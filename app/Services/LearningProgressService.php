@@ -26,6 +26,23 @@ class LearningProgressService
         ));
     }
 
+    public function answerExercise(string $deviceId, Lesson $lesson, int $answerIndex): bool
+    {
+        if (LearningProgress::query()->where('visitor_id', $deviceId)->where('lesson_id', $lesson->id)->exists()) {
+            return true;
+        }
+
+        abort_unless(is_array($lesson->exercise_options) && array_key_exists($answerIndex, $lesson->exercise_options), 422);
+
+        if ($answerIndex !== $lesson->correct_option) {
+            return false;
+        }
+
+        $this->completeLesson($deviceId, $lesson);
+
+        return true;
+    }
+
     public function claimDeviceProgress(Request $request, User $user): void
     {
         $deviceId = $request->cookie('artaswaha_device');

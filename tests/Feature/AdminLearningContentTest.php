@@ -6,6 +6,7 @@ use App\Models\LearningPath;
 use App\Models\Lesson;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class AdminLearningContentTest extends TestCase
@@ -34,7 +35,11 @@ class AdminLearningContentTest extends TestCase
             'summary' => 'Ungkapan salam sederhana.',
             'content' => 'Rahajeng semeng.',
             'sort_order' => 1,
-            'is_published' => true,
+            'has_exercise' => '1',
+            'exercise_prompt' => 'Ucapan untuk pagi hari?',
+            'exercise_options' => ['Rahajeng semeng', 'Rahajeng wengi', 'Suksma', 'Napi kabar'],
+            'correct_option' => 0,
+            'exercise_explanation' => 'Rahajeng semeng berarti selamat pagi.',
         ])->assertRedirect(route('admin.lessons.index'));
 
         $lesson = Lesson::query()->where('slug', 'salam-bali')->firstOrFail();
@@ -44,7 +49,18 @@ class AdminLearningContentTest extends TestCase
 
         $this->post(route('admin.lessons.publish', $lesson))->assertRedirect(route('admin.lessons.index'));
         $this->assertTrue($lesson->fresh()->is_published);
-        $this->get(route('learning.lessons.show', $lesson->slug))->assertOk()->assertSee('Rahajeng semeng.');
+        $this->assertArrayNotHasKey('correct_option', $lesson->fresh()->toArray());
+        $this->get(route('learning.lessons.show', $lesson->slug))->assertOk()->assertSee('Ucapan untuk pagi hari?')->assertDontSee('exercise_explanation');
+
+        $visitorId = (string) Str::uuid();
+        $answerRoute = route('learning.exercises.answer', $lesson->slug);
+        $this->withCookie('artaswaha_device', $visitorId)->post($answerRoute, ['answer_index' => 1])->assertRedirect()->assertSessionHas('status', 'Belum tepat. Coba ingat lagi materi di atas, lalu pilih jawaban lain.');
+        $this->assertDatabaseCount('learning_progress', 0);
+        $this->withCookie('artaswaha_device', $visitorId)->post(route('learning.progress.store', $lesson->slug))->assertForbidden();
+        $this->assertDatabaseCount('learning_progress', 0);
+        $this->withCookie('artaswaha_device', $visitorId)->post($answerRoute, ['answer_index' => 0])->assertRedirect();
+        $this->assertDatabaseHas('learning_progress', ['visitor_id' => $visitorId, 'lesson_id' => $lesson->id, 'points' => 10]);
+        $this->withCookie('artaswaha_device', $visitorId)->get(route('learning.lessons.show', $lesson->slug))->assertOk()->assertSee('Rahajeng semeng berarti selamat pagi.');
 
         $learningPath->update(['is_published' => false]);
         $this->get(route('learning.lessons.show', $lesson->slug))->assertNotFound();

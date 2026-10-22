@@ -38,12 +38,12 @@ class AdminLearningContentService
 
     public function storeLesson(array $data): Lesson
     {
-        return Lesson::query()->create([...$data, 'is_published' => false, 'reviewed_at' => null]);
+        return Lesson::query()->create([...$this->lessonData($data), 'is_published' => false, 'reviewed_at' => null]);
     }
 
     public function updateLesson(Lesson $lesson, array $data): void
     {
-        $lesson->update([...$data, 'is_published' => false, 'reviewed_at' => null]);
+        $lesson->update([...$this->lessonData($data), 'is_published' => false, 'reviewed_at' => null]);
     }
 
     public function publishLesson(Lesson $lesson): void
@@ -54,5 +54,17 @@ class AdminLearningContentService
     public function archiveLesson(Lesson $lesson): void
     {
         $lesson->update(['is_published' => false]);
+    }
+
+    private function lessonData(array $data): array
+    {
+        $hasExercise = (bool) ($data['has_exercise'] ?? false);
+        unset($data['has_exercise']);
+
+        if (! $hasExercise) {
+            return [...$data, 'exercise_prompt' => null, 'exercise_options' => null, 'correct_option' => null, 'exercise_explanation' => null];
+        }
+
+        return $data;
     }
 }

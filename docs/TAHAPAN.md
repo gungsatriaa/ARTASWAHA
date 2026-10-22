@@ -74,14 +74,15 @@ Status: **sebagian selesai**.
 ### Pekerjaan
 
 - [x] Sediakan akses ke materi terbit tanpa membuat akun.
-- [ ] Tambahkan latihan interaktif, audio, animasi, dan kontrol suara.
+- [x] Sediakan latihan pilihan ganda opsional pada pelajaran dengan pemeriksaan jawaban di server dan umpan balik benar/salah.
+- [ ] Tambahkan audio, animasi, dan kontrol suara.
 - [x] Simpan progres dengan UUID pada cookie perangkat terenkripsi oleh Laravel.
 - [ ] Tampilkan pelajaran terakhir, ringkasan progres, dan latihan ulang.
 - [x] Kaitkan progres anonim ke akun saat registrasi/login tanpa mengubah identifier perangkat.
 
 ### Pengujian lokal
 
-- [x] Uji progres per cookie perangkat dan pengiriman penyelesaian berulang pada test lokal.
+- [x] Uji progres per cookie perangkat, pengiriman penyelesaian berulang, penilaian latihan, dan pencegahan melewati latihan pada test lokal.
 - [ ] Periksa cookie terhapus/tidak valid, penggabungan progres, serta jaringan lambat di browser.
 
 ### Selesai bila

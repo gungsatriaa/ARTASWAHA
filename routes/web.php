@@ -14,6 +14,7 @@ Route::get('/', [LearningPathController::class, 'index'])->name('home');
 Route::get('/belajar/{learningPath:slug}', [LearningPathController::class, 'show'])->name('learning.paths.show');
 Route::get('/pelajaran/{lesson:slug}', [LessonController::class, 'show'])->name('learning.lessons.show');
 Route::post('/pelajaran/{lesson:slug}/selesai', [LearningProgressController::class, 'store'])->name('learning.progress.store');
+Route::post('/pelajaran/{lesson:slug}/latihan', [LearningProgressController::class, 'answerExercise'])->middleware('throttle:15,1')->name('learning.exercises.answer');
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/masuk', [AuthController::class, 'createLogin'])->name('login');

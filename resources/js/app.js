@@ -47,6 +47,19 @@ document.querySelectorAll('[data-quiz-builder]').forEach((form) => {
     });
 });
 
+document.querySelectorAll('[data-exercise-toggle]').forEach((toggle) => {
+    const fields = toggle.form.querySelector('[data-exercise-fields]');
+    const syncFields = () => {
+        fields.disabled = !toggle.checked;
+        fields.querySelectorAll('input, textarea').forEach((field) => {
+            field.disabled = !toggle.checked;
+        });
+    };
+
+    toggle.addEventListener('change', syncFields);
+    syncFields();
+});
+
 document.querySelectorAll('[data-copy-room]').forEach((button) => {
     button.addEventListener('click', async () => {
         const status = document.querySelector('[data-copy-status]');

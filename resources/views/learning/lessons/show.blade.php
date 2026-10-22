@@ -29,6 +29,25 @@
 
             @if ($progress?->completed_at)
                 <p class="mt-6 rounded-2xl bg-surface px-5 py-4 font-semibold text-accent">Pelajaran selesai · {{ $progress->points }} poin</p>
+                @if ($lesson->exercise_explanation)
+                    <p class="mt-4 rounded-2xl bg-primary/15 p-5 font-readable leading-7 text-foreground/80">{{ $lesson->exercise_explanation }}</p>
+                @endif
+            @elseif ($lesson->exercise_prompt)
+                <section class="mt-8 rounded-card bg-surface p-6 sm:p-8" aria-labelledby="exercise-title">
+                    <p class="text-sm font-semibold text-accent">Latihan singkat</p>
+                    <h2 id="exercise-title" class="mt-2 font-display text-2xl font-bold">{{ $lesson->exercise_prompt }}</h2>
+                    <form method="POST" action="{{ route('learning.exercises.answer', $lesson->slug) }}" class="mt-6 space-y-3">
+                        @csrf
+                        @foreach ($lesson->exercise_options as $index => $option)
+                            <label class="flex cursor-pointer items-center gap-3 rounded-2xl bg-background p-4 transition hover:bg-white/5">
+                                <input type="radio" name="answer_index" value="{{ $index }}" required class="size-5 accent-[var(--color-accent)]">
+                                <span>{{ $option }}</span>
+                            </label>
+                        @endforeach
+                        @error('answer_index') <span role="alert" class="block text-danger">{{ $message }}</span> @enderror
+                        <button class="min-h-12 w-full rounded-full bg-primary px-7 py-3 font-bold text-white transition hover:brightness-110 sm:w-auto" type="submit">Periksa jawaban</button>
+                    </form>
+                </section>
             @else
                 <form method="POST" action="{{ route('learning.progress.store', $lesson->slug) }}" class="mt-8">
                     @csrf
