@@ -95,8 +95,8 @@
                     <p class="max-w-md font-readable text-sm leading-6 text-foreground/55">Kutipan berikut adalah contoh rancangan, bukan testimoni pengguna nyata.</p>
                 </div>
                 <div class="grid gap-4 md:grid-cols-3">
-                    <figure class="flex h-full flex-col rounded-card bg-surface p-6 sm:p-7">
-                        <blockquote class="flex-1 font-readable text-lg leading-7">Tebak-teki Bali bikin aku ingin tahu jawaban yang lain juga.</blockquote>
+                    <figure class="flex h-[22rem] flex-col rounded-card bg-surface p-6 sm:p-7">
+                        <blockquote class="line-clamp-5 flex-1 font-readable text-lg leading-7">Tebak-teki Bali bikin aku ingin tahu jawaban yang lain juga.</blockquote>
                         <figcaption class="mt-6 flex items-center gap-3 border-t border-white/10 pt-5">
                             <img src="{{ asset('avatar/kupu_kupu.webp') }}" alt="" class="size-12 rounded-full object-cover ring-2 ring-primary/40">
                             <span>
@@ -105,8 +105,8 @@
                             </span>
                         </figcaption>
                     </figure>
-                    <figure class="flex h-full flex-col rounded-card bg-surface p-6 sm:p-7">
-                        <blockquote class="flex-1 font-readable text-lg leading-7">Materinya singkat, jadi bisa kami pelajari bersama di rumah.</blockquote>
+                    <figure class="flex h-[22rem] flex-col rounded-card bg-surface p-6 sm:p-7">
+                        <blockquote class="line-clamp-5 flex-1 font-readable text-lg leading-7">Materinya singkat, jadi bisa kami pelajari bersama di rumah.</blockquote>
                         <figcaption class="mt-6 flex items-center gap-3 border-t border-white/10 pt-5">
                             <img src="{{ asset('avatar/gajah.webp') }}" alt="" class="size-12 rounded-full object-cover ring-2 ring-primary/40">
                             <span>
@@ -115,8 +115,8 @@
                             </span>
                         </figcaption>
                     </figure>
-                    <figure class="flex h-full flex-col rounded-card bg-surface p-6 sm:p-7">
-                        <blockquote class="flex-1 font-readable text-lg leading-7">Kuis bersama memberi cara baru untuk mengenalkan paribasa.</blockquote>
+                    <figure class="flex h-[22rem] flex-col rounded-card bg-surface p-6 sm:p-7">
+                        <blockquote class="line-clamp-5 flex-1 font-readable text-lg leading-7">Kuis bersama memberi cara baru untuk mengenalkan paribasa.</blockquote>
                         <figcaption class="mt-6 flex items-center gap-3 border-t border-white/10 pt-5">
                             <img src="{{ asset('avatar/jalak_bali.webp') }}" alt="" class="size-12 rounded-full object-cover ring-2 ring-primary/40">
                             <span>

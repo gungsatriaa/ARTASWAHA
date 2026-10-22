@@ -37,6 +37,8 @@ class LearningFlowTest extends TestCase
             ->assertSee('Main kuis bersama')
             ->assertSee('Apa kata mereka')
             ->assertSee('Ilustrasi · contoh suara')
+            ->assertSee('h-[22rem]', false)
+            ->assertSee('line-clamp-5', false)
             ->assertSee(asset('avatar/kupu_kupu.webp'))
             ->assertSee(asset('avatar/gajah.webp'))
             ->assertSee(asset('avatar/jalak_bali.webp'))
@@ -45,6 +47,13 @@ class LearningFlowTest extends TestCase
             ->assertSee(route('learning.paths.show', 'cecimpedan'));
 
         $html = $response->getContent();
+        preg_match_all('/<blockquote[^>]*>(.*?)<\/blockquote>/s', $html, $reviews);
+        $this->assertCount(3, $reviews[1]);
+
+        foreach ($reviews[1] as $review) {
+            $this->assertLessThanOrEqual(120, mb_strlen(html_entity_decode(strip_tags($review))));
+        }
+
         $sections = ['tentang', 'keunggulan', 'testimoni', 'faq'];
         $positions = array_map(fn (string $section) => strpos($html, 'id="'.$section.'"'), $sections);
 
