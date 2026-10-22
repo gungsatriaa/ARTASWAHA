@@ -49,9 +49,6 @@
         <main>
             <section class="mx-auto grid max-w-7xl items-center gap-12 px-6 pb-20 pt-10 md:grid-cols-[1.05fr_.95fr] md:pb-28 md:pt-16 lg:px-10">
                 <div class="max-w-2xl">
-                    <p class="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-surface px-4 py-2 text-sm font-semibold text-accent">
-                        <span aria-hidden="true">✦</span> Belajar budaya Bali, satu langkah kecil
-                    </p>
                     <h1 class="font-display text-5xl font-bold leading-[1.08] tracking-tight sm:text-6xl lg:text-7xl">Bahasa Bali jadi <span class="text-accent">seru</span> dipelajari.</h1>
                     <p class="mt-6 max-w-xl font-readable text-lg leading-8 text-foreground/75 sm:text-xl">Kenali paribasa dan aksara Bali lewat cerita, latihan singkat, dan permainan yang bisa langsung dicoba. Mulai tanpa akun; progres tersimpan di perangkatmu.</p>
                     <div id="mulai" class="mt-9 flex flex-wrap gap-3">
