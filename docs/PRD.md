@@ -2,7 +2,7 @@
 
 ## Ringkasan
 
-ArtaSwaha adalah platform pembelajaran interaktif untuk anak-anak di Bali. Platform membantu pengguna belajar bahasa Bali, Aksara Bali, cecimpedan, dan materi budaya lokal melalui pelajaran singkat, audio, latihan, serta kuis bersama. Pengalaman dibuat menyenangkan dan mudah digunakan anak, dengan materi yang ditinjau oleh penutur atau pengajar yang memahami budaya Bali.
+ArtaSwaha adalah platform pembelajaran interaktif untuk anak-anak di Bali yang berfokus pada Paribasa Bali dan Aksara Bali. Materi disajikan melalui pelajaran singkat, audio, latihan, permainan, serta kuis bersama. Pengalaman dibuat menyenangkan dan mudah digunakan anak, dengan isi yang ditinjau oleh penutur atau pengajar yang memahami budaya Bali.
 
 ## Pengguna dan akses
 
@@ -22,9 +22,10 @@ ArtaSwaha adalah platform pembelajaran interaktif untuk anak-anak di Bali. Platf
 
 ### Belajar mandiri
 
-- Jalur belajar bertema: Bahasa Bali, Aksara Bali, Cecimpedan, dan materi budaya terkait.
-- Peta/jalur pelajaran berurutan dengan unit kecil.
-- Bentuk latihan: pilihan jawaban, cocokkan arti dengan gambar/kata, dengarkan lalu pilih, susun kata/aksara, dan teka-teki.
+- Dua jalur utama dengan unit pelajaran berurutan dan bertahap:
+  - **Paribasa Bali:** Cecimpedan, Peparikan, dan Sesonggakan.
+  - **Aksara Bali:** Aksara Wreastra beserta gantungannya, Pengangge Suara, Pengangge Tengenan, Pengangge Arda Suara, dan angka dalam Aksara Bali.
+- Bentuk latihan: pilihan jawaban, cocokkan bentuk dan arti, dengarkan lalu pilih, susun aksara, lengkapi kata, serta tebak makna paribasa.
 - **Keyboard Aksara Bali di layar:** membantu pengguna memasukkan Aksara Bali saat membuat soal/kuis dan saat menjawab latihan atau kuis yang menerima jawaban aksara. Keyboard menampilkan karakter dan tanda yang relevan, bekerja pada perangkat sentuh maupun komputer, serta menyediakan input alternatif bila layout perangkat tidak mendukung Aksara Bali.
 - Audio pelafalan yang dapat diputar ulang.
 - Umpan balik visual dan suara untuk jawaban benar, salah, dan penyelesaian pelajaran; kontrol untuk mematikan suara.
@@ -54,7 +55,7 @@ ArtaSwaha adalah platform pembelajaran interaktif untuk anak-anak di Bali. Platf
 - Keyboard Aksara Bali dimulai dengan karakter yang diperlukan untuk materi versi awal; pemetaan dan dukungan kombinasi karakter harus ditinjau bersama ahli/penutur.
 - Room memakai kode undangan; aktivitas realtime dibatasi pada status room, jawaban, dan skor.
 - Belum mencakup chat, unggahan konten bebas oleh publik, marketplace, atau fitur sosial terbuka.
-- Materi dan audio harus ditinjau oleh penutur/pengajar yang kompeten sebelum diterbitkan.
+- Materi Paribasa Bali, kaidah penulisan Aksara Bali, kombinasi gantungan/pengangge, dan audio harus ditinjau oleh penutur atau pengajar yang kompeten sebelum diterbitkan.
 
 ## Kebutuhan nonfungsional
 
