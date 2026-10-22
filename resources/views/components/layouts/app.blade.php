@@ -1,4 +1,4 @@
-@props(['learningPaths', 'title' => 'ARTASWAHA - Platform Edukasi Bahasa, Sastra, dan Aksara Bali.'])
+@props(['learningPaths', 'title' => 'ARTASWAHA - Platform Edukasi Bahasa, Sastra, dan Aksara Bali.', 'showFooter' => true])
 
 <!DOCTYPE html>
 <html lang="id">
@@ -12,11 +12,13 @@
         <title>{{ $title }}</title>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="min-h-screen bg-background font-sans text-foreground antialiased">
+    <body @class(['min-h-screen bg-background font-sans text-foreground antialiased', 'flex flex-col' => ! $showFooter])>
         <x-site-nav :learning-paths="$learningPaths" />
-        <main>
+        <main @class(['flex-1' => ! $showFooter])>
             {{ $slot }}
         </main>
-        <x-site-footer :learning-paths="$learningPaths" />
+        @if ($showFooter)
+            <x-site-footer :learning-paths="$learningPaths" />
+        @endif
     </body>
 </html>

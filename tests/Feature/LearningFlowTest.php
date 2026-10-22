@@ -93,7 +93,9 @@ class LearningFlowTest extends TestCase
             ->assertSee('aria-label="Kuis dibuat: 2"', false)
             ->assertSee('Detail akun')
             ->assertSee(route('learning.paths.show', 'cecimpedan'))
-            ->assertSee(route('quizzes.index'));
+            ->assertSee(route('quizzes.index'))
+            ->assertSee('min-h-[calc(100svh-6rem)]', false)
+            ->assertDontSee('Ruang belajar paribasa dan aksara Bali yang seru');
     }
 
     public function test_path_page_only_lists_published_reviewed_lessons(): void
