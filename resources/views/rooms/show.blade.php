@@ -1,14 +1,6 @@
-<!DOCTYPE html>
-<html lang="id">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Room {{ $room->code }} — ARTASWAHA</title>
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body class="min-h-screen bg-background font-sans text-foreground antialiased">
-        <header class="border-b border-white/10"><div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-5"><a href="{{ route('home') }}" class="font-display text-xl font-bold">ARTASWAHA</a><a href="{{ route('quizzes.index') }}" class="text-sm font-semibold text-accent">Keluar dari room</a></div></header>
-        <main class="mx-auto max-w-5xl px-6 py-10" data-room-code="{{ $room->code }}">
+<x-layouts.app :show-footer="false" title="Room {{ $room->code }} — ARTASWAHA">
+        <div class="mx-auto w-full max-w-5xl px-5 py-8 sm:px-6 sm:py-10" data-room-code="{{ $room->code }}">
+            <div class="mb-6 flex justify-end"><a href="{{ route('quizzes.index') }}" class="inline-flex min-h-10 items-center rounded-full px-4 text-sm font-semibold text-accent transition hover:bg-surface">Keluar dari room</a></div>
             @if ($errors->any())<p role="alert" class="mb-6 rounded-2xl bg-danger/10 p-4 text-danger">{{ $errors->first() }}</p>@endif
             <p data-live-status class="mb-3 min-h-5 text-sm text-foreground/50">Segarkan halaman untuk memeriksa pembaruan room.</p>
             <div class="flex flex-wrap items-start justify-between gap-5">
@@ -64,6 +56,5 @@
                     </ol>
                 </section>
             @endif
-        </main>
-    </body>
-</html>
+        </div>
+</x-layouts.app>

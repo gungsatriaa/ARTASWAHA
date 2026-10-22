@@ -3,6 +3,26 @@ import Pusher from 'pusher-js';
 
 const roomPage = document.querySelector('[data-room-code]');
 
+document.querySelectorAll('[data-mobile-nav]').forEach((dialog) => {
+    const openButton = document.querySelector(`[aria-controls="${dialog.id}"]`);
+    const closeButton = dialog.querySelector('[data-mobile-nav-close]');
+
+    openButton?.addEventListener('click', () => {
+        dialog.showModal();
+        openButton.setAttribute('aria-expanded', 'true');
+    });
+    closeButton?.addEventListener('click', () => dialog.close());
+    dialog.querySelectorAll('a, form button').forEach((item) => {
+        item.addEventListener('click', () => dialog.close());
+    });
+    dialog.addEventListener('click', (event) => {
+        if (event.target === dialog) {
+            dialog.close();
+        }
+    });
+    dialog.addEventListener('close', () => openButton?.setAttribute('aria-expanded', 'false'));
+});
+
 if (roomPage && import.meta.env.VITE_REVERB_APP_KEY && import.meta.env.VITE_REVERB_HOST) {
     window.Pusher = Pusher;
     window.Echo = new Echo({

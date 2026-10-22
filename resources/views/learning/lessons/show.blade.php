@@ -1,22 +1,8 @@
-<!DOCTYPE html>
-<html lang="id">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="theme-color" content="#0a0a0a">
-        <title>{{ $lesson->title }} — ARTASWAHA</title>
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body class="min-h-screen bg-background font-sans text-foreground antialiased">
-        <header class="border-b border-white/10">
-            <div class="mx-auto flex max-w-4xl items-center justify-between px-6 py-5">
-                <a href="{{ route('home') }}" class="font-display text-xl font-bold">ARTASWAHA</a>
-                <a href="{{ route('learning.paths.show', $lesson->learningPath->slug) }}" class="rounded-full px-4 py-2 text-sm font-semibold hover:bg-surface">Daftar pelajaran</a>
-            </div>
-        </header>
-        <main class="mx-auto max-w-3xl px-6 py-12 sm:py-16">
+<x-layouts.app :show-footer="false" :title="$lesson->title . ' — ARTASWAHA'">
+        <div class="mx-auto w-full max-w-3xl px-5 py-8 sm:px-6 sm:py-12 lg:py-16">
+            <a href="{{ route('learning.paths.show', $lesson->learningPath->slug) }}" class="mb-8 inline-flex min-h-10 items-center rounded-full px-4 text-sm font-semibold text-foreground/70 transition hover:bg-surface hover:text-accent">← Daftar pelajaran</a>
             <p class="font-semibold text-accent">{{ $lesson->learningPath->title }}</p>
-            <h1 class="mt-2 font-display text-4xl font-bold sm:text-5xl">{{ $lesson->title }}</h1>
+            <h1 class="mt-2 break-words font-display text-3xl font-bold sm:text-5xl">{{ $lesson->title }}</h1>
             <p class="mt-4 font-readable text-lg leading-8 text-foreground/70">{{ $lesson->summary }}</p>
 
             @if (session('status'))
@@ -54,6 +40,5 @@
                     <button class="min-h-14 w-full rounded-full bg-primary px-7 py-4 font-bold text-white transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent" type="submit">Tandai pelajaran selesai</button>
                 </form>
             @endif
-        </main>
-    </body>
-</html>
+        </div>
+</x-layouts.app>

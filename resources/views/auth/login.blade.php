@@ -1,13 +1,6 @@
-<!DOCTYPE html>
-<html lang="id">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Masuk — ARTASWAHA</title>
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body class="grid min-h-screen place-items-center bg-background px-5 py-10 font-sans text-foreground">
-        <main class="w-full max-w-md rounded-card bg-surface p-7 sm:p-9">
+<x-layouts.app :show-footer="false" title="Masuk — ARTASWAHA">
+    <div class="grid flex-1 place-items-center px-5 py-10">
+        <section class="w-full max-w-md rounded-card bg-surface p-6 sm:p-9">
             <a href="{{ route('home') }}" class="font-display text-xl font-bold">ARTASWAHA</a>
             <h1 class="mt-8 font-display text-3xl font-bold">Senang bertemu lagi!</h1>
             <p class="mt-2 font-readable text-foreground/65">Masuk untuk membuat atau bergabung ke kuis.</p>
@@ -26,6 +19,6 @@
             </form>
             <a href="{{ route('password.request') }}" class="mt-5 inline-block text-sm text-accent hover:underline">Lupa kata sandi?</a>
             <p class="mt-6 text-sm text-foreground/65">Belum punya akun? <a class="font-bold text-accent hover:underline" href="{{ route('register') }}">Daftar</a></p>
-        </main>
-    </body>
-</html>
+        </section>
+    </div>
+</x-layouts.app>

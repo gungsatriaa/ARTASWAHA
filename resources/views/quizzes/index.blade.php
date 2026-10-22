@@ -1,19 +1,6 @@
-<!DOCTYPE html>
-<html lang="id">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Kuis — ARTASWAHA</title>
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body class="min-h-screen bg-background font-sans text-foreground antialiased">
-        <header class="border-b border-white/10">
-            <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-5">
-                <a href="{{ route('home') }}" class="font-display text-xl font-bold">ARTASWAHA</a>
-                <a href="{{ route('quizzes.create') }}" class="rounded-full bg-accent px-5 py-3 text-sm font-extrabold text-background">Buat kuis</a>
-            </div>
-        </header>
-        <main class="mx-auto max-w-6xl px-6 py-12">
+<x-layouts.app :show-footer="false" title="Kuis — ARTASWAHA">
+        <div class="mx-auto w-full max-w-6xl px-5 py-8 sm:px-6 sm:py-12">
+            <div class="mb-6 flex justify-end"><a href="{{ route('quizzes.create') }}" class="inline-flex min-h-11 items-center rounded-full bg-accent px-5 py-3 text-sm font-extrabold text-background">Buat kuis</a></div>
             <h1 class="font-display text-4xl font-bold">Kuis bersama</h1>
             <p class="mt-3 font-readable text-foreground/65">Buat kuis sendiri atau gunakan kode untuk bergabung ke room.</p>
 
@@ -44,6 +31,5 @@
                 </div>
                 <div class="mt-6">{{ $quizzes->links() }}</div>
             </section>
-        </main>
-    </body>
-</html>
+        </div>
+</x-layouts.app>

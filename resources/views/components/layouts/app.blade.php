@@ -1,4 +1,4 @@
-@props(['learningPaths', 'title' => 'ARTASWAHA - Platform Edukasi Bahasa, Sastra, dan Aksara Bali.', 'showFooter' => true])
+@props(['learningPaths' => null, 'title' => 'ARTASWAHA - Platform Edukasi Bahasa, Sastra, dan Aksara Bali.', 'showFooter' => true])
 
 <!DOCTYPE html>
 <html lang="id">

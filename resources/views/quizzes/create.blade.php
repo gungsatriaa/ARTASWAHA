@@ -1,14 +1,6 @@
-<!DOCTYPE html>
-<html lang="id">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Buat kuis — ARTASWAHA</title>
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body class="min-h-screen bg-background font-sans text-foreground antialiased">
-        <header class="border-b border-white/10"><div class="mx-auto max-w-4xl px-6 py-5"><a href="{{ route('quizzes.index') }}" class="font-display text-xl font-bold">ARTASWAHA <span class="text-sm font-medium text-foreground/55">/ Kuis</span></a></div></header>
-        <main class="mx-auto max-w-4xl px-6 py-10">
+<x-layouts.app :show-footer="false" title="Buat kuis — ARTASWAHA">
+        <div class="mx-auto w-full max-w-4xl px-5 py-8 sm:px-6 sm:py-10">
+            <a href="{{ route('quizzes.index') }}" class="mb-8 inline-flex min-h-10 items-center rounded-full px-4 text-sm font-semibold text-foreground/70 transition hover:bg-surface hover:text-accent">← Kembali ke kuis</a>
             <h1 class="font-display text-4xl font-bold">Buat kuis</h1>
             <p class="mt-3 font-readable text-foreground/65">Tulis pertanyaan, lalu tandai satu jawaban yang benar.</p>
             @if ($errors->any())<p role="alert" class="mt-6 rounded-2xl bg-danger/10 p-4 text-danger">{{ $errors->first() }}</p>@endif
@@ -72,6 +64,5 @@
                 </template>
                 <button type="submit" class="min-h-14 w-full rounded-full bg-primary px-7 py-4 font-bold text-white hover:brightness-110">Simpan kuis</button>
             </form>
-        </main>
-    </body>
-</html>
+        </div>
+</x-layouts.app>

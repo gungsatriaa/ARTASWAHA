@@ -1,17 +1,9 @@
-<!DOCTYPE html>
-<html lang="id">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>{{ $quiz->title }} — ARTASWAHA</title>
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body class="min-h-screen bg-background font-sans text-foreground antialiased">
-        <header class="border-b border-white/10"><div class="mx-auto flex max-w-4xl items-center justify-between px-6 py-5"><a href="{{ route('quizzes.index') }}" class="font-display text-xl font-bold">ARTASWAHA / Kuis</a><a href="{{ route('quizzes.index') }}" class="text-sm font-semibold text-accent">Kembali</a></div></header>
-        <main class="mx-auto max-w-4xl px-6 py-10">
+<x-layouts.app :show-footer="false" :title="$quiz->title . ' — ARTASWAHA'">
+        <div class="mx-auto w-full max-w-4xl px-5 py-8 sm:px-6 sm:py-10">
+            <a href="{{ route('quizzes.index') }}" class="mb-8 inline-flex min-h-10 items-center rounded-full px-4 text-sm font-semibold text-foreground/70 transition hover:bg-surface hover:text-accent">← Kembali ke kuis</a>
             @if (session('status'))<p role="status" class="mb-6 rounded-2xl bg-primary/20 p-4 text-accent">{{ session('status') }}</p>@endif
             <p class="text-sm font-semibold text-accent">Kuis pribadi</p>
-            <h1 class="mt-2 font-display text-4xl font-bold">{{ $quiz->title }}</h1>
+            <h1 class="mt-2 break-words font-display text-3xl font-bold sm:text-4xl">{{ $quiz->title }}</h1>
             @if ($quiz->description)<p class="mt-3 font-readable text-foreground/65">{{ $quiz->description }}</p>@endif
             <p class="mt-5 text-sm text-foreground/50">{{ $quiz->questions->count() }} pertanyaan</p>
             <form method="POST" action="{{ route('rooms.store', $quiz) }}" class="mt-8">
@@ -23,6 +15,5 @@
                     <li class="rounded-card bg-surface p-5"><span class="text-sm font-semibold text-accent">Pertanyaan {{ $index + 1 }}</span><p class="mt-2 font-semibold">{{ $question->prompt }}</p></li>
                 @endforeach
             </ol>
-        </main>
-    </body>
-</html>
+        </div>
+</x-layouts.app>
