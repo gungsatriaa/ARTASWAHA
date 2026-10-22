@@ -4,13 +4,17 @@ Dokumen ini membagi pengembangan menjadi tahapan yang dapat diselesaikan dan diu
 
 ## Tahap 1 — Fondasi dan keputusan produk
 
+Status: **sebagian selesai**.
+
 ### Pekerjaan
 
-- Pastikan versi Laravel, PHP, MySQL, Node/Vite, dan paket yang benar-benar terpasang.
-- Tetapkan struktur fitur, bahasa antarmuka, rentang usia sasaran, dan materi pertama yang akan dibuat.
-- Validasi isi Bahasa Bali/Aksara Bali/cecimpedan bersama penutur atau pengajar yang kompeten.
-- Siapkan lingkungan lokal, konfigurasi `.env`, database MySQL lokal, serta Redis lokal bila digunakan.
-- Pastikan `.env` dan kredensial tidak dilacak Git.
+- [x] Pastikan versi Laravel dan PHP yang terpasang.
+- [ ] Catat dan verifikasi versi MySQL, Node/Vite, serta paket utama dalam dokumen proyek.
+- [x] Tetapkan ruang lingkup materi: Paribasa Bali dan Aksara Bali; bahasa antarmuka Indonesia; sasaran umum anak-anak.
+- [ ] Tetapkan rentang usia sasaran secara spesifik dan materi pertama untuk prototipe.
+- [ ] Validasi isi Bahasa Bali/Aksara Bali/cecimpedan bersama penutur atau pengajar yang kompeten.
+- [ ] Siapkan serta jalankan lingkungan lokal dengan MySQL dan Redis.
+- [x] Pastikan `.env` diabaikan Git.
 
 ### Selesai bila
 
@@ -20,24 +24,30 @@ Dokumen ini membagi pengembangan menjadi tahapan yang dapat diselesaikan dan diu
 
 ## Tahap 2 — Sistem desain dan kerangka UI
 
+Status: **sebagian selesai**.
+
 ### Pekerjaan
 
-- Bangun layout Blade responsif dengan navigasi sederhana dan konsisten.
-- Terapkan palet gelap, tipografi Nunito/Atkinson Hyperlegible/Quicksand, dan radius komponen sesuai `STYLE.md`.
-- Buat komponen dasar yang benar-benar dipakai berulang: tombol, kartu, badge progres, dialog, dan pesan status.
-- Tambahkan dukungan keyboard, fokus terlihat, kontras yang memadai, reduced motion, serta kontrol suara.
-- Siapkan slot ilustrasi maskot dan aset orisinal tanpa mengunci layout ke satu gambar tertentu.
+- [x] Bangun landing page Blade dengan navigasi fixed dan layout yang memiliki aturan responsif.
+- [x] Terapkan palet gelap, radius, dan token tema Tailwind sesuai `STYLE.md`.
+- [x] Konfigurasikan Nunito, Atkinson Hyperlegible, dan Quicksand sebagai font UI serta Vimala lokal untuk Aksara Bali.
+- [ ] Buat komponen dasar reusable untuk tombol, kartu, progres, dialog, dan pesan status.
+- [ ] Tuntaskan audit keyboard, fokus, kontras, reduced motion, serta kontrol suara.
+- [x] Gunakan aset maskot untuk identitas/favikon tanpa menjadikannya isi utama hero.
+- [x] Pastikan proses build aset frontend berhasil.
 
 ### Pengujian lokal
 
-- Periksa halaman pada lebar ponsel dan desktop di browser lokal.
-- Verifikasi navigasi keyboard, kontras, teks panjang, dan fallback saat font/CDN gagal.
+- [ ] Periksa halaman pada lebar ponsel dan desktop di browser lokal.
+- [ ] Verifikasi navigasi keyboard, kontras, teks panjang, dan fallback saat font gagal.
 
 ### Selesai bila
 
 - Halaman dasar responsif dan komponen memiliki perilaku serta gaya konsisten.
 
 ## Tahap 3 — Materi belajar dan panel admin
+
+Status: **belum dimulai**.
 
 ### Pekerjaan
 
