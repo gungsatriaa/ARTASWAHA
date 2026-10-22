@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#0a0a0a">
-        <title>@yield('title') — Admin ArtaSwaha</title>
+        <title>@yield('title') — Admin ARTASWAHA</title>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="min-h-screen bg-background font-sans text-foreground antialiased">

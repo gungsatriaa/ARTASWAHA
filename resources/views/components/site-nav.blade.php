@@ -2,7 +2,7 @@
 
 <header class="sticky top-0 z-50 border-b border-white/10 bg-background/95 backdrop-blur-sm">
     <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 lg:px-10">
-        <a href="{{ route('home') }}" class="flex items-center gap-3 rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent" aria-label="ArtaSwaha beranda">
+        <a href="{{ route('home') }}" class="flex items-center gap-3 rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent" aria-label="ARTASWAHA beranda">
             <img src="{{ asset('image/maskot.webp') }}" alt="" class="size-12 rounded-full object-cover object-center">
             <span class="font-display text-2xl font-bold tracking-tight">ARTASWAHA</span>
         </a>

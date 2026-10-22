@@ -92,9 +92,9 @@
             <section id="tentang" class="mx-auto max-w-7xl px-6 pb-20 lg:px-10">
                 <div class="grid gap-8 rounded-card bg-surface p-7 sm:p-10 lg:grid-cols-[.9fr_1.1fr] lg:items-center lg:p-12">
                     <div>
-                        <p class="font-semibold text-accent">Tentang ArtaSwaha</p>
+                        <p class="font-semibold text-accent">Tentang ARTASWAHA</p>
                         <h2 class="mt-3 font-display text-3xl font-bold leading-tight sm:text-4xl">Belajar budaya Bali, dekat dengan keseharian anak.</h2>
-                        <p class="mt-5 max-w-xl font-readable leading-7 text-foreground/65">ArtaSwaha mengajak anak mengenal paribasa dan aksara Bali lewat contoh, cerita, dan latihan singkat yang bisa diulang dengan nyaman.</p>
+                        <p class="mt-5 max-w-xl font-readable leading-7 text-foreground/65">ARTASWAHA adalah platform edukasi bahasa, sastra, dan aksara Bali yang mengajak anak belajar lewat contoh, cerita, dan latihan singkat.</p>
                     </div>
                     <div class="grid gap-3 sm:grid-cols-3">
                         <article class="rounded-3xl bg-background p-5">
@@ -151,10 +151,10 @@
                 <div class="space-y-3">
                     <details class="group rounded-card bg-surface p-5 sm:p-6">
                         <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-display text-lg font-bold focus-visible:outline-2 focus-visible:outline-accent [&::-webkit-details-marker]:hidden">
-                            Apa itu ArtaSwaha?
+                            Apa itu ARTASWAHA?
                             <span class="text-xl text-accent transition-transform group-open:rotate-45" aria-hidden="true">＋</span>
                         </summary>
-                        <p class="mt-4 max-w-3xl font-readable leading-7 text-foreground/65">ArtaSwaha adalah platform belajar interaktif untuk mengenal paribasa dan aksara Bali melalui materi singkat dan latihan.</p>
+                        <p class="mt-4 max-w-3xl font-readable leading-7 text-foreground/65">ARTASWAHA adalah platform edukasi bahasa, sastra, dan aksara Bali dengan materi singkat serta latihan interaktif.</p>
                     </details>
                     <details class="group rounded-card bg-surface p-5 sm:p-6">
                         <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-display text-lg font-bold focus-visible:outline-2 focus-visible:outline-accent [&::-webkit-details-marker]:hidden">

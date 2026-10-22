@@ -8,7 +8,7 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
 #[Signature('app:make-admin-user {email}')]
-#[Description('Promosikan akun yang sudah ada menjadi administrator ArtaSwaha.')]
+#[Description('Promosikan akun yang sudah ada menjadi administrator ARTASWAHA.')]
 class MakeAdminUser extends Command
 {
     public function handle(): int

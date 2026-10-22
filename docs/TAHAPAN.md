@@ -1,4 +1,4 @@
-# Tahapan Pengembangan ArtaSwaha
+# Tahapan Pengembangan ARTASWAHA
 
 Dokumen ini membagi pengembangan menjadi tahapan yang dapat diselesaikan dan diuji secara lokal. Cakupannya berakhir pada aplikasi yang berjalan dan dapat diperiksa di lingkungan lokal; tahapan deployment tidak termasuk.
 

@@ -1,4 +1,4 @@
-# Aturan Commit ArtaSwaha
+# Aturan Commit ARTASWAHA
 
 ## Format pesan
 

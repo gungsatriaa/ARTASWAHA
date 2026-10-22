@@ -1,4 +1,4 @@
-# ArtaSwaha — UI dan Visual Style
+# ARTASWAHA — UI dan Visual Style
 
 ## Implementasi styling
 
@@ -10,7 +10,7 @@
 
 ## Arah visual
 
-Buat pengalaman belajar yang ceria, hangat, dan mudah dipahami anak, dengan identitas visual yang berakar pada Bali. Ambil inspirasi umum dari aplikasi belajar bahasa yang ringan dan memberi umpan balik, tetapi gunakan komposisi, karakter, ilustrasi, palet, ikon, suara, dan pola navigasi ArtaSwaha sendiri. Jangan menyalin maskot, layout khas, ikon, teks, atau aset Duolingo.
+Buat pengalaman belajar yang ceria, hangat, dan mudah dipahami anak, dengan identitas visual yang berakar pada Bali. Ambil inspirasi umum dari aplikasi belajar bahasa yang ringan dan memberi umpan balik, tetapi gunakan komposisi, karakter, ilustrasi, palet, ikon, suara, dan pola navigasi ARTASWAHA sendiri. Jangan menyalin maskot, layout khas, ikon, teks, atau aset Duolingo.
 
 ## Palet warna
 
@@ -33,7 +33,7 @@ Buat pengalaman belajar yang ceria, hangat, dan mudah dipahami anak, dengan iden
 
 ## Bentuk dan sudut
 
-- Gunakan bentuk membulat sebagai ciri UI ArtaSwaha yang ramah anak.
+- Gunakan bentuk membulat sebagai ciri UI ARTASWAHA yang ramah anak.
 - **Kartu utama:** sudut besar, sekitar `24–32px`, terutama untuk kartu pelajaran, ringkasan progres, dan panel kuis.
 - **Tombol utama dan chip:** gunakan bentuk kapsul/full-rounded jika label dan ukuran tombol tetap nyaman dibaca serta mudah disentuh.
 - **Input dan kontrol sekunder:** sudut membulat sedang, sekitar `12–16px`, agar berbeda dari tombol kapsul.
@@ -67,7 +67,7 @@ Buat pengalaman belajar yang ceria, hangat, dan mudah dipahami anak, dengan iden
 
 ## Aset dan bahasa
 
-- Buat karakter, ilustrasi, serta ikon orisinal untuk ArtaSwaha.
+- Buat karakter, ilustrasi, serta ikon orisinal untuk ARTASWAHA.
 - Gunakan ikon Font Awesome melalui CDN untuk ikon UI; pilih satu gaya ikon secara konsisten dan gunakan ikon sebagai pendamping label yang jelas, bukan pengganti label penting.
 - Muat versi Font Awesome yang dipatok secara eksplisit dari CDN tepercaya, dan sediakan fallback teks/ikon agar antarmuka tetap dapat dipahami jika CDN gagal dimuat.
 - Gunakan audio pelafalan yang ditinjau penutur yang kompeten.

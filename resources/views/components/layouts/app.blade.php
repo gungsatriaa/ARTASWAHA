@@ -1,4 +1,4 @@
-@props(['learningPaths', 'title' => 'ARTASWAHA — Belajar Bali dengan gembira'])
+@props(['learningPaths', 'title' => 'ARTASWAHA - Platform Edukasi Bahasa, Sastra, dan Aksara Bali.'])
 
 <!DOCTYPE html>
 <html lang="id">
@@ -6,6 +6,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#0a0a0a">
+        <meta name="description" content="ARTASWAHA - Platform Edukasi Bahasa, Sastra, dan Aksara Bali.">
         <link rel="icon" type="image/webp" href="{{ asset('image/maskot.webp') }}">
         <link rel="apple-touch-icon" href="{{ asset('image/maskot.webp') }}">
         <title>{{ $title }}</title>

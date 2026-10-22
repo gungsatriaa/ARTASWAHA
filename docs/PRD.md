@@ -1,8 +1,8 @@
-# ArtaSwaha — Product Requirements Document
+# ARTASWAHA — Product Requirements Document
 
 ## Ringkasan
 
-ArtaSwaha adalah platform pembelajaran interaktif untuk anak-anak di Bali yang berfokus pada Paribasa Bali dan Aksara Bali. Materi disajikan melalui pelajaran singkat, audio, latihan, permainan, serta kuis bersama. Pengalaman dibuat menyenangkan dan mudah digunakan anak, dengan isi yang ditinjau oleh penutur atau pengajar yang memahami budaya Bali.
+ARTASWAHA adalah platform edukasi bahasa, sastra, dan aksara Bali untuk anak-anak. Materi disajikan melalui pelajaran singkat, audio, latihan, permainan, serta kuis bersama. Pengalaman dibuat menyenangkan dan mudah digunakan anak, dengan isi yang ditinjau oleh penutur atau pengajar yang memahami budaya Bali.
 
 ## Pengguna dan akses
 

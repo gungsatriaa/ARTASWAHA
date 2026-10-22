@@ -1,4 +1,4 @@
-# ArtaSwaha — Coding Guidelines
+# ARTASWAHA — Coding Guidelines
 
 ## Prinsip umum
 

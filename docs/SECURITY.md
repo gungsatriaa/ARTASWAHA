@@ -1,6 +1,6 @@
-# ArtaSwaha — Standar Keamanan
+# ARTASWAHA — Standar Keamanan
 
-Dokumen ini menetapkan baseline keamanan untuk aplikasi Laravel ArtaSwaha. Terapkan sesuai versi Laravel dan paket yang benar-benar terpasang; jangan menganggap contoh API berlaku untuk semua versi.
+Dokumen ini menetapkan baseline keamanan untuk aplikasi Laravel ARTASWAHA. Terapkan sesuai versi Laravel dan paket yang benar-benar terpasang; jangan menganggap contoh API berlaku untuk semua versi.
 
 ## Identitas dan akses
 

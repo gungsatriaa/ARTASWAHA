@@ -1,4 +1,4 @@
-# ArtaSwaha — Tech Stack
+# ARTASWAHA — Tech Stack
 
 ## Stack inti
 
@@ -32,7 +32,7 @@
 ## Versi lokal yang sudah diverifikasi
 
 - Laravel 13.38.0, PHP 8.4.27, dan Composer 2.10.2.
-- MySQL 8.0.33; migrasi schema ArtaSwaha sudah berhasil diterapkan pada database lokal.
+- MySQL 8.0.33; migrasi schema ARTASWAHA sudah berhasil diterapkan pada database lokal.
 - Node.js 22.22.3, npm 10.9.8, dan Vite 8.3.5.
 - Laravel Reverb 1.12.0, Laravel Echo 2.6.1, dan Pusher JS 8.6.0.
 - Ekstensi PHP Redis tersedia, tetapi service Redis lokal belum berjalan saat diperiksa (`127.0.0.1:6379` menolak koneksi).

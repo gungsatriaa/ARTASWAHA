@@ -20,6 +20,7 @@ class LearningFlowTest extends TestCase
 
         $this->get(route('home'))
             ->assertOk()
+            ->assertSee('ARTASWAHA - Platform Edukasi Bahasa, Sastra, dan Aksara Bali.')
             ->assertSee('Cecimpedan')
             ->assertSee('Pengangge Suara')
             ->assertSee('Ruang belajar paribasa dan aksara Bali')
@@ -27,7 +28,7 @@ class LearningFlowTest extends TestCase
             ->assertSee('group-hover:visible')
             ->assertSee('group-has-[:focus-visible]:visible')
             ->assertDontSee('group-focus-within:visible')
-            ->assertSee('Tentang ArtaSwaha')
+            ->assertSee('Tentang ARTASWAHA')
             ->assertSee('Apa kata mereka')
             ->assertSee('Yang sering ditanyakan')
             ->assertSee('bukan testimoni pengguna nyata')

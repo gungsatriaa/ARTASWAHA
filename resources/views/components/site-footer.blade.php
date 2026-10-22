@@ -24,7 +24,7 @@
         </div>
 
         <div class="mt-10 flex flex-col gap-3 border-t border-white/10 pt-5 text-sm text-foreground/45 sm:flex-row sm:items-center sm:justify-between">
-            <p>© {{ now()->year }} ArtaSwaha. Belajar budaya Bali dengan gembira.</p>
+            <p>© {{ now()->year }} · ARTASWAHA - Platform Edukasi Bahasa, Sastra, dan Aksara Bali.</p>
             <a href="#mulai" class="font-semibold transition hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">Kembali ke atas ↑</a>
         </div>
     </div>
