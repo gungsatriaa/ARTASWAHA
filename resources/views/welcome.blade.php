@@ -73,8 +73,7 @@
                     <article class="rounded-card bg-surface p-6 sm:p-8">
                         <div class="flex items-start justify-between gap-4">
                             <div>
-                                <p class="text-sm font-semibold text-accent">Jalur 1</p>
-                                <h3 class="mt-2 font-display text-2xl font-bold">Paribasa Bali</h3>
+                                <h3 class="font-display text-2xl font-bold">Paribasa Bali</h3>
                                 <p class="mt-3 max-w-md font-readable leading-7 text-foreground/65">Belajar ungkapan, permainan kata, dan teka-teki yang hidup dalam keseharian Bali.</p>
                             </div>
                             <span class="grid size-12 shrink-0 place-items-center rounded-full bg-accent/10 text-xl text-accent" aria-hidden="true">✦</span>
@@ -89,8 +88,7 @@
                     <article class="rounded-card bg-surface p-6 sm:p-8">
                         <div class="flex items-start justify-between gap-4">
                             <div>
-                                <p class="text-sm font-semibold text-accent">Jalur 2</p>
-                                <h3 class="mt-2 font-display text-2xl font-bold">Aksara Bali</h3>
+                                <h3 class="font-display text-2xl font-bold">Aksara Bali</h3>
                                 <p class="mt-3 max-w-md font-readable leading-7 text-foreground/65">Kenali bentuk aksara, tanda bunyi, pasangan, dan angka melalui contoh serta latihan menulis.</p>
                             </div>
                             <span class="grid size-12 shrink-0 place-items-center rounded-full bg-primary/15 font-balinese text-2xl text-accent" lang="ban" aria-hidden="true">ᬅ</span>
