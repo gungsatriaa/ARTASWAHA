@@ -130,17 +130,6 @@
                 </div>
             </section>
 
-            <section id="room" class="mx-6 mb-16 rounded-[2rem] border border-white/10 bg-surface px-6 py-10 sm:px-10 md:mx-auto md:max-w-7xl md:py-14 lg:px-14">
-                <div class="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
-                    <div>
-                        <p class="font-semibold text-accent">Belajar bareng</p>
-                        <h2 class="mt-2 font-display text-3xl font-bold">Ada kode room dari teman?</h2>
-                        <p class="mt-3 max-w-xl font-readable leading-7 text-foreground/65">Masuk ke kuis bersama, jawab pertanyaan, dan lihat progres sesi secara langsung.</p>
-                    </div>
-                    <a href="{{ auth()->check() ? route('quizzes.index') : route('login') }}" class="inline-flex min-h-12 shrink-0 items-center justify-center rounded-full bg-accent px-7 py-3 font-bold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Masuk untuk ikut kuis</a>
-                </div>
-            </section>
-
             <section id="testimoni" class="mx-auto max-w-7xl px-6 pb-20 lg:px-10">
                 <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
                     <div>
