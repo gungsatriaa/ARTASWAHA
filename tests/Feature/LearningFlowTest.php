@@ -36,6 +36,10 @@ class LearningFlowTest extends TestCase
             ->assertSee('Materi singkat dan terarah')
             ->assertSee('Main kuis bersama')
             ->assertSee('Apa kata mereka')
+            ->assertSee('Ilustrasi · contoh suara')
+            ->assertSee(asset('avatar/kupu_kupu.webp'))
+            ->assertSee(asset('avatar/gajah.webp'))
+            ->assertSee(asset('avatar/jalak_bali.webp'))
             ->assertSee('Yang sering ditanyakan')
             ->assertSee('bukan testimoni pengguna nyata')
             ->assertSee(route('learning.paths.show', 'cecimpedan'));
