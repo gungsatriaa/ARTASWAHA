@@ -27,6 +27,10 @@ class LearningFlowTest extends TestCase
             ->assertSee('group-hover:visible')
             ->assertSee('group-has-[:focus-visible]:visible')
             ->assertDontSee('group-focus-within:visible')
+            ->assertSee('Tentang ArtaSwaha')
+            ->assertSee('Apa kata mereka')
+            ->assertSee('Yang sering ditanyakan')
+            ->assertSee('bukan testimoni pengguna nyata')
             ->assertSee(route('learning.paths.show', 'cecimpedan'));
     }
 

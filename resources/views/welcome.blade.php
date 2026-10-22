@@ -88,4 +88,88 @@
                     <a href="{{ auth()->check() ? route('quizzes.index') : route('login') }}" class="inline-flex min-h-12 shrink-0 items-center justify-center rounded-full bg-accent px-7 py-3 font-bold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Masuk untuk ikut kuis</a>
                 </div>
             </section>
+
+            <section id="tentang" class="mx-auto max-w-7xl px-6 pb-20 lg:px-10">
+                <div class="grid gap-8 rounded-card bg-surface p-7 sm:p-10 lg:grid-cols-[.9fr_1.1fr] lg:items-center lg:p-12">
+                    <div>
+                        <p class="font-semibold text-accent">Tentang ArtaSwaha</p>
+                        <h2 class="mt-3 font-display text-3xl font-bold leading-tight sm:text-4xl">Belajar budaya Bali, dekat dengan keseharian anak.</h2>
+                        <p class="mt-5 max-w-xl font-readable leading-7 text-foreground/65">ArtaSwaha mengajak anak mengenal paribasa dan aksara Bali lewat contoh, cerita, dan latihan singkat yang bisa diulang dengan nyaman.</p>
+                    </div>
+                    <div class="grid gap-3 sm:grid-cols-3">
+                        <article class="rounded-3xl bg-background p-5">
+                            <span class="grid size-10 place-items-center rounded-full bg-accent/10 text-lg text-accent" aria-hidden="true">✦</span>
+                            <h3 class="mt-4 font-display font-bold">Paribasa</h3>
+                            <p class="mt-2 font-readable text-sm leading-6 text-foreground/60">Cecimpedan, peparikan, dan sesonggakan.</p>
+                        </article>
+                        <article class="rounded-3xl bg-background p-5">
+                            <span class="grid size-10 place-items-center rounded-full bg-primary/20 font-balinese text-xl text-accent" lang="ban" aria-hidden="true">ᬅ</span>
+                            <h3 class="mt-4 font-display font-bold">Aksara Bali</h3>
+                            <p class="mt-2 font-readable text-sm leading-6 text-foreground/60">Belajar bentuk, tanda, gantungan, dan angka.</p>
+                        </article>
+                        <article class="rounded-3xl bg-background p-5">
+                            <span class="grid size-10 place-items-center rounded-full bg-accent/10 text-lg text-accent" aria-hidden="true">♫</span>
+                            <h3 class="mt-4 font-display font-bold">Belajar bareng</h3>
+                            <p class="mt-2 font-readable text-sm leading-6 text-foreground/60">Buat kuis dan ajak teman masuk room.</p>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <section id="testimoni" class="mx-auto max-w-7xl px-6 pb-20 lg:px-10">
+                <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+                    <div>
+                        <p class="font-semibold text-accent">Apa kata mereka</p>
+                        <h2 class="mt-2 font-display text-3xl font-bold sm:text-4xl">Belajar yang terasa dekat dan menyenangkan</h2>
+                    </div>
+                    <p class="max-w-md font-readable text-sm leading-6 text-foreground/55">Kutipan berikut adalah contoh rancangan, bukan testimoni pengguna nyata.</p>
+                </div>
+                <div class="grid gap-4 md:grid-cols-3">
+                    <figure class="rounded-card bg-surface p-6 sm:p-7">
+                        <span class="text-3xl text-accent" aria-hidden="true">“</span>
+                        <blockquote class="mt-2 font-readable text-lg leading-7">Tebak-teki Bali bikin aku ingin tahu jawaban yang lain juga.</blockquote>
+                        <figcaption class="mt-6 text-sm font-semibold text-foreground/50">Contoh suara murid</figcaption>
+                    </figure>
+                    <figure class="rounded-card bg-surface p-6 sm:p-7">
+                        <span class="text-3xl text-accent" aria-hidden="true">“</span>
+                        <blockquote class="mt-2 font-readable text-lg leading-7">Materinya singkat, jadi bisa kami pelajari bersama di rumah.</blockquote>
+                        <figcaption class="mt-6 text-sm font-semibold text-foreground/50">Contoh suara keluarga</figcaption>
+                    </figure>
+                    <figure class="rounded-card bg-surface p-6 sm:p-7">
+                        <span class="text-3xl text-accent" aria-hidden="true">“</span>
+                        <blockquote class="mt-2 font-readable text-lg leading-7">Kuis bersama memberi cara baru untuk mengenalkan paribasa.</blockquote>
+                        <figcaption class="mt-6 text-sm font-semibold text-foreground/50">Contoh suara pendidik</figcaption>
+                    </figure>
+                </div>
+            </section>
+
+            <section id="faq" class="mx-auto max-w-4xl px-6 pb-24 lg:px-10">
+                <div class="mb-8 text-center">
+                    <p class="font-semibold text-accent">FAQ</p>
+                    <h2 class="mt-2 font-display text-3xl font-bold sm:text-4xl">Yang sering ditanyakan</h2>
+                </div>
+                <div class="space-y-3">
+                    <details class="group rounded-card bg-surface p-5 sm:p-6">
+                        <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-display text-lg font-bold focus-visible:outline-2 focus-visible:outline-accent [&::-webkit-details-marker]:hidden">
+                            Apa itu ArtaSwaha?
+                            <span class="text-xl text-accent transition-transform group-open:rotate-45" aria-hidden="true">＋</span>
+                        </summary>
+                        <p class="mt-4 max-w-3xl font-readable leading-7 text-foreground/65">ArtaSwaha adalah platform belajar interaktif untuk mengenal paribasa dan aksara Bali melalui materi singkat dan latihan.</p>
+                    </details>
+                    <details class="group rounded-card bg-surface p-5 sm:p-6">
+                        <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-display text-lg font-bold focus-visible:outline-2 focus-visible:outline-accent [&::-webkit-details-marker]:hidden">
+                            Apa saja yang bisa dipelajari?
+                            <span class="text-xl text-accent transition-transform group-open:rotate-45" aria-hidden="true">＋</span>
+                        </summary>
+                        <p class="mt-4 max-w-3xl font-readable leading-7 text-foreground/65">Paribasa Bali mencakup Cecimpedan, Peparikan, dan Sesonggakan. Aksara Bali mencakup Wreastra beserta gantungannya, Pengangge Suara, Pengangge Tengenan, Pengangge Arda Suara, dan angka.</p>
+                    </details>
+                    <details class="group rounded-card bg-surface p-5 sm:p-6">
+                        <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-display text-lg font-bold focus-visible:outline-2 focus-visible:outline-accent [&::-webkit-details-marker]:hidden">
+                            Apakah harus membuat akun untuk mulai belajar?
+                            <span class="text-xl text-accent transition-transform group-open:rotate-45" aria-hidden="true">＋</span>
+                        </summary>
+                        <p class="mt-4 max-w-3xl font-readable leading-7 text-foreground/65">Belajar mandiri bisa dimulai tanpa akun dan progres tersimpan di perangkat. Untuk membuat atau bergabung ke kuis bersama, kamu perlu masuk.</p>
+                    </details>
+                </div>
+            </section>
 </x-layouts.app>
