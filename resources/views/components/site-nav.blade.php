@@ -62,10 +62,11 @@
             <span class="grid gap-1.5" aria-hidden="true"><span class="h-0.5 w-5 rounded-full bg-current"></span><span class="h-0.5 w-5 rounded-full bg-current"></span><span class="h-0.5 w-5 rounded-full bg-current"></span></span>
         </button>
     </div>
-    <dialog id="mobile-navigation" data-mobile-nav class="fixed inset-y-0 right-0 m-0 h-dvh max-h-dvh w-[min(22rem,calc(100%-1rem))] max-w-none overflow-hidden border-0 bg-transparent p-0 text-foreground backdrop:bg-black/75">
-        <aside class="flex h-full flex-col border-l border-white/10 bg-background p-5 shadow-2xl shadow-black/50">
+</header>
+<div data-mobile-nav-backdrop aria-controls="mobile-navigation" aria-hidden="true"></div>
+<aside id="mobile-navigation" data-mobile-nav role="dialog" aria-modal="true" aria-label="Navigasi utama" aria-hidden="true" inert class="z-50 flex h-dvh flex-col border-l border-white/10 bg-background p-5 text-foreground shadow-2xl shadow-black/50">
             <div class="flex items-center justify-between border-b border-white/10 pb-5">
-                <a href="{{ route('home') }}" class="flex items-center gap-3 font-display text-lg font-bold"><img src="{{ asset('image/maskot.webp') }}" alt="" class="size-10 rounded-full object-cover">ARTASWAHA</a>
+                <a href="{{ route('home') }}" class="flex items-center gap-3 rounded-full font-display text-lg font-bold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"><img src="{{ asset('image/maskot.webp') }}" alt="" class="size-10 rounded-full object-cover">ARTASWAHA</a>
                 <button type="button" data-mobile-nav-close aria-label="Tutup menu" class="grid size-10 place-items-center rounded-full bg-background text-xl text-foreground/70 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">&times;</button>
             </div>
             <nav class="mt-5 flex-1 space-y-3 overflow-y-auto overscroll-contain pb-6" aria-label="Navigasi mobile">
@@ -133,6 +134,4 @@
                     </form>
                 </div>
             @endauth
-        </aside>
-    </dialog>
-</header>
+</aside>

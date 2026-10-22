@@ -21,8 +21,8 @@
                 </button>
             </div>
         </header>
-        <dialog id="admin-mobile-navigation" data-mobile-nav class="fixed inset-y-0 right-0 m-0 h-dvh max-h-dvh w-[min(22rem,calc(100%-1rem))] max-w-none overflow-hidden border-0 bg-transparent p-0 text-foreground backdrop:bg-black/75">
-            <aside class="flex h-full flex-col border-l border-white/10 bg-surface p-5 shadow-2xl shadow-black/50">
+        <div data-mobile-nav-backdrop aria-controls="admin-mobile-navigation" aria-hidden="true"></div>
+        <aside id="admin-mobile-navigation" data-mobile-nav role="dialog" aria-modal="true" aria-label="Navigasi admin" aria-hidden="true" inert class="z-50 flex h-dvh flex-col border-l border-white/10 bg-surface p-5 text-foreground shadow-2xl shadow-black/50">
                 <div class="flex items-center justify-between border-b border-white/10 pb-5">
                     <span class="font-display text-lg font-bold">ARTASWAHA <span class="text-accent">/ Admin</span></span>
                     <button type="button" data-mobile-nav-close aria-label="Tutup menu" class="grid size-10 place-items-center rounded-full bg-background text-xl text-foreground/70 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">&times;</button>
@@ -32,8 +32,7 @@
                     <a href="{{ route('admin.learning-paths.index') }}" @class(['flex min-h-12 items-center rounded-2xl px-4 font-semibold transition', 'bg-primary/20 text-accent' => request()->routeIs('admin.learning-paths.*'), 'text-foreground/75 hover:bg-background hover:text-accent' => ! request()->routeIs('admin.learning-paths.*')])>Jalur belajar</a>
                     <a href="{{ route('home') }}" class="mt-4 flex min-h-12 items-center rounded-2xl px-4 font-semibold text-foreground/75 transition hover:bg-background hover:text-accent">Lihat situs</a>
                 </nav>
-            </aside>
-        </dialog>
+        </aside>
         <main class="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-12">
             @if (session('status'))
                 <p role="status" class="mb-6 rounded-2xl bg-primary/20 p-4 text-sm font-semibold text-accent">{{ session('status') }}</p>

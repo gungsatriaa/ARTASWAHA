@@ -1,5 +1,5 @@
 <x-layouts.app :learning-paths="$learningPaths">
-            <section class="mx-auto grid min-h-[calc(100svh-6rem)] max-w-7xl items-center gap-10 px-5 pb-12 pt-8 md:gap-12 md:px-6 md:pb-16 md:pt-16 lg:grid-cols-[1.05fr_.95fr] lg:px-10">
+            <section class="mx-auto grid min-h-[calc(100svh-6rem)] max-w-7xl items-center gap-10 overflow-x-clip px-5 pb-12 pt-8 md:gap-12 md:px-6 md:pb-16 md:pt-16 lg:grid-cols-[1.05fr_.95fr] lg:px-10">
                 <div class="max-w-2xl">
                     <h1 class="font-display text-5xl font-bold leading-[1.08] tracking-tight sm:text-6xl lg:text-7xl">Bahasa Bali jadi <span class="text-accent">seru</span> dipelajari.</h1>
                     <p class="mt-6 max-w-xl font-readable text-lg leading-8 text-foreground/75 sm:text-xl">Kenali paribasa dan aksara Bali lewat cerita, latihan singkat, dan permainan yang bisa langsung dicoba. Mulai tanpa akun; progres tersimpan di perangkatmu.</p>

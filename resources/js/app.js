@@ -6,33 +6,83 @@ const scrollLockedDialogs = new Set();
 
 const syncPageScrollLock = () => {
     const isLocked = scrollLockedDialogs.size > 0;
-    document.documentElement.classList.toggle('dialog-open', isLocked);
     document.body.classList.toggle('dialog-open', isLocked);
 };
 
-document.querySelectorAll('[data-mobile-nav]').forEach((dialog) => {
-    const openButton = document.querySelector(`[aria-controls="${dialog.id}"]`);
-    const closeButton = dialog.querySelector('[data-mobile-nav-close]');
+const closeMobileNavigation = (sidebar, backdrop, openButton) => {
+    if (!sidebar.classList.contains('is-open') || sidebar.classList.contains('is-closing')) {
+        return;
+    }
+
+    sidebar.classList.add('is-closing');
+    sidebar.classList.remove('is-open');
+    backdrop.classList.add('is-closing');
+    backdrop.classList.remove('is-open');
+
+    let fallbackTimeout;
+    const finishClosing = () => {
+        sidebar.removeEventListener('transitionend', handleTransitionEnd);
+        window.clearTimeout(fallbackTimeout);
+        sidebar.classList.remove('is-closing');
+        sidebar.inert = true;
+        sidebar.setAttribute('aria-hidden', 'true');
+        backdrop.classList.remove('is-closing');
+        scrollLockedDialogs.delete(sidebar);
+        syncPageScrollLock();
+        openButton.setAttribute('aria-expanded', 'false');
+        openButton.focus();
+    };
+    const handleTransitionEnd = (event) => {
+        if (event.target === sidebar && event.propertyName === 'transform') {
+            finishClosing();
+        }
+    };
+
+    sidebar.addEventListener('transitionend', handleTransitionEnd);
+    fallbackTimeout = window.setTimeout(finishClosing, 350);
+};
+
+document.querySelectorAll('[data-mobile-nav]').forEach((sidebar) => {
+    const openButton = document.querySelector(`[aria-controls="${sidebar.id}"]`);
+    const closeButton = sidebar.querySelector('[data-mobile-nav-close]');
+    const backdrop = document.querySelector(`[data-mobile-nav-backdrop][aria-controls="${sidebar.id}"]`);
 
     openButton?.addEventListener('click', () => {
-        dialog.showModal();
-        scrollLockedDialogs.add(dialog);
+        sidebar.inert = false;
+        sidebar.setAttribute('aria-hidden', 'false');
+        sidebar.classList.remove('is-closing');
+        backdrop.classList.remove('is-closing');
+        sidebar.classList.add('is-open');
+        backdrop.classList.add('is-open');
+        scrollLockedDialogs.add(sidebar);
         syncPageScrollLock();
         openButton.setAttribute('aria-expanded', 'true');
+        closeButton.focus();
     });
-    closeButton?.addEventListener('click', () => dialog.close());
-    dialog.querySelectorAll('a, form button').forEach((item) => {
-        item.addEventListener('click', () => dialog.close());
+    closeButton?.addEventListener('click', () => closeMobileNavigation(sidebar, backdrop, openButton));
+    sidebar.querySelectorAll('a, form button').forEach((item) => {
+        item.addEventListener('click', () => closeMobileNavigation(sidebar, backdrop, openButton));
     });
-    dialog.addEventListener('click', (event) => {
-        if (event.target === dialog) {
-            dialog.close();
+    backdrop.addEventListener('click', () => closeMobileNavigation(sidebar, backdrop, openButton));
+    sidebar.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            closeMobileNavigation(sidebar, backdrop, openButton);
         }
-    });
-    dialog.addEventListener('close', () => {
-        scrollLockedDialogs.delete(dialog);
-        syncPageScrollLock();
-        openButton?.setAttribute('aria-expanded', 'false');
+
+        if (event.key === 'Tab') {
+            const focusableItems = [...sidebar.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')].filter((item) => item.getClientRects().length > 0);
+            const firstItem = focusableItems[0];
+            const lastItem = focusableItems[focusableItems.length - 1];
+
+            if (event.shiftKey && document.activeElement === firstItem) {
+                event.preventDefault();
+                lastItem.focus();
+            } else if (!event.shiftKey && document.activeElement === lastItem) {
+                event.preventDefault();
+                firstItem.focus();
+            }
+        }
     });
 });
 
