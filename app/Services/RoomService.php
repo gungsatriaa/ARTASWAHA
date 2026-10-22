@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
+use App\Events\RoomUpdated;
 use App\Models\Quiz;
 use App\Models\QuizQuestion;
 use App\Models\Room;
 use App\Models\RoomAnswer;
-use App\Models\RoomParticipant;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -19,7 +19,7 @@ class RoomService
         abort_unless($quiz->user_id === $host->id, 403);
         abort_if($quiz->questions()->doesntExist(), 422, 'Tambahkan setidaknya satu pertanyaan terlebih dahulu.');
 
-        return DB::transaction(function () use ($quiz, $host): Room {
+        $room = DB::transaction(function () use ($quiz, $host): Room {
             $room = Room::query()->create([
                 'quiz_id' => $quiz->id,
                 'host_id' => $host->id,
@@ -34,11 +34,15 @@ class RoomService
 
             return $room;
         });
+
+        $this->broadcastRoomUpdate($room);
+
+        return $room;
     }
 
     public function join(string $code, User $user): Room
     {
-        return DB::transaction(function () use ($code, $user): Room {
+        $room = DB::transaction(function () use ($code, $user): Room {
             $room = Room::query()->where('code', Str::upper(trim($code)))->lockForUpdate()->firstOrFail();
             abort_unless($room->status === 'waiting', 422, 'Room tidak menerima peserta baru.');
 
@@ -49,11 +53,15 @@ class RoomService
 
             return $room;
         });
+
+        $this->broadcastRoomUpdate($room);
+
+        return $room;
     }
 
     public function start(Room $room, User $user): Room
     {
-        return DB::transaction(function () use ($room, $user): Room {
+        $room = DB::transaction(function () use ($room, $user): Room {
             $room = Room::query()->whereKey($room->id)->lockForUpdate()->firstOrFail();
             abort_unless($room->host_id === $user->id, 403);
             abort_unless($room->status === 'waiting', 422, 'Room sudah dimulai atau berakhir.');
@@ -69,11 +77,15 @@ class RoomService
 
             return $room->refresh();
         });
+
+        $this->broadcastRoomUpdate($room);
+
+        return $room;
     }
 
     public function answer(Room $room, User $user, array $data): RoomAnswer
     {
-        return DB::transaction(function () use ($room, $user, $data): RoomAnswer {
+        $answer = DB::transaction(function () use ($room, $user, $data): RoomAnswer {
             $room = Room::query()->whereKey($room->id)->lockForUpdate()->firstOrFail();
             abort_unless($room->status === 'active', 422, 'Room belum aktif.');
 
@@ -102,11 +114,15 @@ class RoomService
 
             return $answer;
         });
+
+        $this->broadcastRoomUpdate($room);
+
+        return $answer;
     }
 
     public function advance(Room $room, User $user): Room
     {
-        return DB::transaction(function () use ($room, $user): Room {
+        $room = DB::transaction(function () use ($room, $user): Room {
             $room = Room::query()->whereKey($room->id)->lockForUpdate()->firstOrFail();
             abort_unless($room->host_id === $user->id, 403);
             abort_unless($room->status === 'active', 422, 'Room tidak sedang berjalan.');
@@ -123,6 +139,10 @@ class RoomService
 
             return $room->refresh();
         });
+
+        $this->broadcastRoomUpdate($room);
+
+        return $room;
     }
 
     /** @return array{room: Room, participant: RoomParticipant, currentAnswer: RoomAnswer|null} */
@@ -140,5 +160,21 @@ class RoomService
             : null;
 
         return compact('room', 'participant', 'currentAnswer');
+    }
+
+    private function broadcastRoomUpdate(Room $room): void
+    {
+        $room->load('currentQuestion');
+        $question = $room->currentQuestion;
+
+        event(new RoomUpdated($room->code, [
+            'status' => $room->status,
+            'question' => $question ? [
+                'id' => $question->id,
+                'prompt' => $question->prompt,
+                'options' => $question->options,
+                'sort_order' => $question->sort_order,
+            ] : null,
+        ]));
     }
 }

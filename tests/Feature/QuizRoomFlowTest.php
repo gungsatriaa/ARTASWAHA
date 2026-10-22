@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Events\RoomUpdated;
 use App\Models\Quiz;
 use App\Models\Room;
 use App\Models\RoomAnswer;
@@ -99,6 +100,48 @@ class QuizRoomFlowTest extends TestCase
 
         $this->actingAs($host)->post(route('rooms.advance', $room->code))->assertRedirect(route('rooms.show', $room->code));
         $this->assertDatabaseHas('rooms', ['id' => $room->id, 'status' => 'finished']);
+    }
+
+    public function test_private_room_channel_only_allows_its_host_and_participants(): void
+    {
+        config([
+            'broadcasting.default' => 'reverb',
+            'broadcasting.connections.reverb.key' => 'test-key',
+            'broadcasting.connections.reverb.secret' => 'test-secret',
+            'broadcasting.connections.reverb.app_id' => 'test-app',
+            'broadcasting.connections.reverb.options' => [
+                'host' => 'localhost',
+                'port' => 8080,
+                'scheme' => 'http',
+                'useTLS' => false,
+            ],
+        ]);
+        require base_path('routes/channels.php');
+
+        $host = User::factory()->create();
+        $player = User::factory()->create();
+        $outsider = User::factory()->create();
+        $room = Room::factory()->create(['host_id' => $host->id]);
+        RoomParticipant::factory()->create(['room_id' => $room->id, 'user_id' => $player->id]);
+        $this->assertSame($host->id, $room->host_id);
+        $this->assertTrue(Room::query()->where('code', $room->code)->where('host_id', $host->id)->exists());
+        $payload = ['socket_id' => '1234.5678', 'channel_name' => 'private-rooms.'.$room->code];
+
+        $this->actingAs($host)->postJson('/broadcasting/auth', $payload)->assertOk();
+        $this->actingAs($player)->postJson('/broadcasting/auth', $payload)->assertOk();
+        $this->actingAs($outsider)->postJson('/broadcasting/auth', $payload)->assertForbidden();
+    }
+
+    public function test_room_update_event_does_not_expose_correct_answer(): void
+    {
+        $event = new RoomUpdated('ROOMCODE12', [
+            'status' => 'active',
+            'question' => ['id' => 1, 'prompt' => 'Pertanyaan?', 'options' => ['A', 'B'], 'sort_order' => 1],
+        ]);
+
+        $this->assertSame('private-rooms.ROOMCODE12', $event->broadcastOn()->name);
+        $this->assertSame(['status', 'question'], array_keys($event->broadcastWith()));
+        $this->assertArrayNotHasKey('correct_option', $event->broadcastWith()['question']);
     }
 
     private function createQuiz(User $owner): Quiz

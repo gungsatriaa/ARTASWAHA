@@ -8,8 +8,9 @@
     </head>
     <body class="min-h-screen bg-background font-sans text-foreground antialiased">
         <header class="border-b border-white/10"><div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-5"><a href="{{ route('home') }}" class="font-display text-xl font-bold">ARTASWAHA</a><a href="{{ route('quizzes.index') }}" class="text-sm font-semibold text-accent">Keluar dari room</a></div></header>
-        <main class="mx-auto max-w-5xl px-6 py-10">
+        <main class="mx-auto max-w-5xl px-6 py-10" data-room-code="{{ $room->code }}">
             @if ($errors->any())<p role="alert" class="mb-6 rounded-2xl bg-danger/10 p-4 text-danger">{{ $errors->first() }}</p>@endif
+            <p data-live-status class="mb-3 min-h-5 text-sm text-foreground/50">Segarkan halaman untuk memeriksa pembaruan room.</p>
             <div class="flex flex-wrap items-start justify-between gap-5">
                 <div><p class="text-sm font-semibold text-accent">{{ $room->quiz->title }}</p><h1 class="mt-2 font-display text-4xl font-bold">Room {{ $room->code }}</h1><p class="mt-2 text-sm capitalize text-foreground/55">{{ $room->status === 'waiting' ? 'Menunggu' : ($room->status === 'active' ? 'Sedang berlangsung' : 'Selesai') }}</p></div>
                 <button type="button" data-copy-room="{{ route('rooms.show', $room->code) }}" class="rounded-full bg-surface px-5 py-3 text-sm font-bold hover:bg-white/10">Salin tautan undangan</button>

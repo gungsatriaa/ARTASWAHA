@@ -153,23 +153,25 @@ Status: **sebagian selesai**.
 
 ## Tahap 8 — Realtime dengan Reverb dan Redis
 
-Status: **belum dimulai**.
+Status: **sebagian selesai**.
 
 ### Pekerjaan
 
-- Cocokkan versi Laravel dan paket sebelum memasang Reverb, Echo, atau dependensi tambahan.
-- Jalankan Reverb lokal dan hubungkan browser melalui Echo.
-- Siarkan perubahan yang diperlukan saja: peserta bergabung, sesi mulai, soal aktif, jawaban masuk, dan leaderboard.
-- Gunakan channel privat/presence yang diotorisasi berdasarkan room.
-- Tetapkan server sebagai sumber kebenaran untuk timer, jawaban, skor, dan hasil.
-- Gunakan Redis lokal untuk queue/cache dan scaling pub/sub hanya bila dibutuhkan; jangan jadikan Redis penyimpanan permanen progres.
-- Tangani reconnect, event duplikat, pesan terlambat, dan fallback ketika WebSocket terputus.
+- [x] Cocokkan versi Laravel dan paket sebelum memasang Reverb, Echo, atau dependensi tambahan.
+- [x] Siapkan konfigurasi Reverb, Laravel Echo, dan Pusher JS; contoh environment memakai Redis untuk queue/cache.
+- [x] Siarkan perubahan room setelah peserta bergabung, sesi mulai, jawaban masuk, dan soal berganti.
+- [x] Gunakan channel privat yang membatasi akses ke host/peserta room; payload event tidak memuat jawaban benar maupun skor.
+- [x] Tetapkan server sebagai sumber kebenaran untuk jawaban, skor, dan hasil; browser memuat ulang data terotorisasi setelah event.
+- [ ] Jalankan Reverb, queue worker, Redis, dan MySQL lokal secara bersamaan.
+- [ ] Uji beberapa browser, reconnect sungguhan, duplikasi/pesan terlambat, serta perilaku saat WebSocket terputus.
 
 ### Pengujian lokal
 
-- Jalankan MySQL, Redis, queue worker bila diperlukan, Reverb, dan aplikasi pada lingkungan development lokal.
-- Uji beberapa browser/session lokal bergabung ke room yang sama dan pastikan status serta skor konsisten.
-- Uji reconnect, koneksi terputus, akses channel lintas room, dan pengiriman event berulang.
+- [x] Uji otorisasi endpoint channel Reverb untuk host, peserta, dan pengguna luar memakai test lokal.
+- [x] Uji bahwa payload event room tidak mengirim kunci jawaban atau data peringkat.
+- [ ] Jalankan MySQL, Redis, queue worker bila diperlukan, Reverb, dan aplikasi pada lingkungan development lokal.
+- [ ] Uji beberapa browser/session lokal bergabung ke room yang sama dan pastikan status serta skor konsisten.
+- [ ] Uji reconnect sungguhan, koneksi terputus, akses channel lintas room, dan pengiriman event berulang.
 
 ### Selesai bila
 
@@ -184,6 +186,7 @@ Status: **sebagian selesai**.
 - [x] Tampilkan papan peringkat room dengan nama tampilan dan poin dari server.
 - [x] Beri poin hanya untuk jawaban benar; satu jawaban per peserta per pertanyaan.
 - [x] Izinkan pembuat kuis mematikan papan peringkat.
+- [x] Muat ulang data room dari server pada setiap pembaruan realtime; jangan sertakan skor dalam payload broadcast.
 - Tampilkan ringkasan jawaban/topik yang perlu diulang tanpa mempermalukan peserta.
 - Sediakan hasil yang dapat dilihat ulang oleh pengguna yang berhak.
 

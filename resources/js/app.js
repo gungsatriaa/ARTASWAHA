@@ -1,3 +1,21 @@
+import Echo from 'laravel-echo';
+import Pusher from 'pusher-js';
+
+const roomPage = document.querySelector('[data-room-code]');
+
+if (roomPage && import.meta.env.VITE_REVERB_APP_KEY && import.meta.env.VITE_REVERB_HOST) {
+    window.Pusher = Pusher;
+    window.Echo = new Echo({
+        broadcaster: 'reverb',
+        key: import.meta.env.VITE_REVERB_APP_KEY,
+        wsHost: import.meta.env.VITE_REVERB_HOST,
+        wsPort: Number(import.meta.env.VITE_REVERB_PORT ?? 80),
+        wssPort: Number(import.meta.env.VITE_REVERB_PORT ?? 443),
+        forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
+        enabledTransports: ['ws', 'wss'],
+    });
+}
+
 document.querySelectorAll('[data-quiz-builder]').forEach((form) => {
     const list = form.querySelector('[data-question-list]');
     const template = form.querySelector('[data-question-template]');
@@ -41,3 +59,31 @@ document.querySelectorAll('[data-copy-room]').forEach((button) => {
         }
     });
 });
+
+if (window.Echo && roomPage) {
+    window.Echo.private(`rooms.${roomPage.dataset.roomCode}`)
+        .listen('.room.updated', () => window.location.reload());
+
+    const status = roomPage.querySelector('[data-live-status]');
+    let hasConnected = false;
+
+    window.Echo.connector.pusher.connection.bind('state_change', ({ current }) => {
+        if (current === 'connected') {
+            if (hasConnected) {
+                window.location.reload();
+            }
+
+            hasConnected = true;
+
+            if (status) {
+                status.textContent = 'Pembaruan room realtime aktif.';
+            }
+
+            return;
+        }
+
+        if (status) {
+            status.textContent = 'Koneksi realtime terputus. Segarkan halaman untuk memeriksa pembaruan.';
+        }
+    });
+}
