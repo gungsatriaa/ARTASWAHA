@@ -22,7 +22,7 @@
                                 <p class="mt-3 font-display text-xl font-bold sm:text-2xl">Om Swastyastu</p>
                                 <p class="mt-2 font-readable leading-7 text-foreground/65">Salam pembuka dalam bahasa Bali. Kenali bentuk aksaranya lewat contoh.</p>
                             </div>
-                            <img src="{{ asset('image/asset1.webp') }}" alt="Maskot ARTASWAHA sedang belajar menulis" class="mx-auto h-56 w-full object-contain sm:h-80 sm:scale-125 sm:translate-x-6 sm:-translate-y-1 md:h-[22rem] md:scale-[1.4] md:translate-x-8 md:-translate-y-2">
+                            <img src="{{ asset('image/asset1.webp') }}" alt="Maskot ARTASWAHA sedang belajar menulis" class="mx-auto h-56 w-full object-contain sm:h-80 sm:scale-125 sm:translate-x-6 sm:-translate-y-1 md:h-[20rem] md:scale-[1.8] md:translate-x-8 md:-translate-y-33">
                         </div>
                         <div class="mt-4 flex items-center justify-between gap-3 border-t border-white/10 pt-4 text-sm">
                             <span class="font-balinese text-lg text-accent" lang="ban" aria-hidden="true">ᬒᬁ</span>
