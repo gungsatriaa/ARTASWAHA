@@ -28,6 +28,7 @@ class LearningFlowTest extends TestCase
             ->assertSee('Om Swastyastu')
             ->assertSee('ᬒᬁ ᬲ᭄ᬯᬲ᭄ᬢ᭄ᬬᬲ᭄ᬢᬸ᭟')
             ->assertSee(asset('image/asset1.webp'))
+            ->assertSee('absolute right-0 top-12', false)
             ->assertSee('md:h-[20rem]', false)
             ->assertDontSee('Bawak-bawak madaging banyu')
             ->assertSee('Pengangge Suara')
