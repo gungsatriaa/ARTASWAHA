@@ -53,6 +53,7 @@ Status: **sebagian selesai**.
 ### Pekerjaan
 
 - [x] Buat skema jalur, pelajaran, dan progres beserta relasi, indeks, factory, dan seed kategori.
+- [x] Isi kategori awal Paribasa Bali dan Aksara Bali pada database lokal.
 - [ ] Tambahkan bank soal serta pengelolaan media.
 - [x] Buat alur admin untuk membuat dan mengubah jalur/pelajaran, mengurutkan, meninjau, menerbitkan, dan mengarsipkan pelajaran.
 - [ ] Tambahkan penyimpanan audio/gambar dengan validasi tipe dan ukuran.
