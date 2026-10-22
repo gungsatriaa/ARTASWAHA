@@ -16,13 +16,13 @@
                             <span class="font-balinese text-xl" lang="ban" aria-hidden="true">ᬅ</span>
                             <span>Belajar Aksara Bali</span>
                         </div>
-                        <div class="mt-5 grid items-center gap-2 sm:grid-cols-[minmax(0,1fr)_11rem] md:relative">
+                        <div class="mt-5 grid items-center gap-2 sm:relative sm:grid-cols-[minmax(0,1fr)_11rem]">
                             <div class="relative z-10 min-w-0 py-3">
                                 <p class="font-balinese text-2xl leading-[1.8] text-foreground sm:text-3xl" lang="ban">ᬒᬁ ᬲ᭄ᬯᬲ᭄ᬢ᭄ᬬᬲ᭄ᬢᬸ᭟</p>
                                 <p class="mt-3 font-display text-xl font-bold sm:text-2xl">Om Swastyastu</p>
                                 <p class="mt-2 font-readable leading-7 text-foreground/65">Salam pembuka dalam bahasa Bali. Kenali bentuk aksaranya lewat contoh.</p>
                             </div>
-                            <img src="{{ asset('image/asset1.webp') }}" alt="Maskot ARTASWAHA sedang belajar menulis" class="absolute right-0 top-12 z-0 h-40 w-40 scale-[1.4] translate-x-4 -translate-y-15 object-contain sm:relative sm:right-auto sm:top-auto sm:z-auto sm:mx-auto sm:h-80 sm:w-full sm:scale-[1.7] sm:translate-x-6 sm:-translate-y-25 md:absolute md:right-0 md:top-0 md:z-0 md:mx-0 md:h-[20rem] md:w-44 md:scale-[1.8] md:translate-x-8 md:-translate-y-28">
+                            <img src="{{ asset('image/asset1.webp') }}" alt="Maskot ARTASWAHA sedang belajar menulis" class="absolute right-0 top-12 z-0 h-40 w-40 scale-[1.4] translate-x-4 -translate-y-15 object-contain sm:absolute sm:right-0 sm:top-0 sm:z-0 sm:mx-0 sm:h-80 sm:w-44 sm:scale-[1.7] sm:translate-x-6 sm:-translate-y-25 md:h-[20rem] md:scale-[1.8] md:translate-x-8 md:-translate-y-35">
                         </div>
                         <div class="mt-4 flex items-center justify-between gap-3 border-t border-white/10 pt-4 text-sm">
                             <span class="font-balinese text-lg text-accent" lang="ban" aria-hidden="true">ᬒᬁ</span>
