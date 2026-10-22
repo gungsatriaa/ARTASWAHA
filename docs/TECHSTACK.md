@@ -4,7 +4,7 @@
 
 | Area | Teknologi | Peran |
 |---|---|---|
-| Backend | Laravel (versi mengikuti baseline proyek) | Routing, autentikasi, validasi, otorisasi, logika aplikasi, queue dan event |
+| Backend | Laravel 13.38.0 + PHP 8.4.27 | Routing, autentikasi, validasi, otorisasi, logika aplikasi, queue dan event |
 | UI | Blade | Render halaman server-side dan komponen antarmuka |
 | Interaksi UI | JavaScript ringan dan CSS | Latihan interaktif, animasi, audio, dan pembaruan antarmuka |
 | Database | MySQL | Pengguna, materi, soal, room, jawaban, progres, dan hasil |
@@ -29,6 +29,14 @@
 - Redis bukan database utama; data permanen dan progres tersimpan di MySQL.
 - Sediakan fallback yang masuk akal jika animasi/suara atau koneksi realtime tidak tersedia.
 
+## Versi lokal yang sudah diverifikasi
+
+- Laravel 13.38.0, PHP 8.4.27, dan Composer 2.10.2.
+- MySQL 8.0.33; migrasi schema ArtaSwaha sudah berhasil diterapkan pada database lokal.
+- Node.js 22.22.3, npm 10.9.8, dan Vite 8.3.5.
+- Laravel Reverb 1.12.0, Laravel Echo 2.6.1, dan Pusher JS 8.6.0.
+- Ekstensi PHP Redis tersedia, tetapi service Redis lokal belum berjalan saat diperiksa (`127.0.0.1:6379` menolak koneksi).
+
 ## Di luar keputusan saat ini
 
-Versi Laravel, paket autentikasi, detail konfigurasi aaPanel/web server, serta object storage belum ditetapkan dalam dokumen ini. Cocokkan Reverb dengan versi Laravel terpasang; dokumentasi Laravel menjelaskan Reverb sebagai integrasi broadcasting dan Redis pub/sub untuk scaling, sementara deployment Reverb memerlukan process manager dan konfigurasi WebSocket/TLS yang benar. [Laravel Broadcasting](https://laravel.com/docs/broadcasting), [Laravel Reverb](https://laravel.com/docs/reverb), [Laravel Deployment](https://laravel.com/docs/deployment).
+Detail konfigurasi aaPanel/web server dan object storage belum ditetapkan. Deployment memang berada di luar cakupan tahap implementasi lokal. [Laravel Broadcasting](https://laravel.com/docs/broadcasting), [Laravel Reverb](https://laravel.com/docs/reverb), [Laravel Deployment](https://laravel.com/docs/deployment).

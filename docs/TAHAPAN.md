@@ -9,11 +9,12 @@ Status: **sebagian selesai**.
 ### Pekerjaan
 
 - [x] Pastikan versi Laravel dan PHP yang terpasang.
-- [ ] Catat dan verifikasi versi MySQL, Node/Vite, serta paket utama dalam dokumen proyek.
+- [x] Catat versi MySQL, Node/Vite, Reverb, Echo, dan paket utama dalam `TECHSTACK.md`.
 - [x] Tetapkan ruang lingkup materi: Paribasa Bali dan Aksara Bali; bahasa antarmuka Indonesia; sasaran umum anak-anak.
 - [ ] Tetapkan rentang usia sasaran secara spesifik dan materi pertama untuk prototipe.
 - [ ] Validasi isi Bahasa Bali/Aksara Bali/cecimpedan bersama penutur atau pengajar yang kompeten.
-- [ ] Siapkan serta jalankan lingkungan lokal dengan MySQL dan Redis.
+- [x] Siapkan MySQL lokal dan jalankan seluruh migration.
+- [ ] Jalankan Redis lokal untuk cache, queue, dan realtime.
 - [x] Pastikan `.env` diabaikan Git.
 
 ### Selesai bila
@@ -61,7 +62,8 @@ Status: **sebagian selesai**.
 
 - [x] Jalankan migration dan pengujian alur memakai SQLite sementara di test lokal.
 - [x] Uji otorisasi admin, validasi materi, proses tinjau/publikasi/arsip, dan tampilan draf pada test lokal.
-- [ ] Periksa migration pada MySQL lokal, pengurutan materi, dan kasus data kosong.
+- [x] Terapkan seluruh migration pada MySQL lokal 8.0.33.
+- [ ] Uji pengurutan banyak materi dan kasus data kosong.
 
 ### Selesai bila
 
@@ -165,6 +167,7 @@ Status: **sebagian selesai**.
 - [x] Gunakan channel privat yang membatasi akses ke host/peserta room; payload event tidak memuat jawaban benar maupun skor.
 - [x] Tetapkan server sebagai sumber kebenaran untuk jawaban, skor, dan hasil; browser memuat ulang data terotorisasi setelah event.
 - [ ] Jalankan Reverb, queue worker, Redis, dan MySQL lokal secara bersamaan.
+- [ ] Service Redis belum aktif lokal (PING ke `127.0.0.1:6379` ditolak).
 - [ ] Uji beberapa browser, reconnect sungguhan, duplikasi/pesan terlambat, serta perilaku saat WebSocket terputus.
 
 ### Pengujian lokal
