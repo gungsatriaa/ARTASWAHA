@@ -13,22 +13,20 @@
                 <div class="mx-auto w-full max-w-lg py-4 md:pl-8">
                     <div class="relative overflow-hidden rounded-card border border-white/10 bg-surface p-7 sm:p-9">
                         <div class="flex items-center gap-3 text-sm font-semibold text-accent">
-                            <span aria-hidden="true">✦</span>
-                            <span>Cecimpedan</span>
+                            <span class="font-balinese text-xl" lang="ban" aria-hidden="true">ᬅ</span>
+                            <span>Belajar Aksara Bali</span>
                         </div>
-                        <p class="mt-8 font-display text-2xl font-bold leading-relaxed sm:text-3xl">“Bawak-bawak madaging banyu, apa?”</p>
-                        <p class="mt-3 font-readable leading-7 text-foreground/65">Teka-teki: kecil, berisi air. Coba tebak sebelum membuka jawabannya.</p>
-                        <details class="group mt-8">
-                            <summary class="flex min-h-14 cursor-pointer list-none items-center justify-between rounded-full bg-primary px-6 py-4 font-bold text-white transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent [&::-webkit-details-marker]:hidden">
-                                Lihat jawaban
-                                <span class="text-xl" aria-hidden="true">＋</span>
-                            </summary>
-                            <p class="mt-5 border-l-2 border-accent pl-4 font-readable text-lg font-semibold text-accent">Kelapa muda</p>
-                        </details>
-                        <div class="mt-9 flex items-center gap-2 text-xs font-semibold text-foreground/45">
-                            <span class="h-px flex-1 bg-white/10"></span>
-                            Belajar lewat cerita dan permainan
-                            <span class="h-px flex-1 bg-white/10"></span>
+                        <div class="mt-5 grid items-center gap-2 sm:grid-cols-[minmax(0,1fr)_11rem]">
+                            <div class="min-w-0 py-3">
+                                <p class="font-balinese text-2xl leading-[1.8] text-foreground sm:text-3xl" lang="ban">ᬒᬁ ᬲ᭄ᬯᬲ᭄ᬢ᭄ᬬᬲ᭄ᬢᬸ᭟</p>
+                                <p class="mt-3 font-display text-xl font-bold sm:text-2xl">Om Swastyastu</p>
+                                <p class="mt-2 font-readable leading-7 text-foreground/65">Salam pembuka dalam bahasa Bali. Kenali bentuk aksaranya lewat contoh.</p>
+                            </div>
+                            <img src="{{ asset('image/asset1.webp') }}" alt="Maskot ARTASWAHA sedang belajar menulis" class="mx-auto h-56 w-full object-contain sm:h-64">
+                        </div>
+                        <div class="mt-4 flex items-center justify-between gap-3 border-t border-white/10 pt-4 text-sm">
+                            <span class="font-balinese text-lg text-accent" lang="ban" aria-hidden="true">ᬒᬁ</span>
+                            <span class="text-right font-semibold text-foreground/50">Belajar aksara lewat contoh visual</span>
                         </div>
                     </div>
                 </div>
