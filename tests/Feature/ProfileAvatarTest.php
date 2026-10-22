@@ -37,6 +37,8 @@ class ProfileAvatarTest extends TestCase
             ->assertSee('Unggah avatar sendiri')
             ->assertSee('Atur tampilan avatar')
             ->assertSee('Bagian di dalam lingkaran yang akan disimpan.')
+            ->assertSee('avatar-modal-content', false)
+            ->assertSee('overflow-hidden rounded-card', false)
             ->assertSee('avatar/penyu.webp');
     }
 

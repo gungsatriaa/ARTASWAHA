@@ -38,3 +38,23 @@ body {
     color: var(--color-foreground);
     font-family: var(--font-sans);
 }
+
+.avatar-modal-content {
+    scrollbar-color: var(--color-primary) transparent;
+    scrollbar-width: thin;
+}
+
+.avatar-modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.avatar-modal-content::-webkit-scrollbar-track {
+    background: transparent;
+    margin-block: 1.5rem;
+}
+
+.avatar-modal-content::-webkit-scrollbar-thumb {
+    background-color: var(--color-primary);
+    border: 2px solid var(--color-surface);
+    border-radius: 9999px;
+}
