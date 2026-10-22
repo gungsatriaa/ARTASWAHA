@@ -14,8 +14,8 @@ Buat pengalaman belajar yang ceria, hangat, dan mudah dipahami anak, dengan iden
 
 ## Palet warna
 
-- **Latar utama:** biru arang `#111827` untuk tampilan gelap yang tidak hitam pekat.
-- **Panel dan kartu:** charcoal `#191919`, memberi pemisah halus dari latar hitam tanpa nuansa biru yang dominan.
+- **Latar utama:** charcoal `#141618`, gelap tetapi tidak hitam pekat.
+- **Panel dan kartu:** charcoal terang `#222629`, sedikit lebih terang dari latar agar kartu mudah dibedakan tanpa kontras berlebihan.
 - **Primary:** teal `#007C80` untuk tombol utama, progres, dan elemen interaktif.
 - **Aksen:** kuning keemasan `#FFC700` sebagai pengganti oranye, untuk sorotan, bintang, dan detail penting.
 - **Teks utama:** krem terang `#F5F3EE`; gunakan `#FFC700` untuk teks aksen atau judul pendek, bukan paragraf panjang.
