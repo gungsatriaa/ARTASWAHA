@@ -80,18 +80,22 @@ class LearningFlowTest extends TestCase
 
         $this->seed(LearningPathSeeder::class);
         $user = User::factory()->create(['name' => 'Gung Satria', 'email' => 'gung@example.com']);
-        LearningProgress::factory()->for($user)->create();
+        $path = LearningPath::query()->where('slug', 'cecimpedan')->firstOrFail();
+        $lesson = Lesson::factory()->create(['learning_path_id' => $path->id]);
+        LearningProgress::factory()->for($user)->for($lesson)->create();
         Quiz::factory()->for($user)->count(2)->create();
 
         $this->actingAs($user)
             ->get(route('profile.show'))
             ->assertOk()
-            ->assertSee('Profil belajar')
+            ->assertSee('Progres belajar')
             ->assertSee('Gung Satria')
             ->assertSee('gung@example.com')
-            ->assertSee('aria-label="Pelajaran selesai: 1"', false)
-            ->assertSee('aria-label="Kuis dibuat: 2"', false)
-            ->assertSee('Detail akun')
+            ->assertSee('Tentang aplikasi ini')
+            ->assertSee('Paribasa Bali')
+            ->assertSee('Aksara Bali')
+            ->assertSee('1 dari 1 pelajaran selesai')
+            ->assertSee('aria-label="Progres Cecimpedan: 1 dari 1 pelajaran"', false)
             ->assertSee(route('learning.paths.show', 'cecimpedan'))
             ->assertSee(route('quizzes.index'))
             ->assertSee('min-h-[calc(100svh-6rem)]', false)

@@ -10,17 +10,27 @@ class ProfileController extends Controller
 {
     public function __invoke(): View
     {
-        $user = auth()->user()->loadCount([
-            'learningProgress as completed_lessons_count' => fn (Builder $query): Builder => $query->whereNotNull('completed_at'),
-            'quizzes',
-        ]);
+        $user = auth()->user();
 
         $learningPaths = LearningPath::query()
             ->where('is_published', true)
+            ->withCount([
+                'lessons',
+                'lessons as completed_lessons_count' => fn (Builder $query): Builder => $query->whereHas(
+                    'progress',
+                    fn (Builder $progressQuery): Builder => $progressQuery
+                        ->where('user_id', $user->id)
+                        ->whereNotNull('completed_at'),
+                ),
+            ])
             ->orderBy('group')
             ->orderBy('sort_order')
             ->get();
 
-        return view('profile.show', compact('learningPaths', 'user'));
+        $learningPathsByGroup = $learningPaths->groupBy('group');
+        $totalLessons = $learningPaths->sum('lessons_count');
+        $completedLessons = $learningPaths->sum('completed_lessons_count');
+
+        return view('profile.show', compact('completedLessons', 'learningPaths', 'learningPathsByGroup', 'totalLessons', 'user'));
     }
 }
