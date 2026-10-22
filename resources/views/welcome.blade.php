@@ -1,61 +1,4 @@
-<!DOCTYPE html>
-<html lang="id">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="theme-color" content="#000000">
-        <link rel="icon" type="image/webp" href="{{ asset('image/maskot.webp') }}">
-        <link rel="apple-touch-icon" href="{{ asset('image/maskot.webp') }}">
-        <title>ARTASWAHA — Belajar Bali dengan gembira</title>
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body class="min-h-screen bg-background font-sans text-foreground antialiased">
-        <header class="sticky top-0 z-50 border-b border-white/10 bg-background/95 backdrop-blur-sm">
-            <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 lg:px-10">
-            <a href="/" class="flex items-center gap-3 rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent" aria-label="ArtaSwaha beranda">
-                <img src="{{ asset('image/maskot.webp') }}" alt="" class="size-12 rounded-full object-cover object-center">
-                <span class="font-display text-2xl font-bold tracking-tight">ARTASWAHA</span>
-            </a>
-            <nav class="flex items-center gap-1 sm:gap-3" aria-label="Navigasi utama">
-                <div class="group relative hidden sm:block">
-                    <button type="button" class="inline-flex min-h-11 items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold text-foreground/80 transition hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" aria-haspopup="true">Paribasa Bali <span class="mt-[-3px] size-2 rotate-45 border-b-2 border-r-2 border-current transition-transform group-hover:rotate-[225deg]" aria-hidden="true"></span></button>
-                    <div class="invisible absolute left-0 top-full z-20 w-56 translate-y-2 pt-3 opacity-0 transition duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
-                        <div class="rounded-2xl border border-white/10 bg-surface p-2 shadow-2xl shadow-black/40">
-                            @foreach ($learningPaths->where('group', 'paribasa') as $learningPath)
-                                <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="{{ route('learning.paths.show', $learningPath->slug) }}">{{ $learningPath->title }}</a>
-                            @endforeach
-                        </div>
-                    </div>
-                </div>
-                <div class="group relative hidden sm:block">
-                    <button type="button" class="inline-flex min-h-11 items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold text-foreground/80 transition hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" aria-haspopup="true">Aksara Bali <span class="mt-[-3px] size-2 rotate-45 border-b-2 border-r-2 border-current transition-transform group-hover:rotate-[225deg]" aria-hidden="true"></span></button>
-                    <div class="invisible absolute left-0 top-full z-20 w-64 translate-y-2 pt-3 opacity-0 transition duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
-                        <div class="rounded-2xl border border-white/10 bg-surface p-2 shadow-2xl shadow-black/40">
-                            @foreach ($learningPaths->where('group', 'aksara') as $learningPath)
-                                <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="{{ route('learning.paths.show', $learningPath->slug) }}">{{ $learningPath->title }}</a>
-                            @endforeach
-                        </div>
-                    </div>
-                </div>
-                <a class="hidden min-h-11 items-center rounded-full px-4 py-3 text-sm font-semibold text-foreground/80 transition hover:bg-surface sm:inline-flex" href="{{ auth()->check() ? route('quizzes.index') : route('login') }}">Kuis</a>
-                @guest
-                    <a class="hidden min-h-11 items-center rounded-full px-4 py-3 text-sm font-semibold text-foreground/80 transition hover:bg-surface sm:inline-flex" href="{{ route('login') }}">Login</a>
-                    <a class="inline-flex min-h-11 items-center rounded-full bg-accent px-6 py-3 text-sm font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent" href="{{ route('register') }}">Daftar</a>
-                @else
-                    <span class="hidden text-sm font-semibold text-foreground/75 sm:inline">{{ auth()->user()->name }}</span>
-                    @if (auth()->user()->is_admin)
-                        <a href="{{ route('admin.lessons.index') }}" class="hidden min-h-11 items-center rounded-full px-4 py-3 text-sm font-semibold text-accent transition hover:bg-surface sm:inline-flex">Kelola materi</a>
-                    @endif
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button class="inline-flex min-h-11 items-center rounded-full bg-accent px-5 py-3 text-sm font-extrabold text-background" type="submit">Keluar</button>
-                    </form>
-                @endguest
-            </nav>
-            </div>
-        </header>
-
-        <main>
+<x-layouts.app :learning-paths="$learningPaths">
             <section class="mx-auto grid min-h-[calc(100svh-6rem)] max-w-7xl items-center gap-12 px-6 pb-16 pt-10 md:grid-cols-[1.05fr_.95fr] md:pb-16 md:pt-16 lg:px-10">
                 <div class="max-w-2xl">
                     <h1 class="font-display text-5xl font-bold leading-[1.08] tracking-tight sm:text-6xl lg:text-7xl">Bahasa Bali jadi <span class="text-accent">seru</span> dipelajari.</h1>
@@ -145,10 +88,4 @@
                     <a href="{{ auth()->check() ? route('quizzes.index') : route('login') }}" class="inline-flex min-h-12 shrink-0 items-center justify-center rounded-full bg-accent px-7 py-3 font-bold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Masuk untuk ikut kuis</a>
                 </div>
             </section>
-        </main>
-
-        <footer class="mx-auto max-w-7xl px-6 pb-8 text-sm text-foreground/50 lg:px-10">
-            <p>ArtaSwaha — belajar bahasa dan budaya Bali dengan gembira.</p>
-        </footer>
-    </body>
-</html>
+</x-layouts.app>

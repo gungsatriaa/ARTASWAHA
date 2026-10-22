@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\LearningProgress;
 use App\Models\LearningPath;
+use App\Models\LearningProgress;
 use App\Models\Lesson;
 use Database\Seeders\LearningPathSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -14,14 +14,17 @@ class LearningFlowTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_homepage_lists_the_seeded_learning_categories(): void
+    public function test_homepage_lists_learning_features_and_footer_links(): void
     {
         $this->seed(LearningPathSeeder::class);
 
         $this->get(route('home'))
             ->assertOk()
             ->assertSee('Cecimpedan')
-            ->assertSee('Pengangge Suara');
+            ->assertSee('Pengangge Suara')
+            ->assertSee('Ruang belajar paribasa dan aksara Bali')
+            ->assertSee('Kembali ke atas')
+            ->assertSee(route('learning.paths.show', 'cecimpedan'));
     }
 
     public function test_unreviewed_lessons_are_not_accessible(): void
