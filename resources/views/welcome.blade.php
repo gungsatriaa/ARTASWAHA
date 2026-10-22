@@ -47,7 +47,7 @@
         </header>
 
         <main>
-            <section class="mx-auto grid max-w-7xl items-center gap-12 px-6 pb-20 pt-10 md:grid-cols-[1.05fr_.95fr] md:pb-28 md:pt-16 lg:px-10">
+            <section class="mx-auto grid min-h-[calc(100svh-6rem)] max-w-7xl items-center gap-12 px-6 pb-16 pt-10 md:grid-cols-[1.05fr_.95fr] md:pb-16 md:pt-16 lg:px-10">
                 <div class="max-w-2xl">
                     <h1 class="font-display text-5xl font-bold leading-[1.08] tracking-tight sm:text-6xl lg:text-7xl">Bahasa Bali jadi <span class="text-accent">seru</span> dipelajari.</h1>
                     <p class="mt-6 max-w-xl font-readable text-lg leading-8 text-foreground/75 sm:text-xl">Kenali paribasa dan aksara Bali lewat cerita, latihan singkat, dan permainan yang bisa langsung dicoba. Mulai tanpa akun; progres tersimpan di perangkatmu.</p>
