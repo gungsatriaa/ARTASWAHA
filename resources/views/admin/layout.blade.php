@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="theme-color" content="#141618">
+        <meta name="theme-color" content="#111315">
         <title>@yield('title') — Admin ArtaSwaha</title>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>

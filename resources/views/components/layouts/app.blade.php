@@ -5,7 +5,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="theme-color" content="#141618">
+        <meta name="theme-color" content="#111315">
         <link rel="icon" type="image/webp" href="{{ asset('image/maskot.webp') }}">
         <link rel="apple-touch-icon" href="{{ asset('image/maskot.webp') }}">
         <title>{{ $title }}</title>
