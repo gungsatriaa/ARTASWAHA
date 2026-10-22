@@ -50,6 +50,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
 Route::middleware('auth')->group(function (): void {
     Route::get('/profil', ProfileController::class)->name('profile.show');
+    Route::get('/profil/tentang', [ProfileController::class, 'about'])->name('profile.about');
     Route::get('/kuis', [QuizController::class, 'index'])->name('quizzes.index');
     Route::get('/kuis/buat', [QuizController::class, 'create'])->name('quizzes.create');
     Route::post('/kuis', [QuizController::class, 'store'])->middleware('throttle:10,1')->name('quizzes.store');

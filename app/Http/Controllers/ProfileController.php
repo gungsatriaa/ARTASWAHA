@@ -8,6 +8,18 @@ use Illuminate\Database\Eloquent\Builder;
 
 class ProfileController extends Controller
 {
+    public function about(): View
+    {
+        $user = auth()->user();
+        $learningPaths = LearningPath::query()
+            ->where('is_published', true)
+            ->orderBy('group')
+            ->orderBy('sort_order')
+            ->get();
+
+        return view('profile.about', compact('learningPaths', 'user'));
+    }
+
     public function __invoke(): View
     {
         $user = auth()->user();

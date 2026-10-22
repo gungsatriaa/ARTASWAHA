@@ -92,6 +92,7 @@ class LearningFlowTest extends TestCase
             ->assertSee('Gung Satria')
             ->assertSee('gung@example.com')
             ->assertSee('Tentang aplikasi ini')
+            ->assertSee(route('profile.about'))
             ->assertSee('Paribasa Bali')
             ->assertSee('Aksara Bali')
             ->assertSee('1 dari 1 pelajaran selesai')
@@ -100,6 +101,37 @@ class LearningFlowTest extends TestCase
             ->assertSee(route('quizzes.index'))
             ->assertSee('min-h-[calc(100svh-6rem)]', false)
             ->assertDontSee('Ruang belajar paribasa dan aksara Bali yang seru');
+    }
+
+    public function test_profile_about_page_explains_the_system_version_and_privacy(): void
+    {
+        $this->get(route('profile.about'))->assertRedirect(route('login'));
+
+        $this->seed(LearningPathSeeder::class);
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('profile.about'))
+            ->assertOk()
+            ->assertSee('Tentang ARTASWAHA')
+            ->assertSee('Platform Edukasi Bahasa, Sastra, dan Aksara Bali')
+            ->assertSee('Versi 0.1.0')
+            ->assertSee('Ringkasan kebijakan privasi')
+            ->assertSee('ID acak pada cookie perangkat')
+            ->assertSee('belum ada penghapusan akun mandiri')
+            ->assertSee(route('profile.show'));
+    }
+
+    public function test_profile_shows_a_clear_empty_state_when_no_lessons_exist(): void
+    {
+        $this->seed(LearningPathSeeder::class);
+
+        $this->actingAs(User::factory()->create())
+            ->get(route('profile.show'))
+            ->assertOk()
+            ->assertSee('Materi belajar sedang disiapkan')
+            ->assertSee('Segera hadir')
+            ->assertDontSee('0 dari 0 pelajaran selesai');
     }
 
     public function test_path_page_only_lists_published_reviewed_lessons(): void
