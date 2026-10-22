@@ -18,7 +18,9 @@ Buat pengalaman belajar yang ceria, hangat, dan mudah dipahami anak, dengan iden
 - **Nunito:** font utama untuk navigasi, tombol, label, dan UI umum; ramah serta tetap jelas pada berbagai ukuran.
 - **Atkinson Hyperlegible:** gunakan untuk instruksi, penjelasan, dan teks latihan ketika keterbacaan menjadi prioritas.
 - **Quicksand:** gunakan untuk judul pendek, nama jalur, atau sorotan; jangan gunakan untuk paragraf panjang.
-- Batasi hierarki ke ukuran dan bobot yang konsisten. Pastikan aksara Bali dan seluruh glyph yang dibutuhkan tersedia pada font/fallback yang dipakai; uji tampilan aktual sebelum rilis.
+- **Vimala (`Font Vimala.ttf`):** gunakan khusus untuk menampilkan Aksara Bali. Jangan gunakan sebagai font UI atau teks Latin; pasangkan dengan ejaan/transliterasi Latin menggunakan Nunito atau Atkinson Hyperlegible.
+- Simpan file font Vimala di aset aplikasi yang dikelola proyek dan muat sebagai font lokal, bukan dari CDN. Pastikan hak penggunaan/redistribusi font telah dikonfirmasi sebelum font dibundel atau dipublikasikan.
+- Batasi hierarki ke ukuran dan bobot yang konsisten. Uji glyph Aksara Bali, tanda diakritik, dan kombinasi karakter Vimala pada browser target sebelum rilis.
 - Muat font dari sumber tepercaya dengan versi/berkas yang stabil dan fallback sans-serif agar teks tetap terbaca jika font gagal dimuat.
 
 ## Bentuk dan sudut

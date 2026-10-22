@@ -25,6 +25,7 @@ ArtaSwaha adalah platform pembelajaran interaktif untuk anak-anak di Bali. Platf
 - Jalur belajar bertema: Bahasa Bali, Aksara Bali, Cecimpedan, dan materi budaya terkait.
 - Peta/jalur pelajaran berurutan dengan unit kecil.
 - Bentuk latihan: pilihan jawaban, cocokkan arti dengan gambar/kata, dengarkan lalu pilih, susun kata/aksara, dan teka-teki.
+- **Keyboard Aksara Bali di layar:** membantu pengguna memasukkan Aksara Bali saat membuat soal/kuis dan saat menjawab latihan atau kuis yang menerima jawaban aksara. Keyboard menampilkan karakter dan tanda yang relevan, bekerja pada perangkat sentuh maupun komputer, serta menyediakan input alternatif bila layout perangkat tidak mendukung Aksara Bali.
 - Audio pelafalan yang dapat diputar ulang.
 - Umpan balik visual dan suara untuk jawaban benar, salah, dan penyelesaian pelajaran; kontrol untuk mematikan suara.
 - Progres, bintang/poin sederhana, pelajaran terakhir, dan latihan ulang.
@@ -33,6 +34,7 @@ ArtaSwaha adalah platform pembelajaran interaktif untuk anak-anak di Bali. Platf
 ### Kuis bersama
 
 - Pengguna terdaftar dapat membuat kuis dari bank materi/soal yang tersedia.
+- Pembuat soal dapat memilih tipe jawaban Aksara Bali dan memasukkan teks soal/jawaban dengan keyboard Aksara Bali di layar.
 - Pembuat kuis dapat membuat room, memilih kuis dan pengaturan sesi, lalu membagikan kode atau tautan undangan.
 - Pengguna terdaftar dapat bergabung dengan kode room.
 - Host dapat memulai sesi dan mengendalikan jalannya kuis.
@@ -49,6 +51,7 @@ ArtaSwaha adalah platform pembelajaran interaktif untuk anak-anak di Bali. Platf
 ## Batasan versi awal
 
 - Fokus pada satu jalur belajar yang tervalidasi, satu set tipe soal utama, dan kuis pilihan ganda.
+- Keyboard Aksara Bali dimulai dengan karakter yang diperlukan untuk materi versi awal; pemetaan dan dukungan kombinasi karakter harus ditinjau bersama ahli/penutur.
 - Room memakai kode undangan; aktivitas realtime dibatasi pada status room, jawaban, dan skor.
 - Belum mencakup chat, unggahan konten bebas oleh publik, marketplace, atau fitur sosial terbuka.
 - Materi dan audio harus ditinjau oleh penutur/pengajar yang kompeten sebelum diterbitkan.
