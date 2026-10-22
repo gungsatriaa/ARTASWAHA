@@ -23,7 +23,7 @@ return new class extends Migration
             $table->timestamp('reviewed_at')->nullable();
             $table->timestamps();
 
-            $table->index(['learning_path_id', 'is_published', 'reviewed_at', 'sort_order']);
+            $table->index(['learning_path_id', 'is_published', 'reviewed_at', 'sort_order'], 'lessons_path_publish_review_order_idx');
         });
     }
 
