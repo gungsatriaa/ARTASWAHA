@@ -21,9 +21,9 @@
                     <button type="button" class="inline-flex min-h-11 items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold text-foreground/80 transition hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" aria-haspopup="true">Paribasa Bali <span class="mt-[-3px] size-2 rotate-45 border-b-2 border-r-2 border-current transition-transform group-hover:rotate-[225deg]" aria-hidden="true"></span></button>
                     <div class="invisible absolute left-0 top-full z-20 w-56 translate-y-2 pt-3 opacity-0 transition duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
                         <div class="rounded-2xl border border-white/10 bg-surface p-2 shadow-2xl shadow-black/40">
-                            <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="#jalur">Cecimpedan</a>
-                            <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="#jalur">Peparikan</a>
-                            <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="#jalur">Sesonggakan</a>
+                            <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="{{ route('learning.paths.show', 'cecimpedan') }}">Cecimpedan</a>
+                            <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="{{ route('learning.paths.show', 'peparikan') }}">Peparikan</a>
+                            <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="{{ route('learning.paths.show', 'sesonggakan') }}">Sesonggakan</a>
                         </div>
                     </div>
                 </div>
@@ -31,11 +31,11 @@
                     <button type="button" class="inline-flex min-h-11 items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold text-foreground/80 transition hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" aria-haspopup="true">Aksara Bali <span class="mt-[-3px] size-2 rotate-45 border-b-2 border-r-2 border-current transition-transform group-hover:rotate-[225deg]" aria-hidden="true"></span></button>
                     <div class="invisible absolute left-0 top-full z-20 w-64 translate-y-2 pt-3 opacity-0 transition duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
                         <div class="rounded-2xl border border-white/10 bg-surface p-2 shadow-2xl shadow-black/40">
-                            <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="#jalur">Aksara Wreastra &amp; gantungan</a>
-                            <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="#jalur">Pengangge Suara</a>
-                            <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="#jalur">Pengangge Tengenan</a>
-                            <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="#jalur">Pengangge Arda Suara</a>
-                            <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="#jalur">Angka Aksara Bali</a>
+                            <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="{{ route('learning.paths.show', 'wreastra-gantungan') }}">Aksara Wreastra &amp; gantungan</a>
+                            <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="{{ route('learning.paths.show', 'pengangge-suara') }}">Pengangge Suara</a>
+                            <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="{{ route('learning.paths.show', 'pengangge-tengenan') }}">Pengangge Tengenan</a>
+                            <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="{{ route('learning.paths.show', 'pengangge-arda-suara') }}">Pengangge Arda Suara</a>
+                            <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="{{ route('learning.paths.show', 'angka-aksara-bali') }}">Angka Aksara Bali</a>
                         </div>
                     </div>
                 </div>
@@ -101,11 +101,11 @@
                             <span class="grid size-12 shrink-0 place-items-center rounded-full bg-accent/10 text-xl text-accent" aria-hidden="true">✦</span>
                         </div>
                         <ul class="mt-7 flex flex-wrap gap-2 text-sm font-semibold">
-                            <li class="rounded-full bg-background px-4 py-2">Cecimpedan</li>
-                            <li class="rounded-full bg-background px-4 py-2">Peparikan</li>
-                            <li class="rounded-full bg-background px-4 py-2">Sesonggakan</li>
+                            @foreach ($learningPaths->where('group', 'paribasa') as $learningPath)
+                                <li><a class="inline-flex rounded-full bg-background px-4 py-2 transition hover:text-accent" href="{{ route('learning.paths.show', $learningPath->slug) }}">{{ $learningPath->title }}</a></li>
+                            @endforeach
                         </ul>
-                        <a href="#room" class="mt-8 inline-flex min-h-12 items-center rounded-full bg-primary px-6 py-3 font-bold text-white transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Jelajahi paribasa</a>
+                        <a href="{{ route('learning.paths.show', 'cecimpedan') }}" class="mt-8 inline-flex min-h-12 items-center rounded-full bg-primary px-6 py-3 font-bold text-white transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Jelajahi paribasa</a>
                     </article>
                     <article class="rounded-card bg-surface p-6 sm:p-8">
                         <div class="flex items-start justify-between gap-4">
@@ -117,11 +117,11 @@
                             <span class="grid size-12 shrink-0 place-items-center rounded-full bg-primary/15 font-balinese text-2xl text-accent" lang="ban" aria-hidden="true">ᬅ</span>
                         </div>
                         <ul class="mt-7 flex flex-wrap gap-2 text-sm font-semibold">
-                            <li class="rounded-full bg-background px-4 py-2">Wreastra &amp; gantungan</li>
-                            <li class="rounded-full bg-background px-4 py-2">Pengangge</li>
-                            <li class="rounded-full bg-background px-4 py-2">Angka Bali</li>
+                            @foreach ($learningPaths->where('group', 'aksara') as $learningPath)
+                                <li><a class="inline-flex rounded-full bg-background px-4 py-2 transition hover:text-accent" href="{{ route('learning.paths.show', $learningPath->slug) }}">{{ $learningPath->title }}</a></li>
+                            @endforeach
                         </ul>
-                        <a href="#room" class="mt-8 inline-flex min-h-12 items-center rounded-full bg-primary px-6 py-3 font-bold text-white transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Jelajahi aksara</a>
+                        <a href="{{ route('learning.paths.show', 'wreastra-gantungan') }}" class="mt-8 inline-flex min-h-12 items-center rounded-full bg-primary px-6 py-3 font-bold text-white transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Jelajahi aksara</a>
                     </article>
                 </div>
             </section>

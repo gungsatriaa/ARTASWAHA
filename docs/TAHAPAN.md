@@ -47,20 +47,20 @@ Status: **sebagian selesai**.
 
 ## Tahap 3 — Materi belajar dan panel admin
 
-Status: **belum dimulai**.
+Status: **sebagian selesai**.
 
 ### Pekerjaan
 
-- Rancang model dan relasi untuk jalur, unit, pelajaran, soal, pilihan jawaban, media, dan status publikasi.
-- Buat migration, model, factory/seed data lokal, validasi, dan indeks query penting.
-- Buat pengelolaan materi khusus admin: buat, ubah, urutkan, tinjau, terbitkan, dan arsipkan.
-- Simpan audio/gambar dengan validasi tipe dan ukuran; gunakan aset contoh lokal.
-- Pastikan konten yang belum ditinjau tidak tampil sebagai materi terbit.
+- [x] Buat skema jalur, pelajaran, dan progres beserta relasi, indeks, factory, dan seed kategori.
+- [ ] Tambahkan bank soal, media, dan alur CRUD materi khusus admin.
+- [ ] Buat alur admin untuk membuat, mengubah, mengurutkan, meninjau, menerbitkan, dan mengarsipkan materi.
+- [ ] Tambahkan penyimpanan audio/gambar dengan validasi tipe dan ukuran.
+- [x] Pastikan pelajaran yang belum ditinjau tidak tampil pada halaman publik.
 
 ### Pengujian lokal
 
-- Jalankan migration dan seeder pada database lokal kosong.
-- Periksa validasi, otorisasi admin, pengurutan materi, serta kasus data kosong.
+- [x] Jalankan migration dan pengujian alur memakai SQLite sementara di test lokal.
+- [ ] Periksa migration pada MySQL lokal, otorisasi admin, pengurutan materi, serta kasus data kosong.
 
 ### Selesai bila
 
@@ -68,19 +68,20 @@ Status: **belum dimulai**.
 
 ## Tahap 4 — Belajar mandiri anonim
 
+Status: **sebagian selesai**.
+
 ### Pekerjaan
 
-- Sediakan masuk langsung ke materi tanpa membuat akun.
-- Buat latihan awal yang sederhana, misalnya pilihan ganda dan dengarkan-lalu-pilih.
-- Berikan umpan balik, audio, animasi singkat, dan kontrol untuk mematikan suara.
-- Simpan progres dengan identifier anonim berbasis browser/perangkat; jangan memakai nama asli.
-- Tampilkan pelajaran terakhir, progres, dan latihan ulang.
-- Rancang alur pengaitan progres anonim ke akun tanpa menghapus atau menggandakan progres.
+- [x] Sediakan akses ke materi terbit tanpa membuat akun.
+- [ ] Tambahkan latihan interaktif, audio, animasi, dan kontrol suara.
+- [x] Simpan progres dengan UUID pada cookie perangkat terenkripsi oleh Laravel.
+- [ ] Tampilkan pelajaran terakhir, ringkasan progres, dan latihan ulang.
+- [ ] Kaitkan progres anonim ke akun saat registrasi/login.
 
 ### Pengujian lokal
 
-- Pastikan progres bertahan setelah refresh dan kunjungan berikutnya pada browser yang sama.
-- Periksa perilaku ketika cookie dihapus, identifier tidak valid, progres sudah ada di akun, dan jaringan lambat.
+- [x] Uji progres per cookie perangkat dan pengiriman penyelesaian berulang pada test lokal.
+- [ ] Periksa cookie terhapus/tidak valid, penggabungan progres, serta jaringan lambat di browser.
 
 ### Selesai bila
 
