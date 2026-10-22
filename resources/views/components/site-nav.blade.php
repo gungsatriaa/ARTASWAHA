@@ -13,7 +13,7 @@
                         {{ $label }}
                         <span class="mt-[-3px] size-2 rotate-45 border-b-2 border-r-2 border-current transition-transform group-hover:rotate-[225deg]" aria-hidden="true"></span>
                     </button>
-                    <div class="invisible absolute left-0 top-full z-20 w-64 translate-y-2 pt-3 opacity-0 transition duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                    <div class="invisible absolute left-0 top-full z-20 w-64 translate-y-2 pt-3 opacity-0 transition duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-has-[:focus-visible]:visible group-has-[:focus-visible]:translate-y-0 group-has-[:focus-visible]:opacity-100">
                         <div class="rounded-2xl border border-white/10 bg-surface p-2 shadow-2xl shadow-black/40">
                             @foreach ($learningPaths->where('group', $group) as $learningPath)
                                 <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="{{ route('learning.paths.show', $learningPath->slug) }}">{{ $learningPath->title }}</a>
