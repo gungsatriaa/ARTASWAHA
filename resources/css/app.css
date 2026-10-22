@@ -3,7 +3,37 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+@font-face {
+    font-family: Vimala;
+    src: url('/fonts/vimala.ttf') format('truetype');
+    font-display: swap;
+}
+
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --color-background: #111827;
+    --color-surface: #1b2636;
+    --color-primary: #007c80;
+    --color-accent: #ffc700;
+    --color-foreground: #f5f3ee;
+    --color-muted: #a7b0bd;
+    --color-success: #4ade80;
+    --color-danger: #fb7185;
+
+    --font-sans: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+    --font-readable: 'Atkinson Hyperlegible', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Quicksand', 'Nunito', ui-sans-serif, system-ui, sans-serif;
+    --font-balinese: Vimala, sans-serif;
+
+    --radius-card: 1.75rem;
+    --radius-control: 0.875rem;
+}
+
+:root {
+    color-scheme: dark;
+}
+
+body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
 }
