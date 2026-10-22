@@ -29,11 +29,7 @@
             @else
                 <div class="group relative">
                     <button type="button" class="relative grid size-11 place-items-center overflow-hidden rounded-full bg-accent font-display font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent" aria-label="Menu profil {{ auth()->user()->name }}">
-                        @if (auth()->user()->avatar)
-                            <img src="{{ str_starts_with(auth()->user()->avatar, 'avatars/') ? route('profile.avatar.show') : asset(auth()->user()->avatar) }}" alt="" class="absolute inset-0 size-full object-cover">
-                        @else
-                            {{ mb_strtoupper(mb_substr(auth()->user()->name, 0, 1)) }}
-                        @endif
+                        <img src="{{ str_starts_with(auth()->user()->avatar ?? '', 'avatars/') ? route('profile.avatar.show') : asset(auth()->user()->avatar ?? array_key_first(\App\Services\ProfileAvatarService::DEFAULT_AVATARS)) }}" alt="" class="absolute inset-0 size-full object-cover">
                     </button>
                     <div class="invisible absolute right-0 top-full z-20 w-56 translate-y-2 pt-3 opacity-0 transition duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-has-[:focus-visible]:visible group-has-[:focus-visible]:translate-y-0 group-has-[:focus-visible]:opacity-100">
                         <div class="rounded-2xl border border-white/10 bg-surface p-2 shadow-2xl shadow-black/40">

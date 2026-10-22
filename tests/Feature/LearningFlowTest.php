@@ -71,7 +71,8 @@ class LearningFlowTest extends TestCase
             ->assertSee('Keluar')
             ->assertDontSee('>Daftar</a>', false);
 
-        $this->assertMatchesRegularExpression('/aria-label="Menu profil Gung Satria">\s*G\s*<\/button>/', $response->getContent());
+        $this->assertStringContainsString('src="'.asset($user->avatar).'"', $response->getContent());
+        $this->assertStringNotContainsString('>G</button>', $response->getContent());
     }
 
     public function test_profile_page_requires_authentication_and_shows_account_details(): void

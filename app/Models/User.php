@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Services\ProfileAvatarService;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Arr;
 
 #[Fillable(['name', 'email', 'password', 'avatar'])]
 #[Hidden(['password', 'remember_token'])]
@@ -17,6 +19,13 @@ class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    protected static function booted(): void
+    {
+        static::creating(static function (User $user): void {
+            $user->avatar ??= Arr::random(array_keys(ProfileAvatarService::DEFAULT_AVATARS));
+        });
+    }
 
     /**
      * Get the attributes that should be cast.

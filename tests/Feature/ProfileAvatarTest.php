@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Services\ProfileAvatarService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -11,6 +12,13 @@ use Tests\TestCase;
 class ProfileAvatarTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_new_users_receive_a_random_default_avatar(): void
+    {
+        $user = User::factory()->create();
+
+        $this->assertContains($user->avatar, array_keys(ProfileAvatarService::DEFAULT_AVATARS));
+    }
 
     public function test_a_user_can_choose_a_default_avatar(): void
     {
@@ -75,6 +83,6 @@ class ProfileAvatarTest extends TestCase
             ])
             ->assertSessionHasErrors('avatar_upload');
 
-        $this->assertNull($user->fresh()->avatar);
+        $this->assertSame($user->avatar, $user->fresh()->avatar);
     }
 }

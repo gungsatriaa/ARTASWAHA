@@ -4,11 +4,7 @@
     <div class="mx-auto grid min-h-[calc(100svh-6rem)] max-w-7xl gap-5 px-6 py-6 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-center lg:px-10">
         <aside class="rounded-card bg-surface p-5 sm:p-6 lg:sticky lg:top-28 lg:self-start" aria-label="Profil dan navigasi akun">
             <div class="flex items-center gap-4 lg:flex-col lg:items-start">
-                @if ($user->avatar)
-                    <img src="{{ str_starts_with($user->avatar, 'avatars/') ? route('profile.avatar.show') : asset($user->avatar) }}" alt="Avatar {{ $user->name }}" class="size-16 shrink-0 rounded-full object-cover ring-2 ring-primary/40">
-                @else
-                    <span class="grid size-16 shrink-0 place-items-center rounded-full bg-accent font-display text-2xl font-extrabold text-background" aria-hidden="true">{{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}</span>
-                @endif
+                <img src="{{ str_starts_with($user->avatar ?? '', 'avatars/') ? route('profile.avatar.show') : asset($user->avatar ?? array_key_first(\App\Services\ProfileAvatarService::DEFAULT_AVATARS)) }}" alt="Avatar {{ $user->name }}" class="size-16 shrink-0 rounded-full object-cover ring-2 ring-primary/40">
                 <div class="min-w-0">
                     <h1 class="break-words font-display text-xl font-bold">{{ $user->name }}</h1>
                     <p class="mt-1 break-all text-sm text-foreground/55">{{ $user->email }}</p>
