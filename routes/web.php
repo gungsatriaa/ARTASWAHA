@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\LearningPathController as AdminLearningPathController;
+use App\Http\Controllers\Admin\LessonController as AdminLessonController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LearningPathController;
 use App\Http\Controllers\LearningProgressController;
@@ -25,6 +27,24 @@ Route::middleware('guest')->group(function (): void {
 });
 
 Route::post('/keluar', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
+
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function (): void {
+    Route::get('/', fn () => to_route('admin.lessons.index'))->name('index');
+
+    Route::get('/jalur', [AdminLearningPathController::class, 'index'])->name('learning-paths.index');
+    Route::get('/jalur/buat', [AdminLearningPathController::class, 'create'])->name('learning-paths.create');
+    Route::post('/jalur', [AdminLearningPathController::class, 'store'])->name('learning-paths.store');
+    Route::get('/jalur/{learningPath}/edit', [AdminLearningPathController::class, 'edit'])->name('learning-paths.edit');
+    Route::put('/jalur/{learningPath}', [AdminLearningPathController::class, 'update'])->name('learning-paths.update');
+
+    Route::get('/pelajaran', [AdminLessonController::class, 'index'])->name('lessons.index');
+    Route::get('/pelajaran/buat', [AdminLessonController::class, 'create'])->name('lessons.create');
+    Route::post('/pelajaran', [AdminLessonController::class, 'store'])->name('lessons.store');
+    Route::get('/pelajaran/{lesson}/edit', [AdminLessonController::class, 'edit'])->name('lessons.edit');
+    Route::put('/pelajaran/{lesson}', [AdminLessonController::class, 'update'])->name('lessons.update');
+    Route::post('/pelajaran/{lesson}/terbitkan', [AdminLessonController::class, 'publish'])->name('lessons.publish');
+    Route::post('/pelajaran/{lesson}/arsipkan', [AdminLessonController::class, 'archive'])->name('lessons.archive');
+});
 
 Route::middleware('auth')->group(function (): void {
     Route::get('/kuis', [QuizController::class, 'index'])->name('quizzes.index');

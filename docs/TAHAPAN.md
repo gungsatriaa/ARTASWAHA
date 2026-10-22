@@ -52,15 +52,16 @@ Status: **sebagian selesai**.
 ### Pekerjaan
 
 - [x] Buat skema jalur, pelajaran, dan progres beserta relasi, indeks, factory, dan seed kategori.
-- [ ] Tambahkan bank soal, media, dan alur CRUD materi khusus admin.
-- [ ] Buat alur admin untuk membuat, mengubah, mengurutkan, meninjau, menerbitkan, dan mengarsipkan materi.
+- [ ] Tambahkan bank soal serta pengelolaan media.
+- [x] Buat alur admin untuk membuat dan mengubah jalur/pelajaran, mengurutkan, meninjau, menerbitkan, dan mengarsipkan pelajaran.
 - [ ] Tambahkan penyimpanan audio/gambar dengan validasi tipe dan ukuran.
 - [x] Pastikan pelajaran yang belum ditinjau tidak tampil pada halaman publik.
 
 ### Pengujian lokal
 
 - [x] Jalankan migration dan pengujian alur memakai SQLite sementara di test lokal.
-- [ ] Periksa migration pada MySQL lokal, otorisasi admin, pengurutan materi, serta kasus data kosong.
+- [x] Uji otorisasi admin, validasi materi, proses tinjau/publikasi/arsip, dan tampilan draf pada test lokal.
+- [ ] Periksa migration pada MySQL lokal, pengurutan materi, dan kasus data kosong.
 
 ### Selesai bila
 

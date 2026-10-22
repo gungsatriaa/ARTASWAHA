@@ -12,7 +12,8 @@ class LessonController extends Controller
 {
     public function show(Request $request, Lesson $lesson, LearningProgressService $progressService): Response
     {
-        abort_unless($lesson->is_published && $lesson->reviewed_at !== null, 404);
+        $lesson->loadMissing('learningPath:id,slug,title,is_published');
+        abort_unless($lesson->is_published && $lesson->reviewed_at !== null && $lesson->learningPath->is_published, 404);
 
         $deviceId = $progressService->deviceId($request);
         $progress = $lesson->progress()->where('visitor_id', $deviceId)->first();
