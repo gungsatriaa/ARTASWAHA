@@ -4,13 +4,15 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#111827">
+        <link rel="icon" type="image/webp" href="{{ asset('image/maskot.webp') }}">
+        <link rel="apple-touch-icon" href="{{ asset('image/maskot.webp') }}">
         <title>ArtaSwaha — Belajar Bali dengan gembira</title>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="min-h-screen bg-background font-sans text-foreground antialiased">
         <header class="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 lg:px-10">
             <a href="/" class="flex items-center gap-3 rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent" aria-label="ArtaSwaha beranda">
-                <span class="grid size-11 place-items-center rounded-full bg-primary text-xl font-bold text-foreground">A</span>
+                <img src="{{ asset('image/maskot.webp') }}" alt="" class="size-12 rounded-full object-cover object-center ring-2 ring-primary/60">
                 <span class="font-display text-2xl font-bold tracking-tight">ArtaSwaha</span>
             </a>
             <nav class="flex items-center gap-3" aria-label="Navigasi utama">
@@ -34,15 +36,32 @@
                     <p class="mt-4 text-sm text-foreground/55">Belajar mandiri tanpa akun. Untuk kuis bersama, masuk atau daftar terlebih dahulu.</p>
                 </div>
 
-                <div class="relative mx-auto grid w-full max-w-lg place-items-center">
-                    <div class="absolute size-[min(88vw,26rem)] rounded-full bg-primary/20" aria-hidden="true"></div>
-                    <div class="absolute right-4 top-8 z-10 rounded-2xl border border-white/10 bg-surface px-4 py-3 shadow-xl sm:right-0">
-                        <p class="text-xs font-semibold text-foreground/60">Hari ini belajar</p>
-                        <p class="mt-1 font-display font-bold text-accent">Rahajeng semeng</p>
-                    </div>
-                    <img src="{{ asset('image/maskot.webp') }}" alt="Maskot ArtaSwaha mengajak belajar budaya Bali" class="relative z-0 w-full max-w-[27rem] rounded-[2rem] object-contain drop-shadow-2xl" fetchpriority="high">
-                    <div class="absolute bottom-6 left-0 z-10 max-w-[15rem] rounded-2xl border border-white/10 bg-surface/95 px-4 py-3 shadow-xl backdrop-blur">
-                        <p class="font-readable text-sm leading-6 text-foreground/75">Satu kata baru hari ini. Besok, satu lagi.</p>
+                <div class="relative mx-auto w-full max-w-lg">
+                    <div class="absolute -inset-5 rounded-[3rem] bg-primary/15 blur-2xl" aria-hidden="true"></div>
+                    <div class="relative overflow-hidden rounded-[2rem] border border-white/10 bg-surface p-5 shadow-2xl sm:p-7">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-semibold text-foreground/60">Petualangan hari ini</p>
+                                <p class="mt-1 font-display text-xl font-bold">Salam dalam Bahasa Bali</p>
+                            </div>
+                            <span class="grid size-12 place-items-center rounded-full bg-accent/15 text-2xl text-accent" aria-hidden="true">✿</span>
+                        </div>
+                        <div class="mt-7 rounded-[1.5rem] bg-background p-5 sm:p-6">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="font-semibold">Pelajaran 1 dari 5</span>
+                                <span class="font-bold text-accent">20%</span>
+                            </div>
+                            <div class="mt-3 h-3 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-label="Progres pelajaran" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">
+                                <div class="h-full w-1/5 rounded-full bg-accent"></div>
+                            </div>
+                            <p class="mt-7 font-readable text-sm text-foreground/60">Bagaimana mengucapkan “selamat pagi”?</p>
+                            <div class="mt-3 rounded-2xl border border-white/10 bg-surface px-4 py-4 text-center">
+                                <span class="font-balinese text-3xl" lang="ban">ᬲᬸᬩᬳ᭄‌ᬫᬢᭂᬂ</span>
+                                <p class="mt-2 text-sm font-semibold text-foreground/70">Rahajeng semeng</p>
+                            </div>
+                            <button type="button" class="mt-4 min-h-12 w-full rounded-full bg-primary px-5 py-3 font-bold text-white transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Dengar pelafalan <span aria-hidden="true">♫</span></button>
+                        </div>
+                        <p class="mt-5 text-center font-readable text-sm text-foreground/60">Satu latihan singkat, satu langkah lebih dekat.</p>
                     </div>
                 </div>
             </section>
