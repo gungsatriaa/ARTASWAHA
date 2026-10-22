@@ -18,7 +18,7 @@ class LearningFlowTest extends TestCase
     {
         $this->seed(LearningPathSeeder::class);
 
-        $this->get(route('home'))
+        $response = $this->get(route('home'))
             ->assertOk()
             ->assertSee('ARTASWAHA - Platform Edukasi Bahasa, Sastra, dan Aksara Bali.')
             ->assertSee('Cecimpedan')
@@ -29,10 +29,23 @@ class LearningFlowTest extends TestCase
             ->assertSee('group-has-[:focus-visible]:visible')
             ->assertDontSee('group-focus-within:visible')
             ->assertSee('Tentang ARTASWAHA')
+            ->assertSee('Keunggulan ARTASWAHA')
+            ->assertSee('Mulai tanpa akun')
+            ->assertSee('Materi singkat dan terarah')
+            ->assertSee('Main kuis bersama')
             ->assertSee('Apa kata mereka')
             ->assertSee('Yang sering ditanyakan')
             ->assertSee('bukan testimoni pengguna nyata')
             ->assertSee(route('learning.paths.show', 'cecimpedan'));
+
+        $html = $response->getContent();
+        $sections = ['tentang', 'jalur', 'keunggulan', 'room', 'testimoni', 'faq'];
+        $positions = array_map(fn (string $section) => strpos($html, 'id="'.$section.'"'), $sections);
+
+        $this->assertNotContains(false, $positions);
+        $sortedPositions = $positions;
+        sort($sortedPositions);
+        $this->assertSame($sortedPositions, $positions);
     }
 
     public function test_unreviewed_lessons_are_not_accessible(): void
