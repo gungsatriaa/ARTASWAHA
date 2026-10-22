@@ -22,7 +22,7 @@
                                 <p class="mt-3 font-display text-xl font-bold sm:text-2xl">Om Swastyastu</p>
                                 <p class="mt-2 font-readable leading-7 text-foreground/65">Salam pembuka dalam bahasa Bali. Kenali bentuk aksaranya lewat contoh.</p>
                             </div>
-                            <img src="{{ asset('image/asset1.webp') }}" alt="Maskot ARTASWAHA sedang belajar menulis" class="absolute right-0 top-12 z-0 h-40 w-40 scale-[1.4] max-[380px]:scale-[1.15] translate-x-4 -translate-y-15 object-contain sm:absolute sm:right-0 sm:top-0 sm:z-0 sm:mx-0 sm:h-80 sm:w-44 sm:scale-[1.5] sm:translate-x-6 sm:-translate-y-25 md:h-[20rem] md:scale-[1.8] md:translate-x-8 md:-translate-y-35">
+                            <img src="{{ asset('image/asset1.webp') }}" alt="Maskot ARTASWAHA sedang belajar menulis" class="absolute right-0 top-12 z-0 h-40 w-40 scale-[1.4] max-[380px]:scale-[1.0] max-[380px]:translate-x-8 translate-x-4 -translate-y-15 object-contain sm:absolute sm:right-0 sm:top-0 sm:z-0 sm:mx-0 sm:h-80 sm:w-44 sm:scale-[1.5] sm:translate-x-6 sm:-translate-y-25 md:h-[20rem] md:scale-[1.8] md:translate-x-8 md:-translate-y-35">
                         </div>
                         <div class="mt-4 flex items-center justify-between gap-3 border-t border-white/10 pt-4 text-sm">
                             <span class="font-balinese text-lg text-accent" lang="ban" aria-hidden="true">ᬒᬁ</span>
@@ -62,24 +62,24 @@
             <section id="keunggulan" class="mx-auto max-w-7xl px-6 pb-20 lg:px-10">
                 <div class="mb-8 max-w-2xl">
                     <p class="font-semibold text-accent">Keunggulan ARTASWAHA</p>
-                    <h2 class="mt-2 font-display text-3xl font-bold sm:text-4xl">Belajar dengan cara yang terasa ringan</h2>
-                    <p class="mt-4 font-readable leading-7 text-foreground/65">Mulai dari satu pelajaran, lalu ajak teman bermain saat siap.</p>
+                    <h2 class="mt-2 font-display text-3xl font-bold sm:text-4xl">Belajar Bali lewat tantangan kecil yang seru</h2>
+                    <p class="mt-4 font-readable leading-7 text-foreground/65">Pilih materi, tuntaskan misi belajarmu, lalu ajak teman ke arena kuis.</p>
                 </div>
                 <div class="grid gap-4 md:grid-cols-3">
                     <article class="rounded-card bg-surface p-6 sm:p-7">
                         <span class="grid size-12 place-items-center rounded-full bg-accent/10 text-xl text-accent" aria-hidden="true">✦</span>
-                        <h3 class="mt-5 font-display text-xl font-bold">Mulai tanpa akun</h3>
-                        <p class="mt-3 font-readable leading-7 text-foreground/65">Coba belajar mandiri kapan saja. Progres tersimpan di perangkat yang kamu gunakan.</p>
+                        <h3 class="mt-5 font-display text-xl font-bold">Mulai petualanganmu</h3>
+                        <p class="mt-3 font-readable leading-7 text-foreground/65">Pilih materi yang kamu suka, tuntaskan satu tantangan, lalu lanjutkan belajar kapan saja. Progresmu tersimpan di perangkat.</p>
                     </article>
                     <article class="rounded-card bg-surface p-6 sm:p-7">
                         <span class="grid size-12 place-items-center rounded-full bg-primary/20 font-balinese text-2xl text-accent" lang="ban" aria-hidden="true">ᬅ</span>
-                        <h3 class="mt-5 font-display text-xl font-bold">Materi singkat dan terarah</h3>
-                        <p class="mt-3 font-readable leading-7 text-foreground/65">Kenali paribasa dan aksara Bali lewat contoh, lalu kuatkan pemahaman dengan latihan.</p>
+                        <h3 class="mt-5 font-display text-xl font-bold">Jelajahi paribasa dan aksara</h3>
+                        <p class="mt-3 font-readable leading-7 text-foreground/65">Tebak Cecimpedan, kenali Peparikan, dan latih Aksara Bali lewat contoh serta latihan interaktif.</p>
                     </article>
                     <article class="rounded-card bg-surface p-6 sm:p-7">
                         <span class="grid size-12 place-items-center rounded-full bg-primary/20 text-xl text-accent" aria-hidden="true">♫</span>
-                        <h3 class="mt-5 font-display text-xl font-bold">Main kuis bersama</h3>
-                        <p class="mt-3 font-readable leading-7 text-foreground/65">Buat kuis atau bergabung ke room teman untuk menjawab dan melihat hasil bersama.</p>
+                        <h3 class="mt-5 font-display text-xl font-bold">Ajak teman ke arena kuis</h3>
+                        <p class="mt-3 font-readable leading-7 text-foreground/65">Buat kuis atau masuk ke room, jawab bersama, dan lihat peringkat berubah secara langsung.</p>
                     </article>
                 </div>
             </section>
