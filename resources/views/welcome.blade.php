@@ -19,23 +19,23 @@
             <nav class="flex items-center gap-1 sm:gap-3" aria-label="Navigasi utama">
                 <div class="group relative hidden sm:block">
                     <a class="inline-flex min-h-11 items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold text-foreground/80 transition hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" href="#jalur" aria-haspopup="true">Paribasa Bali <span aria-hidden="true">⌄</span></a>
-                    <div class="invisible absolute left-0 top-full z-20 w-56 translate-y-2 pt-2 opacity-0 transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
-                        <div class="rounded-2xl border border-white/10 bg-surface p-2 shadow-xl">
-                            <a class="block rounded-xl px-4 py-3 text-sm hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-accent" href="#jalur">Cecimpedan</a>
-                            <a class="block rounded-xl px-4 py-3 text-sm hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-accent" href="#jalur">Peparikan</a>
-                            <a class="block rounded-xl px-4 py-3 text-sm hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-accent" href="#jalur">Sesonggakan</a>
+                    <div class="invisible absolute left-0 top-full z-20 w-56 translate-y-2 pt-3 opacity-0 transition duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                        <div class="rounded-2xl border border-white/10 bg-surface p-2 shadow-2xl shadow-black/40">
+                            <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="#jalur">Cecimpedan</a>
+                            <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="#jalur">Peparikan</a>
+                            <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="#jalur">Sesonggakan</a>
                         </div>
                     </div>
                 </div>
                 <div class="group relative hidden sm:block">
                     <a class="inline-flex min-h-11 items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold text-foreground/80 transition hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" href="#jalur" aria-haspopup="true">Aksara Bali <span aria-hidden="true">⌄</span></a>
-                    <div class="invisible absolute left-0 top-full z-20 w-64 translate-y-2 pt-2 opacity-0 transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
-                        <div class="rounded-2xl border border-white/10 bg-surface p-2 shadow-xl">
-                            <a class="block rounded-xl px-4 py-3 text-sm hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-accent" href="#jalur">Aksara Wreastra &amp; gantungan</a>
-                            <a class="block rounded-xl px-4 py-3 text-sm hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-accent" href="#jalur">Pengangge Suara</a>
-                            <a class="block rounded-xl px-4 py-3 text-sm hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-accent" href="#jalur">Pengangge Tengenan</a>
-                            <a class="block rounded-xl px-4 py-3 text-sm hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-accent" href="#jalur">Pengangge Arda Suara</a>
-                            <a class="block rounded-xl px-4 py-3 text-sm hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-accent" href="#jalur">Angka Aksara Bali</a>
+                    <div class="invisible absolute left-0 top-full z-20 w-64 translate-y-2 pt-3 opacity-0 transition duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                        <div class="rounded-2xl border border-white/10 bg-surface p-2 shadow-2xl shadow-black/40">
+                            <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="#jalur">Aksara Wreastra &amp; gantungan</a>
+                            <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="#jalur">Pengangge Suara</a>
+                            <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="#jalur">Pengangge Tengenan</a>
+                            <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="#jalur">Pengangge Arda Suara</a>
+                            <a class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="#jalur">Angka Aksara Bali</a>
                         </div>
                     </div>
                 </div>
