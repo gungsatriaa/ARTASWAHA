@@ -12,7 +12,7 @@
     <body class="min-h-screen bg-background font-sans text-foreground antialiased">
         <header class="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 lg:px-10">
             <a href="/" class="flex items-center gap-3 rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent" aria-label="ArtaSwaha beranda">
-                <img src="{{ asset('image/maskot.webp') }}" alt="" class="size-12 rounded-full object-cover object-center ring-2 ring-primary/60">
+                <img src="{{ asset('image/maskot.webp') }}" alt="" class="size-12 rounded-full object-cover object-center">
                 <span class="font-display text-2xl font-bold tracking-tight">ArtaSwaha</span>
             </a>
             <nav class="flex items-center gap-3" aria-label="Navigasi utama">
