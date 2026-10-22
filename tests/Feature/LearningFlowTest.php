@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\LearningPath;
 use App\Models\LearningProgress;
 use App\Models\Lesson;
+use App\Models\Quiz;
 use App\Models\User;
 use Database\Seeders\LearningPathSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -79,13 +80,20 @@ class LearningFlowTest extends TestCase
 
         $this->seed(LearningPathSeeder::class);
         $user = User::factory()->create(['name' => 'Gung Satria', 'email' => 'gung@example.com']);
+        LearningProgress::factory()->for($user)->create();
+        Quiz::factory()->for($user)->count(2)->create();
 
         $this->actingAs($user)
             ->get(route('profile.show'))
             ->assertOk()
-            ->assertSee('Profil')
+            ->assertSee('Profil belajar')
             ->assertSee('Gung Satria')
-            ->assertSee('gung@example.com');
+            ->assertSee('gung@example.com')
+            ->assertSee('aria-label="Pelajaran selesai: 1"', false)
+            ->assertSee('aria-label="Kuis dibuat: 2"', false)
+            ->assertSee('Detail akun')
+            ->assertSee(route('learning.paths.show', 'cecimpedan'))
+            ->assertSee(route('quizzes.index'));
     }
 
     public function test_path_page_only_lists_published_reviewed_lessons(): void
