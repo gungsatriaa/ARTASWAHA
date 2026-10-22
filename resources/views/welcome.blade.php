@@ -96,11 +96,7 @@
                 </div>
                 <div class="grid gap-4 md:grid-cols-3">
                     <figure class="flex h-full flex-col rounded-card bg-surface p-6 sm:p-7">
-                        <div class="flex items-center justify-between">
-                            <span class="grid size-10 place-items-center rounded-full bg-primary/15 font-display text-3xl leading-none text-accent" aria-hidden="true">“</span>
-                            <span class="rounded-full bg-background px-3 py-1 text-xs font-bold text-foreground/55">Paribasa Bali</span>
-                        </div>
-                        <blockquote class="mt-5 flex-1 font-readable text-lg leading-7">Tebak-teki Bali bikin aku ingin tahu jawaban yang lain juga.</blockquote>
+                        <blockquote class="flex-1 font-readable text-lg leading-7">Tebak-teki Bali bikin aku ingin tahu jawaban yang lain juga.</blockquote>
                         <figcaption class="mt-6 flex items-center gap-3 border-t border-white/10 pt-5">
                             <img src="{{ asset('avatar/kupu_kupu.webp') }}" alt="" class="size-12 rounded-full object-cover ring-2 ring-primary/40">
                             <span>
@@ -110,11 +106,7 @@
                         </figcaption>
                     </figure>
                     <figure class="flex h-full flex-col rounded-card bg-surface p-6 sm:p-7">
-                        <div class="flex items-center justify-between">
-                            <span class="grid size-10 place-items-center rounded-full bg-primary/15 font-display text-3xl leading-none text-accent" aria-hidden="true">“</span>
-                            <span class="rounded-full bg-background px-3 py-1 text-xs font-bold text-foreground/55">Belajar di rumah</span>
-                        </div>
-                        <blockquote class="mt-5 flex-1 font-readable text-lg leading-7">Materinya singkat, jadi bisa kami pelajari bersama di rumah.</blockquote>
+                        <blockquote class="flex-1 font-readable text-lg leading-7">Materinya singkat, jadi bisa kami pelajari bersama di rumah.</blockquote>
                         <figcaption class="mt-6 flex items-center gap-3 border-t border-white/10 pt-5">
                             <img src="{{ asset('avatar/gajah.webp') }}" alt="" class="size-12 rounded-full object-cover ring-2 ring-primary/40">
                             <span>
@@ -124,11 +116,7 @@
                         </figcaption>
                     </figure>
                     <figure class="flex h-full flex-col rounded-card bg-surface p-6 sm:p-7">
-                        <div class="flex items-center justify-between">
-                            <span class="grid size-10 place-items-center rounded-full bg-primary/15 font-display text-3xl leading-none text-accent" aria-hidden="true">“</span>
-                            <span class="rounded-full bg-background px-3 py-1 text-xs font-bold text-foreground/55">Kuis bersama</span>
-                        </div>
-                        <blockquote class="mt-5 flex-1 font-readable text-lg leading-7">Kuis bersama memberi cara baru untuk mengenalkan paribasa.</blockquote>
+                        <blockquote class="flex-1 font-readable text-lg leading-7">Kuis bersama memberi cara baru untuk mengenalkan paribasa.</blockquote>
                         <figcaption class="mt-6 flex items-center gap-3 border-t border-white/10 pt-5">
                             <img src="{{ asset('avatar/jalak_bali.webp') }}" alt="" class="size-12 rounded-full object-cover ring-2 ring-primary/40">
                             <span>
