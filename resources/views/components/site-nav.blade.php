@@ -12,6 +12,11 @@
             <span class="font-display text-lg font-bold tracking-tight sm:text-2xl">ARTASWAHA</span>
         </a>
         <nav class="hidden items-center gap-1 lg:flex lg:gap-3" aria-label="Navigasi utama">
+            <a href="{{ route('home') }}" @class([
+                'inline-flex min-h-11 items-center rounded-full px-4 py-3 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
+                'bg-primary/20 text-accent' => request()->routeIs('home'),
+                'text-foreground/80 hover:bg-surface' => ! request()->routeIs('home'),
+            ]) @if (request()->routeIs('home')) aria-current="page" @endif>Beranda</a>
             @foreach (['paribasa' => 'Paribasa Bali', 'aksara' => 'Aksara Bali'] as $group => $label)
                 <div class="group relative hidden sm:block">
                     <button type="button" class="inline-flex min-h-11 items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold text-foreground/80 transition hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" aria-haspopup="true">
@@ -64,6 +69,11 @@
                 <button type="button" data-mobile-nav-close aria-label="Tutup menu" class="grid size-10 place-items-center rounded-full bg-background text-xl text-foreground/70 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">&times;</button>
             </div>
             <nav class="mt-5 flex-1 space-y-3 overflow-y-auto overscroll-contain" aria-label="Navigasi mobile">
+                <a href="{{ route('home') }}" @class([
+                    'flex min-h-11 items-center rounded-2xl px-4 py-3 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-accent',
+                    'bg-primary/20 text-accent' => request()->routeIs('home'),
+                    'text-foreground/75 hover:bg-surface hover:text-accent' => ! request()->routeIs('home'),
+                ]) @if (request()->routeIs('home')) aria-current="page" @endif>Beranda</a>
                 @foreach (['paribasa' => 'Paribasa Bali', 'aksara' => 'Aksara Bali'] as $group => $label)
                     <details @if ($currentLearningPath instanceof \App\Models\LearningPath && $currentLearningPath->group === $group) open @endif class="group border-b border-white/10 pb-2">
                         <summary class="flex min-h-12 cursor-pointer list-none items-center justify-between rounded-2xl px-4 py-3 font-display font-bold text-foreground/85 transition hover:bg-surface hover:text-accent focus-visible:outline-2 focus-visible:outline-accent [&::-webkit-details-marker]:hidden">

@@ -2,6 +2,13 @@ import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 
 const roomPage = document.querySelector('[data-room-code]');
+const scrollLockedDialogs = new Set();
+
+const syncPageScrollLock = () => {
+    const isLocked = scrollLockedDialogs.size > 0;
+    document.documentElement.classList.toggle('dialog-open', isLocked);
+    document.body.classList.toggle('dialog-open', isLocked);
+};
 
 document.querySelectorAll('[data-mobile-nav]').forEach((dialog) => {
     const openButton = document.querySelector(`[aria-controls="${dialog.id}"]`);
@@ -9,6 +16,8 @@ document.querySelectorAll('[data-mobile-nav]').forEach((dialog) => {
 
     openButton?.addEventListener('click', () => {
         dialog.showModal();
+        scrollLockedDialogs.add(dialog);
+        syncPageScrollLock();
         openButton.setAttribute('aria-expanded', 'true');
     });
     closeButton?.addEventListener('click', () => dialog.close());
@@ -20,7 +29,11 @@ document.querySelectorAll('[data-mobile-nav]').forEach((dialog) => {
             dialog.close();
         }
     });
-    dialog.addEventListener('close', () => openButton?.setAttribute('aria-expanded', 'false'));
+    dialog.addEventListener('close', () => {
+        scrollLockedDialogs.delete(dialog);
+        syncPageScrollLock();
+        openButton?.setAttribute('aria-expanded', 'false');
+    });
 });
 
 if (roomPage && import.meta.env.VITE_REVERB_APP_KEY && import.meta.env.VITE_REVERB_HOST) {
@@ -94,8 +107,16 @@ document.querySelectorAll('[data-copy-room]').forEach((button) => {
 });
 
 document.querySelectorAll('[data-avatar-dialog]').forEach((dialog) => {
-    document.querySelector('[data-avatar-open]')?.addEventListener('click', () => dialog.showModal());
+    document.querySelector('[data-avatar-open]')?.addEventListener('click', () => {
+        dialog.showModal();
+        scrollLockedDialogs.add(dialog);
+        syncPageScrollLock();
+    });
     dialog.querySelector('[data-avatar-close]')?.addEventListener('click', () => dialog.close());
+    dialog.addEventListener('close', () => {
+        scrollLockedDialogs.delete(dialog);
+        syncPageScrollLock();
+    });
     dialog.addEventListener('click', (event) => {
         if (event.target === dialog) {
             dialog.close();
@@ -104,6 +125,8 @@ document.querySelectorAll('[data-avatar-dialog]').forEach((dialog) => {
 
     if (dialog.hasAttribute('data-open-on-load')) {
         dialog.showModal();
+        scrollLockedDialogs.add(dialog);
+        syncPageScrollLock();
     }
 
     const form = dialog.querySelector('form');

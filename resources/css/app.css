@@ -6,7 +6,7 @@
 
 @font-face {
     font-family: Vimala;
-    src: url('/fonts/vimala.ttf') format('truetype');
+    src: url('../../public/fonts/vimala.ttf') format('truetype');
     font-display: swap;
 }
 
@@ -39,6 +39,12 @@ body {
     font-family: var(--font-sans);
 }
 
+html.dialog-open,
+body.dialog-open {
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
 .avatar-modal-content {
     scrollbar-color: var(--color-primary) transparent;
     scrollbar-width: thin;
@@ -62,13 +68,15 @@ body {
 dialog[data-mobile-nav][open] {
     position: fixed;
     inset: 0 0 0 auto;
+    box-sizing: border-box;
     width: min(22rem, calc(100vw - 1rem));
-    height: 100dvh;
+    height: auto;
     max-width: none;
-    max-height: 100dvh;
+    max-height: none;
     margin: 0;
     padding: 0;
     border: 0;
+    overflow: hidden;
     animation: mobile-nav-enter 180ms ease-out both;
 }
 
