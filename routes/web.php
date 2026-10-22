@@ -4,6 +4,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LearningPathController;
 use App\Http\Controllers\LearningProgressController;
 use App\Http\Controllers\LessonController;
+use App\Http\Controllers\QuizController;
+use App\Http\Controllers\RoomController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LearningPathController::class, 'index'])->name('home');
@@ -23,3 +25,16 @@ Route::middleware('guest')->group(function (): void {
 });
 
 Route::post('/keluar', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
+
+Route::middleware('auth')->group(function (): void {
+    Route::get('/kuis', [QuizController::class, 'index'])->name('quizzes.index');
+    Route::get('/kuis/buat', [QuizController::class, 'create'])->name('quizzes.create');
+    Route::post('/kuis', [QuizController::class, 'store'])->middleware('throttle:10,1')->name('quizzes.store');
+    Route::get('/kuis/{quiz}', [QuizController::class, 'show'])->name('quizzes.show');
+    Route::post('/kuis/{quiz}/room', [RoomController::class, 'store'])->middleware('throttle:10,1')->name('rooms.store');
+    Route::post('/room/gabung', [RoomController::class, 'join'])->middleware('throttle:10,1')->name('rooms.join');
+    Route::get('/room/{room:code}', [RoomController::class, 'show'])->name('rooms.show');
+    Route::post('/room/{room:code}/mulai', [RoomController::class, 'start'])->name('rooms.start');
+    Route::post('/room/{room:code}/jawab', [RoomController::class, 'answer'])->middleware('throttle:30,1')->name('rooms.answer');
+    Route::post('/room/{room:code}/selanjutnya', [RoomController::class, 'advance'])->name('rooms.advance');
+});

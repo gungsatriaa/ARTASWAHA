@@ -110,17 +110,20 @@ Status: **sebagian selesai**.
 
 ## Tahap 6 — Kuis mandiri dan bank soal
 
+Status: **sebagian selesai**.
+
 ### Pekerjaan
 
-- Sediakan bank soal yang ditinjau admin dan dapat dikelompokkan berdasarkan topik/kesulitan.
-- Implementasikan kuis mandiri dengan pilihan ganda, timer opsional, skor server-side, dan ringkasan hasil.
-- Catat jawaban dan percobaan secukupnya untuk mendukung latihan ulang.
-- Tampilkan penjelasan atau materi rujukan setelah menjawab bila tersedia.
+- [ ] Sediakan bank soal yang ditinjau admin dan dapat dikelompokkan berdasarkan topik/kesulitan.
+- [x] Sediakan editor kuis pilihan ganda milik pengguna dengan validasi opsi dan batas jumlah pertanyaan.
+- [ ] Implementasikan kuis mandiri dengan timer dan ringkasan hasil.
+- [x] Hitung jawaban dan poin di server; abaikan skor kiriman browser dan cegah jawaban dihitung ganda.
+- [ ] Tampilkan penjelasan atau materi rujukan setelah menjawab bila tersedia.
 
 ### Pengujian lokal
 
-- Uji batas waktu, jawaban ganda, pengiriman ulang, soal tanpa pilihan, dan manipulasi skor dari browser.
-- Periksa ringkasan hasil dan latihan ulang.
+- [x] Uji validasi opsi, pengiriman jawaban berulang, dan manipulasi poin kiriman browser.
+- [ ] Uji batas waktu, ringkasan hasil, serta latihan ulang.
 
 ### Selesai bila
 
@@ -128,25 +131,29 @@ Status: **sebagian selesai**.
 
 ## Tahap 7 — Membuat kuis dan room
 
+Status: **sebagian selesai**.
+
 ### Pekerjaan
 
-- Izinkan pengguna terdaftar membuat kuis dari bank soal yang tersedia.
-- Izinkan pembuat membuat room, memilih kuis/pengaturan, dan membagikan kode atau tautan.
-- Izinkan pengguna terdaftar bergabung dengan kode room.
-- Terapkan status host dan peserta pada keanggotaan room, bukan role global.
-- Tambahkan aturan room: status sesi, kapasitas bila dibutuhkan, kode invalid/kedaluwarsa, host keluar, dan peserta keluar.
-- Sediakan kontrol host untuk mulai dan mengakhiri sesi.
+- [x] Izinkan pengguna terdaftar membuat kuis pribadi dengan pilihan ganda.
+- [x] Izinkan pemilik kuis membuat room dan membagikan kode/tautan undangan acak.
+- [x] Izinkan pengguna terdaftar bergabung dengan kode room yang valid.
+- [x] Terapkan host/peserta per keanggotaan room tanpa role guru/siswa.
+- [x] Validasi status room, kode salah, akses host, keanggotaan, dan jawaban server-side.
+- [x] Sediakan kontrol host untuk mulai dan lanjut hingga sesi selesai.
 
 ### Pengujian lokal
 
-- Uji pembuatan room, kode salah, join berulang, host/non-host, room sudah dimulai/selesai, dan akses tanpa izin.
-- Pastikan kode tidak mudah ditebak dan aksi room selalu diverifikasi server-side.
+- [x] Uji pembuatan room, gabung, kontrol host, scoring, dan akses kuis privat.
+- [ ] Uji kode salah/kedaluwarsa, koneksi beberapa browser, serta konkurensi pada MySQL lokal.
 
 ### Selesai bila
 
 - Host dapat membuat room dan peserta yang sah dapat bergabung serta mengikuti sesi.
 
 ## Tahap 8 — Realtime dengan Reverb dan Redis
+
+Status: **belum dimulai**.
 
 ### Pekerjaan
 
@@ -170,17 +177,19 @@ Status: **sebagian selesai**.
 
 ## Tahap 9 — Peringkat, hasil, dan pengalaman kelas
 
+Status: **sebagian selesai**.
+
 ### Pekerjaan
 
-- Tampilkan papan peringkat sementara dan hasil akhir dengan nama tampilan/avatar.
-- Terapkan aturan skor yang konsisten dan komunikasikan peran ketepatan/kecepatan.
-- Izinkan host mematikan peringkat untuk sesi yang tidak kompetitif.
+- [x] Tampilkan papan peringkat room dengan nama tampilan dan poin dari server.
+- [x] Beri poin hanya untuk jawaban benar; satu jawaban per peserta per pertanyaan.
+- [x] Izinkan pembuat kuis mematikan papan peringkat.
 - Tampilkan ringkasan jawaban/topik yang perlu diulang tanpa mempermalukan peserta.
 - Sediakan hasil yang dapat dilihat ulang oleh pengguna yang berhak.
 
 ### Pengujian lokal
 
-- Uji seri, jawaban terlambat, peserta disconnect, leaderboard nonaktif, dan hasil setelah sesi berakhir.
+- [ ] Uji seri, jawaban terlambat, peserta disconnect, leaderboard nonaktif, dan hasil setelah sesi berakhir.
 
 ### Selesai bila
 

@@ -39,7 +39,7 @@
                         </div>
                     </div>
                 </div>
-                <a class="hidden min-h-11 items-center rounded-full px-4 py-3 text-sm font-semibold text-foreground/80 transition hover:bg-surface sm:inline-flex" href="#room">Kuis</a>
+                <a class="hidden min-h-11 items-center rounded-full px-4 py-3 text-sm font-semibold text-foreground/80 transition hover:bg-surface sm:inline-flex" href="{{ auth()->check() ? route('quizzes.index') : route('login') }}">Kuis</a>
                 @guest
                     <a class="hidden min-h-11 items-center rounded-full px-4 py-3 text-sm font-semibold text-foreground/80 transition hover:bg-surface sm:inline-flex" href="{{ route('login') }}">Login</a>
                     <a class="inline-flex min-h-11 items-center rounded-full bg-accent px-6 py-3 text-sm font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent" href="{{ route('register') }}">Daftar</a>
@@ -61,7 +61,7 @@
                     <p class="mt-6 max-w-xl font-readable text-lg leading-8 text-foreground/75 sm:text-xl">Kenali paribasa dan aksara Bali lewat cerita, latihan singkat, dan permainan yang bisa langsung dicoba. Mulai tanpa akun; progres tersimpan di perangkatmu.</p>
                     <div id="mulai" class="mt-9 flex flex-wrap gap-3">
                         <a href="#jalur" class="inline-flex min-h-14 items-center justify-center rounded-full bg-primary px-8 py-4 font-bold text-white shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Mulai belajar gratis</a>
-                        <a href="#room" class="inline-flex min-h-14 items-center justify-center rounded-full border border-white/15 px-7 py-4 font-bold transition hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Gabung kuis</a>
+                        <a href="{{ auth()->check() ? route('quizzes.index') : route('login') }}" class="inline-flex min-h-14 items-center justify-center rounded-full border border-white/15 px-7 py-4 font-bold transition hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Gabung kuis</a>
                     </div>
                     <p class="mt-4 text-sm text-foreground/55">Belajar mandiri tanpa akun. Untuk kuis bersama, masuk atau daftar terlebih dahulu.</p>
                 </div>
@@ -141,7 +141,7 @@
                         <h2 class="mt-2 font-display text-3xl font-bold">Ada kode room dari teman?</h2>
                         <p class="mt-3 max-w-xl font-readable leading-7 text-foreground/65">Masuk ke kuis bersama, jawab pertanyaan, dan lihat progres sesi secara langsung.</p>
                     </div>
-                    <a href="#mulai" class="inline-flex min-h-12 shrink-0 items-center justify-center rounded-full bg-accent px-7 py-3 font-bold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Masuk untuk ikut kuis</a>
+                    <a href="{{ auth()->check() ? route('quizzes.index') : route('login') }}" class="inline-flex min-h-12 shrink-0 items-center justify-center rounded-full bg-accent px-7 py-3 font-bold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Masuk untuk ikut kuis</a>
                 </div>
             </section>
         </main>

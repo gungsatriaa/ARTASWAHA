@@ -35,4 +35,19 @@ class User extends Authenticatable
     {
         return $this->hasMany(LearningProgress::class);
     }
+
+    public function quizzes(): HasMany
+    {
+        return $this->hasMany(Quiz::class);
+    }
+
+    public function hostedRooms(): HasMany
+    {
+        return $this->hasMany(Room::class, 'host_id');
+    }
+
+    public function roomParticipations(): HasMany
+    {
+        return $this->hasMany(RoomParticipant::class);
+    }
 }
