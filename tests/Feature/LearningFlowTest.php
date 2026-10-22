@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\LearningPath;
 use App\Models\LearningProgress;
 use App\Models\Lesson;
+use App\Models\User;
 use Database\Seeders\LearningPathSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -53,6 +54,21 @@ class LearningFlowTest extends TestCase
         $lesson = Lesson::factory()->create(['reviewed_at' => null]);
 
         $this->get(route('learning.lessons.show', $lesson->slug))->assertNotFound();
+    }
+
+    public function test_authenticated_navigation_uses_a_circular_profile_menu(): void
+    {
+        $this->seed(LearningPathSeeder::class);
+        $user = User::factory()->create(['name' => 'Gung Satria']);
+
+        $response = $this->actingAs($user)
+            ->get(route('home'))
+            ->assertOk()
+            ->assertSee('aria-label="Menu profil Gung Satria"', false)
+            ->assertSee('Keluar')
+            ->assertDontSee('>Daftar</a>', false);
+
+        $this->assertMatchesRegularExpression('/aria-label="Menu profil Gung Satria">\s*G\s*<\/button>/', $response->getContent());
     }
 
     public function test_path_page_only_lists_published_reviewed_lessons(): void
