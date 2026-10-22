@@ -35,6 +35,8 @@ class ProfileAvatarTest extends TestCase
             ->assertSee(asset('avatar/gajah.webp'))
             ->assertSee('Ganti avatar')
             ->assertSee('Unggah avatar sendiri')
+            ->assertSee('Atur tampilan avatar')
+            ->assertSee('Bagian di dalam lingkaran yang akan disimpan.')
             ->assertSee('avatar/penyu.webp');
     }
 

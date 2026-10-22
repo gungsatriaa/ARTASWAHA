@@ -59,9 +59,22 @@
 
                     <label class="mt-5 block rounded-2xl bg-background p-4 text-sm font-semibold">
                         Unggah avatar sendiri
-                        <input type="file" name="avatar_upload" accept="image/png,image/jpeg,image/webp" class="mt-2 block w-full text-sm text-foreground/70 file:mr-3 file:rounded-full file:border-0 file:bg-primary/20 file:px-4 file:py-2 file:font-bold file:text-accent focus-visible:outline-2 focus-visible:outline-accent">
+                        <input type="file" name="avatar_upload" accept="image/png,image/jpeg,image/webp" data-avatar-file class="mt-2 block w-full text-sm text-foreground/70 file:mr-3 file:rounded-full file:border-0 file:bg-primary/20 file:px-4 file:py-2 file:font-bold file:text-accent focus-visible:outline-2 focus-visible:outline-accent">
                         <span class="mt-2 block text-xs font-normal text-foreground/50">PNG, JPG, atau WebP · maksimal 2 MB. Jika memilih file, file itu yang digunakan.</span>
                     </label>
+
+                    <section data-avatar-crop hidden class="mt-4 rounded-2xl bg-background p-4" aria-label="Atur potongan avatar">
+                        <div class="flex flex-col items-center gap-4 sm:flex-row">
+                            <div data-avatar-crop-viewport class="relative size-40 shrink-0 touch-none overflow-hidden rounded-full bg-surface ring-2 ring-accent/70 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent" role="group" aria-label="Pratinjau crop avatar; gunakan tombol panah untuk menggeser" tabindex="0"></div>
+                            <div class="w-full">
+                                <p class="text-sm font-bold">Atur tampilan avatar</p>
+                                <p class="mt-1 text-xs text-foreground/55">Geser gambar di dalam lingkaran atau gunakan tombol panah, lalu atur perbesarannya.</p>
+                                <label class="mt-4 block text-xs font-semibold text-foreground/70" for="avatar-zoom">Perbesaran</label>
+                                <input id="avatar-zoom" data-avatar-zoom type="range" min="1" max="3" step="0.01" value="1" class="mt-2 w-full accent-accent focus-visible:outline-2 focus-visible:outline-accent" aria-label="Atur perbesaran avatar">
+                            </div>
+                        </div>
+                        <p data-avatar-crop-status role="status" class="mt-3 text-xs text-foreground/55">Bagian di dalam lingkaran yang akan disimpan.</p>
+                    </section>
 
                     <button type="submit" class="mt-6 min-h-12 w-full rounded-full bg-accent px-6 py-3 font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Simpan avatar</button>
                 </form>
