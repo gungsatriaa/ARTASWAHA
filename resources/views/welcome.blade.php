@@ -39,6 +39,9 @@
                         </div>
                     </div>
                 </div>
+                <a class="hidden min-h-11 items-center rounded-full px-4 py-3 text-sm font-semibold text-foreground/80 transition hover:bg-surface sm:inline-flex" href="#jalur">Modul Belajar</a>
+                <a class="hidden min-h-11 items-center rounded-full px-4 py-3 text-sm font-semibold text-foreground/80 transition hover:bg-surface sm:inline-flex" href="#room">Kuis</a>
+                <a class="hidden min-h-11 items-center rounded-full px-4 py-3 text-sm font-semibold text-foreground/80 transition hover:bg-surface sm:inline-flex" href="#login">Login</a>
                 <a class="inline-flex min-h-11 items-center rounded-full bg-accent px-6 py-3 text-sm font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent" href="#mulai">Mulai belajar</a>
             </nav>
             </div>
