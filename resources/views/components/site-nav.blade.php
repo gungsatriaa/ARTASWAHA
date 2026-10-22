@@ -5,7 +5,7 @@
     $currentLearningPathSlug = $currentLearningPath instanceof \App\Models\LearningPath ? $currentLearningPath->slug : $currentLearningPath;
 @endphp
 
-<header class="sticky top-0 z-50 border-b border-white/10 bg-background/95 backdrop-blur-sm">
+<header class="sticky top-0 z-50 border-b border-white/10 bg-background">
     <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 sm:py-5 lg:px-10 lg:py-6">
         <a href="{{ route('home') }}" class="flex items-center gap-3 rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent" aria-label="ARTASWAHA beranda">
             <img src="{{ asset('image/maskot.webp') }}" alt="" class="size-10 rounded-full object-cover object-center sm:size-12">
@@ -68,7 +68,7 @@
                 <a href="{{ route('home') }}" class="flex items-center gap-3 font-display text-lg font-bold"><img src="{{ asset('image/maskot.webp') }}" alt="" class="size-10 rounded-full object-cover">ARTASWAHA</a>
                 <button type="button" data-mobile-nav-close aria-label="Tutup menu" class="grid size-10 place-items-center rounded-full bg-background text-xl text-foreground/70 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">&times;</button>
             </div>
-            <nav class="mt-5 flex-1 space-y-3 overflow-y-auto overscroll-contain" aria-label="Navigasi mobile">
+            <nav class="mt-5 flex-1 space-y-3 overflow-y-auto overscroll-contain pb-6" aria-label="Navigasi mobile">
                 <a href="{{ route('home') }}" @class([
                     'flex min-h-11 items-center rounded-2xl px-4 py-3 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-accent',
                     'bg-primary/20 text-accent' => request()->routeIs('home'),
