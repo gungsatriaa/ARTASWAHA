@@ -49,7 +49,7 @@
                         <span aria-hidden="true">✦</span> Belajar budaya Bali, satu langkah kecil
                     </p>
                     <h1 class="font-display text-5xl font-bold leading-[1.08] tracking-tight sm:text-6xl lg:text-7xl">Bahasa Bali jadi <span class="text-accent">seru</span> dipelajari.</h1>
-                    <p class="mt-6 max-w-xl font-readable text-lg leading-8 text-foreground/75 sm:text-xl">Dengar, main, dan pecahkan teka-teki sambil mengenal bahasa serta aksara Bali. Mulai belajar langsung—progresmu tersimpan di perangkat ini.</p>
+                    <p class="mt-6 max-w-xl font-readable text-lg leading-8 text-foreground/75 sm:text-xl">Kenali paribasa dan aksara Bali lewat cerita, latihan singkat, dan permainan yang bisa langsung dicoba. Mulai tanpa akun; progres tersimpan di perangkatmu.</p>
                     <div id="mulai" class="mt-9 flex flex-wrap gap-3">
                         <a href="#jalur" class="inline-flex min-h-14 items-center justify-center rounded-full bg-primary px-8 py-4 font-bold text-white shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Mulai belajar gratis</a>
                         <a href="#room" class="inline-flex min-h-14 items-center justify-center rounded-full border border-white/15 px-7 py-4 font-bold transition hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Gabung kuis</a>
@@ -84,26 +84,43 @@
             <section id="jalur" class="mx-auto max-w-7xl px-6 pb-20 lg:px-10">
                 <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
                     <div>
-                        <p class="font-semibold text-accent">Pilih petualanganmu</p>
-                        <h2 class="mt-2 font-display text-3xl font-bold sm:text-4xl">Mulai dari yang kamu suka</h2>
+                        <p class="font-semibold text-accent">Jalur belajar</p>
+                        <h2 class="mt-2 font-display text-3xl font-bold sm:text-4xl">Pilih yang ingin kamu pelajari</h2>
                     </div>
-                    <p class="max-w-md font-readable text-foreground/65">Pelajaran dibuat pendek supaya mudah diikuti dan menyenangkan untuk diulang.</p>
+                    <p class="max-w-md font-readable text-foreground/65">Mulai dari pengenalan, lalu lanjutkan ke latihan. Setiap bagian dirancang singkat dan mudah diulang.</p>
                 </div>
-                <div class="grid gap-4 md:grid-cols-3">
-                    <article class="rounded-card border border-white/10 bg-surface p-6 transition hover:border-primary/60">
-                        <span class="grid size-12 place-items-center rounded-2xl bg-primary/15 text-2xl" aria-hidden="true">◉</span>
-                        <h3 class="mt-5 font-display text-xl font-bold">Bahasa Bali</h3>
-                        <p class="mt-2 font-readable leading-7 text-foreground/65">Kenali sapaan, kata sehari-hari, dan cara mengucapkannya.</p>
+                <div class="grid gap-5 lg:grid-cols-2">
+                    <article class="rounded-card bg-surface p-6 sm:p-8">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <p class="text-sm font-semibold text-accent">Jalur 1</p>
+                                <h3 class="mt-2 font-display text-2xl font-bold">Paribasa Bali</h3>
+                                <p class="mt-3 max-w-md font-readable leading-7 text-foreground/65">Belajar ungkapan, permainan kata, dan teka-teki yang hidup dalam keseharian Bali.</p>
+                            </div>
+                            <span class="grid size-12 shrink-0 place-items-center rounded-full bg-accent/10 text-xl text-accent" aria-hidden="true">✦</span>
+                        </div>
+                        <ul class="mt-7 flex flex-wrap gap-2 text-sm font-semibold">
+                            <li class="rounded-full bg-background px-4 py-2">Cecimpedan</li>
+                            <li class="rounded-full bg-background px-4 py-2">Peparikan</li>
+                            <li class="rounded-full bg-background px-4 py-2">Sesonggakan</li>
+                        </ul>
+                        <a href="#room" class="mt-8 inline-flex min-h-12 items-center rounded-full bg-primary px-6 py-3 font-bold text-white transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Jelajahi paribasa</a>
                     </article>
-                    <article class="rounded-card border border-white/10 bg-surface p-6 transition hover:border-primary/60">
-                        <span class="grid size-12 place-items-center rounded-2xl bg-accent/15 text-2xl text-accent" aria-hidden="true">ᬅ</span>
-                        <h3 class="mt-5 font-display text-xl font-bold">Aksara Bali</h3>
-                        <p class="mt-2 font-readable leading-7 text-foreground/65">Belajar mengenali dan menyusun aksara langkah demi langkah.</p>
-                    </article>
-                    <article class="rounded-card border border-white/10 bg-surface p-6 transition hover:border-primary/60">
-                        <span class="grid size-12 place-items-center rounded-2xl bg-white/10 text-2xl" aria-hidden="true">❔</span>
-                        <h3 class="mt-5 font-display text-xl font-bold">Cecimpedan</h3>
-                        <p class="mt-2 font-readable leading-7 text-foreground/65">Asah rasa ingin tahu lewat teka-teki tradisional Bali.</p>
+                    <article class="rounded-card bg-surface p-6 sm:p-8">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <p class="text-sm font-semibold text-accent">Jalur 2</p>
+                                <h3 class="mt-2 font-display text-2xl font-bold">Aksara Bali</h3>
+                                <p class="mt-3 max-w-md font-readable leading-7 text-foreground/65">Kenali bentuk aksara, tanda bunyi, pasangan, dan angka melalui contoh serta latihan menulis.</p>
+                            </div>
+                            <span class="grid size-12 shrink-0 place-items-center rounded-full bg-primary/15 font-balinese text-2xl text-accent" lang="ban" aria-hidden="true">ᬅ</span>
+                        </div>
+                        <ul class="mt-7 flex flex-wrap gap-2 text-sm font-semibold">
+                            <li class="rounded-full bg-background px-4 py-2">Wreastra &amp; gantungan</li>
+                            <li class="rounded-full bg-background px-4 py-2">Pengangge</li>
+                            <li class="rounded-full bg-background px-4 py-2">Angka Bali</li>
+                        </ul>
+                        <a href="#room" class="mt-8 inline-flex min-h-12 items-center rounded-full bg-primary px-6 py-3 font-bold text-white transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Jelajahi aksara</a>
                     </article>
                 </div>
             </section>
