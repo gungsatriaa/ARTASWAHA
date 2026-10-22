@@ -29,6 +29,7 @@ class LearningFlowTest extends TestCase
             ->assertSee('ᬒᬁ ᬲ᭄ᬯᬲ᭄ᬢ᭄ᬬᬲ᭄ᬢᬸ᭟')
             ->assertSee(asset('image/asset1.webp'))
             ->assertSee('absolute right-0 top-12', false)
+            ->assertSee('max-[380px]:scale-[1.15]', false)
             ->assertSee('sm:absolute sm:right-0 sm:top-0', false)
             ->assertSee('xl:grid-cols-[1.05fr_.95fr]', false)
             ->assertSee('md:h-[20rem]', false)
