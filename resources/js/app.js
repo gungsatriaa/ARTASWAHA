@@ -73,6 +73,20 @@ document.querySelectorAll('[data-copy-room]').forEach((button) => {
     });
 });
 
+document.querySelectorAll('[data-avatar-dialog]').forEach((dialog) => {
+    document.querySelector('[data-avatar-open]')?.addEventListener('click', () => dialog.showModal());
+    dialog.querySelector('[data-avatar-close]')?.addEventListener('click', () => dialog.close());
+    dialog.addEventListener('click', (event) => {
+        if (event.target === dialog) {
+            dialog.close();
+        }
+    });
+
+    if (dialog.hasAttribute('data-open-on-load')) {
+        dialog.showModal();
+    }
+});
+
 if (window.Echo && roomPage) {
     window.Echo.private(`rooms.${roomPage.dataset.roomCode}`)
         .listen('.room.updated', () => window.location.reload());

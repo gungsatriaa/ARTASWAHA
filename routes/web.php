@@ -9,6 +9,8 @@ use App\Http\Controllers\LessonController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\RoomController;
+use App\Http\Controllers\ShowProfileAvatarController;
+use App\Http\Controllers\UpdateProfileAvatarController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LearningPathController::class, 'index'])->name('home');
@@ -51,6 +53,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 Route::middleware('auth')->group(function (): void {
     Route::get('/profil', ProfileController::class)->name('profile.show');
     Route::get('/profil/tentang', [ProfileController::class, 'about'])->name('profile.about');
+    Route::get('/profil/avatar', ShowProfileAvatarController::class)->name('profile.avatar.show');
+    Route::put('/profil/avatar', UpdateProfileAvatarController::class)->middleware('throttle:10,1')->name('profile.avatar.update');
     Route::get('/kuis', [QuizController::class, 'index'])->name('quizzes.index');
     Route::get('/kuis/buat', [QuizController::class, 'create'])->name('quizzes.create');
     Route::post('/kuis', [QuizController::class, 'store'])->middleware('throttle:10,1')->name('quizzes.store');

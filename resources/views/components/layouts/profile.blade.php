@@ -4,10 +4,15 @@
     <div class="mx-auto grid min-h-[calc(100svh-6rem)] max-w-7xl gap-5 px-6 py-6 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-center lg:px-10">
         <aside class="rounded-card bg-surface p-5 sm:p-6 lg:sticky lg:top-28 lg:self-start" aria-label="Profil dan navigasi akun">
             <div class="flex items-center gap-4 lg:flex-col lg:items-start">
-                <span class="grid size-16 shrink-0 place-items-center rounded-full bg-accent font-display text-2xl font-extrabold text-background" aria-hidden="true">{{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}</span>
+                @if ($user->avatar)
+                    <img src="{{ str_starts_with($user->avatar, 'avatars/') ? route('profile.avatar.show') : asset($user->avatar) }}" alt="Avatar {{ $user->name }}" class="size-16 shrink-0 rounded-full object-cover ring-2 ring-primary/40">
+                @else
+                    <span class="grid size-16 shrink-0 place-items-center rounded-full bg-accent font-display text-2xl font-extrabold text-background" aria-hidden="true">{{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}</span>
+                @endif
                 <div class="min-w-0">
                     <h1 class="break-words font-display text-xl font-bold">{{ $user->name }}</h1>
                     <p class="mt-1 break-all text-sm text-foreground/55">{{ $user->email }}</p>
+                    <button type="button" data-avatar-open class="mt-3 rounded-full bg-primary/15 px-4 py-2 text-sm font-bold text-accent transition hover:bg-primary/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Ganti avatar</button>
                 </div>
             </div>
 
@@ -22,8 +27,56 @@
                     <span aria-hidden="true">♫</span> Kuis saya
                 </a>
             </nav>
+
+            <dialog data-avatar-dialog @if ($errors->any()) data-open-on-load @endif class="m-auto max-h-[calc(100dvh-2rem)] w-[min(38rem,calc(100%-2rem))] overflow-y-auto rounded-card border border-white/10 bg-surface p-0 text-foreground shadow-2xl backdrop:bg-black/75">
+                <form method="POST" action="{{ route('profile.avatar.update') }}" enctype="multipart/form-data" class="p-5 sm:p-7">
+                    @csrf
+                    @method('PUT')
+                    <header class="flex items-start justify-between gap-4">
+                        <div>
+                            <h2 class="font-display text-2xl font-bold">Pilih avatar</h2>
+                            <p class="mt-1 text-sm text-foreground/60">Pilih ilustrasi Bali atau unggah gambar milikmu.</p>
+                        </div>
+                        <button type="button" data-avatar-close aria-label="Tutup" class="grid size-10 shrink-0 place-items-center rounded-full bg-background text-xl text-foreground/70 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">&times;</button>
+                    </header>
+
+                    @if ($errors->any())
+                        <p role="alert" class="mt-4 rounded-2xl bg-danger/10 p-3 text-sm text-danger">{{ $errors->first('avatar_upload') ?: $errors->first('avatar') }}</p>
+                    @endif
+                    @php
+                        $selectedAvatar = old('avatar', $user->avatar && ! str_starts_with($user->avatar, 'avatars/') ? $user->avatar : ($user->avatar ? '' : array_key_first(\App\Services\ProfileAvatarService::DEFAULT_AVATARS)));
+                    @endphp
+                    <fieldset class="mt-5">
+                        <legend class="mb-3 text-sm font-bold">Avatar bawaan</legend>
+                        <div class="grid grid-cols-3 gap-3 sm:grid-cols-5">
+                            @foreach (\App\Services\ProfileAvatarService::DEFAULT_AVATARS as $avatarPath => $avatarName)
+                                <label class="group cursor-pointer rounded-2xl p-2 text-center transition hover:bg-background has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent">
+                                    <input class="peer sr-only" type="radio" name="avatar" value="{{ $avatarPath }}" @checked($selectedAvatar === $avatarPath)>
+                                    <span class="mx-auto block size-16 overflow-hidden rounded-full ring-2 ring-transparent transition peer-checked:ring-accent group-hover:scale-105">
+                                        <img src="{{ asset($avatarPath) }}" alt="" class="size-full object-cover">
+                                    </span>
+                                    <span class="mt-2 block truncate text-xs font-semibold text-foreground/70 peer-checked:text-accent">{{ $avatarName }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                    </fieldset>
+
+                    <label class="mt-5 block rounded-2xl bg-background p-4 text-sm font-semibold">
+                        Unggah avatar sendiri
+                        <input type="file" name="avatar_upload" accept="image/png,image/jpeg,image/webp" class="mt-2 block w-full text-sm text-foreground/70 file:mr-3 file:rounded-full file:border-0 file:bg-primary/20 file:px-4 file:py-2 file:font-bold file:text-accent focus-visible:outline-2 focus-visible:outline-accent">
+                        <span class="mt-2 block text-xs font-normal text-foreground/50">PNG, JPG, atau WebP · maksimal 2 MB. Jika memilih file, file itu yang digunakan.</span>
+                    </label>
+
+                    <button type="submit" class="mt-6 min-h-12 w-full rounded-full bg-accent px-6 py-3 font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Simpan avatar</button>
+                </form>
+            </dialog>
         </aside>
 
-        <div class="min-w-0">{{ $slot }}</div>
+        <div class="min-w-0">
+            @if (session('status'))
+                <p role="status" class="mb-4 rounded-2xl bg-primary/15 px-5 py-3 text-sm font-semibold text-accent">{{ session('status') }}</p>
+            @endif
+            {{ $slot }}
+        </div>
     </div>
 </x-layouts.app>

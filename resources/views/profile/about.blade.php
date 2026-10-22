@@ -35,7 +35,7 @@
             <dl class="mt-5 space-y-4 text-sm leading-6">
                 <div class="rounded-2xl bg-background p-4">
                     <dt class="font-bold">Data yang digunakan</dt>
-                    <dd class="mt-1 text-foreground/65">Akun menyimpan nama, alamat email, dan kata sandi dalam bentuk terlindungi. Belajar tanpa akun menggunakan ID acak pada cookie perangkat untuk mengingat progres; progres perangkat dapat ditautkan ke akun saat kamu masuk atau mendaftar. Kuis dan room menyimpan pertanyaan, nama tampilan peserta, jawaban, serta skor yang diperlukan untuk menjalankan sesi.</dd>
+                    <dd class="mt-1 text-foreground/65">Akun menyimpan nama, alamat email, kata sandi dalam bentuk terlindungi, dan avatar pilihan. Gambar avatar yang diunggah disimpan privat dan hanya dapat dimuat saat pemilik akun masuk. Belajar tanpa akun menggunakan ID acak pada cookie perangkat untuk mengingat progres; progres perangkat dapat ditautkan ke akun saat kamu masuk atau mendaftar. Kuis dan room menyimpan pertanyaan, nama tampilan peserta, jawaban, serta skor yang diperlukan untuk menjalankan sesi.</dd>
                 </div>
                 <div class="rounded-2xl bg-background p-4">
                     <dt class="font-bold">Penggunaan dan keterlihatan</dt>
