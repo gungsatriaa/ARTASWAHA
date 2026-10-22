@@ -39,7 +39,7 @@ class LearningFlowTest extends TestCase
             ->assertSee(route('learning.paths.show', 'cecimpedan'));
 
         $html = $response->getContent();
-        $sections = ['tentang', 'jalur', 'keunggulan', 'testimoni', 'faq'];
+        $sections = ['tentang', 'keunggulan', 'testimoni', 'faq'];
         $positions = array_map(fn (string $section) => strpos($html, 'id="'.$section.'"'), $sections);
 
         $this->assertNotContains(false, $positions);

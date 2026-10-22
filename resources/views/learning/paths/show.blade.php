@@ -11,7 +11,7 @@
         <header class="border-b border-white/10">
             <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
                 <a href="{{ route('home') }}" class="font-display text-xl font-bold">ARTASWAHA</a>
-                <a href="{{ route('home') }}#jalur" class="rounded-full px-4 py-2 text-sm font-semibold hover:bg-surface">Kembali</a>
+                <a href="{{ route('home') }}" class="rounded-full px-4 py-2 text-sm font-semibold hover:bg-surface">Kembali</a>
             </div>
         </header>
         <main class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
