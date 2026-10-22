@@ -76,7 +76,7 @@ Status: **sebagian selesai**.
 - [ ] Tambahkan latihan interaktif, audio, animasi, dan kontrol suara.
 - [x] Simpan progres dengan UUID pada cookie perangkat terenkripsi oleh Laravel.
 - [ ] Tampilkan pelajaran terakhir, ringkasan progres, dan latihan ulang.
-- [ ] Kaitkan progres anonim ke akun saat registrasi/login.
+- [x] Kaitkan progres anonim ke akun saat registrasi/login tanpa mengubah identifier perangkat.
 
 ### Pengujian lokal
 
@@ -89,17 +89,20 @@ Status: **sebagian selesai**.
 
 ## Tahap 5 — Akun dan perpindahan progres
 
+Status: **sebagian selesai**.
+
 ### Pekerjaan
 
-- Tambahkan registrasi, login, logout, pemulihan akses, dan validasi akun memakai pola Laravel yang sesuai versi terpasang.
-- Minimalkan data yang diminta dan gunakan nama tampilan/avatar untuk aktivitas bersama.
-- Gabungkan progres anonim ke akun saat registrasi/login dengan aturan duplikasi yang jelas.
-- Terapkan rate limit, perlindungan sesi, dan otorisasi untuk halaman akun.
+- [x] Tambahkan registrasi, login, logout, pemulihan kata sandi, dan validasi memakai fitur Laravel.
+- [x] Gunakan nama tampilan dan batasi data akun awal pada nama tampilan, email, serta kata sandi.
+- [x] Kaitkan progres anonim ke akun saat registrasi/login.
+- [x] Terapkan rate limit pada form auth dan regenerasi/invalidation sesi.
+- [ ] Tambahkan halaman akun dan otorisasi untuk operasi kuis/room.
 
 ### Pengujian lokal
 
-- Uji alur autentikasi valid/tidak valid, pembatasan percobaan, logout, serta penggabungan progres.
-- Verifikasi progres milik satu akun tidak dapat dibaca akun lain.
+- [x] Uji registrasi, login valid/tidak valid, logout, reset kata sandi, dan pengaitan progres.
+- [ ] Uji pembatasan percobaan dan isolasi data antar akun.
 
 ### Selesai bila
 

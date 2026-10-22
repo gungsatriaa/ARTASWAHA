@@ -12,7 +12,7 @@ class LearningProgress extends Model
     /** @use HasFactory<LearningProgressFactory> */
     use HasFactory;
 
-    protected $fillable = ['visitor_id', 'lesson_id', 'points', 'completed_at'];
+    protected $fillable = ['visitor_id', 'user_id', 'lesson_id', 'points', 'completed_at'];
 
     protected function casts(): array
     {
@@ -22,5 +22,10 @@ class LearningProgress extends Model
     public function lesson(): BelongsTo
     {
         return $this->belongsTo(Lesson::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }
