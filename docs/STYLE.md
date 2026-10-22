@@ -1,5 +1,13 @@
 # ArtaSwaha — UI dan Visual Style
 
+## Implementasi styling
+
+- Gunakan Tailwind CSS v4 untuk layout dan styling komponen; gunakan utility classes di Blade dan hindari stylesheet terpisah untuk aturan yang hanya dipakai sekali.
+- Definisikan warna, tipografi, radius, dan token global sekali di `resources/css/app.css` menggunakan `@theme` serta custom properties CSS bila diperlukan.
+- Gunakan token tema global melalui utility Tailwind atau `var(...)`; jangan menyalin nilai warna/radius berulang di template.
+- CSS khusus hanya untuk kebutuhan yang tidak praktis ditulis dengan utility, seperti `@font-face` Vimala dan aturan glyph Aksara Bali.
+- Font Nunito, Atkinson Hyperlegible, dan Quicksand dimuat dari sumber tepercaya dengan fallback; Vimala dimuat sebagai file lokal proyek.
+
 ## Arah visual
 
 Buat pengalaman belajar yang ceria, hangat, dan mudah dipahami anak, dengan identitas visual yang berakar pada Bali. Ambil inspirasi umum dari aplikasi belajar bahasa yang ringan dan memberi umpan balik, tetapi gunakan komposisi, karakter, ilustrasi, palet, ikon, suara, dan pola navigasi ArtaSwaha sendiri. Jangan menyalin maskot, layout khas, ikon, teks, atau aset Duolingo.
