@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LearningPathController;
 use App\Http\Controllers\LearningProgressController;
 use App\Http\Controllers\LessonController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\RoomController;
 use Illuminate\Support\Facades\Route;
@@ -48,6 +49,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 });
 
 Route::middleware('auth')->group(function (): void {
+    Route::get('/profil', ProfileController::class)->name('profile.show');
     Route::get('/kuis', [QuizController::class, 'index'])->name('quizzes.index');
     Route::get('/kuis/buat', [QuizController::class, 'create'])->name('quizzes.create');
     Route::post('/kuis', [QuizController::class, 'store'])->middleware('throttle:10,1')->name('quizzes.store');

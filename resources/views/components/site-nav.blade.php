@@ -34,6 +34,7 @@
                     <div class="invisible absolute right-0 top-full z-20 w-56 translate-y-2 pt-3 opacity-0 transition duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-has-[:focus-visible]:visible group-has-[:focus-visible]:translate-y-0 group-has-[:focus-visible]:opacity-100">
                         <div class="rounded-2xl border border-white/10 bg-surface p-2 shadow-2xl shadow-black/40">
                             <p class="truncate px-4 py-3 text-sm font-semibold text-foreground/70">{{ auth()->user()->name }}</p>
+                            <a href="{{ route('profile.show') }}" class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">Profil</a>
                             @if (auth()->user()->is_admin)
                                 <a href="{{ route('admin.lessons.index') }}" class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">Kelola materi</a>
                             @endif

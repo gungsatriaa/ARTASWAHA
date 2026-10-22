@@ -65,10 +65,27 @@ class LearningFlowTest extends TestCase
             ->get(route('home'))
             ->assertOk()
             ->assertSee('aria-label="Menu profil Gung Satria"', false)
+            ->assertSee('Profil')
+            ->assertSee(route('profile.show'))
             ->assertSee('Keluar')
             ->assertDontSee('>Daftar</a>', false);
 
         $this->assertMatchesRegularExpression('/aria-label="Menu profil Gung Satria">\s*G\s*<\/button>/', $response->getContent());
+    }
+
+    public function test_profile_page_requires_authentication_and_shows_account_details(): void
+    {
+        $this->get(route('profile.show'))->assertRedirect(route('login'));
+
+        $this->seed(LearningPathSeeder::class);
+        $user = User::factory()->create(['name' => 'Gung Satria', 'email' => 'gung@example.com']);
+
+        $this->actingAs($user)
+            ->get(route('profile.show'))
+            ->assertOk()
+            ->assertSee('Profil')
+            ->assertSee('Gung Satria')
+            ->assertSee('gung@example.com');
     }
 
     public function test_path_page_only_lists_published_reviewed_lessons(): void
