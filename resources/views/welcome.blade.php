@@ -11,7 +11,7 @@
                 </div>
 
                 <div class="mx-auto w-full max-w-lg py-4 md:pl-8">
-                    <div class="relative overflow-hidden rounded-card border border-white/10 bg-surface p-7 sm:p-9">
+                    <div class="relative rounded-card border border-white/10 bg-surface p-7 sm:p-9">
                         <div class="flex items-center gap-3 text-sm font-semibold text-accent">
                             <span class="font-balinese text-xl" lang="ban" aria-hidden="true">ᬅ</span>
                             <span>Belajar Aksara Bali</span>
@@ -22,7 +22,7 @@
                                 <p class="mt-3 font-display text-xl font-bold sm:text-2xl">Om Swastyastu</p>
                                 <p class="mt-2 font-readable leading-7 text-foreground/65">Salam pembuka dalam bahasa Bali. Kenali bentuk aksaranya lewat contoh.</p>
                             </div>
-                            <img src="{{ asset('image/asset1.webp') }}" alt="Maskot ARTASWAHA sedang belajar menulis" class="mx-auto h-56 w-full object-contain sm:h-64">
+                            <img src="{{ asset('image/asset1.webp') }}" alt="Maskot ARTASWAHA sedang belajar menulis" class="mx-auto h-56 w-full object-contain sm:h-72 sm:scale-125 sm:translate-x-6 sm:translate-y-2 md:h-80 md:scale-[1.3] md:translate-x-8 md:translate-y-3">
                         </div>
                         <div class="mt-4 flex items-center justify-between gap-3 border-t border-white/10 pt-4 text-sm">
                             <span class="font-balinese text-lg text-accent" lang="ban" aria-hidden="true">ᬒᬁ</span>
