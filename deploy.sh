@@ -82,6 +82,10 @@ wait_for_reverb() {
 
 cd "$APP_DIR"
 
+printf '=================================================\n'
+printf '  Memulai deployment ARTASWAHA...\n'
+printf '=================================================\n'
+
 command -v git >/dev/null || fail "git tidak ditemukan."
 command -v php >/dev/null || fail "PHP CLI tidak ditemukan."
 command -v composer >/dev/null || fail "Composer tidak ditemukan."
@@ -98,14 +102,14 @@ fi
 [[ "$(git branch --show-current)" == "$DEPLOY_BRANCH" ]] || fail "Branch aktif bukan '$DEPLOY_BRANCH'. Atur DEPLOY_BRANCH sesuai branch yang akan di-deploy."
 [[ -z "$(git status --porcelain)" ]] || fail "Working tree tidak bersih. Commit/stash perubahan di server sebelum deploy agar tidak tertimpa."
 
-printf '\n== Validasi environment production ==\n'
+printf '\n[0/15] Memvalidasi environment production...\n'
 [[ "$(dotenv_value APP_ENV)" == "production" ]] || fail "APP_ENV harus production."
 [[ "$(dotenv_value APP_DEBUG)" == "false" ]] || fail "APP_DEBUG harus false."
 
-printf '\n== Aktifkan maintenance mode ==\n'
+printf '\n[1/15] Menyalakan mode maintenance...\n'
 php artisan down --render="errors::503" --retry=60
 
-printf '\n== Update source dari GitHub ==\n'
+printf '\n[2/15] Menarik pembaruan dari GitHub...\n'
 if [[ -f "$DEPLOY_SSH_KEY" ]]; then
     printf -v DEPLOY_GIT_SSH_COMMAND 'ssh -i %q -o IdentitiesOnly=yes' "$DEPLOY_SSH_KEY"
     GIT_SSH_COMMAND="$DEPLOY_GIT_SSH_COMMAND" git fetch --prune "$DEPLOY_REMOTE" "$DEPLOY_BRANCH"
@@ -115,23 +119,34 @@ else
     git pull --ff-only "$DEPLOY_REMOTE" "$DEPLOY_BRANCH"
 fi
 
-printf '\n== Install dependency PHP ==\n'
-composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+printf '\n[3/15] Memperbarui dependensi Composer production...\n'
+COMPOSER_IPRESOLVE=4 COMPOSER_PROCESS_TIMEOUT=2000 composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
-printf '\n== Build frontend ==\n'
+printf '\n[4/15] Menginstal dependensi NPM...\n'
 npm ci --no-audit --no-fund
+
+printf '\n[5/15] Mem-build frontend...\n'
 npm run build
 
-printf '\n== Migrasi, storage, dan optimasi Laravel ==\n'
-php artisan config:clear
+printf '\n[6/15] Menjalankan migrasi database...\n'
 php artisan migrate --force
+
+printf '\n[7/15] Membuat symbolic link storage...\n'
 php artisan storage:link
+
+printf '\n[8/15] Membersihkan cache konfigurasi lama...\n'
+php artisan config:clear
+
+printf '\n[9/15] Mengoptimalkan cache Laravel...\n'
 php artisan optimize
 
-printf '\n== Restart worker dan Reverb ==\n'
+printf '\n[10/15] Meminta restart queue worker dan Reverb...\n'
 php artisan queue:restart
 php artisan reverb:restart
+printf '\n[11/15] Menunggu service mulai kembali...\n'
+sleep 2
 
+printf '\n[12/15] Memeriksa status queue worker dan Reverb...\n'
 if [[ -n "$SUPERVISORCTL_BIN" ]]; then
     check_supervisor_program "Queue worker" "$QUEUE_PROGRAM"
     check_supervisor_program "Reverb process" "$REVERB_PROGRAM"
@@ -141,10 +156,10 @@ else
     check_process "Reverb process" '[a]rtisan reverb:start'
 fi
 
-printf '\n== Matikan maintenance mode ==\n'
+printf '\n[13/15] Mematikan mode maintenance...\n'
 php artisan up
 
-printf '\n== Health checks ==\n'
+printf '\n[14/15] Menjalankan health check Laravel, OCR, AI, dan WebSocket...\n'
 APP_URL="$(dotenv_value APP_URL)"
 OCR_API_URL="$(dotenv_value OCR_API_URL)"
 OCR_API_KEY="$(dotenv_value OCR_API_KEY)"
@@ -174,4 +189,10 @@ check_http "AI API models" "${AI_API_URL%/}/models" "${AI_HEADERS[@]}"
 
 wait_for_reverb "$REVERB_SERVER_HOST" "$REVERB_SERVER_PORT"
 
-printf '\nDeploy selesai.\n'
+printf '\n[15/15] Deployment ARTASWAHA berhasil.\n'
+printf '=================================================\n'
+printf '  Aplikasi siap digunakan.\n'
+printf '=================================================\n'
+printf '\nVerifikasi cepat:\n'
+printf '  php artisan about\n'
+printf '  php artisan queue:failed\n'
