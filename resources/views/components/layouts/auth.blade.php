@@ -16,7 +16,7 @@
     </head>
     <body class="min-h-dvh overflow-x-hidden bg-background font-sans text-foreground antialiased">
         <main class="grid min-h-dvh lg:grid-cols-2">
-                <aside class="flex flex-col justify-between border-b border-white/10 bg-surface px-5 py-8 sm:px-10 sm:py-10 lg:min-h-dvh lg:border-b-0 lg:border-r lg:px-12 lg:py-12 xl:px-20">
+                <aside class="hidden flex-col justify-between border-b border-white/10 bg-surface px-5 py-8 sm:px-10 sm:py-10 lg:flex lg:min-h-dvh lg:border-b-0 lg:border-r lg:px-12 lg:py-12 xl:px-20">
                     <div class="flex flex-1 flex-col">
                         <a href="{{ route('home') }}" class="inline-flex w-fit items-center gap-3 rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent" aria-label="ARTASWAHA beranda">
                             <img src="{{ asset('image/maskot.webp') }}" alt="" class="size-10 rounded-full object-cover lg:size-12">
@@ -41,9 +41,21 @@
                     </div>
                 </aside>
 
-                <section class="flex items-center bg-background px-5 py-8 sm:px-10 sm:py-10 lg:min-h-dvh lg:px-12 lg:py-12 xl:px-20">
-                    <div class="mx-auto w-full max-w-md">
+                <section class="flex flex-col bg-background px-5 py-8 sm:px-10 sm:py-10 lg:min-h-dvh lg:px-12 lg:py-12 xl:px-20">
+                    <div class="mx-auto flex w-full max-w-md items-center justify-between gap-3 lg:max-w-none lg:justify-end">
+                        <a href="{{ route('home') }}" class="flex w-fit shrink-0 items-center gap-2 rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent lg:hidden" aria-label="ARTASWAHA beranda">
+                            <img src="{{ asset('image/maskot.webp') }}" alt="" class="size-10 rounded-full object-cover">
+                            <span class="font-display text-base font-bold sm:text-lg">ARTASWAHA</span>
+                        </a>
+                        <a href="{{ route('home') }}" class="inline-flex min-h-10 items-center gap-2 rounded-full px-2 text-xs font-semibold text-foreground/60 transition hover:bg-surface hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:px-3 sm:text-sm">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                            Kembali ke beranda
+                        </a>
+                    </div>
+                    <div class="flex flex-1 items-center">
+                        <div class="mx-auto w-full max-w-md">
                         {{ $slot }}
+                        </div>
                     </div>
                 </section>
         </main>
