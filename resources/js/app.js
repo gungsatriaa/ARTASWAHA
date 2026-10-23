@@ -383,6 +383,54 @@ document.querySelectorAll('[data-learning-picker]').forEach((dialog) => {
     });
 });
 
+document.querySelectorAll('[data-testimonial-carousel]').forEach((carousel) => {
+    const track = carousel.querySelector('[data-testimonial-track]');
+    const slides = [...carousel.querySelectorAll('[data-testimonial-slide]')];
+    const previousButton = carousel.querySelector('[data-testimonial-previous]');
+    const nextButton = carousel.querySelector('[data-testimonial-next]');
+    const status = carousel.querySelector('[data-testimonial-status]');
+
+    if (!track || slides.length === 0 || !previousButton || !nextButton || !status) {
+        return;
+    }
+
+    carousel.dataset.overflow = String(slides.length > 3);
+
+    const currentIndex = () => {
+        const trackLeft = track.getBoundingClientRect().left + Number.parseFloat(getComputedStyle(track).paddingLeft);
+
+        return slides.reduce((closestIndex, slide, index) => {
+            const closestDistance = Math.abs(slides[closestIndex].getBoundingClientRect().left - trackLeft);
+            const distance = Math.abs(slide.getBoundingClientRect().left - trackLeft);
+
+            return distance < closestDistance ? index : closestIndex;
+        }, 0);
+    };
+
+    const updateControls = () => {
+        const index = currentIndex();
+        previousButton.disabled = index === 0;
+        nextButton.disabled = index === slides.length - 1;
+        status.textContent = `${index + 1} / ${slides.length}`;
+    };
+
+    const scrollBySlide = (direction) => {
+        const trackStyles = getComputedStyle(track);
+        const gap = Number.parseFloat(trackStyles.columnGap) || 0;
+        const distance = slides[0].getBoundingClientRect().width + gap;
+
+        track.scrollBy({
+            left: distance * direction,
+            behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+        });
+    };
+
+    previousButton.addEventListener('click', () => scrollBySlide(-1));
+    nextButton.addEventListener('click', () => scrollBySlide(1));
+    track.addEventListener('scroll', updateControls, { passive: true });
+    updateControls();
+});
+
 if (window.Echo && roomPage) {
     window.Echo.private(`rooms.${roomPage.dataset.roomCode}`)
         .listen('.room.updated', () => window.location.reload());

@@ -32,17 +32,17 @@
                 </div>
             </section>
 
-            <dialog id="learning-picker" data-learning-picker aria-labelledby="learning-picker-title" class="m-auto max-h-[calc(100dvh-2.5rem)] w-[min(44rem,calc(100%-2rem))] overflow-hidden rounded-card border border-white/10 bg-surface p-0 text-foreground shadow-2xl backdrop:bg-black/70 backdrop:backdrop-blur-sm sm:max-h-[85dvh]">
-                <div class="max-h-[calc(100dvh-2.5rem)] overflow-y-auto overscroll-contain p-4 sm:max-h-[85dvh] sm:p-5">
-                    <header class="sticky top-0 z-10 -mx-4 flex items-center justify-between gap-4 border-b border-white/10 bg-surface px-4 pb-4 pt-1 sm:-mx-5 sm:px-5">
+            <dialog id="learning-picker" data-learning-picker aria-labelledby="learning-picker-title" class="m-auto h-[min(85dvh,48rem)] max-h-[calc(100dvh-2.5rem)] w-[min(44rem,calc(100%-2rem))] flex-col overflow-hidden rounded-card border border-white/10 bg-surface p-0 text-foreground shadow-2xl backdrop:bg-black/70 backdrop:backdrop-blur-sm">
+                <header class="flex shrink-0 items-center justify-between gap-4 border-b border-white/10 bg-surface px-4 pb-4 pt-4 sm:px-5 sm:pt-5">
                         <div>
                             <p class="mb-1 text-xs font-bold text-accent">Petualangan belajar</p>
                             <h2 id="learning-picker-title" class="font-display text-xl font-bold sm:text-2xl">Mau belajar apa hari ini?</h2>
                             <p class="mt-1.5 text-sm text-foreground/60">Pilih satu topik untuk melihat materi dan mulai berlatih.</p>
                         </div>
                         <button type="button" data-learning-picker-close aria-label="Tutup pilihan materi" class="grid size-9 shrink-0 place-items-center rounded-full border border-white/10 bg-background text-foreground/70 transition hover:border-accent/50 hover:bg-accent/10 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" class="size-4" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
-                    </header>
-                    <div class="mt-4 space-y-4">
+                </header>
+                <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5">
+                    <div class="space-y-4">
                         @foreach (['paribasa' => 'Paribasa Bali', 'aksara' => 'Aksara Bali'] as $group => $label)
                             @php($groupPaths = $learningPaths->where('group', $group))
                             <section aria-labelledby="learning-picker-{{ $group }}">
@@ -160,8 +160,9 @@
                     </div>
                     <p class="max-w-md font-readable text-sm leading-6 text-foreground/55">Kutipan berikut adalah contoh rancangan, bukan testimoni pengguna nyata.</p>
                 </div>
-                <div class="grid gap-4 md:grid-cols-3">
-                    <figure class="flex h-[22rem] flex-col rounded-card bg-surface p-6 sm:p-7">
+                <div data-testimonial-carousel>
+                    <div data-testimonial-track role="region" aria-label="Daftar contoh testimoni" class="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:grid md:grid-cols-3 md:overflow-visible md:pb-0 md:snap-none">
+                    <figure data-testimonial-slide class="flex h-[22rem] w-[88%] shrink-0 snap-start flex-col rounded-card bg-surface p-6 sm:w-[72%] sm:p-7 md:w-auto">
                         <blockquote class="line-clamp-5 flex-1 font-readable text-lg leading-7">Tebak-teki Bali bikin aku ingin tahu jawaban yang lain juga.</blockquote>
                         <figcaption class="mt-6 flex items-center gap-3 border-t border-white/10 pt-5">
                             <img src="{{ asset('avatar/kupu_kupu.webp') }}" alt="" class="size-12 rounded-full object-cover ring-2 ring-primary/40">
@@ -171,7 +172,7 @@
                             </span>
                         </figcaption>
                     </figure>
-                    <figure class="flex h-[22rem] flex-col rounded-card bg-surface p-6 sm:p-7">
+                    <figure data-testimonial-slide class="flex h-[22rem] w-[88%] shrink-0 snap-start flex-col rounded-card bg-surface p-6 sm:w-[72%] sm:p-7 md:w-auto">
                         <blockquote class="line-clamp-5 flex-1 font-readable text-lg leading-7">Materinya singkat, jadi bisa kami pelajari bersama di rumah.</blockquote>
                         <figcaption class="mt-6 flex items-center gap-3 border-t border-white/10 pt-5">
                             <img src="{{ asset('avatar/gajah.webp') }}" alt="" class="size-12 rounded-full object-cover ring-2 ring-primary/40">
@@ -181,7 +182,7 @@
                             </span>
                         </figcaption>
                     </figure>
-                    <figure class="flex h-[22rem] flex-col rounded-card bg-surface p-6 sm:p-7">
+                    <figure data-testimonial-slide class="flex h-[22rem] w-[88%] shrink-0 snap-start flex-col rounded-card bg-surface p-6 sm:w-[72%] sm:p-7 md:w-auto">
                         <blockquote class="line-clamp-5 flex-1 font-readable text-lg leading-7">Kuis bersama memberi cara baru untuk mengenalkan paribasa.</blockquote>
                         <figcaption class="mt-6 flex items-center gap-3 border-t border-white/10 pt-5">
                             <img src="{{ asset('avatar/jalak_bali.webp') }}" alt="" class="size-12 rounded-full object-cover ring-2 ring-primary/40">
@@ -191,6 +192,16 @@
                             </span>
                         </figcaption>
                     </figure>
+                    </div>
+                    <div data-testimonial-controls class="mt-4 flex items-center justify-between gap-3 md:hidden">
+                        <button type="button" data-testimonial-previous aria-label="Testimoni sebelumnya" class="grid size-11 place-items-center rounded-full border border-white/10 bg-surface text-foreground transition hover:border-accent/50 hover:text-accent disabled:cursor-not-allowed disabled:opacity-35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5" aria-hidden="true"><path d="M19 12H5m7 7-7-7 7-7"/></svg>
+                        </button>
+                        <p data-testimonial-status class="text-sm font-semibold tabular-nums text-foreground/60" aria-live="polite" aria-atomic="true">1 / 3</p>
+                        <button type="button" data-testimonial-next aria-label="Testimoni berikutnya" class="grid size-11 place-items-center rounded-full border border-white/10 bg-surface text-foreground transition hover:border-accent/50 hover:text-accent disabled:cursor-not-allowed disabled:opacity-35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5" aria-hidden="true"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
+                        </button>
+                    </div>
                 </div>
             </section>
 
