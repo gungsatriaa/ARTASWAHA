@@ -175,7 +175,7 @@ chmod +x deploy.sh
 ./deploy.sh
 ```
 
-Script akan menolak working tree yang tidak bersih, mengaktifkan maintenance mode, fast-forward branch `main` dari `origin`, memasang Composer production dependencies, membangun aset npm, menjalankan migrasi, membuat storage link, mengoptimasi Laravel, memberi sinyal restart graceful pada queue dan Reverb, memeriksa status worker, lalu mengaktifkan kembali aplikasi dan mengecek `/up`, OCR `/health`, endpoint AI `/models`, serta port WebSocket internal.
+Script memvalidasi environment sebelum maintenance mode, menolak perubahan pada file tracked (untracked seperti `.well-known` tidak menghalangi deploy), lalu fast-forward branch `main` dari `origin`, memasang Composer production dependencies, membangun aset npm, menjalankan migrasi, membuat storage link, mengoptimasi Laravel, memberi sinyal restart graceful pada queue dan Reverb, memeriksa status worker, lalu mengaktifkan kembali aplikasi dan mengecek `/up`, OCR `/health`, endpoint AI `/models`, serta port WebSocket internal. Jika file untracked berbenturan dengan file yang masuk dari GitHub, Git akan menghentikan pull tanpa menimpanya.
 
 Jika `supervisorctl` tersedia, script memeriksa status program Supervisor. Jika tidak tersedia, script memakai `pgrep` untuk memastikan proses worker dan Reverb terlihat aktif; ini hanya mengecek proses, bukan memastikan Supervisor akan otomatis menghidupkannya kembali. Atur Supervisor/aaPanel untuk `autorestart` dan pastikan queue serta Reverb tetap dikelola oleh process manager.
 

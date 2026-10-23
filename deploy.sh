@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+# ARTASWAHA production deploy script for aaPanel.
 APP_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 DEPLOY_REMOTE="${DEPLOY_REMOTE:-origin}"
 DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
@@ -25,7 +26,6 @@ check_http() {
 
     local status
     status="$(curl --silent --show-error --location --max-time 8 --output /dev/null --write-out '%{http_code}' "$@" "$url")" || fail "$label tidak dapat dihubungi ($url)."
-
     [[ "$status" == 2* ]] || fail "$label merespons HTTP $status ($url)."
     printf 'OK  %-18s HTTP %s\n' "$label" "$status"
 }
@@ -86,6 +86,7 @@ printf '=================================================\n'
 printf '  Memulai deployment ARTASWAHA...\n'
 printf '=================================================\n'
 
+printf '\n[0/15] Memvalidasi prasyarat dan environment production...\n'
 command -v git >/dev/null || fail "git tidak ditemukan."
 command -v php >/dev/null || fail "PHP CLI tidak ditemukan."
 command -v composer >/dev/null || fail "Composer tidak ditemukan."
@@ -100,9 +101,7 @@ else
     command -v pgrep >/dev/null || fail "supervisorctl dan pgrep tidak ditemukan; tidak dapat memeriksa proses worker."
 fi
 [[ "$(git branch --show-current)" == "$DEPLOY_BRANCH" ]] || fail "Branch aktif bukan '$DEPLOY_BRANCH'. Atur DEPLOY_BRANCH sesuai branch yang akan di-deploy."
-[[ -z "$(git status --porcelain)" ]] || fail "Working tree tidak bersih. Commit/stash perubahan di server sebelum deploy agar tidak tertimpa."
-
-printf '\n[0/15] Memvalidasi environment production...\n'
+git diff --quiet && git diff --cached --quiet || fail "Ada perubahan file tracked. Commit/stash perubahan di server sebelum deploy."
 [[ "$(dotenv_value APP_ENV)" == "production" ]] || fail "APP_ENV harus production."
 [[ "$(dotenv_value APP_DEBUG)" == "false" ]] || fail "APP_DEBUG harus false."
 
@@ -143,6 +142,7 @@ php artisan optimize
 printf '\n[10/15] Meminta restart queue worker dan Reverb...\n'
 php artisan queue:restart
 php artisan reverb:restart
+
 printf '\n[11/15] Menunggu service mulai kembali...\n'
 sleep 2
 
@@ -151,7 +151,7 @@ if [[ -n "$SUPERVISORCTL_BIN" ]]; then
     check_supervisor_program "Queue worker" "$QUEUE_PROGRAM"
     check_supervisor_program "Reverb process" "$REVERB_PROGRAM"
 else
-    printf '\nSupervisor CLI tidak tersedia; memeriksa proses aktif langsung.\n'
+    printf 'Supervisor CLI tidak tersedia; memeriksa proses aktif langsung.\n'
     check_process "Queue worker" '[a]rtisan queue:work'
     check_process "Reverb process" '[a]rtisan reverb:start'
 fi
