@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
+use Laravel\Socialite\Two\User as GoogleUser;
 
 class AuthService
 {
@@ -31,6 +32,44 @@ class AuthService
 
         $request->session()->regenerate();
         $progressService->claimDeviceProgress($request, Auth::user());
+
+        return true;
+    }
+
+    public function loginWithGoogle(GoogleUser $googleUser, Request $request, LearningProgressService $progressService): bool
+    {
+        $email = $googleUser->getEmail();
+        $googleId = $googleUser->getId();
+
+        if (! is_string($email) || ! filter_var($email, FILTER_VALIDATE_EMAIL) || ($googleUser->user['verified_email'] ?? false) !== true || ! is_string($googleId) || $googleId === '') {
+            return false;
+        }
+
+        $user = User::query()->where('google_id', $googleId)->first()
+            ?? User::query()->where('email', $email)->first();
+
+        if ($user?->google_id !== null && $user->google_id !== $googleId) {
+            return false;
+        }
+
+        if (! $user) {
+            $name = $googleUser->getName();
+            $user = new User;
+            $user->forceFill([
+                'name' => is_string($name) && trim($name) !== '' ? trim($name) : Str::before($email, '@'),
+                'email' => $email,
+                'password' => Str::random(64),
+            ]);
+        }
+
+        $user->forceFill([
+            'google_id' => $googleId,
+            'email_verified_at' => $user->email_verified_at ?? now(),
+        ])->save();
+
+        Auth::login($user);
+        $request->session()->regenerate();
+        $progressService->claimDeviceProgress($request, $user);
 
         return true;
     }

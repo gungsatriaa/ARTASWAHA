@@ -12,6 +12,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
 use Illuminate\View\View;
+use Laravel\Socialite\Socialite;
+use Throwable;
 
 class AuthController extends Controller
 {
@@ -39,6 +41,32 @@ class AuthController extends Controller
         }
 
         return to_route('home');
+    }
+
+    public function redirectToGoogle(): RedirectResponse
+    {
+        if (! config('services.google.client_id') || ! config('services.google.client_secret') || ! config('services.google.redirect')) {
+            return to_route('login')->withErrors(['google' => 'Login Google belum dikonfigurasi.']);
+        }
+
+        return Socialite::driver('google')->redirect();
+    }
+
+    public function handleGoogleCallback(Request $request, AuthService $authService, LearningProgressService $progressService): RedirectResponse
+    {
+        try {
+            $googleUser = Socialite::driver('google')->user();
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return to_route('login')->withErrors(['google' => 'Login Google gagal. Silakan coba lagi.']);
+        }
+
+        if (! $authService->loginWithGoogle($googleUser, $request, $progressService)) {
+            return to_route('login')->withErrors(['google' => 'Akun Google tidak memiliki email terverifikasi atau tidak dapat ditautkan.']);
+        }
+
+        return to_route('home')->with('status', 'Berhasil masuk dengan Google. Selamat belajar!');
     }
 
     public function logout(Request $request, AuthService $authService): RedirectResponse

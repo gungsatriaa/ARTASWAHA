@@ -31,6 +31,9 @@ Route::middleware('guest')->group(function (): void {
     Route::post('/reset-kata-sandi', [AuthController::class, 'resetPassword'])->middleware('throttle:5,1')->name('password.update');
 });
 
+Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->middleware(['guest', 'throttle:10,1'])->name('auth.google.redirect');
+Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->middleware('throttle:10,1')->name('auth.google.callback');
+
 Route::post('/keluar', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function (): void {

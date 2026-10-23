@@ -27,5 +27,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5 transition-transform group-hover:translate-x-1" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </button>
     </form>
+    <div class="my-5 flex items-center gap-3 text-xs font-semibold text-foreground/40"><span class="h-px flex-1 bg-white/10"></span><span>atau masuk dengan</span><span class="h-px flex-1 bg-white/10"></span></div>
+    <a href="{{ route('auth.google.redirect') }}" class="flex min-h-12 w-full items-center justify-center gap-3 rounded-full border border-white/10 bg-background px-5 font-bold transition hover:border-white/20 hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"><span aria-hidden="true" class="font-display text-xl font-extrabold text-[#4285F4]">G</span> Lanjutkan dengan Google</a>
     <p class="mt-4 text-center text-sm text-foreground/60">Belum punya akun? <a class="rounded-full font-extrabold text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent" href="{{ route('register') }}">Ayo daftar</a></p>
 </x-layouts.auth>

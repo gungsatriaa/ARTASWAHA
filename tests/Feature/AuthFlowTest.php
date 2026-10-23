@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
+use Laravel\Socialite\Socialite;
+use Laravel\Socialite\Two\User as GoogleUser;
 use Tests\TestCase;
 
 class AuthFlowTest extends TestCase
@@ -23,6 +25,7 @@ class AuthFlowTest extends TestCase
             $this->get($url)
                 ->assertOk()
                 ->assertSee('Belajar Bali,')
+                ->assertSee(route('auth.google.redirect'))
                 ->assertDontSee('data-mobile-nav', false)
                 ->assertDontSee('<footer', false);
         }
@@ -102,5 +105,100 @@ class AuthFlowTest extends TestCase
 
         $this->post(route('login.store'), ['email' => 'missing@example.test', 'password' => 'wrong-password'])
             ->assertTooManyRequests();
+    }
+
+    public function test_google_oauth_can_create_a_verified_account_and_sign_in(): void
+    {
+        config([
+            'services.google.client_id' => 'google-client-id',
+            'services.google.client_secret' => 'google-client-secret',
+            'services.google.redirect' => 'http://localhost/auth/google/callback',
+        ]);
+        Socialite::fake('google', GoogleUser::fake([
+            'id' => 'google-user-123',
+            'name' => 'Putu Bali',
+            'email' => 'putu@gmail.com',
+            'verified_email' => true,
+        ]));
+
+        $this->get(route('auth.google.redirect'))->assertRedirect();
+        $this->get(route('auth.google.callback'))->assertRedirect(route('home'));
+
+        $this->assertAuthenticated();
+        $this->assertDatabaseHas('users', [
+            'name' => 'Putu Bali',
+            'email' => 'putu@gmail.com',
+            'google_id' => 'google-user-123',
+        ]);
+        $this->assertNotNull(User::query()->where('email', 'putu@gmail.com')->firstOrFail()->email_verified_at);
+    }
+
+    public function test_google_oauth_links_a_verified_email_to_an_existing_account(): void
+    {
+        $user = User::factory()->create(['email' => 'putu@gmail.com']);
+        Socialite::fake('google', GoogleUser::fake([
+            'id' => 'google-user-123',
+            'name' => 'Different Google Name',
+            'email' => 'putu@gmail.com',
+            'verified_email' => true,
+        ]));
+
+        $this->get(route('auth.google.callback'))->assertRedirect(route('home'));
+
+        $this->assertAuthenticatedAs($user);
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'google_id' => 'google-user-123',
+        ]);
+        $this->assertDatabaseCount('users', 1);
+    }
+
+    public function test_google_oauth_rejects_an_unverified_email(): void
+    {
+        Socialite::fake('google', GoogleUser::fake([
+            'id' => 'google-user-123',
+            'email' => 'putu@gmail.com',
+            'verified_email' => false,
+        ]));
+
+        $this->get(route('auth.google.callback'))
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors('google');
+
+        $this->assertGuest();
+        $this->assertDatabaseCount('users', 0);
+    }
+
+    public function test_google_oauth_does_not_link_an_email_to_a_different_google_account(): void
+    {
+        User::factory()->create([
+            'email' => 'putu@gmail.com',
+            'google_id' => 'another-google-user',
+        ]);
+        Socialite::fake('google', GoogleUser::fake([
+            'id' => 'google-user-123',
+            'email' => 'putu@gmail.com',
+            'verified_email' => true,
+        ]));
+
+        $this->get(route('auth.google.callback'))
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors('google');
+
+        $this->assertGuest();
+        $this->assertDatabaseCount('users', 1);
+    }
+
+    public function test_google_oauth_redirect_requires_provider_configuration(): void
+    {
+        config([
+            'services.google.client_id' => null,
+            'services.google.client_secret' => null,
+            'services.google.redirect' => null,
+        ]);
+
+        $this->get(route('auth.google.redirect'))
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors('google');
     }
 }
