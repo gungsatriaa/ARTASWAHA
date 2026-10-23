@@ -460,12 +460,44 @@ document.querySelectorAll('[data-testimonial-carousel]').forEach((carousel) => {
 });
 
 if (window.Echo && roomPage) {
-    window.Echo.private(`rooms.${roomPage.dataset.roomCode}`)
-        .listen('.room.updated', () => window.location.reload());
+    const roomStatus = roomPage.querySelector('[data-live-status]');
+    let roomPresenceUsers = [];
 
-    const status = roomPage.querySelector('[data-live-status]');
+    const renderRoomPresence = (users) => {
+        roomPresenceUsers = [...new Map(users.map((user) => [String(user.id), user])).values()];
+        const onlineUserIds = new Set(roomPresenceUsers.map((user) => String(user.id)));
+
+        roomPage.querySelectorAll('[data-room-presence-user]').forEach((row) => {
+            row.hidden = !onlineUserIds.has(row.dataset.roomPresenceUser);
+        });
+
+        let rank = 0;
+        roomPage.querySelectorAll('[data-room-leaderboard-user]').forEach((row) => {
+            if (!row.hidden) {
+                rank += 1;
+                row.querySelector('[data-room-rank]').textContent = `${rank}.`;
+            }
+        });
+
+        if (roomStatus) {
+            roomStatus.textContent = 'Pembaruan room realtime aktif.';
+        }
+    };
+
+    window.Echo.join(`rooms.${roomPage.dataset.roomCode}`)
+        .here(renderRoomPresence)
+        .joining((user) => renderRoomPresence([...roomPresenceUsers, user]))
+        .leaving((user) => renderRoomPresence(roomPresenceUsers.filter((onlineUser) => String(onlineUser.id) !== String(user.id))))
+        .listen('.room.updated', () => window.location.reload())
+        .error((error) => {
+            if (roomStatus) {
+                roomStatus.textContent = 'Tidak dapat bergabung ke kanal realtime room.';
+            }
+
+            console.error('Room presence subscription failed:', error);
+        });
+
     let hasConnected = false;
-
     window.Echo.connector.pusher.connection.bind('state_change', ({ current }) => {
         if (current === 'connected') {
             if (hasConnected) {
@@ -473,16 +505,17 @@ if (window.Echo && roomPage) {
             }
 
             hasConnected = true;
-
-            if (status) {
-                status.textContent = 'Pembaruan room realtime aktif.';
-            }
-
             return;
         }
 
-        if (status) {
-            status.textContent = 'Koneksi realtime terputus. Segarkan halaman untuk memeriksa pembaruan.';
+        if (roomStatus) {
+            roomStatus.textContent = 'Koneksi realtime terputus. Menyambungkan kembali…';
         }
     });
+} else if (roomPage) {
+    const roomStatus = roomPage.querySelector('[data-live-status]');
+
+    if (roomStatus) {
+        roomStatus.textContent = 'Realtime belum dikonfigurasi pada aplikasi ini.';
+    }
 }

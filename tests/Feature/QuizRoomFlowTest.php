@@ -8,7 +8,10 @@ use App\Models\Room;
 use App\Models\RoomAnswer;
 use App\Models\RoomParticipant;
 use App\Models\User;
+use Illuminate\Broadcasting\PresenceChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 class QuizRoomFlowTest extends TestCase
@@ -51,6 +54,21 @@ class QuizRoomFlowTest extends TestCase
         $this->assertDatabaseCount('quizzes', 0);
     }
 
+    public function test_quiz_allows_duplicate_options(): void
+    {
+        $response = $this->actingAs(User::factory()->create())->post(route('quizzes.store'), [
+            'title' => 'Pilihan yang boleh sama',
+            'questions' => [[
+                'prompt' => 'Contoh pertanyaan?',
+                'options' => ['Jawaban A', 'Jawaban A'],
+                'correct_option' => 0,
+            ]],
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseCount('quizzes', 1);
+    }
+
     public function test_private_quiz_cannot_be_read_or_hosted_by_another_user(): void
     {
         $owner = User::factory()->create();
@@ -73,6 +91,21 @@ class QuizRoomFlowTest extends TestCase
         $this->post(route('rooms.store', $quiz))->assertRedirect();
         $room = Room::query()->firstOrFail();
         $this->get(route('rooms.show', $room->code))->assertOk()->assertSee($room->code)->assertSee('Mulai kuis');
+    }
+
+    public function test_room_invitation_link_opens_join_form_with_room_code_prefilled(): void
+    {
+        $host = User::factory()->create();
+        $room = Room::factory()->create(['host_id' => $host->id]);
+        RoomParticipant::factory()->create(['room_id' => $room->id, 'user_id' => $host->id]);
+
+        $response = $this->actingAs($host)->get(route('rooms.show', $room->code));
+
+        $response->assertOk()
+            ->assertSee(route('quizzes.index', ['code' => $room->code]), false);
+        $this->get(route('quizzes.index', ['code' => $room->code]))
+            ->assertOk()
+            ->assertSee('value="'.$room->code.'"', false);
     }
 
     public function test_room_join_answer_scoring_and_host_controls_are_server_authorized(): void
@@ -102,6 +135,36 @@ class QuizRoomFlowTest extends TestCase
         $this->assertDatabaseHas('rooms', ['id' => $room->id, 'status' => 'finished']);
     }
 
+    public function test_participant_can_leave_room_and_is_removed_from_live_room_data(): void
+    {
+        $host = User::factory()->create();
+        $player = User::factory()->create();
+        $room = Room::factory()->create(['host_id' => $host->id]);
+        RoomParticipant::factory()->create(['room_id' => $room->id, 'user_id' => $host->id]);
+        RoomParticipant::factory()->create(['room_id' => $room->id, 'user_id' => $player->id]);
+        Event::fake([RoomUpdated::class]);
+
+        $this->actingAs($player)
+            ->post(route('rooms.leave', $room->code))
+            ->assertRedirect(route('quizzes.index'))
+            ->assertSessionHas('status', 'Kamu sudah keluar dari room.');
+
+        $this->assertDatabaseMissing('room_participants', ['room_id' => $room->id, 'user_id' => $player->id]);
+        $this->assertDatabaseHas('room_participants', ['room_id' => $room->id, 'user_id' => $host->id]);
+        Event::assertDispatched(RoomUpdated::class);
+    }
+
+    public function test_room_host_cannot_leave_and_orphan_the_room(): void
+    {
+        $host = User::factory()->create();
+        $room = Room::factory()->create(['host_id' => $host->id]);
+        RoomParticipant::factory()->create(['room_id' => $room->id, 'user_id' => $host->id]);
+
+        $this->actingAs($host)->post(route('rooms.leave', $room->code))->assertForbidden();
+
+        $this->assertDatabaseHas('room_participants', ['room_id' => $room->id, 'user_id' => $host->id]);
+    }
+
     public function test_private_room_channel_only_allows_its_host_and_participants(): void
     {
         config([
@@ -125,10 +188,10 @@ class QuizRoomFlowTest extends TestCase
         RoomParticipant::factory()->create(['room_id' => $room->id, 'user_id' => $player->id]);
         $this->assertSame($host->id, $room->host_id);
         $this->assertTrue(Room::query()->where('code', $room->code)->where('host_id', $host->id)->exists());
-        $payload = ['socket_id' => '1234.5678', 'channel_name' => 'private-rooms.'.$room->code];
+        $payload = ['socket_id' => '1234.5678', 'channel_name' => 'presence-rooms.'.$room->code];
 
-        $this->actingAs($host)->postJson('/broadcasting/auth', $payload)->assertOk();
-        $this->actingAs($player)->postJson('/broadcasting/auth', $payload)->assertOk();
+        $this->actingAs($host)->postJson('/broadcasting/auth', $payload)->assertOk()->assertJsonStructure(['auth', 'channel_data']);
+        $this->actingAs($player)->postJson('/broadcasting/auth', $payload)->assertOk()->assertJsonStructure(['auth', 'channel_data']);
         $this->actingAs($outsider)->postJson('/broadcasting/auth', $payload)->assertForbidden();
     }
 
@@ -139,7 +202,9 @@ class QuizRoomFlowTest extends TestCase
             'question' => ['id' => 1, 'prompt' => 'Pertanyaan?', 'options' => ['A', 'B'], 'sort_order' => 1],
         ]);
 
-        $this->assertSame('private-rooms.ROOMCODE12', $event->broadcastOn()->name);
+        $this->assertInstanceOf(ShouldBroadcastNow::class, $event);
+        $this->assertInstanceOf(PresenceChannel::class, $event->broadcastOn());
+        $this->assertSame('presence-rooms.ROOMCODE12', $event->broadcastOn()->name);
         $this->assertSame(['status', 'question'], array_keys($event->broadcastWith()));
         $this->assertArrayNotHasKey('correct_option', $event->broadcastWith()['question']);
     }

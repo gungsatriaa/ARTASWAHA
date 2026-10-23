@@ -23,7 +23,7 @@ class StoreQuizRequest extends FormRequest
             'questions' => ['required', 'array', 'min:1', 'max:20'],
             'questions.*.prompt' => ['required', 'string', 'max:500'],
             'questions.*.options' => ['required', 'array', 'min:2', 'max:5'],
-            'questions.*.options.*' => ['required', 'string', 'max:140', 'distinct'],
+            'questions.*.options.*' => ['required', 'string', 'max:140'],
             'questions.*.correct_option' => ['required', 'integer', 'min:0', 'max:4'],
             'questions.*.explanation' => ['nullable', 'string', 'max:500'],
         ];

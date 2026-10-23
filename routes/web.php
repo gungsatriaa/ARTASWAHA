@@ -69,6 +69,7 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/kuis/{quiz}/room', [RoomController::class, 'store'])->middleware('throttle:10,1')->name('rooms.store');
     Route::post('/room/gabung', [RoomController::class, 'join'])->middleware('throttle:10,1')->name('rooms.join');
     Route::get('/room/{room:code}', [RoomController::class, 'show'])->name('rooms.show');
+    Route::post('/room/{room:code}/keluar', [RoomController::class, 'leave'])->name('rooms.leave');
     Route::post('/room/{room:code}/mulai', [RoomController::class, 'start'])->name('rooms.start');
     Route::post('/room/{room:code}/jawab', [RoomController::class, 'answer'])->middleware('throttle:30,1')->name('rooms.answer');
     Route::post('/room/{room:code}/selanjutnya', [RoomController::class, 'advance'])->name('rooms.advance');

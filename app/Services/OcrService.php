@@ -24,6 +24,22 @@ class OcrService
             throw new RuntimeException('Dokumen gagal dibaca oleh layanan OCR.');
         }
 
-        return trim($response->json('text'));
+        $text = str_replace(["\r\n", "\r"], "\n", $response->json('text'));
+        $text = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $text) ?? $text;
+        $lines = array_filter(explode("\n", $text), static function (string $line): bool {
+            $words = preg_split('/\s+/u', trim($line), -1, PREG_SPLIT_NO_EMPTY);
+
+            if (count($words) < 6) {
+                return true;
+            }
+
+            $words = array_map(static fn (string $word): string => preg_replace('/[^\p{L}\p{N}]/u', '', $word) ?? '', $words);
+            $shortWords = count(array_filter($words, static fn (string $word): bool => mb_strlen($word) <= 3));
+            $uppercaseWords = count(array_filter($words, static fn (string $word): bool => preg_match('/^\p{Lu}{2,}$/u', $word) === 1));
+
+            return ! ($shortWords / count($words) >= 0.8 && $uppercaseWords >= 2);
+        });
+
+        return trim(implode("\n", $lines));
     }
 }

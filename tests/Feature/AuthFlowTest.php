@@ -72,7 +72,7 @@ class AuthFlowTest extends TestCase
             ->assertSessionHasErrors('email');
         $this->assertGuest();
 
-        $this->post(route('login.store'), ['email' => $user->email, 'password' => 'safe-password'])
+        $this->post(route('login.store'), ['email' => $user->email, 'password' => 'safe-password', 'remember' => true])
             ->assertRedirect(route('home'));
         $this->assertAuthenticatedAs($user);
     }

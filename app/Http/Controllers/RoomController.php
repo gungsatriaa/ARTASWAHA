@@ -31,6 +31,13 @@ class RoomController extends Controller
         return view('rooms.show', $roomService->viewData($room, request()->user()));
     }
 
+    public function leave(Room $room, RoomService $roomService): RedirectResponse
+    {
+        $roomService->leave($room, request()->user());
+
+        return to_route('quizzes.index')->with('status', 'Kamu sudah keluar dari room.');
+    }
+
     public function start(Room $room, RoomService $roomService): RedirectResponse
     {
         $roomService->start($room, request()->user());

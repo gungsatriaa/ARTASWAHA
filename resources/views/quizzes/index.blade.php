@@ -10,7 +10,7 @@
             <form method="POST" action="{{ route('rooms.join') }}" class="mt-8 flex flex-col gap-3 rounded-card bg-surface p-5 sm:flex-row sm:items-end">
                 @csrf
                 <label class="flex-1 text-sm font-semibold">Kode room
-                    <input name="code" value="{{ old('code') }}" required minlength="10" maxlength="10" pattern="[A-Za-z0-9]{10}" autocomplete="off" class="mt-2 min-h-12 w-full rounded-control border border-white/10 bg-background px-4 uppercase tracking-widest outline-none focus:border-accent">
+                    <input name="code" value="{{ old('code', request('code')) }}" required minlength="10" maxlength="10" pattern="[A-Za-z0-9]{10}" autocomplete="off" class="mt-2 min-h-12 w-full rounded-control border border-white/10 bg-background px-4 uppercase tracking-widest outline-none focus:border-accent">
                 </label>
                 <button class="min-h-12 rounded-full bg-primary px-7 py-3 font-bold text-white" type="submit">Gabung room</button>
             </form>

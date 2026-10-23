@@ -7,6 +7,7 @@ use App\Models\Quiz;
 use App\Models\QuizQuestion;
 use App\Models\Room;
 use App\Models\RoomAnswer;
+use App\Models\RoomParticipant;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -57,6 +58,16 @@ class RoomService
         $this->broadcastRoomUpdate($room);
 
         return $room;
+    }
+
+    public function leave(Room $room, User $user): void
+    {
+        abort_unless($room->host_id !== $user->id, 403, 'Host tidak dapat keluar dari room.');
+
+        $participant = $room->participants()->where('user_id', $user->id)->firstOrFail();
+        $participant->delete();
+
+        $this->broadcastRoomUpdate($room);
     }
 
     public function start(Room $room, User $user): Room

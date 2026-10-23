@@ -26,7 +26,10 @@ class AuthService
     /** @param array{email: string, password: string, remember?: bool} $credentials */
     public function login(array $credentials, Request $request, LearningProgressService $progressService): bool
     {
-        if (! Auth::attempt($credentials, $credentials['remember'] ?? false)) {
+        $remember = $credentials['remember'] ?? false;
+        unset($credentials['remember']);
+
+        if (! Auth::attempt($credentials, $remember)) {
             return false;
         }
 
