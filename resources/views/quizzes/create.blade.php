@@ -4,6 +4,13 @@
             <h1 class="font-display text-4xl font-bold">Buat kuis</h1>
             <p class="mt-3 font-readable text-foreground/65">Tulis pertanyaan, lalu tandai satu jawaban yang benar.</p>
             @if ($errors->any())<p role="alert" class="mt-6 rounded-2xl bg-danger/10 p-4 text-danger">{{ $errors->first() }}</p>@endif
+            <section class="mt-8 rounded-card bg-surface p-6 sm:p-8" data-ai-quiz data-upload-url="{{ route('quizzes.drafts.store') }}">
+                <h2 class="font-display text-xl font-bold">Buat draf dengan AI</h2>
+                <p class="mt-2 text-sm text-foreground/65">Unggah JPG, PNG, WEBP, PDF, DOC, atau DOCX (maks. 10 MB). Periksa hasil ekstraksi dan soal sebelum menyimpan.</p>
+                <div class="mt-4 flex flex-wrap gap-3"><input type="file" accept="image/jpeg,image/png,image/webp,application/pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" data-ai-file class="max-w-full text-sm"><button type="button" data-ai-submit class="rounded-full bg-accent px-5 py-3 font-bold text-background">Buat draf soal</button></div>
+                <p class="mt-3 text-sm text-foreground/65" role="status" data-ai-status aria-live="polite"></p>
+                <details class="mt-3 hidden" data-ai-source><summary class="cursor-pointer font-semibold">Tinjau teks OCR</summary><pre class="mt-2 max-h-48 overflow-auto whitespace-pre-wrap rounded-xl bg-background p-4 text-sm" data-ai-text></pre></details>
+            </section>
             <form method="POST" action="{{ route('quizzes.store') }}" class="mt-8 space-y-6" data-quiz-builder>
                 @csrf
                 <section class="rounded-card bg-surface p-6 sm:p-8">

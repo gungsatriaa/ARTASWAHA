@@ -41,4 +41,11 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
 
+    'ocr' => ['url' => env('OCR_API_URL', 'http://127.0.0.1:18001'), 'key' => env('OCR_API_KEY')],
+    'ai' => [
+        'url' => env('AI_API_URL', 'http://127.0.0.1:20128/v1'),
+        'key' => env('AI_API_KEY'),
+        'model' => env('AI_MODEL', 'ag/gemini-3.8-flash-medium'),
+    ],
+
 ];

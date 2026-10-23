@@ -9,6 +9,7 @@ use App\Http\Controllers\LearningProgressController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuizController;
+use App\Http\Controllers\QuizDraftController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\ShowProfileAvatarController;
 use App\Http\Controllers\UpdateProfileAvatarController;
@@ -61,6 +62,8 @@ Route::middleware('auth')->group(function (): void {
     Route::put('/profil/avatar', UpdateProfileAvatarController::class)->middleware('throttle:10,1')->name('profile.avatar.update');
     Route::get('/kuis', [QuizController::class, 'index'])->name('quizzes.index');
     Route::get('/kuis/buat', [QuizController::class, 'create'])->name('quizzes.create');
+    Route::post('/kuis/draf-ai', [QuizDraftController::class, 'store'])->middleware('throttle:5,1')->name('quizzes.drafts.store');
+    Route::get('/kuis/draf-ai/{quizDraft}', [QuizDraftController::class, 'show'])->name('quizzes.drafts.show');
     Route::post('/kuis', [QuizController::class, 'store'])->middleware('throttle:10,1')->name('quizzes.store');
     Route::get('/kuis/{quiz}', [QuizController::class, 'show'])->name('quizzes.show');
     Route::post('/kuis/{quiz}/room', [RoomController::class, 'store'])->middleware('throttle:10,1')->name('rooms.store');
