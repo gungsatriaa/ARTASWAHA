@@ -28,7 +28,7 @@
         <aside id="admin-mobile-navigation" data-mobile-nav role="dialog" aria-modal="true" aria-label="Navigasi admin" aria-hidden="true" inert class="z-50 flex h-dvh flex-col border-l border-white/10 bg-surface p-5 text-foreground shadow-2xl shadow-black/50">
                 <div class="flex items-center justify-between border-b border-white/10 pb-5">
                     <span class="font-display text-lg font-bold">ARTASWAHA <span class="text-accent">/ Admin</span></span>
-                    <button type="button" data-mobile-nav-close aria-label="Tutup menu" class="grid size-10 place-items-center rounded-full bg-background text-xl text-foreground/70 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">&times;</button>
+                    <button type="button" data-mobile-nav-close aria-label="Tutup menu" class="grid size-10 place-items-center rounded-full bg-background text-foreground/70 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" class="size-4" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
                 </div>
                 <nav class="mt-5 flex-1 space-y-2" aria-label="Navigasi admin mobile">
                     <a href="{{ route('admin.lessons.index') }}" @class(['flex min-h-12 items-center gap-3 rounded-full px-4 font-semibold transition focus-visible:outline-2 focus-visible:outline-accent', 'bg-primary/20 text-accent shadow-[inset_0_0_0_1px_rgba(0,124,128,0.35)]' => request()->routeIs('admin.lessons.*'), 'text-foreground/75 hover:bg-background hover:text-accent' => ! request()->routeIs('admin.lessons.*')])>

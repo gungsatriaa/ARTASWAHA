@@ -4,7 +4,7 @@
                     <h1 class="font-display text-5xl font-bold leading-[1.08] tracking-tight sm:text-6xl lg:text-7xl">Bahasa Bali jadi <span class="text-accent">seru</span> dipelajari.</h1>
                     <p class="mt-6 max-w-xl font-readable text-lg leading-8 text-foreground/75 sm:text-xl">Kenali paribasa dan aksara Bali lewat cerita, latihan singkat, dan permainan yang bisa langsung dicoba. Mulai tanpa akun; progres tersimpan di perangkatmu.</p>
                     <div id="mulai" class="mt-9 flex flex-wrap gap-3">
-                        <a href="{{ route('learning.paths.show', 'cecimpedan') }}" class="inline-flex min-h-14 items-center justify-center rounded-full bg-primary px-8 py-4 font-bold text-white shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Mulai belajar gratis</a>
+                        <button type="button" data-learning-picker-open aria-haspopup="dialog" aria-controls="learning-picker" class="inline-flex min-h-14 items-center justify-center rounded-full bg-primary px-8 py-4 font-bold text-white shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Mulai belajar gratis</button>
                         <a href="{{ auth()->check() ? route('quizzes.index') : route('login') }}" class="inline-flex min-h-14 items-center justify-center rounded-full border border-white/15 px-7 py-4 font-bold transition hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Gabung kuis</a>
                     </div>
                     <p class="mt-4 text-sm text-foreground/55">Belajar mandiri tanpa akun. Untuk kuis bersama, masuk atau daftar terlebih dahulu.</p>
@@ -31,6 +31,74 @@
                     </div>
                 </div>
             </section>
+
+            <dialog id="learning-picker" data-learning-picker aria-labelledby="learning-picker-title" class="m-auto max-h-[calc(100dvh-2.5rem)] w-[min(44rem,calc(100%-2rem))] overflow-hidden rounded-card border border-white/10 bg-surface p-0 text-foreground shadow-2xl backdrop:bg-black/70 backdrop:backdrop-blur-sm sm:max-h-[85dvh]">
+                <div class="max-h-[calc(100dvh-2.5rem)] overflow-y-auto overscroll-contain p-4 sm:max-h-[85dvh] sm:p-5">
+                    <header class="sticky top-0 z-10 -mx-4 flex items-center justify-between gap-4 border-b border-white/10 bg-surface px-4 pb-4 pt-1 sm:-mx-5 sm:px-5">
+                        <div>
+                            <p class="mb-1 text-xs font-bold text-accent">Petualangan belajar</p>
+                            <h2 id="learning-picker-title" class="font-display text-xl font-bold sm:text-2xl">Mau belajar apa hari ini?</h2>
+                            <p class="mt-1.5 text-sm text-foreground/60">Pilih satu topik untuk melihat materi dan mulai berlatih.</p>
+                        </div>
+                        <button type="button" data-learning-picker-close aria-label="Tutup pilihan materi" class="grid size-9 shrink-0 place-items-center rounded-full border border-white/10 bg-background text-foreground/70 transition hover:border-accent/50 hover:bg-accent/10 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" class="size-4" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+                    </header>
+                    <div class="mt-4 space-y-4">
+                        @foreach (['paribasa' => 'Paribasa Bali', 'aksara' => 'Aksara Bali'] as $group => $label)
+                            @php($groupPaths = $learningPaths->where('group', $group))
+                            <section aria-labelledby="learning-picker-{{ $group }}">
+                                <header class="mb-2.5 flex items-center gap-2.5">
+                                    <span class="grid size-9 shrink-0 place-items-center rounded-xl {{ $group === 'paribasa' ? 'bg-accent/10 text-accent' : 'bg-primary/20 text-accent' }}" aria-hidden="true">
+                                    @if ($group === 'paribasa')
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-6.5A7.5 7.5 0 1 1 20 11.5Z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg>
+                                    @else
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5" aria-hidden="true"><path d="m4 19 6-14 5 14M6 14h7M15 19l3-7 3 7M16 17h4"/></svg>
+                                    @endif
+                                    </span>
+                                    <h3 id="learning-picker-{{ $group }}" class="font-display text-base font-bold">{{ $label }}</h3>
+                                    <span class="rounded-full bg-surface px-2 py-0.5 text-[11px] font-bold text-foreground/50">{{ $groupPaths->count() }} materi</span>
+                                </header>
+                                <nav class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3" aria-label="Materi {{ $label }}">
+                                    @foreach ($groupPaths as $learningPath)
+                                        <a href="{{ route('learning.paths.show', $learningPath->slug) }}" class="group flex min-h-36 flex-col rounded-2xl border border-white/8 bg-background p-3 transition duration-150 hover:-translate-y-0.5 hover:border-accent/35 hover:bg-background/70 hover:shadow-lg hover:shadow-black/20 focus-visible:border-accent/50 focus-visible:outline-2 focus-visible:outline-accent">
+                                            <span class="grid size-9 place-items-center rounded-xl {{ $group === 'paribasa' ? 'bg-accent/10 text-accent' : 'bg-primary/20 text-accent' }} transition-colors group-hover:bg-accent group-hover:text-background" aria-hidden="true">
+                                                @switch($learningPath->slug)
+                                                    @case('cecimpedan')
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-6.5A7.5 7.5 0 1 1 20 11.5Z"/><path d="M9.8 9a2.2 2.2 0 1 1 3.8 1.5c-.9.9-1.6 1.1-1.6 2.5M12 16.5h.01"/></svg>
+                                                        @break
+                                                    @case('peparikan')
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5"><path d="M4 7h10M4 12h16M4 17h10"/><path d="M18 5v8.2a2.3 2.3 0 1 1-2-2.3V7l5-1v5.2a2.3 2.3 0 1 1-2-2.3V5z"/></svg>
+                                                        @break
+                                                    @case('sesonggakan')
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5"><path d="M8 11H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5v6a7 7 0 0 1-7 7M19 11h-3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5v6a7 7 0 0 1-7 7"/></svg>
+                                                        @break
+                                                    @case('wreastra-gantungan')
+                                                        <span class="font-balinese text-2xl" lang="ban">ᬅ</span>
+                                                        @break
+                                                    @case('pengangge-suara')
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5"><path d="M3 10v4M7 7v10M11 4v16M15 7v10M19 10v4M22 8v8"/></svg>
+                                                        @break
+                                                    @case('pengangge-tengenan')
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5"><path d="M4 12h12M12 6l6 6-6 6"/><circle cx="20" cy="12" r="1" fill="currentColor" stroke="none"/></svg>
+                                                        @break
+                                                    @case('pengangge-arda-suara')
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5"><path d="M8 5 3 12l5 7M16 5l5 7-5 7M13 4l-2 16"/></svg>
+                                                        @break
+                                                    @case('angka-aksara-bali')
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5"><path d="M8 4 5 20M17 4l-3 16M3 9h18M2 15h18"/></svg>
+                                                        @break
+                                                @endswitch
+                                            </span>
+                                            <span class="mt-2.5 block font-display text-sm font-bold leading-5 text-foreground/90 transition-colors group-hover:text-accent">{{ $learningPath->title }}</span>
+                                            <span class="mt-1 flex-1 text-xs leading-5 text-foreground/55">{{ $learningPath->description }}</span>
+                                            <span class="mt-2.5 inline-flex items-center gap-1.5 text-xs font-bold text-accent">Mulai belajar <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5 transition-transform group-hover:translate-x-1"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+                                        </a>
+                                    @endforeach
+                                </nav>
+                            </section>
+                        @endforeach
+                    </div>
+                </div>
+            </dialog>
 
             <section id="tentang" class="mx-auto max-w-7xl px-6 pb-20 lg:px-10">
                 <div class="grid gap-8 rounded-card bg-surface p-7 sm:p-10 lg:grid-cols-[.9fr_1.1fr] lg:items-center lg:p-12">

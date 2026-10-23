@@ -28,12 +28,12 @@
                 <form method="POST" action="{{ route('profile.avatar.update') }}" enctype="multipart/form-data" class="avatar-modal-content max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain p-5 sm:p-7">
                     @csrf
                     @method('PUT')
-                    <header class="flex items-start justify-between gap-4">
+                    <header class="sticky top-0 z-10 -mx-5 flex items-center justify-between gap-4 bg-surface px-5 pb-3 pt-1 sm:-mx-7 sm:px-7">
                         <div>
                             <h2 class="font-display text-2xl font-bold">Pilih avatar</h2>
                             <p class="mt-1 text-sm text-foreground/60">Pilih ilustrasi Bali atau unggah gambar milikmu.</p>
                         </div>
-                        <button type="button" data-avatar-close aria-label="Tutup" class="grid size-10 shrink-0 place-items-center rounded-full bg-background text-xl text-foreground/70 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">&times;</button>
+                        <button type="button" data-avatar-close aria-label="Tutup" class="grid size-10 shrink-0 place-items-center rounded-full bg-background text-foreground/70 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" class="size-4" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
                     </header>
 
                     @if ($errors->any())

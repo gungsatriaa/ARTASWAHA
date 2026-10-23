@@ -77,6 +77,23 @@ class LearningFlowTest extends TestCase
         $this->assertSame($sortedPositions, $positions);
     }
 
+    public function test_homepage_learning_picker_lists_every_published_learning_path_by_group(): void
+    {
+        $this->seed(LearningPathSeeder::class);
+
+        $response = $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('data-learning-picker-open', false)
+            ->assertSee('id="learning-picker"', false)
+            ->assertSee('Paribasa Bali')
+            ->assertSee('Aksara Bali');
+
+        foreach (LearningPath::query()->where('is_published', true)->get() as $learningPath) {
+            $response->assertSee($learningPath->title)
+                ->assertSee(route('learning.paths.show', $learningPath->slug));
+        }
+    }
+
     public function test_unreviewed_lessons_are_not_accessible(): void
     {
         $lesson = Lesson::factory()->create(['reviewed_at' => null]);
@@ -170,6 +187,7 @@ class LearningFlowTest extends TestCase
         Lesson::factory()->create([
             'learning_path_id' => $path->id,
             'title' => 'Pelajaran yang ditinjau',
+            'slug' => 'pelajaran-yang-ditinjau',
         ]);
         Lesson::factory()->create([
             'learning_path_id' => $path->id,
@@ -179,7 +197,11 @@ class LearningFlowTest extends TestCase
 
         $this->get(route('learning.paths.show', $path->slug))
             ->assertOk()
+            ->assertSee('Pilih pelajaran')
+            ->assertSee('1 pelajaran')
+            ->assertSee('lg:grid-cols-[.82fr_1.18fr]', false)
             ->assertSee('Pelajaran yang ditinjau')
+            ->assertSee(route('learning.lessons.show', 'pelajaran-yang-ditinjau'))
             ->assertDontSee('Draf internal');
     }
 

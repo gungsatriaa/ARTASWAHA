@@ -363,6 +363,26 @@ document.querySelectorAll('[data-avatar-dialog]').forEach((dialog) => {
     });
 });
 
+document.querySelectorAll('[data-learning-picker]').forEach((dialog) => {
+    const openButton = document.querySelector(`[aria-controls="${dialog.id}"]`);
+
+    openButton?.addEventListener('click', () => {
+        dialog.showModal();
+        scrollLockedDialogs.add(dialog);
+        syncPageScrollLock();
+    });
+    dialog.querySelector('[data-learning-picker-close]')?.addEventListener('click', () => dialog.close());
+    dialog.addEventListener('close', () => {
+        scrollLockedDialogs.delete(dialog);
+        syncPageScrollLock();
+    });
+    dialog.addEventListener('click', (event) => {
+        if (event.target === dialog) {
+            dialog.close();
+        }
+    });
+});
+
 if (window.Echo && roomPage) {
     window.Echo.private(`rooms.${roomPage.dataset.roomCode}`)
         .listen('.room.updated', () => window.location.reload());

@@ -87,7 +87,7 @@
 <aside id="mobile-navigation" data-mobile-nav role="dialog" aria-modal="true" aria-label="Navigasi utama" aria-hidden="true" inert class="z-50 flex h-dvh flex-col border-l border-white/10 bg-background p-5 text-foreground shadow-2xl shadow-black/50">
             <div class="flex items-center justify-between border-b border-white/10 pb-5">
                 <a href="{{ route('home') }}" class="flex items-center gap-3 rounded-full font-display text-lg font-bold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"><img src="{{ asset('image/maskot.webp') }}" alt="" class="size-10 rounded-full object-cover">ARTASWAHA</a>
-                <button type="button" data-mobile-nav-close aria-label="Tutup menu" class="grid size-10 place-items-center rounded-full bg-background text-xl text-foreground/70 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">&times;</button>
+                <button type="button" data-mobile-nav-close aria-label="Tutup menu" class="grid size-10 place-items-center rounded-full bg-background text-foreground/70 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" class="size-4" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
             </div>
             <nav class="mt-5 flex-1 space-y-3 overflow-y-auto overscroll-contain pb-6" aria-label="Navigasi mobile">
                 <a href="{{ route('home') }}" @class([
