@@ -17,14 +17,20 @@ class AuthFlowTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_guest_authentication_pages_share_mobile_navigation(): void
+    public function test_login_and_registration_use_their_dedicated_layout(): void
     {
-        foreach ([route('login'), route('register'), route('password.request')] as $url) {
+        foreach ([route('login'), route('register')] as $url) {
             $this->get($url)
                 ->assertOk()
-                ->assertSee('aria-controls="mobile-navigation"', false)
-                ->assertSee('data-mobile-nav', false);
+                ->assertSee('Belajar Bali,')
+                ->assertDontSee('data-mobile-nav', false)
+                ->assertDontSee('<footer', false);
         }
+
+        $this->get(route('password.request'))
+            ->assertOk()
+            ->assertSee('aria-controls="mobile-navigation"', false)
+            ->assertSee('data-mobile-nav', false);
     }
 
     public function test_a_user_can_register_and_log_out(): void

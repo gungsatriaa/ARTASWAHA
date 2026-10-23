@@ -86,6 +86,21 @@ document.querySelectorAll('[data-mobile-nav]').forEach((sidebar) => {
     });
 });
 
+document.querySelectorAll('[data-password-toggle]').forEach((button) => {
+    const input = document.getElementById(button.getAttribute('aria-controls'));
+
+    if (!input) {
+        return;
+    }
+
+    button.addEventListener('click', () => {
+        const shouldShowPassword = input.type === 'password';
+        input.type = shouldShowPassword ? 'text' : 'password';
+        button.textContent = shouldShowPassword ? 'Sembunyikan' : 'Tampilkan';
+        button.setAttribute('aria-pressed', String(shouldShowPassword));
+    });
+});
+
 if (roomPage && import.meta.env.VITE_REVERB_APP_KEY && import.meta.env.VITE_REVERB_HOST) {
     window.Pusher = Pusher;
     window.Echo = new Echo({

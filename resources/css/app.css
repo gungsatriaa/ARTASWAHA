@@ -20,9 +20,9 @@
     --color-success: #4ade80;
     --color-danger: #fb7185;
 
-    --font-sans: 'Nunito', ui-sans-serif, system-ui, sans-serif;
-    --font-readable: 'Atkinson Hyperlegible', ui-sans-serif, system-ui, sans-serif;
-    --font-display: 'Quicksand', 'Nunito', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-readable: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Outfit', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
     --font-balinese: Vimala, sans-serif;
 
     --radius-card: 1.75rem;

@@ -9,6 +9,9 @@
         <meta name="description" content="ARTASWAHA - Platform Edukasi Bahasa, Sastra, dan Aksara Bali.">
         <link rel="icon" type="image/webp" href="{{ asset('image/maskot.webp') }}">
         <link rel="apple-touch-icon" href="{{ asset('image/maskot.webp') }}">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400..800&family=Plus+Jakarta+Sans:wght@400..800&display=swap" rel="stylesheet">
         <title>{{ $title }}</title>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
