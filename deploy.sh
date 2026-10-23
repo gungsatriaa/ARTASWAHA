@@ -6,6 +6,7 @@ DEPLOY_REMOTE="${DEPLOY_REMOTE:-origin}"
 DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
 QUEUE_PROGRAM="${QUEUE_SUPERVISOR_PROGRAM:-artaswaha-queue:*}"
 REVERB_PROGRAM="${REVERB_SUPERVISOR_PROGRAM:-artaswaha-reverb}"
+SUPERVISORCTL_BIN="${SUPERVISORCTL_BIN:-$(command -v supervisorctl || true)}"
 
 fail() {
     printf 'ERROR: %s\n' "$*" >&2
@@ -33,9 +34,17 @@ check_supervisor_program() {
     local program="$2"
     local output
 
-    output="$(supervisorctl status "$program")" || fail "Tidak dapat membaca status Supervisor untuk $program."
+    output="$("$SUPERVISORCTL_BIN" status "$program")" || fail "Tidak dapat membaca status Supervisor untuk $program."
     printf '%s\n' "$output" | awk 'NF { seen = 1; if ($2 != "RUNNING") { print; failed = 1 } } END { if (!seen || failed) exit 1 }' || fail "$label belum seluruhnya RUNNING:\n$output"
     printf 'OK  %-18s RUNNING\n' "$label"
+}
+
+check_process() {
+    local label="$1"
+    local pattern="$2"
+
+    pgrep -af "$pattern" >/dev/null || fail "$label tidak ditemukan. Periksa proses di Supervisor/aaPanel."
+    printf 'OK  %-18s proses aktif\n' "$label"
 }
 
 check_reverb_port() {
@@ -77,16 +86,23 @@ command -v php >/dev/null || fail "PHP CLI tidak ditemukan."
 command -v composer >/dev/null || fail "Composer tidak ditemukan."
 command -v npm >/dev/null || fail "npm tidak ditemukan."
 command -v curl >/dev/null || fail "curl tidak ditemukan."
-command -v supervisorctl >/dev/null || fail "supervisorctl tidak ditemukan atau tidak dapat diakses."
 command -v timeout >/dev/null || fail "timeout tidak ditemukan."
 [[ -f .env ]] || fail ".env tidak ditemukan; deploy dibatalkan."
 [[ -f vendor/autoload.php ]] || fail "vendor belum tersedia; lakukan instalasi awal Composer terlebih dahulu."
+if [[ -n "$SUPERVISORCTL_BIN" ]]; then
+    [[ -x "$SUPERVISORCTL_BIN" ]] || fail "SUPERVISORCTL_BIN tidak dapat dijalankan: $SUPERVISORCTL_BIN"
+else
+    command -v pgrep >/dev/null || fail "supervisorctl dan pgrep tidak ditemukan; tidak dapat memeriksa proses worker."
+fi
 [[ "$(git branch --show-current)" == "$DEPLOY_BRANCH" ]] || fail "Branch aktif bukan '$DEPLOY_BRANCH'. Atur DEPLOY_BRANCH sesuai branch yang akan di-deploy."
 [[ -z "$(git status --porcelain)" ]] || fail "Working tree tidak bersih. Commit/stash perubahan di server sebelum deploy agar tidak tertimpa."
 
 printf '\n== Validasi environment production ==\n'
 [[ "$(dotenv_value APP_ENV)" == "production" ]] || fail "APP_ENV harus production."
 [[ "$(dotenv_value APP_DEBUG)" == "false" ]] || fail "APP_DEBUG harus false."
+
+printf '\n== Aktifkan maintenance mode ==\n'
+php artisan down --render="errors::503" --retry=60
 
 printf '\n== Update source dari GitHub ==\n'
 git fetch --prune "$DEPLOY_REMOTE" "$DEPLOY_BRANCH"
@@ -99,14 +115,27 @@ printf '\n== Build frontend ==\n'
 npm ci --no-audit --no-fund
 npm run build
 
-printf '\n== Migrasi dan optimasi Laravel ==\n'
+printf '\n== Migrasi, storage, dan optimasi Laravel ==\n'
 php artisan config:clear
 php artisan migrate --force
+php artisan storage:link
 php artisan optimize
 
 printf '\n== Restart worker dan Reverb ==\n'
 php artisan queue:restart
 php artisan reverb:restart
+
+if [[ -n "$SUPERVISORCTL_BIN" ]]; then
+    check_supervisor_program "Queue worker" "$QUEUE_PROGRAM"
+    check_supervisor_program "Reverb process" "$REVERB_PROGRAM"
+else
+    printf '\nSupervisor CLI tidak tersedia; memeriksa proses aktif langsung.\n'
+    check_process "Queue worker" '[a]rtisan queue:work'
+    check_process "Reverb process" '[a]rtisan reverb:start'
+fi
+
+printf '\n== Matikan maintenance mode ==\n'
+php artisan up
 
 printf '\n== Health checks ==\n'
 APP_URL="$(dotenv_value APP_URL)"
@@ -137,7 +166,5 @@ fi
 check_http "AI API models" "${AI_API_URL%/}/models" "${AI_HEADERS[@]}"
 
 wait_for_reverb "$REVERB_SERVER_HOST" "$REVERB_SERVER_PORT"
-check_supervisor_program "Queue worker" "$QUEUE_PROGRAM"
-check_supervisor_program "Reverb process" "$REVERB_PROGRAM"
 
 printf '\nDeploy selesai.\n'

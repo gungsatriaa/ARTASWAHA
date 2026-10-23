@@ -175,7 +175,11 @@ chmod +x deploy.sh
 ./deploy.sh
 ```
 
-Script akan menolak working tree yang tidak bersih, fast-forward branch `main` dari `origin`, memasang Composer production dependencies, membangun aset npm, menjalankan migrasi, mengoptimasi Laravel, memberi sinyal restart graceful pada queue dan Reverb, lalu memeriksa `/up`, OCR `/health`, endpoint AI `/models`, port WebSocket internal, dan status kedua program Supervisor.
+Script akan menolak working tree yang tidak bersih, mengaktifkan maintenance mode, fast-forward branch `main` dari `origin`, memasang Composer production dependencies, membangun aset npm, menjalankan migrasi, membuat storage link, mengoptimasi Laravel, memberi sinyal restart graceful pada queue dan Reverb, memeriksa status worker, lalu mengaktifkan kembali aplikasi dan mengecek `/up`, OCR `/health`, endpoint AI `/models`, serta port WebSocket internal.
+
+Jika `supervisorctl` tersedia, script memeriksa status program Supervisor. Jika tidak tersedia, script memakai `pgrep` untuk memastikan proses worker dan Reverb terlihat aktif; ini hanya mengecek proses, bukan memastikan Supervisor akan otomatis menghidupkannya kembali. Atur Supervisor/aaPanel untuk `autorestart` dan pastikan queue serta Reverb tetap dikelola oleh process manager.
+
+Deploy menjalankan maintenance mode selama proses berlangsung. Bila perintah gagal sebelum tahap `php artisan up`, aplikasi sengaja dibiarkan dalam maintenance agar tidak melayani traffic dengan rilis setengah jadi. Setelah memperbaiki penyebabnya, jalankan `php artisan up` secara manual.
 
 Untuk branch/remote atau nama Supervisor yang berbeda:
 
@@ -184,6 +188,8 @@ DEPLOY_BRANCH=main DEPLOY_REMOTE=origin \
 QUEUE_SUPERVISOR_PROGRAM='artaswaha-queue:*' \
 REVERB_SUPERVISOR_PROGRAM=artaswaha-reverb ./deploy.sh
 ```
+
+Jika `supervisorctl` terpasang di lokasi yang tidak ada pada `PATH`, set `SUPERVISORCTL_BIN=/path/ke/supervisorctl`. Bila command memang tidak tersedia, script memakai pemeriksaan proses langsung.
 
 Script tidak melakukan rollback otomatis. Bila migrasi atau health check gagal, jangan menghapus/mereset database; periksa output dan log, pulihkan backup bila migrasi memang merusak data, lalu perbaiki penyebabnya.
 
