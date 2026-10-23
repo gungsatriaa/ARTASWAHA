@@ -13,13 +13,21 @@
         </a>
         <nav class="hidden items-center gap-1 lg:flex lg:gap-3" aria-label="Navigasi utama">
             <a href="{{ route('home') }}" @class([
-                'inline-flex min-h-11 items-center rounded-full px-4 py-3 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
+                'inline-flex min-h-11 items-center gap-2 rounded-full px-3 py-3 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
                 'bg-primary/20 text-accent' => request()->routeIs('home'),
                 'text-foreground/80 hover:bg-surface' => ! request()->routeIs('home'),
-            ]) @if (request()->routeIs('home')) aria-current="page" @endif>Beranda</a>
+            ]) @if (request()->routeIs('home')) aria-current="page" @endif>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-4 shrink-0" aria-hidden="true"><path d="m3 10 9-7 9 7"/><path d="M5 9v12h14V9M9 21v-7h6v7"/></svg>
+                Beranda
+            </a>
             @foreach (['paribasa' => 'Paribasa Bali', 'aksara' => 'Aksara Bali'] as $group => $label)
                 <div class="group relative hidden sm:block">
-                    <button type="button" class="inline-flex min-h-11 items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold text-foreground/80 transition hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" aria-haspopup="true">
+                    <button type="button" class="inline-flex min-h-11 items-center gap-2 rounded-full px-3 py-3 text-sm font-semibold text-foreground/80 transition hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" aria-haspopup="true">
+                        @if ($group === 'paribasa')
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-4 shrink-0" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-6.5A7.5 7.5 0 1 1 20 11.5Z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg>
+                        @else
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-4 shrink-0" aria-hidden="true"><path d="m4 19 6-14 5 14M6 14h7M15 19l3-7 3 7M16 17h4"/></svg>
+                        @endif
                         {{ $label }}
                         <span class="mt-[-3px] size-2 rotate-45 border-b-2 border-r-2 border-current transition-transform group-hover:rotate-[225deg]" aria-hidden="true"></span>
                     </button>
@@ -32,10 +40,19 @@
                     </div>
                 </div>
             @endforeach
-            <a class="hidden min-h-11 items-center rounded-full px-4 py-3 text-sm font-semibold text-foreground/80 transition hover:bg-surface sm:inline-flex" href="{{ auth()->check() ? route('quizzes.index') : route('login') }}">Kuis</a>
+            <a class="hidden min-h-11 items-center gap-2 rounded-full px-3 py-3 text-sm font-semibold text-foreground/80 transition hover:bg-surface sm:inline-flex" href="{{ auth()->check() ? route('quizzes.index') : route('login') }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-4 shrink-0" aria-hidden="true"><path d="M8 5V3h8v2"/><path d="M6 5h12v16H6z"/><path d="M9 10h6M9 14h6M9 18h3"/></svg>
+                Kuis
+            </a>
             @guest
-                <a class="hidden min-h-11 items-center rounded-full px-4 py-3 text-sm font-semibold text-foreground/80 transition hover:bg-surface sm:inline-flex" href="{{ route('login') }}">Login</a>
-                <a class="inline-flex min-h-11 items-center rounded-full bg-accent px-6 py-3 font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent" href="{{ route('register') }}">Daftar</a>
+                <a class="hidden min-h-11 items-center gap-2 rounded-full px-3 py-3 text-sm font-semibold text-foreground/80 transition hover:bg-surface sm:inline-flex" href="{{ route('login') }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-4 shrink-0" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3"/><path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"/></svg>
+                    Login
+                </a>
+                <a class="inline-flex min-h-11 items-center gap-2 rounded-full bg-accent px-4 py-3 text-sm font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent" href="{{ route('register') }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-4 shrink-0" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>
+                    Daftar
+                </a>
             @else
                 <div class="group relative">
                     <button type="button" class="relative grid size-11 place-items-center overflow-hidden rounded-full bg-accent font-display font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent" aria-label="Menu profil {{ auth()->user()->name }}">
@@ -71,24 +88,39 @@
             </div>
             <nav class="mt-5 flex-1 space-y-3 overflow-y-auto overscroll-contain pb-6" aria-label="Navigasi mobile">
                 <a href="{{ route('home') }}" @class([
-                    'flex min-h-11 items-center rounded-2xl px-4 py-3 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-accent',
-                    'bg-primary/20 text-accent' => request()->routeIs('home'),
+                    'flex min-h-12 items-center gap-3 rounded-full px-4 py-3 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-accent',
+                    'bg-primary/20 text-accent shadow-[inset_0_0_0_1px_rgba(0,124,128,0.35)]' => request()->routeIs('home'),
                     'text-foreground/75 hover:bg-surface hover:text-accent' => ! request()->routeIs('home'),
-                ]) @if (request()->routeIs('home')) aria-current="page" @endif>Beranda</a>
+                ]) @if (request()->routeIs('home')) aria-current="page" @endif>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5 shrink-0" aria-hidden="true"><path d="m3 10 9-7 9 7"/><path d="M5 9v12h14V9M9 21v-7h6v7"/></svg>
+                    Beranda
+                </a>
                 @foreach (['paribasa' => 'Paribasa Bali', 'aksara' => 'Aksara Bali'] as $group => $label)
                     <details @if ($currentLearningPath instanceof \App\Models\LearningPath && $currentLearningPath->group === $group) open @endif class="group border-b border-white/10 pb-2">
-                        <summary class="flex min-h-12 cursor-pointer list-none items-center justify-between rounded-2xl px-4 py-3 font-display font-bold text-foreground/85 transition hover:bg-surface hover:text-accent focus-visible:outline-2 focus-visible:outline-accent [&::-webkit-details-marker]:hidden">
-                            {{ $label }}
+                        <summary @class([
+                            'flex min-h-12 cursor-pointer list-none items-center justify-between rounded-full px-4 py-3 font-display font-bold transition hover:bg-surface hover:text-accent focus-visible:outline-2 focus-visible:outline-accent [&::-webkit-details-marker]:hidden',
+                            'bg-primary/20 text-accent' => $currentLearningPath instanceof \App\Models\LearningPath && $currentLearningPath->group === $group,
+                            'text-foreground/85' => ! ($currentLearningPath instanceof \App\Models\LearningPath && $currentLearningPath->group === $group),
+                        ])>
+                            <span class="flex items-center gap-3">
+                                @if ($group === 'paribasa')
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5 shrink-0" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-6.5A7.5 7.5 0 1 1 20 11.5Z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg>
+                                @else
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5 shrink-0" aria-hidden="true"><path d="m4 19 6-14 5 14M6 14h7M15 19l3-7 3 7M16 17h4"/></svg>
+                                @endif
+                                {{ $label }}
+                            </span>
                             <span class="size-2 rotate-45 border-b-2 border-r-2 border-current transition-transform group-open:rotate-[225deg]" aria-hidden="true"></span>
                         </summary>
-                        <div class="mt-1 space-y-1 pl-3">
+                        <div class="mt-2 space-y-1 pl-3">
                             @foreach ($learningPaths->where('group', $group) as $learningPath)
                                 <a href="{{ route('learning.paths.show', $learningPath->slug) }}" @class([
-                                    'flex min-h-11 items-center justify-between gap-3 rounded-2xl px-4 py-2 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-accent',
+                                    'flex min-h-11 items-center gap-3 rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-accent',
                                     'bg-primary/20 text-accent shadow-[inset_0_0_0_1px_rgba(0,124,128,0.35)]' => $currentLearningPathSlug === $learningPath->slug,
                                     'text-foreground/70 hover:bg-surface hover:text-accent' => $currentLearningPathSlug !== $learningPath->slug,
                                 ])>
-                                    {{ $learningPath->title }}
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-4 shrink-0" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v17H6.5A2.5 2.5 0 0 0 4 22z"/><path d="M4 5.5v14A2.5 2.5 0 0 1 6.5 17H20"/></svg>
+                                    <span class="min-w-0 flex-1">{{ $learningPath->title }}</span>
                                     @if ($currentLearningPathSlug === $learningPath->slug)
                                         <span class="size-2 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
                                     @endif
@@ -99,21 +131,33 @@
                 @endforeach
                 <div class="space-y-1 border-t border-white/10 pt-4">
                     <a href="{{ auth()->check() ? route('quizzes.index') : route('login') }}" @class([
-                        'flex min-h-11 items-center rounded-2xl px-4 py-3 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-accent',
-                        'bg-primary/20 text-accent' => request()->routeIs('quizzes.*', 'rooms.*'),
+                        'flex min-h-12 items-center gap-3 rounded-full px-4 py-3 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-accent',
+                        'bg-primary/20 text-accent shadow-[inset_0_0_0_1px_rgba(0,124,128,0.35)]' => request()->routeIs('quizzes.*', 'rooms.*'),
                         'text-foreground/75 hover:bg-surface hover:text-accent' => ! request()->routeIs('quizzes.*', 'rooms.*'),
-                    ])>Kuis</a>
+                    ])>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5 shrink-0" aria-hidden="true"><path d="M8 5V3h8v2"/><path d="M6 5h12v16H6z"/><path d="M9 10h6M9 14h6M9 18h3"/></svg>
+                        Kuis
+                    </a>
                 @auth
                     @if (auth()->user()->is_admin)
-                        <a href="{{ route('admin.lessons.index') }}" class="flex min-h-11 items-center rounded-2xl px-4 py-3 text-sm font-bold text-foreground/75 transition hover:bg-surface hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">Kelola materi</a>
+                        <a href="{{ route('admin.lessons.index') }}" class="flex min-h-12 items-center gap-3 rounded-full px-4 py-3 text-sm font-bold text-foreground/75 transition hover:bg-surface hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5 shrink-0" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg>
+                            Kelola materi
+                        </a>
                     @endif
                 @else
                     <a href="{{ route('login') }}" @class([
-                        'flex min-h-11 items-center rounded-2xl px-4 py-3 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-accent',
+                        'flex min-h-12 items-center gap-3 rounded-full px-4 py-3 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-accent',
                         'bg-primary/20 text-accent' => request()->routeIs('login'),
                         'text-foreground/75 hover:bg-surface hover:text-accent' => ! request()->routeIs('login'),
-                    ])>Login</a>
-                    <a href="{{ route('register') }}" class="mt-2 flex min-h-12 items-center justify-center rounded-full bg-accent px-5 py-3 font-extrabold text-background transition hover:brightness-110">Daftar</a>
+                    ])>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5 shrink-0" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3"/><path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"/></svg>
+                        Login
+                    </a>
+                    <a href="{{ route('register') }}" class="mt-2 flex min-h-12 items-center justify-center gap-2 rounded-full bg-accent px-5 py-3 font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5 shrink-0" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>
+                        Daftar
+                    </a>
                 @endauth
                 </div>
             </nav>

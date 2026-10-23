@@ -82,7 +82,7 @@ aside[data-mobile-nav] {
     inset: 0 0 0 auto;
     z-index: 70;
     box-sizing: border-box;
-    width: min(22rem, calc(100vw - 1rem));
+    width: min(20rem, calc(100vw - 1rem));
     overflow: hidden;
     transform: translateX(100%);
     pointer-events: none;

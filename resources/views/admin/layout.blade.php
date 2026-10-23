@@ -28,9 +28,18 @@
                     <button type="button" data-mobile-nav-close aria-label="Tutup menu" class="grid size-10 place-items-center rounded-full bg-background text-xl text-foreground/70 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">&times;</button>
                 </div>
                 <nav class="mt-5 flex-1 space-y-2" aria-label="Navigasi admin mobile">
-                    <a href="{{ route('admin.lessons.index') }}" @class(['flex min-h-12 items-center rounded-2xl px-4 font-semibold transition', 'bg-primary/20 text-accent' => request()->routeIs('admin.lessons.*'), 'text-foreground/75 hover:bg-background hover:text-accent' => ! request()->routeIs('admin.lessons.*')])>Pelajaran</a>
-                    <a href="{{ route('admin.learning-paths.index') }}" @class(['flex min-h-12 items-center rounded-2xl px-4 font-semibold transition', 'bg-primary/20 text-accent' => request()->routeIs('admin.learning-paths.*'), 'text-foreground/75 hover:bg-background hover:text-accent' => ! request()->routeIs('admin.learning-paths.*')])>Jalur belajar</a>
-                    <a href="{{ route('home') }}" class="mt-4 flex min-h-12 items-center rounded-2xl px-4 font-semibold text-foreground/75 transition hover:bg-background hover:text-accent">Lihat situs</a>
+                    <a href="{{ route('admin.lessons.index') }}" @class(['flex min-h-12 items-center gap-3 rounded-full px-4 font-semibold transition focus-visible:outline-2 focus-visible:outline-accent', 'bg-primary/20 text-accent shadow-[inset_0_0_0_1px_rgba(0,124,128,0.35)]' => request()->routeIs('admin.lessons.*'), 'text-foreground/75 hover:bg-background hover:text-accent' => ! request()->routeIs('admin.lessons.*')])>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5 shrink-0" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg>
+                        Pelajaran
+                    </a>
+                    <a href="{{ route('admin.learning-paths.index') }}" @class(['flex min-h-12 items-center gap-3 rounded-full px-4 font-semibold transition focus-visible:outline-2 focus-visible:outline-accent', 'bg-primary/20 text-accent shadow-[inset_0_0_0_1px_rgba(0,124,128,0.35)]' => request()->routeIs('admin.learning-paths.*'), 'text-foreground/75 hover:bg-background hover:text-accent' => ! request()->routeIs('admin.learning-paths.*')])>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5 shrink-0" aria-hidden="true"><circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h3a5 5 0 0 0 5-5V8"/></svg>
+                        Jalur belajar
+                    </a>
+                    <a href="{{ route('home') }}" class="mt-4 flex min-h-12 items-center gap-3 rounded-full px-4 font-semibold text-foreground/75 transition hover:bg-background hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5 shrink-0" aria-hidden="true"><path d="m3 10 9-7 9 7"/><path d="M5 9v12h14V9M9 21v-7h6v7"/></svg>
+                        Lihat situs
+                    </a>
                 </nav>
         </aside>
         <main class="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-12">
