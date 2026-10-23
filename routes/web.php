@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\LearningPathController as AdminLearningPathController;
 use App\Http\Controllers\Admin\LessonController as AdminLessonController;
 use App\Http\Controllers\AuthController;
@@ -33,7 +34,7 @@ Route::middleware('guest')->group(function (): void {
 Route::post('/keluar', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function (): void {
-    Route::get('/', fn () => to_route('admin.lessons.index'))->name('index');
+    Route::get('/', AdminDashboardController::class)->name('index');
 
     Route::get('/jalur', [AdminLearningPathController::class, 'index'])->name('learning-paths.index');
     Route::get('/jalur/buat', [AdminLearningPathController::class, 'create'])->name('learning-paths.create');

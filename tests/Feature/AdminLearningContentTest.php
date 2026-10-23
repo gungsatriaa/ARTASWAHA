@@ -15,8 +15,31 @@ class AdminLearningContentTest extends TestCase
 
     public function test_admin_access_is_required_for_content_management(): void
     {
+        $this->get(route('admin.index'))->assertRedirect(route('login'));
         $this->get(route('admin.lessons.index'))->assertRedirect(route('login'));
-        $this->actingAs(User::factory()->create())->get(route('admin.lessons.index'))->assertForbidden();
+        $this->actingAs(User::factory()->create())->get(route('admin.index'))->assertForbidden();
+        $this->get(route('admin.lessons.index'))->assertForbidden();
+    }
+
+    public function test_admin_dashboard_summarizes_modules_and_links_to_management(): void
+    {
+        $admin = User::factory()->create();
+        $admin->forceFill(['is_admin' => true])->save();
+        $learningPath = LearningPath::factory()->create(['title' => 'Paribasa Bali']);
+        Lesson::factory()->create(['learning_path_id' => $learningPath->id, 'title' => 'Modul terbit']);
+        Lesson::factory()->create(['learning_path_id' => $learningPath->id, 'title' => 'Modul draf', 'is_published' => false, 'reviewed_at' => null]);
+        Lesson::factory()->create(['learning_path_id' => $learningPath->id, 'title' => 'Modul arsip', 'is_published' => false]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.index'))
+            ->assertOk()
+            ->assertSee('Ruang kendali pembelajaran')
+            ->assertSee('Modul terbit')
+            ->assertSee('Modul draf')
+            ->assertSee('Modul arsip')
+            ->assertSee('3 modul')
+            ->assertSee(route('admin.lessons.create'), false)
+            ->assertSee(route('admin.learning-paths.index'), false);
     }
 
     public function test_admin_can_save_review_publish_edit_and_archive_a_lesson(): void
