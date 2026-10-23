@@ -13,10 +13,22 @@
 
             @foreach (['paribasa' => 'Paribasa Bali', 'aksara' => 'Aksara Bali'] as $group => $label)
                 <div>
-                    <h2 class="font-display font-bold">{{ $label }}</h2>
+                    <h2 class="inline-flex items-center gap-2 font-display font-bold">
+                        @if ($group === 'paribasa')
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-4 text-accent" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-6.5A7.5 7.5 0 1 1 20 11.5Z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg>
+                        @else
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-4 text-accent" aria-hidden="true"><path d="m4 19 6-14 5 14M6 14h7M15 19l3-7 3 7M16 17h4"/></svg>
+                        @endif
+                        {{ $label }}
+                    </h2>
                     <ul class="mt-4 space-y-2 text-sm text-foreground/65">
                         @foreach ($learningPaths->where('group', $group) as $learningPath)
-                            <li><a class="inline-flex min-h-8 items-center transition hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="{{ route('learning.paths.show', $learningPath->slug) }}">{{ $learningPath->title }}</a></li>
+                            <li>
+                                <a class="inline-flex min-h-8 items-center gap-2 transition hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" href="{{ route('learning.paths.show', $learningPath->slug) }}">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-4 shrink-0 text-accent/80" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v17H6.5A2.5 2.5 0 0 0 4 22z"/><path d="M4 5.5v14A2.5 2.5 0 0 1 6.5 17H20"/></svg>
+                                    {{ $learningPath->title }}
+                                </a>
+                            </li>
                         @endforeach
                     </ul>
                 </div>
