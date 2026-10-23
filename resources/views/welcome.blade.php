@@ -41,7 +41,7 @@
                     </div>
                     <div class="grid gap-3 sm:grid-cols-3">
                         <article class="rounded-3xl bg-background p-5">
-                            <span class="grid size-10 place-items-center rounded-full bg-accent/10 text-lg text-accent" aria-hidden="true">✦</span>
+                            <span class="grid size-10 place-items-center rounded-full bg-accent/10 text-accent" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-6.5A7.5 7.5 0 1 1 20 11.5Z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg></span>
                             <h3 class="mt-4 font-display font-bold">Paribasa</h3>
                             <p class="mt-2 font-readable text-sm leading-6 text-foreground/60">Cecimpedan, peparikan, dan sesonggakan.</p>
                         </article>
@@ -51,7 +51,7 @@
                             <p class="mt-2 font-readable text-sm leading-6 text-foreground/60">Belajar bentuk, tanda, gantungan, dan angka.</p>
                         </article>
                         <article class="rounded-3xl bg-background p-5">
-                            <span class="grid size-10 place-items-center rounded-full bg-accent/10 text-lg text-accent" aria-hidden="true">♫</span>
+                            <span class="grid size-10 place-items-center rounded-full bg-accent/10 text-accent" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg></span>
                             <h3 class="mt-4 font-display font-bold">Belajar bareng</h3>
                             <p class="mt-2 font-readable text-sm leading-6 text-foreground/60">Buat kuis dan ajak teman masuk room.</p>
                         </article>
@@ -67,7 +67,7 @@
                 </div>
                 <div class="grid gap-4 md:grid-cols-3">
                     <article class="rounded-card bg-surface p-6 sm:p-7">
-                        <span class="grid size-12 place-items-center rounded-full bg-accent/10 text-xl text-accent" aria-hidden="true">✦</span>
+                        <span class="grid size-12 place-items-center rounded-full bg-accent/10 text-accent" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-6"><circle cx="12" cy="12" r="9"/><path d="m16.2 7.8-2.4 6-6 2.4 2.4-6 6-2.4Z"/></svg></span>
                         <h3 class="mt-5 font-display text-xl font-bold">Mulai petualanganmu</h3>
                         <p class="mt-3 font-readable leading-7 text-foreground/65">Pilih materi yang kamu suka, tuntaskan satu tantangan, lalu lanjutkan belajar kapan saja. Progresmu tersimpan di perangkat.</p>
                     </article>
@@ -77,7 +77,7 @@
                         <p class="mt-3 font-readable leading-7 text-foreground/65">Tebak Cecimpedan, kenali Peparikan, dan latih Aksara Bali lewat contoh serta latihan interaktif.</p>
                     </article>
                     <article class="rounded-card bg-surface p-6 sm:p-7">
-                        <span class="grid size-12 place-items-center rounded-full bg-primary/20 text-xl text-accent" aria-hidden="true">♫</span>
+                        <span class="grid size-12 place-items-center rounded-full bg-primary/20 text-accent" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-6"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg></span>
                         <h3 class="mt-5 font-display text-xl font-bold">Ajak teman ke arena kuis</h3>
                         <p class="mt-3 font-readable leading-7 text-foreground/65">Buat kuis atau masuk ke room, jawab bersama, dan lihat peringkat berubah secara langsung.</p>
                     </article>
