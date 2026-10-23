@@ -4,6 +4,7 @@ set -Eeuo pipefail
 APP_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 DEPLOY_REMOTE="${DEPLOY_REMOTE:-origin}"
 DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
+DEPLOY_SSH_KEY="${DEPLOY_SSH_KEY:-/root/.ssh/aapanel/artaswaha_78175}"
 QUEUE_PROGRAM="${QUEUE_SUPERVISOR_PROGRAM:-artaswaha-queue:*}"
 REVERB_PROGRAM="${REVERB_SUPERVISOR_PROGRAM:-artaswaha-reverb}"
 SUPERVISORCTL_BIN="${SUPERVISORCTL_BIN:-$(command -v supervisorctl || true)}"
@@ -105,8 +106,14 @@ printf '\n== Aktifkan maintenance mode ==\n'
 php artisan down --render="errors::503" --retry=60
 
 printf '\n== Update source dari GitHub ==\n'
-git fetch --prune "$DEPLOY_REMOTE" "$DEPLOY_BRANCH"
-git pull --ff-only "$DEPLOY_REMOTE" "$DEPLOY_BRANCH"
+if [[ -f "$DEPLOY_SSH_KEY" ]]; then
+    printf -v DEPLOY_GIT_SSH_COMMAND 'ssh -i %q -o IdentitiesOnly=yes' "$DEPLOY_SSH_KEY"
+    GIT_SSH_COMMAND="$DEPLOY_GIT_SSH_COMMAND" git fetch --prune "$DEPLOY_REMOTE" "$DEPLOY_BRANCH"
+    GIT_SSH_COMMAND="$DEPLOY_GIT_SSH_COMMAND" git pull --ff-only "$DEPLOY_REMOTE" "$DEPLOY_BRANCH"
+else
+    git fetch --prune "$DEPLOY_REMOTE" "$DEPLOY_BRANCH"
+    git pull --ff-only "$DEPLOY_REMOTE" "$DEPLOY_BRANCH"
+fi
 
 printf '\n== Install dependency PHP ==\n'
 composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction

@@ -189,6 +189,8 @@ QUEUE_SUPERVISOR_PROGRAM='artaswaha-queue:*' \
 REVERB_SUPERVISOR_PROGRAM=artaswaha-reverb ./deploy.sh
 ```
 
+Di aaPanel, script otomatis memakai key `/root/.ssh/aapanel/artaswaha_78175` jika file tersebut ada. Untuk lokasi key lain, jalankan dengan `DEPLOY_SSH_KEY=/path/ke/private-key ./deploy.sh`. Key harus dapat dibaca oleh user yang menjalankan deploy.
+
 Jika `supervisorctl` terpasang di lokasi yang tidak ada pada `PATH`, set `SUPERVISORCTL_BIN=/path/ke/supervisorctl`. Bila command memang tidak tersedia, script memakai pemeriksaan proses langsung.
 
 Script tidak melakukan rollback otomatis. Bila migrasi atau health check gagal, jangan menghapus/mereset database; periksa output dan log, pulihkan backup bila migrasi memang merusak data, lalu perbaiki penyebabnya.
