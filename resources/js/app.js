@@ -1,6 +1,31 @@
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 
+const presenceUrl = document.body.dataset.presenceUrl;
+
+if (presenceUrl) {
+    const pingPresence = () => {
+        if (document.visibilityState !== 'visible') return;
+
+        fetch(presenceUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+                Accept: 'application/json',
+            },
+        }).catch(() => {});
+    };
+
+    pingPresence();
+    window.setInterval(pingPresence, 30000);
+    document.addEventListener('visibilitychange', pingPresence);
+}
+
+if (document.getElementById('analytics-chart-data')) {
+    import('./admin-analytics.js');
+}
+
 const roomPage = document.querySelector('[data-room-code]');
 const scrollLockedDialogs = new Set();
 

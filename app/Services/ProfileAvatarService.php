@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\LearnerProfile;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -23,7 +24,7 @@ class ProfileAvatarService
     ];
 
     /** @param array{avatar?: string|null, avatar_upload?: UploadedFile|null} $data */
-    public function update(User $user, array $data): void
+    public function update(User|LearnerProfile $user, array $data): void
     {
         $previousAvatar = $user->avatar;
         $storedPath = null;

@@ -107,7 +107,7 @@
             </div>
             <aside class="flex flex-col justify-between border-t border-white/10 bg-primary/10 p-6 lg:border-l lg:border-t-0 lg:p-8">
                 <div><span class="font-balinese text-4xl text-accent" lang="ban" aria-hidden="true">ᬒᬁ</span><h2 class="mt-4 font-display text-xl font-bold">Petualanganmu dimulai di sini.</h2><p class="mt-3 text-sm leading-7 text-foreground/60">Beberapa langkah singkat akan membantu kami mengenali minatmu. Kamu bisa langsung belajar setelah selesai.</p></div>
-                <p class="mt-8 border-t border-white/10 pt-5 text-xs leading-6 text-foreground/45">Tanpa email untuk mode anonim. Menghapus cookie atau data situs dapat membuat profil perangkat ini tidak dapat dipulihkan.</p>
+                <p class="mt-8 border-t border-white/10 pt-5 text-xs leading-6 text-foreground/55">Tanpa email untuk mode anonim. Menghapus cookie dapat membuat profil perangkat ini tidak dapat dipulihkan. <a href="{{ route('privacy-policy') }}" class="font-bold text-accent underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-accent">Lihat penggunaan datamu</a>.</p>
             </aside>
         </div>
     </section>

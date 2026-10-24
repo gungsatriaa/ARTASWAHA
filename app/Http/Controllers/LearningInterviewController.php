@@ -25,25 +25,6 @@ class LearningInterviewController extends Controller
         'masyarakat' => 'Masyarakat umum',
     ];
 
-    public function profile(Request $request): View|RedirectResponse
-    {
-        if ($request->user() !== null) {
-            return to_route('profile.show');
-        }
-
-        $deviceId = $request->cookie('artaswaha_device');
-        abort_unless(is_string($deviceId), 404);
-
-        $profile = LearnerProfile::query()
-            ->with('learningPath')
-            ->where('visitor_id', $deviceId)
-            ->where('mode', 'anonymous')
-            ->whereNull('user_id')
-            ->firstOrFail();
-
-        return view('learning.anonymous-profile', compact('profile'));
-    }
-
     public function show(Request $request): View|RedirectResponse
     {
         if (LearnerProfile::completedFor($request->user()?->id, $request->cookie('artaswaha_device')) !== null) {

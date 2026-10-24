@@ -1,4 +1,13 @@
-<x-layouts.profile :learning-paths="$learningPaths" :user="$user">
+<x-layouts.profile :learning-paths="$learningPaths" :user="$user ?? null" :profile="$profile ?? null">
+    @if (isset($profile))
+        <div class="mb-5 rounded-card border border-primary/25 bg-primary/10 p-5 sm:p-6">
+            <p class="text-sm font-bold text-accent">Akun anonim · hanya di perangkat ini</p>
+            <h2 class="mt-2 font-display text-xl font-bold">Belajar sebagai {{ $profile->name }}</h2>
+            <p class="mt-2 text-sm leading-6 text-foreground/65">Progres belajarmu tersimpan di perangkat ini dan tidak otomatis tersedia di perangkat lain.</p>
+            <p class="mt-2 text-sm text-foreground/65">Materi pilihan: {{ $profile->learningPath->title }} · Peran: {{ ['murid' => 'Murid', 'guru' => 'Guru', 'pendatang' => 'Pendatang', 'masyarakat' => 'Masyarakat umum'][$profile->role] ?? $profile->role }}</p>
+            <a href="{{ route('register') }}" class="mt-4 inline-flex min-h-11 items-center rounded-full bg-accent px-5 text-sm font-bold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-accent">Daftar akun</a>
+        </div>
+    @endif
     <section id="progres" class="min-w-0" aria-labelledby="progress-title">
         <header class="mb-5 flex flex-wrap items-end justify-between gap-3">
             <div>

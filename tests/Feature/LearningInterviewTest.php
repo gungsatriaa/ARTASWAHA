@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\LearnerProfile;
 use App\Models\LearningPath;
+use App\Models\LearningProgress;
+use App\Models\Lesson;
 use App\Models\User;
 use App\Services\ProfileAvatarService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -38,8 +40,10 @@ class LearningInterviewTest extends TestCase
 
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('learning.paths.show', $path->slug))->assertOk()->assertSee('Halo, Komang!');
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('learning.interview.avatar'))->assertOk();
+        $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('profile.avatar.show'))->assertOk();
         $this->withCookie('artaswaha_device', (string) Str::uuid())->get(route('learning.paths.show', $path->slug))->assertDontSee('Halo, Komang!');
         $this->withCookie('artaswaha_device', (string) Str::uuid())->get(route('learning.interview.avatar'))->assertNotFound();
+        $this->withCookie('artaswaha_device', (string) Str::uuid())->get(route('profile.avatar.show'))->assertRedirect(route('login'));
     }
 
     public function test_account_choice_survives_login_and_links_the_interview(): void
@@ -135,18 +139,74 @@ class LearningInterviewTest extends TestCase
             ->assertSee('Menu profil anonim Made')
             ->assertSee('Profil anonim')
             ->assertSee('Akun anonim')
-            ->assertSee(route('learning.anonymous-profile.show'), false)
+            ->assertSee(route('profile.show'), false)
+            ->assertDontSee('/profil-anonim')
             ->assertDontSee('>Daftar</a>', false);
 
-        $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('learning.anonymous-profile.show'))
+        $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('profile.show'))
             ->assertOk()
             ->assertSee('Belajar sebagai Made')
             ->assertSee($path->title)
             ->assertSee('Daftar akun');
 
         $otherDevice = (string) Str::uuid();
-        $this->withCookie('artaswaha_device', $otherDevice)->get(route('learning.anonymous-profile.show'))->assertNotFound();
+        $this->withCookie('artaswaha_device', $otherDevice)->get(route('profile.show'))->assertRedirect(route('login'));
         $this->withCookie('artaswaha_device', $otherDevice)->get(route('home'))->assertSee(route('register'), false)->assertDontSee('Menu profil anonim Made');
+    }
+
+    public function test_anonymous_profile_shows_only_this_devices_learning_progress_and_account_menu(): void
+    {
+        $path = LearningPath::factory()->create(['is_published' => true, 'group' => 'paribasa']);
+        $completedLesson = Lesson::factory()->create(['learning_path_id' => $path->id]);
+        $otherLesson = Lesson::factory()->create(['learning_path_id' => $path->id]);
+        $visitorId = (string) Str::uuid();
+        LearnerProfile::query()->create([
+            'visitor_id' => $visitorId,
+            'learning_path_id' => $path->id,
+            'role' => 'murid',
+            'name' => 'Made',
+            'avatar' => 'avatar/gajah.webp',
+            'mode' => 'anonymous',
+        ]);
+        LearningProgress::factory()->create(['visitor_id' => $visitorId, 'lesson_id' => $completedLesson->id]);
+        LearningProgress::factory()->create(['visitor_id' => (string) Str::uuid(), 'lesson_id' => $otherLesson->id]);
+
+        $this->withCookie('artaswaha_device', $visitorId)->get(route('profile.show'))
+            ->assertOk()
+            ->assertSee('Akun anonim')
+            ->assertSee('Belajar sebagai Made')
+            ->assertSee('1 dari 2 pelajaran selesai')
+            ->assertSee('Perlu akun')
+            ->assertSee(route('profile.about'), false)
+            ->assertSee(route('profile.avatar.update'), false);
+
+        $this->withCookie('artaswaha_device', $visitorId)->get(route('profile.about'))->assertOk()->assertSee('Tentang ARTASWAHA');
+        $this->withCookie('artaswaha_device', (string) Str::uuid())->get(route('profile.about'))->assertRedirect(route('login'));
+        $this->get('/profil-anonim')->assertRedirect(route('profile.show'));
+    }
+
+    public function test_anonymous_avatar_can_be_changed_only_from_its_own_device(): void
+    {
+        $path = LearningPath::factory()->create(['is_published' => true]);
+        $visitorId = (string) Str::uuid();
+        $profile = LearnerProfile::query()->create([
+            'visitor_id' => $visitorId,
+            'learning_path_id' => $path->id,
+            'role' => 'murid',
+            'name' => 'Made',
+            'avatar' => 'avatar/gajah.webp',
+            'mode' => 'anonymous',
+        ]);
+
+        $this->withCookie('artaswaha_device', (string) Str::uuid())
+            ->put(route('profile.avatar.update'), ['avatar' => 'avatar/kucing.webp'])
+            ->assertRedirect(route('login'));
+        $this->assertSame('avatar/gajah.webp', $profile->fresh()->avatar);
+
+        $this->withCookie('artaswaha_device', $visitorId)
+            ->put(route('profile.avatar.update'), ['avatar' => 'avatar/kucing.webp'])
+            ->assertRedirect(route('profile.show'));
+        $this->assertSame('avatar/kucing.webp', $profile->fresh()->avatar);
     }
 
     public function test_account_choice_survives_registration(): void
@@ -188,7 +248,7 @@ class LearningInterviewTest extends TestCase
             ->assertOk()
             ->assertSee('Menu profil Putu Dewi')
             ->assertDontSee('Menu profil anonim Putu');
-        $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('learning.anonymous-profile.show'))->assertRedirect(route('profile.show'));
+        $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('profile.show'))->assertOk()->assertSee('Putu Dewi');
         $this->assertDatabaseHas('learner_profiles', ['visitor_id' => $profile->visitor_id, 'mode' => 'account', 'user_id' => auth()->id()]);
     }
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AnalyticsController as AdminAnalyticsController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\LearningPathController as AdminLearningPathController;
 use App\Http\Controllers\Admin\LessonController as AdminLessonController;
@@ -8,6 +9,8 @@ use App\Http\Controllers\LearningInterviewController;
 use App\Http\Controllers\LearningPathController;
 use App\Http\Controllers\LearningProgressController;
 use App\Http\Controllers\LessonController;
+use App\Http\Controllers\PresenceController;
+use App\Http\Controllers\PrivacyPolicyController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\QuizDraftController;
@@ -17,10 +20,17 @@ use App\Http\Controllers\UpdateProfileAvatarController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LearningPathController::class, 'index'])->name('home');
+Route::get('/kebijakan-privasi', PrivacyPolicyController::class)->name('privacy-policy');
+Route::post('/presence', PresenceController::class)->middleware('throttle:30,1')->name('presence.ping');
 Route::get('/mulai-belajar', [LearningInterviewController::class, 'show'])->name('learning.interview.show');
 Route::post('/mulai-belajar', [LearningInterviewController::class, 'store'])->middleware('throttle:20,1')->name('learning.interview.store');
 Route::get('/mulai-belajar/avatar', [LearningInterviewController::class, 'avatar'])->name('learning.interview.avatar');
-Route::get('/profil-anonim', [LearningInterviewController::class, 'profile'])->name('learning.anonymous-profile.show');
+Route::redirect('/profil-anonim', '/profil');
+Route::redirect('/profil-anonim/tentang', '/profil/tentang');
+Route::get('/profil', ProfileController::class)->name('profile.show');
+Route::get('/profil/tentang', [ProfileController::class, 'about'])->name('profile.about');
+Route::get('/profil/avatar', ShowProfileAvatarController::class)->name('profile.avatar.show');
+Route::put('/profil/avatar', UpdateProfileAvatarController::class)->middleware('throttle:10,1')->name('profile.avatar.update');
 Route::get('/belajar/{learningPath:slug}', [LearningPathController::class, 'show'])->name('learning.paths.show');
 Route::get('/pelajaran/{lesson:slug}', [LessonController::class, 'show'])->name('learning.lessons.show');
 Route::post('/pelajaran/{lesson:slug}/selesai', [LearningProgressController::class, 'store'])->name('learning.progress.store');
@@ -44,6 +54,8 @@ Route::post('/keluar', [AuthController::class, 'logout'])->middleware('auth')->n
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function (): void {
     Route::get('/', AdminDashboardController::class)->name('index');
+    Route::get('/analitik', [AdminAnalyticsController::class, 'index'])->name('analytics.index');
+    Route::get('/analitik/online', [AdminAnalyticsController::class, 'online'])->name('analytics.online');
 
     Route::get('/jalur', [AdminLearningPathController::class, 'index'])->name('learning-paths.index');
     Route::get('/jalur/buat', [AdminLearningPathController::class, 'create'])->name('learning-paths.create');
@@ -61,10 +73,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 });
 
 Route::middleware('auth')->group(function (): void {
-    Route::get('/profil', ProfileController::class)->name('profile.show');
-    Route::get('/profil/tentang', [ProfileController::class, 'about'])->name('profile.about');
-    Route::get('/profil/avatar', ShowProfileAvatarController::class)->name('profile.avatar.show');
-    Route::put('/profil/avatar', UpdateProfileAvatarController::class)->middleware('throttle:10,1')->name('profile.avatar.update');
     Route::get('/kuis', [QuizController::class, 'index'])->name('quizzes.index');
     Route::get('/kuis/buat', [QuizController::class, 'create'])->name('quizzes.create');
     Route::post('/kuis/draf-ai', [QuizDraftController::class, 'store'])->middleware('throttle:5,1')->name('quizzes.drafts.store');

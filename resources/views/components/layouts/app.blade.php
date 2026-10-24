@@ -16,7 +16,7 @@
         <title>{{ $title }}</title>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body @class(['min-h-screen bg-background font-sans text-foreground antialiased', 'flex flex-col' => ! $showFooter])>
+    <body data-presence-url="{{ route('presence.ping') }}" @class(['min-h-screen bg-background font-sans text-foreground antialiased', 'flex flex-col' => ! $showFooter])>
         <x-site-nav :learning-paths="$learningPaths" />
         <main @class(['flex-1' => ! $showFooter])>
             {{ $slot }}

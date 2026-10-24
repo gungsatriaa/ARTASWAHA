@@ -39,6 +39,15 @@ class AdminLearningContentTest extends TestCase
             ->assertSee('Modul arsip')
             ->assertSee('3 modul')
             ->assertSee(route('admin.lessons.create'), false)
+            ->assertSee(route('admin.learning-paths.index'), false)
+            ->assertSee('aria-label="Navigasi admin"', false)
+            ->assertSee('lg:grid-cols-[16rem_minmax(0,1fr)]', false)
+            ->assertSee('data-mobile-nav-open', false)
+            ->assertDontSee('aria-label="Navigasi admin mobile"', false);
+
+        $this->actingAs($admin)->get(route('admin.lessons.index'))
+            ->assertOk()
+            ->assertSee('aria-current="page"', false)
             ->assertSee(route('admin.learning-paths.index'), false);
     }
 

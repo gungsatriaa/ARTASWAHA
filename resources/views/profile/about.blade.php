@@ -1,4 +1,4 @@
-<x-layouts.profile :learning-paths="$learningPaths" :user="$user" active="about">
+<x-layouts.profile :learning-paths="$learningPaths" :user="$user ?? null" :profile="$profile ?? null" active="about">
     <article class="rounded-card bg-surface p-5 sm:p-8">
         <header class="flex flex-wrap items-start justify-between gap-4 border-b border-white/10 pb-6">
             <div class="max-w-2xl">
@@ -24,29 +24,9 @@
         </section>
 
         <section class="border-t border-white/10 pt-6" aria-labelledby="privacy-title">
-            <div class="flex flex-wrap items-end justify-between gap-3">
-                <div>
-                    <p class="text-sm font-semibold text-accent">Data dan privasi</p>
-                    <h3 id="privacy-title" class="mt-1 font-display text-xl font-bold">Ringkasan kebijakan privasi</h3>
-                </div>
-                <span class="text-xs text-foreground/50">Berlaku untuk fitur yang tersedia saat ini</span>
-            </div>
-
-            <dl class="mt-5 space-y-4 text-sm leading-6">
-                <div class="rounded-2xl bg-background p-4">
-                    <dt class="font-bold">Data yang digunakan</dt>
-                    <dd class="mt-1 text-foreground/65">Akun menyimpan nama, alamat email, kata sandi dalam bentuk terlindungi, dan avatar pilihan. Gambar avatar yang diunggah disimpan privat dan hanya dapat dimuat saat pemilik akun masuk. Belajar tanpa akun menggunakan ID acak pada cookie perangkat untuk mengingat progres; progres perangkat dapat ditautkan ke akun saat kamu masuk atau mendaftar. Kuis dan room menyimpan pertanyaan, nama tampilan peserta, jawaban, serta skor yang diperlukan untuk menjalankan sesi.</dd>
-                </div>
-                <div class="rounded-2xl bg-background p-4">
-                    <dt class="font-bold">Penggunaan dan keterlihatan</dt>
-                    <dd class="mt-1 text-foreground/65">Data dipakai untuk menyediakan akun, menyimpan progres, dan menjalankan kuis. Nama tampilan serta skor dapat terlihat oleh peserta room ketika peringkat diaktifkan. Kuis yang dibuat hanya ditampilkan kepada pembuatnya; room dibagikan melalui kode undangan.</dd>
-                </div>
-                <div class="rounded-2xl bg-background p-4">
-                    <dt class="font-bold">Kontrol atas data</dt>
-                    <dd class="mt-1 text-foreground/65">Jangan gunakan nama lengkap atau informasi sensitif anak sebagai nama tampilan. Saat ini belum ada penghapusan akun mandiri; untuk permintaan akses, koreksi, atau penghapusan data, hubungi pengelola ARTASWAHA melalui kanal resmi.</dd>
-                </div>
-            </dl>
-            <p class="mt-4 text-xs leading-5 text-foreground/45">Ringkasan ini menjelaskan perilaku sistem saat ini. Masa penyimpanan dan kanal kontak pengelola perlu ditetapkan sebelum layanan digunakan secara luas.</p>
+            <h3 id="privacy-title" class="font-display text-xl font-bold">Data dan privasi</h3>
+            <p class="mt-3 max-w-2xl text-sm leading-7 text-foreground/65">Lihat data yang dikumpulkan saat belajar tanpa akun, membuat akun, dan bermain kuis; cara data dipakai, berapa lama disimpan, serta cara meminta akses atau penghapusan.</p>
+            <a href="{{ route('privacy-policy') }}" class="mt-4 inline-flex min-h-11 items-center rounded-full border border-white/15 px-5 text-sm font-bold text-accent transition hover:border-accent/50 hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Baca kebijakan privasi</a>
         </section>
     </article>
 </x-layouts.profile>

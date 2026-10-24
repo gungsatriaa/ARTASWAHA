@@ -168,9 +168,9 @@ class LearningFlowTest extends TestCase
             ->assertSee('Tentang ARTASWAHA')
             ->assertSee('Platform Edukasi Bahasa, Sastra, dan Aksara Bali')
             ->assertSee('Versi 0.1.0')
-            ->assertSee('Ringkasan kebijakan privasi')
-            ->assertSee('ID acak pada cookie perangkat')
-            ->assertSee('belum ada penghapusan akun mandiri')
+            ->assertSee('Data dan privasi')
+            ->assertSee('Baca kebijakan privasi')
+            ->assertSee(route('privacy-policy'))
             ->assertSee(route('profile.show'));
     }
 

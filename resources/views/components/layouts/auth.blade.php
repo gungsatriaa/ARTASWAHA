@@ -6,6 +6,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#0a0a0a">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="description" content="Masuk atau daftar untuk belajar bahasa dan aksara Bali bersama ARTASWAHA.">
         <link rel="icon" type="image/webp" href="{{ asset('image/maskot.webp') }}">
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,7 +15,7 @@
         <title>{{ $title }}</title>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="min-h-dvh overflow-x-hidden bg-background font-sans text-foreground antialiased">
+    <body data-presence-url="{{ route('presence.ping') }}" class="min-h-dvh overflow-x-hidden bg-background font-sans text-foreground antialiased">
         <main class="grid min-h-dvh lg:grid-cols-2">
                 <aside class="hidden flex-col justify-between border-b border-white/10 bg-surface px-5 py-8 sm:px-10 sm:py-10 lg:flex lg:min-h-dvh lg:border-b-0 lg:border-r lg:px-12 lg:py-12 xl:px-20">
                     <div class="flex flex-1 flex-col">
@@ -55,6 +56,7 @@
                     <div class="flex flex-1 items-center">
                         <div class="mx-auto w-full max-w-md">
                         {{ $slot }}
+                        <p class="mt-5 text-center text-xs leading-5 text-foreground/55">Lihat cara kami menggunakan datamu dalam <a href="{{ route('privacy-policy') }}" class="font-bold text-accent underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-accent">kebijakan privasi</a>.</p>
                         </div>
                     </div>
                 </section>

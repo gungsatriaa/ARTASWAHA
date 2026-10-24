@@ -14,6 +14,7 @@
                 <button class="min-h-12 w-full rounded-full bg-primary px-6 py-3 font-bold text-white hover:brightness-110" type="submit">Kirim tautan</button>
             </form>
             <a href="{{ route('login') }}" class="mt-6 inline-block text-sm font-semibold text-accent hover:underline">Kembali ke masuk</a>
+            <p class="mt-5 text-xs leading-5 text-foreground/55">Penggunaan alamat email dijelaskan dalam <a href="{{ route('privacy-policy') }}" class="font-bold text-accent underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-accent">kebijakan privasi</a>.</p>
         </section>
     </div>
 </x-layouts.app>

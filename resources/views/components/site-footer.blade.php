@@ -58,7 +58,10 @@
         </div>
 
         <div class="mt-10 border-t border-white/10 pt-5 text-sm text-foreground/45">
-            <p>© {{ now()->year }} ARTASWAHA. All rights reserved.</p>
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <p>© {{ now()->year }} ARTASWAHA. All rights reserved.</p>
+                <a href="{{ route('privacy-policy') }}" class="rounded-full font-semibold text-foreground/70 transition hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Kebijakan privasi</a>
+            </div>
         </div>
     </div>
 </footer>

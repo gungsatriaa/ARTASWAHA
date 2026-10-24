@@ -2,20 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LearnerProfile;
 use App\Models\Room;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ShowProfileAvatarController extends Controller
 {
-    public function __invoke(Request $request): StreamedResponse
+    public function __invoke(Request $request): StreamedResponse|RedirectResponse
     {
-        $user = $request->user();
-        abort_unless($user instanceof User, 403);
+        $person = $request->user() ?? LearnerProfile::completedFor(null, $request->cookie('artaswaha_device'));
+        if ($person === null) {
+            return to_route('login');
+        }
 
-        return $this->respond($user);
+        return $this->respond($person);
     }
 
     public function forRoom(Request $request, Room $room, User $user): StreamedResponse
@@ -27,7 +31,7 @@ class ShowProfileAvatarController extends Controller
         return $this->respond($user);
     }
 
-    private function respond(User $user): StreamedResponse
+    private function respond(User|LearnerProfile $user): StreamedResponse
     {
         $avatar = $user->avatar;
 

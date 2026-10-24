@@ -12,7 +12,7 @@
         : null;
     $anonymousAvatar = $anonymousProfile
         ? (str_starts_with($anonymousProfile->avatar ?? '', 'avatars/')
-            ? route('learning.interview.avatar')
+            ? route('profile.avatar.show')
             : asset($anonymousProfile->avatar ?? array_key_first(\App\Services\ProfileAvatarService::DEFAULT_AVATARS)))
         : null;
 @endphp
@@ -68,7 +68,7 @@
                         <div class="invisible absolute right-0 top-full z-20 w-56 translate-y-2 pt-3 opacity-0 transition duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-has-[:focus-visible]:visible group-has-[:focus-visible]:translate-y-0 group-has-[:focus-visible]:opacity-100">
                             <div class="rounded-2xl border border-white/10 bg-surface p-2 shadow-2xl shadow-black/40">
                                 <div class="px-4 py-3"><p class="truncate text-sm font-semibold text-foreground">{{ $anonymousProfile->name }}</p><p class="text-xs text-accent">Akun anonim</p></div>
-                                <a href="{{ route('learning.anonymous-profile.show') }}" class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">Profil</a>
+                                <a href="{{ route('profile.show') }}" class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">Profil</a>
                                 <a href="{{ route('login') }}" class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">Masuk</a>
                                 <a href="{{ route('register') }}" class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">Daftar akun</a>
                             </div>
@@ -178,7 +178,7 @@
                     @endif
                 @else
                     @if ($anonymousProfile)
-                        <a href="{{ route('learning.anonymous-profile.show') }}" class="flex min-h-12 items-center gap-3 rounded-full px-4 py-3 text-sm font-bold text-foreground/75 transition hover:bg-surface hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"><img src="{{ $anonymousAvatar }}" alt="" class="size-7 rounded-full object-cover"> Profil anonim</a>
+                    <a href="{{ route('profile.show') }}" class="flex min-h-12 items-center gap-3 rounded-full px-4 py-3 text-sm font-bold text-foreground/75 transition hover:bg-surface hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"><img src="{{ $anonymousAvatar }}" alt="" class="size-7 rounded-full object-cover"> Profil anonim</a>
                     @else
                     <a href="{{ route('login') }}" @class([
                         'flex min-h-12 items-center gap-3 rounded-full px-4 py-3 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-accent',
@@ -214,7 +214,7 @@
                 </div>
             @endauth
             @if ($anonymousProfile)
-                <a href="{{ route('learning.anonymous-profile.show') }}" class="flex min-w-0 items-center gap-3 border-t border-white/10 pt-4 transition hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" aria-label="Profil anonim {{ $anonymousProfile->name }}">
+                <a href="{{ route('profile.show') }}" class="flex min-w-0 items-center gap-3 border-t border-white/10 pt-4 transition hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" aria-label="Profil anonim {{ $anonymousProfile->name }}">
                     <img src="{{ $anonymousAvatar }}" alt="" class="size-11 shrink-0 rounded-full object-cover ring-1 ring-white/10">
                     <span class="min-w-0"><span class="block truncate text-sm font-bold">{{ $anonymousProfile->name }}</span><span class="block text-xs text-accent">Akun anonim</span></span>
                 </a>

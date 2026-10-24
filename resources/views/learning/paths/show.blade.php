@@ -24,7 +24,7 @@
             @if ($profile)
                 <div class="mt-6 flex items-center gap-3 rounded-2xl border border-accent/20 bg-accent/5 p-3">
                     @if (str_starts_with($profile->avatar ?? '', 'avatars/'))
-                        <img src="{{ route('learning.interview.avatar') }}" alt="" class="size-11 rounded-full object-cover">
+                        <img src="{{ route('profile.avatar.show') }}" alt="" class="size-11 rounded-full object-cover">
                     @elseif ($profile->avatar)
                         <img src="{{ asset($profile->avatar) }}" alt="" class="size-11 rounded-full object-cover">
                     @endif
