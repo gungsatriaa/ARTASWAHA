@@ -8,10 +8,12 @@ use App\Models\Room;
 use App\Models\RoomAnswer;
 use App\Models\RoomParticipant;
 use App\Models\User;
+use App\Services\RoomService;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class QuizRoomFlowTest extends TestCase
@@ -90,7 +92,44 @@ class QuizRoomFlowTest extends TestCase
 
         $this->post(route('rooms.store', $quiz))->assertRedirect();
         $room = Room::query()->firstOrFail();
+        $this->assertMatchesRegularExpression('/\A[A-Z0-9]{4}\z/', $room->code);
         $this->get(route('rooms.show', $room->code))->assertOk()->assertSee($room->code)->assertSee('Mulai kuis');
+    }
+
+    public function test_room_creation_retries_a_duplicate_four_character_code(): void
+    {
+        $host = User::factory()->create();
+        $quiz = $this->createQuiz($host);
+        Room::factory()->create(['code' => 'AB12']);
+
+        Str::createRandomStringsUsingSequence(['AB12', 'CD34']);
+
+        try {
+            $room = app(RoomService::class)->create($quiz, $host);
+        } finally {
+            Str::createRandomStringsUsing();
+        }
+
+        $this->assertSame('CD34', $room->code);
+        $this->assertDatabaseCount('rooms', 2);
+    }
+
+    public function test_room_join_rejects_codes_with_invalid_length(): void
+    {
+        $player = User::factory()->create();
+
+        $this->actingAs($player)->post(route('rooms.join'), ['code' => 'ABCDE'])
+            ->assertSessionHasErrors('code');
+    }
+
+    public function test_existing_ten_character_room_code_still_allows_joining(): void
+    {
+        $host = User::factory()->create();
+        $player = User::factory()->create();
+        $room = Room::factory()->create(['host_id' => $host->id, 'code' => 'ABCD123456']);
+
+        $this->actingAs($player)->post(route('rooms.join'), ['code' => strtolower($room->code)])
+            ->assertRedirect(route('rooms.show', $room->code));
     }
 
     public function test_room_invitation_link_opens_join_form_with_room_code_prefilled(): void

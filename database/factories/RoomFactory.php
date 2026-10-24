@@ -23,7 +23,7 @@ class RoomFactory extends Factory
         return [
             'quiz_id' => Quiz::factory(),
             'host_id' => User::factory(),
-            'code' => Str::upper(Str::random(10)),
+            'code' => Str::upper(Str::random(4)),
             'status' => 'waiting',
             'leaderboard_enabled' => true,
         ];

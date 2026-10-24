@@ -9,6 +9,7 @@ use App\Models\Room;
 use App\Models\RoomAnswer;
 use App\Models\RoomParticipant;
 use App\Models\User;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -20,21 +21,31 @@ class RoomService
         abort_unless($quiz->user_id === $host->id, 403);
         abort_if($quiz->questions()->doesntExist(), 422, 'Tambahkan setidaknya satu pertanyaan terlebih dahulu.');
 
-        $room = DB::transaction(function () use ($quiz, $host): Room {
-            $room = Room::query()->create([
-                'quiz_id' => $quiz->id,
-                'host_id' => $host->id,
-                'code' => Str::upper(Str::random(10)),
-                'leaderboard_enabled' => $quiz->leaderboard_enabled,
-            ]);
+        for ($attempt = 0; $attempt < 10; $attempt++) {
+            try {
+                $room = DB::transaction(function () use ($quiz, $host): Room {
+                    $room = Room::query()->create([
+                        'quiz_id' => $quiz->id,
+                        'host_id' => $host->id,
+                        'code' => Str::upper(Str::random(4)),
+                        'leaderboard_enabled' => $quiz->leaderboard_enabled,
+                    ]);
 
-            $room->participants()->create([
-                'user_id' => $host->id,
-                'display_name' => $host->name,
-            ]);
+                    $room->participants()->create([
+                        'user_id' => $host->id,
+                        'display_name' => $host->name,
+                    ]);
 
-            return $room;
-        });
+                    return $room;
+                });
+
+                break;
+            } catch (UniqueConstraintViolationException $exception) {
+                if ($attempt === 9) {
+                    throw $exception;
+                }
+            }
+        }
 
         $this->broadcastRoomUpdate($room);
 
