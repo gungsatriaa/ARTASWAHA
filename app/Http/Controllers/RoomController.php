@@ -8,6 +8,7 @@ use App\Models\Quiz;
 use App\Models\Room;
 use App\Services\RoomService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 class RoomController extends Controller
@@ -31,11 +32,26 @@ class RoomController extends Controller
         return view('rooms.show', $roomService->viewData($room, request()->user()));
     }
 
+    public function status(Room $room): Response
+    {
+        $user = request()->user();
+        abort_unless($room->host_id === $user->id || $room->participants()->where('user_id', $user->id)->exists(), 403);
+
+        return response()->noContent();
+    }
+
     public function leave(Room $room, RoomService $roomService): RedirectResponse
     {
         $roomService->leave($room, request()->user());
 
         return to_route('quizzes.index')->with('status', 'Kamu sudah keluar dari room.');
+    }
+
+    public function destroy(Room $room, RoomService $roomService): RedirectResponse
+    {
+        $roomService->destroy($room, request()->user());
+
+        return to_route('quizzes.index')->with('status', 'Room berhasil dihapus.');
     }
 
     public function start(Room $room, RoomService $roomService): RedirectResponse

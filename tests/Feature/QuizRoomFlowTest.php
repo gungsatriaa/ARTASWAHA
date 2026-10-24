@@ -162,6 +162,11 @@ class QuizRoomFlowTest extends TestCase
         $this->actingAs($player)->post(route('rooms.start', $room->code))->assertForbidden();
         $this->actingAs($host)->post(route('rooms.start', $room->code))->assertRedirect(route('rooms.show', $room->code));
 
+        $this->actingAs($player)->get(route('rooms.show', $room->code))
+            ->assertOk()
+            ->assertSee('Pertanyaan 1 dari 1')
+            ->assertSee('Pilih satu jawaban');
+
         $question = $quiz->questions()->firstOrFail();
         $answerData = ['question_id' => $question->id, 'answer_index' => 1, 'points_awarded' => 9999];
         $this->actingAs($player)->post(route('rooms.answer', $room->code), $answerData)->assertRedirect();
@@ -202,6 +207,45 @@ class QuizRoomFlowTest extends TestCase
         $this->actingAs($host)->post(route('rooms.leave', $room->code))->assertForbidden();
 
         $this->assertDatabaseHas('room_participants', ['room_id' => $room->id, 'user_id' => $host->id]);
+    }
+
+    public function test_only_host_can_delete_room_and_participants_receive_deletion_event(): void
+    {
+        $host = User::factory()->create();
+        $player = User::factory()->create();
+        $quiz = $this->createQuiz($host);
+        $room = Room::factory()->create(['quiz_id' => $quiz->id, 'host_id' => $host->id]);
+        $participant = RoomParticipant::factory()->create(['room_id' => $room->id, 'user_id' => $player->id]);
+        RoomAnswer::factory()->create([
+            'room_participant_id' => $participant->id,
+            'quiz_question_id' => $quiz->questions()->firstOrFail()->id,
+        ]);
+        Event::fake([RoomUpdated::class]);
+
+        $this->actingAs($player)->get(route('rooms.show', $room->code))
+            ->assertOk()
+            ->assertSee('Room dihapus oleh host')
+            ->assertDontSee('data-room-delete-open', false);
+        $this->get(route('rooms.status', $room->code))->assertNoContent();
+        $this->actingAs(User::factory()->create())->get(route('rooms.status', $room->code))->assertForbidden();
+        $this->actingAs($player)->delete(route('rooms.destroy', $room->code))->assertForbidden();
+        $this->assertDatabaseHas('rooms', ['id' => $room->id]);
+
+        $this->actingAs($host)->get(route('rooms.show', $room->code))
+            ->assertOk()
+            ->assertSee('data-room-delete-open', false);
+        $this->delete(route('rooms.destroy', $room->code))
+            ->assertRedirect(route('quizzes.index'))
+            ->assertSessionHas('status', 'Room berhasil dihapus.');
+
+        $this->assertDatabaseMissing('rooms', ['id' => $room->id]);
+        $this->assertDatabaseMissing('room_participants', ['id' => $participant->id]);
+        $this->assertDatabaseCount('room_answers', 0);
+        $this->assertDatabaseHas('quizzes', ['id' => $quiz->id]);
+        $this->actingAs($player)->get(route('rooms.show', $room->code))->assertNotFound();
+        $this->get(route('rooms.status', $room->code))->assertNotFound();
+        Event::assertDispatched(RoomUpdated::class, fn (RoomUpdated $event) => $event->roomCode === $room->code
+            && $event->broadcastWith() === ['status' => 'deleted', 'question' => null]);
     }
 
     public function test_private_room_channel_only_allows_its_host_and_participants(): void

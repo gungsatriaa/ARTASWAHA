@@ -81,6 +81,18 @@ class RoomService
         $this->broadcastRoomUpdate($room);
     }
 
+    public function destroy(Room $room, User $host): void
+    {
+        DB::transaction(function () use ($room, $host): void {
+            $room = Room::query()->whereKey($room->id)->lockForUpdate()->firstOrFail();
+            abort_unless($room->host_id === $host->id, 403);
+
+            $room->delete();
+        });
+
+        event(new RoomUpdated($room->code, ['status' => 'deleted', 'question' => null]));
+    }
+
     public function start(Room $room, User $user): Room
     {
         $room = DB::transaction(function () use ($room, $user): Room {
@@ -175,7 +187,7 @@ class RoomService
             403,
         );
 
-        $room->load(['quiz', 'currentQuestion', 'participants']);
+        $room->load(['quiz.questions', 'currentQuestion', 'participants']);
         $participant = $room->participants->firstWhere('user_id', $user->id);
         $currentAnswer = $room->current_question_id
             ? $participant->answers()->where('quiz_question_id', $room->current_question_id)->first()

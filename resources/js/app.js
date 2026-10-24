@@ -459,6 +459,55 @@ document.querySelectorAll('[data-testimonial-carousel]').forEach((carousel) => {
     updateControls();
 });
 
+const roomDeletedDialog = document.querySelector('[data-room-deleted-dialog]');
+let roomWasDeleted = false;
+
+const showRoomDeleted = () => {
+    if (roomWasDeleted || !roomDeletedDialog) {
+        return;
+    }
+
+    roomWasDeleted = true;
+    window.Echo?.leave(`rooms.${roomPage.dataset.roomCode}`);
+    roomDeletedDialog.showModal();
+    scrollLockedDialogs.add(roomDeletedDialog);
+    syncPageScrollLock();
+};
+
+const checkRoomStillExists = async (reloadIfPresent = false) => {
+    if (roomWasDeleted) {
+        return;
+    }
+
+    try {
+        const response = await fetch(roomPage.dataset.roomStatusUrl, { cache: 'no-store' });
+
+        if (response.status === 404) {
+            showRoomDeleted();
+        } else if (reloadIfPresent && response.ok) {
+            window.location.reload();
+        }
+    } catch {
+        // Keep the page open during a temporary network interruption.
+    }
+};
+
+if (roomPage) {
+    const deleteConfirmation = document.querySelector('[data-room-delete-confirm]');
+    document.querySelector('[data-room-delete-open]')?.addEventListener('click', () => {
+        deleteConfirmation.showModal();
+        scrollLockedDialogs.add(deleteConfirmation);
+        syncPageScrollLock();
+    });
+    document.querySelector('[data-room-delete-cancel]')?.addEventListener('click', () => deleteConfirmation.close());
+    deleteConfirmation?.addEventListener('close', () => {
+        scrollLockedDialogs.delete(deleteConfirmation);
+        syncPageScrollLock();
+    });
+    roomDeletedDialog?.addEventListener('cancel', (event) => event.preventDefault());
+    window.setInterval(checkRoomStillExists, 15000);
+}
+
 if (window.Echo && roomPage) {
     const roomStatus = roomPage.querySelector('[data-live-status]');
     let roomPresenceUsers = [];
@@ -488,7 +537,13 @@ if (window.Echo && roomPage) {
         .here(renderRoomPresence)
         .joining((user) => renderRoomPresence([...roomPresenceUsers, user]))
         .leaving((user) => renderRoomPresence(roomPresenceUsers.filter((onlineUser) => String(onlineUser.id) !== String(user.id))))
-        .listen('.room.updated', () => window.location.reload())
+        .listen('.room.updated', (event) => {
+            if (event.status === 'deleted') {
+                showRoomDeleted();
+            } else if (!roomWasDeleted) {
+                window.location.reload();
+            }
+        })
         .error((error) => {
             if (roomStatus) {
                 roomStatus.textContent = 'Tidak dapat bergabung ke kanal realtime room.';
@@ -501,7 +556,7 @@ if (window.Echo && roomPage) {
     window.Echo.connector.pusher.connection.bind('state_change', ({ current }) => {
         if (current === 'connected') {
             if (hasConnected) {
-                window.location.reload();
+                checkRoomStillExists(true);
             }
 
             hasConnected = true;
