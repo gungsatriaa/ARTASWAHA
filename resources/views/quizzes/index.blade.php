@@ -32,7 +32,7 @@
                     @csrf
                     <label for="room-code" class="sr-only">Kode room</label>
                     <input id="room-code" name="code" value="{{ old('code', request('code')) }}" required minlength="4" maxlength="10" pattern="[A-Za-z0-9]{4}([A-Za-z0-9]{6})?" autocomplete="off" autocapitalize="characters" placeholder="AB12" class="min-h-14 min-w-0 flex-1 rounded-2xl border border-background bg-background px-5 font-bold uppercase tracking-[0.22em] text-foreground placeholder:text-foreground/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground">
-                    <button class="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-background px-7 py-4 font-extrabold text-foreground transition hover:bg-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-background" type="submit">
+                    <button class="inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-background px-7 py-4 font-extrabold text-foreground transition hover:bg-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-background" type="submit">
                         Gabung room
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
                     </button>

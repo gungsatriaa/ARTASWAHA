@@ -19,7 +19,7 @@
                 </div>
                 <form method="POST" action="{{ route('rooms.store', $quiz) }}" class="mt-8 border-t border-white/10 pt-6">
                     @csrf
-                    <button class="inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-accent px-5 py-3 font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Buat room kuis</button>
+                    <button class="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-accent px-5 py-3 font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Buat room kuis</button>
                 </form>
             </section>
 

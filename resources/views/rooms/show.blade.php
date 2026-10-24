@@ -42,7 +42,7 @@
                     <p class="mt-4 text-sm leading-6 text-background/70">Temanmu dapat memasukkan kode ini di halaman kuis.</p>
                 </div>
                 <div class="mt-7">
-                    <button type="button" data-copy-room="{{ route('quizzes.index', ['code' => $room->code]) }}" class="inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-background px-5 py-3 text-sm font-extrabold text-foreground transition hover:bg-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-background">Salin tautan undangan</button>
+                    <button type="button" data-copy-room="{{ route('quizzes.index', ['code' => $room->code]) }}" class="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-background px-5 py-3 text-sm font-extrabold text-foreground transition hover:bg-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-background">Salin tautan undangan</button>
                     <p role="status" data-copy-status class="mt-2 min-h-5 text-xs font-semibold text-background/70"></p>
                 </div>
             </div>
@@ -59,8 +59,8 @@
                         <ul class="mt-6 grid gap-3 sm:grid-cols-2">
                             @foreach ($room->participants as $roomParticipant)
                                 <li data-room-presence-user="{{ $roomParticipant->user_id }}" class="flex items-center gap-3 rounded-2xl border border-white/10 bg-background p-3">
-                                    <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/25 font-display font-bold text-accent" aria-hidden="true">{{ mb_strtoupper(mb_substr($roomParticipant->display_name, 0, 1)) }}</span>
-                                    <span class="min-w-0 truncate text-sm font-bold">{{ $roomParticipant->display_name }}</span>
+                                    <img src="{{ str_starts_with($roomParticipant->user->avatar ?? '', 'avatars/') ? route('rooms.participant-avatar', [$room->code, $roomParticipant->user_id]) : asset($roomParticipant->user->avatar ?? array_key_first(\App\Services\ProfileAvatarService::DEFAULT_AVATARS)) }}" alt="" class="size-10 shrink-0 rounded-full object-cover ring-2 ring-primary/40">
+                                    <span class="min-w-0 truncate text-sm font-bold">{{ $roomParticipant->user->name }}</span>
                                     @if ($roomParticipant->user_id === $room->host_id)<span class="ml-auto rounded-full bg-accent/10 px-2.5 py-1 text-xs font-bold text-accent">Host</span>@endif
                                 </li>
                             @endforeach
@@ -68,7 +68,7 @@
                         @if ($isHost)
                             <form method="POST" action="{{ route('rooms.start', $room->code) }}" class="mt-8">
                                 @csrf
-                                <button class="inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-primary px-7 py-3 font-extrabold text-foreground transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:w-auto">Mulai kuis</button>
+                                <button class="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-primary px-7 py-3 font-extrabold text-foreground transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:w-auto">Mulai kuis</button>
                             </form>
                         @else
                             <p class="mt-7 text-sm text-foreground/55">Host akan memulai kuis saat semua pemain siap.</p>
@@ -104,7 +104,7 @@
                                         @endforeach
                                     </div>
                                 </fieldset>
-                                <button class="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-accent px-7 py-3 font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:w-auto" type="submit">Kirim jawaban</button>
+                                <button class="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-accent px-7 py-3 font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:w-auto" type="submit">Kirim jawaban</button>
                             </form>
                         @endif
                         @if ($isHost)
@@ -133,7 +133,7 @@
                     <ol class="mt-5 space-y-2">
                         @foreach ($room->participants as $rank => $roomParticipant)
                             <li data-room-presence-user="{{ $roomParticipant->user_id }}" data-room-leaderboard-user class="flex items-center justify-between gap-3 rounded-xl bg-background px-4 py-3 text-sm">
-                                <span class="min-w-0 truncate"><span data-room-rank class="mr-2 font-bold text-accent">{{ $rank + 1 }}.</span>{{ $roomParticipant->display_name }}</span>
+                                <span class="min-w-0 truncate"><span data-room-rank class="mr-2 font-bold text-accent">{{ $rank + 1 }}.</span>{{ $roomParticipant->user->name }}</span>
                                 <strong class="shrink-0 text-accent">{{ $roomParticipant->score }} poin</strong>
                             </li>
                         @endforeach
@@ -167,6 +167,6 @@
         <span class="grid size-12 place-items-center rounded-2xl bg-accent/10 text-2xl text-accent" aria-hidden="true">!</span>
         <h2 id="room-deleted-title" class="mt-5 font-display text-2xl font-bold">Room dihapus oleh host</h2>
         <p class="mt-3 text-sm leading-6 text-foreground/65">Kamu sudah terputus dari room. Kuis lainnya masih bisa dimainkan.</p>
-        <a href="{{ route('quizzes.index') }}" class="mt-7 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-accent px-5 font-extrabold text-background">Kembali ke kuis</a>
+        <a href="{{ route('quizzes.index') }}" class="mt-7 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-accent px-5 font-extrabold text-background">Kembali ke kuis</a>
     </dialog>
 </x-layouts.app>

@@ -13,6 +13,7 @@ use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -145,6 +146,43 @@ class QuizRoomFlowTest extends TestCase
         $this->get(route('quizzes.index', ['code' => $room->code]))
             ->assertOk()
             ->assertSee('value="'.$room->code.'"', false);
+    }
+
+    public function test_room_displays_current_profile_names_and_round_avatar_images(): void
+    {
+        $host = User::factory()->create(['name' => 'Host Bali', 'avatar' => 'avatar/gajah.webp']);
+        $player = User::factory()->create(['name' => 'Pemain Bali', 'avatar' => 'avatar/kucing.webp']);
+        $room = Room::factory()->create(['host_id' => $host->id]);
+        RoomParticipant::factory()->create(['room_id' => $room->id, 'user_id' => $host->id, 'display_name' => 'Nama lama host']);
+        RoomParticipant::factory()->create(['room_id' => $room->id, 'user_id' => $player->id, 'display_name' => 'Nama lama pemain']);
+
+        $this->actingAs($host)->get(route('rooms.show', $room->code))
+            ->assertOk()
+            ->assertSee('Host Bali')
+            ->assertSee('Pemain Bali')
+            ->assertDontSee('Nama lama pemain')
+            ->assertSee(asset('avatar/gajah.webp'))
+            ->assertSee(asset('avatar/kucing.webp'))
+            ->assertSee('rounded-full object-cover ring-2 ring-primary/40', false);
+    }
+
+    public function test_uploaded_room_avatar_is_only_available_to_room_members(): void
+    {
+        Storage::fake('local');
+        $host = User::factory()->create();
+        $player = User::factory()->create(['avatar' => 'avatars/player.webp']);
+        $outsider = User::factory()->create(['avatar' => 'avatars/outsider.webp']);
+        Storage::disk('local')->put('avatars/player.webp', 'player avatar');
+        Storage::disk('local')->put('avatars/outsider.webp', 'outsider avatar');
+        $room = Room::factory()->create(['host_id' => $host->id]);
+        RoomParticipant::factory()->create(['room_id' => $room->id, 'user_id' => $host->id]);
+        RoomParticipant::factory()->create(['room_id' => $room->id, 'user_id' => $player->id]);
+        $avatarUrl = route('rooms.participant-avatar', [$room->code, $player->id]);
+
+        $this->actingAs($host)->get(route('rooms.show', $room->code))->assertSee($avatarUrl);
+        $this->get($avatarUrl)->assertOk()->assertHeader('X-Content-Type-Options', 'nosniff');
+        $this->get(route('rooms.participant-avatar', [$room->code, $outsider->id]))->assertNotFound();
+        $this->actingAs($outsider)->get($avatarUrl)->assertForbidden();
     }
 
     public function test_room_join_answer_scoring_and_host_controls_are_server_authorized(): void

@@ -19,6 +19,6 @@ Broadcast::channel('rooms.{roomCode}', function (User $user, string $roomCode): 
 
     return [
         'id' => $user->id,
-        'name' => $participant?->display_name ?? $user->name,
+        'name' => $user->name,
     ];
 });

@@ -187,7 +187,7 @@ class RoomService
             403,
         );
 
-        $room->load(['quiz.questions', 'currentQuestion', 'participants']);
+        $room->load(['quiz.questions', 'currentQuestion', 'participants.user']);
         $participant = $room->participants->firstWhere('user_id', $user->id);
         $currentAnswer = $room->current_question_id
             ? $participant->answers()->where('quiz_question_id', $room->current_question_id)->first()

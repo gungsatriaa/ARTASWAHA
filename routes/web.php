@@ -69,6 +69,7 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/kuis/{quiz}/room', [RoomController::class, 'store'])->middleware('throttle:10,1')->name('rooms.store');
     Route::post('/room/gabung', [RoomController::class, 'join'])->middleware('throttle:10,1')->name('rooms.join');
     Route::get('/room/{room:code}/status', [RoomController::class, 'status'])->name('rooms.status');
+    Route::get('/room/{room:code}/avatar/{user}', [ShowProfileAvatarController::class, 'forRoom'])->name('rooms.participant-avatar');
     Route::get('/room/{room:code}', [RoomController::class, 'show'])->name('rooms.show');
     Route::post('/room/{room:code}/keluar', [RoomController::class, 'leave'])->name('rooms.leave');
     Route::delete('/room/{room:code}', [RoomController::class, 'destroy'])->name('rooms.destroy');
