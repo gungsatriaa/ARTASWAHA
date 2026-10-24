@@ -41,6 +41,96 @@ class QuizRoomFlowTest extends TestCase
         $this->assertArrayNotHasKey('correct_option', $quiz->questions()->first()->toArray());
     }
 
+    public function test_owner_can_edit_quiz_and_replace_questions_before_any_room_exists(): void
+    {
+        $owner = User::factory()->create();
+        $quiz = $this->createQuiz($owner);
+
+        $this->actingAs($owner)->get(route('quizzes.edit', $quiz))
+            ->assertOk()
+            ->assertSee('Pertanyaan pertama?')
+            ->assertSee('value="Benar"', false)
+            ->assertSee('Simpan perubahan');
+
+        $this->put(route('quizzes.update', $quiz), [
+            'title' => 'Kuis diperbarui',
+            'description' => 'Deskripsi baru',
+            'seconds_per_question' => 20,
+            'show_answers_immediately' => '0',
+            'questions' => [[
+                'prompt' => 'Soal pengganti?',
+                'options' => ['A', 'B', 'C'],
+                'correct_option' => 2,
+                'explanation' => 'C benar',
+            ]],
+        ])->assertRedirect(route('quizzes.show', $quiz));
+
+        $quiz->refresh();
+        $this->assertSame('Kuis diperbarui', $quiz->title);
+        $this->assertSame(20, $quiz->seconds_per_question);
+        $this->assertFalse($quiz->show_answers_immediately);
+        $this->assertFalse($quiz->is_archived);
+        $this->assertSame(1, $quiz->questions()->count());
+        $this->assertSame(['A', 'B', 'C'], $quiz->questions()->firstOrFail()->options);
+        $this->assertSame(2, $quiz->questions()->firstOrFail()->correct_option);
+    }
+
+    public function test_editing_a_quiz_with_rooms_creates_a_new_version_without_changing_existing_rooms(): void
+    {
+        $owner = User::factory()->create();
+        $quiz = $this->createQuiz($owner);
+        $oldQuestion = $quiz->questions()->firstOrFail();
+        $room = app(RoomService::class)->create($quiz, $owner);
+        app(RoomService::class)->start($room, $owner);
+        $this->actingAs($owner)->post(route('rooms.answer', $room->code), [
+            'question_id' => $oldQuestion->id,
+            'answer_index' => 1,
+        ])->assertRedirect();
+
+        $response = $this->actingAs($owner)->put(route('quizzes.update', $quiz), [
+            'title' => 'Versi baru',
+            'show_answers_immediately' => '1',
+            'questions' => [[
+                'prompt' => 'Pertanyaan baru?',
+                'options' => ['Satu', 'Dua'],
+                'correct_option' => 0,
+            ]],
+        ]);
+
+        $newQuiz = Quiz::query()->where('title', 'Versi baru')->firstOrFail();
+        $response->assertRedirect(route('quizzes.show', $newQuiz));
+        $this->assertTrue($quiz->fresh()->is_archived);
+        $this->assertFalse($newQuiz->is_archived);
+        $this->assertSame($quiz->id, $room->fresh()->quiz_id);
+        $this->assertSame('Pertanyaan pertama?', $oldQuestion->fresh()->prompt);
+        $this->assertSame($oldQuestion->id, RoomAnswer::query()->firstOrFail()->quiz_question_id);
+        $this->assertSame('Pertanyaan baru?', $newQuiz->questions()->firstOrFail()->prompt);
+        $this->get(route('quizzes.index'))->assertSee('Versi baru')->assertDontSee('Kuis uji');
+        $this->get(route('quizzes.edit', $quiz))->assertNotFound();
+        $this->post(route('rooms.store', $quiz))->assertStatus(422);
+    }
+
+    public function test_other_users_cannot_edit_a_quiz_and_invalid_updates_do_not_change_it(): void
+    {
+        $owner = User::factory()->create();
+        $quiz = $this->createQuiz($owner);
+        $payload = [
+            'title' => 'Tidak boleh',
+            'questions' => [['prompt' => 'Baru?', 'options' => ['A', 'B'], 'correct_option' => 1]],
+        ];
+
+        $this->actingAs(User::factory()->create())->get(route('quizzes.edit', $quiz))->assertNotFound();
+        $this->put(route('quizzes.update', $quiz), $payload)->assertForbidden();
+
+        $this->actingAs($owner)->put(route('quizzes.update', $quiz), [
+            ...$payload,
+            'questions' => [['prompt' => 'Baru?', 'options' => ['A', 'B'], 'correct_option' => 2]],
+        ])->assertSessionHasErrors('questions.0.correct_option');
+
+        $this->assertSame('Kuis uji', $quiz->fresh()->title);
+        $this->assertSame('Pertanyaan pertama?', $quiz->questions()->firstOrFail()->prompt);
+    }
+
     public function test_quiz_rejects_correct_answer_outside_available_options(): void
     {
         $this->actingAs(User::factory()->create())
@@ -75,6 +165,94 @@ class QuizRoomFlowTest extends TestCase
         $this->assertDatabaseCount('quizzes', 1);
     }
 
+    public function test_quiz_creator_can_delay_answer_results_until_the_room_finishes(): void
+    {
+        $host = User::factory()->create();
+        $this->actingAs($host)->post(route('quizzes.store'), [
+            'title' => 'Kuis rahasia',
+            'show_answers_immediately' => '0',
+            'questions' => [
+                ['prompt' => 'Soal pertama?', 'options' => ['Pengecoh', 'Jawaban rahasia'], 'correct_option' => 1],
+                ['prompt' => 'Soal kedua?', 'options' => ['Salah lagi', 'Jawaban kedua'], 'correct_option' => 1],
+            ],
+        ])->assertRedirect();
+
+        $quiz = Quiz::query()->firstOrFail();
+        $this->assertFalse($quiz->show_answers_immediately);
+        $room = app(RoomService::class)->create($quiz, $host);
+        app(RoomService::class)->start($room, $host);
+        $questions = $quiz->questions()->get();
+
+        $this->post(route('rooms.answer', $room->code), ['question_id' => $questions[0]->id, 'answer_index' => 0])->assertRedirect();
+        $this->get(route('rooms.show', $room->code))
+            ->assertSee('Soal kedua?')
+            ->assertDontSee('Jawaban rahasia')
+            ->assertDontSee('Jawaban belum tepat')
+            ->assertDontSee('data-room-feedback-next', false);
+        $this->get(route('rooms.show', ['room' => $room->code, 'feedback' => RoomAnswer::query()->firstOrFail()->id]))
+            ->assertDontSee('Jawaban rahasia')
+            ->assertDontSee('data-room-feedback-next', false);
+
+        $this->post(route('rooms.answer', $room->code), ['question_id' => $questions[1]->id, 'answer_index' => 1])->assertRedirect();
+        $this->get(route('rooms.show', $room->code))
+            ->assertSee('Hasil jawabanmu')
+            ->assertSee('Salah — Jawabanmu: Pengecoh')
+            ->assertSee('Jawaban benar: Jawaban rahasia')
+            ->assertSee('Benar — Jawabanmu: Jawaban kedua');
+    }
+
+    public function test_immediate_answer_result_shows_selected_wrong_and_correct_options_before_advancing(): void
+    {
+        $host = User::factory()->create();
+        $player = User::factory()->create();
+        $quiz = $this->createQuiz($host);
+        $quiz->update(['show_answers_immediately' => true]);
+        $room = app(RoomService::class)->create($quiz, $host);
+        app(RoomService::class)->join($room->code, $player);
+        app(RoomService::class)->start($room, $host);
+        $question = $quiz->questions()->firstOrFail();
+
+        $response = $this->actingAs($host)->post(route('rooms.answer', $room->code), ['question_id' => $question->id, 'answer_index' => 0])->assertRedirect();
+        $this->get($response->headers->get('Location'))
+            ->assertSee('Jawaban belum tepat')
+            ->assertSee('border-danger/60 bg-danger/10', false)
+            ->assertSee('border-success/60 bg-success/10', false)
+            ->assertSee('Jawaban benar')
+            ->assertSee('data-room-feedback-next', false)
+            ->assertDontSee('Hasil jawabanmu');
+        $this->actingAs($player)->get($response->headers->get('Location'))
+            ->assertOk()
+            ->assertDontSee('Jawaban belum tepat')
+            ->assertDontSee('data-room-feedback-next', false);
+        $this->post(route('rooms.answer', $room->code), ['question_id' => $question->id, 'answer_index' => 1])->assertRedirect();
+        $this->actingAs($host);
+        $this->get(route('rooms.show', $room->code))->assertSee('Kuis selesai!');
+    }
+
+    public function test_timed_quiz_keeps_correct_answer_hidden_until_everyone_finishes_when_feedback_is_delayed(): void
+    {
+        $this->freezeTime();
+        $host = User::factory()->create();
+        $player = User::factory()->create();
+        $quiz = $this->createQuiz($host);
+        $quiz->update(['show_answers_immediately' => false, 'seconds_per_question' => 10]);
+        $room = app(RoomService::class)->create($quiz, $host);
+        app(RoomService::class)->join($room->code, $player);
+        app(RoomService::class)->start($room, $host);
+        $question = $quiz->questions()->firstOrFail();
+
+        $this->actingAs($host)->post(route('rooms.answer', $room->code), ['question_id' => $question->id, 'answer_index' => 0])->assertRedirect();
+        $this->get(route('rooms.show', $room->code))
+            ->assertSee('Pemain lain masih menjawab.')
+            ->assertDontSee('Jawaban belum tepat')
+            ->assertDontSee('Jawaban benar:');
+
+        $this->actingAs($player)->post(route('rooms.answer', $room->code), ['question_id' => $question->id, 'answer_index' => 1])->assertRedirect();
+        $this->actingAs($host)->get(route('rooms.show', $room->code))
+            ->assertSee('Hasil jawabanmu')
+            ->assertSee('Jawaban benar: Benar');
+    }
+
     public function test_quiz_allows_duplicate_options(): void
     {
         $response = $this->actingAs(User::factory()->create())->post(route('quizzes.store'), [
@@ -106,13 +284,13 @@ class QuizRoomFlowTest extends TestCase
         $quiz = $this->createQuiz($host);
 
         $this->actingAs($host)->get(route('quizzes.index'))->assertOk()->assertSee('Kuis uji');
-        $this->get(route('quizzes.create'))->assertOk()->assertSee('Tambah pertanyaan');
+        $this->get(route('quizzes.create'))->assertOk()->assertSee('Tambah pertanyaan')->assertDontSee('Tampilkan peringkat');
         $this->get(route('quizzes.show', $quiz))->assertOk()->assertSee('Pertanyaan pertama?');
 
         $this->post(route('rooms.store', $quiz))->assertRedirect();
         $room = Room::query()->firstOrFail();
         $this->assertMatchesRegularExpression('/\A[A-Z0-9]{4}\z/', $room->code);
-        $this->get(route('rooms.show', $room->code))->assertOk()->assertSee($room->code)->assertSee('Mulai kuis');
+        $this->get(route('rooms.show', $room->code))->assertOk()->assertSee($room->code)->assertSee('Mulai kuis')->assertDontSee('Peringkat');
     }
 
     public function test_room_creation_retries_a_duplicate_four_character_code(): void
@@ -164,6 +342,65 @@ class QuizRoomFlowTest extends TestCase
         $this->get(route('quizzes.index', ['code' => $room->code]))
             ->assertOk()
             ->assertSee('value="'.$room->code.'"', false);
+    }
+
+    public function test_quiz_success_message_uses_shared_notice_style(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->withSession(['status' => 'Room berhasil dihapus.'])
+            ->get(route('quizzes.index'))
+            ->assertOk()
+            ->assertSee('Room berhasil dihapus.')
+            ->assertSee('border-l-success', false);
+    }
+
+    public function test_started_room_hides_invitation_and_shows_modal_to_new_player(): void
+    {
+        $host = User::factory()->create();
+        $existingPlayer = User::factory()->create();
+        $newPlayer = User::factory()->create();
+        $room = app(RoomService::class)->create($this->createQuiz($host), $host);
+        app(RoomService::class)->join($room->code, $existingPlayer);
+        app(RoomService::class)->start($room, $host);
+
+        $this->actingAs($host)->get(route('rooms.show', $room->code))
+            ->assertOk()
+            ->assertDontSee('Salin undangan')
+            ->assertDontSee('data-copy-room', false)
+            ->assertDontSee('Kuis berlangsung')
+            ->assertSee('data-live-status', false);
+        $this->actingAs($existingPlayer)->get(route('rooms.show', $room->code))->assertOk();
+
+        $joinPage = route('quizzes.index', ['code' => $room->code]);
+        $this->actingAs($newPlayer)->from($joinPage)
+            ->post(route('rooms.join'), ['code' => $room->code])
+            ->assertRedirect($joinPage)
+            ->assertSessionHasErrors('room_started');
+
+        $this->followingRedirects()->post(route('rooms.join'), ['code' => $room->code])
+            ->assertOk()
+            ->assertSee('data-room-join-closed-dialog', false)
+            ->assertSee('Kuis sudah dimulai');
+        $this->assertDatabaseMissing('room_participants', ['room_id' => $room->id, 'user_id' => $newPlayer->id]);
+    }
+
+    public function test_finished_room_does_not_offer_an_invitation_or_allow_new_players(): void
+    {
+        $host = User::factory()->create();
+        $newPlayer = User::factory()->create();
+        $room = app(RoomService::class)->create($this->createQuiz($host), $host);
+        $room->update(['status' => 'finished']);
+
+        $this->actingAs($host)->get(route('rooms.show', $room->code))
+            ->assertOk()
+            ->assertSee('Kuis selesai!')
+            ->assertDontSee('Permainan selesai!')
+            ->assertDontSee('Salin tautan undangan')
+            ->assertDontSee('data-copy-room', false);
+        $this->actingAs($newPlayer)->from(route('quizzes.index'))
+            ->post(route('rooms.join'), ['code' => $room->code])
+            ->assertRedirect(route('quizzes.index'))
+            ->assertSessionHasErrors('room_finished');
     }
 
     public function test_room_displays_current_profile_names_and_round_avatar_images(): void
@@ -222,7 +459,8 @@ class QuizRoomFlowTest extends TestCase
             ->assertOk()
             ->assertSee('Soal 1')
             ->assertSee('Pilih satu jawaban')
-            ->assertSee('data-quiz-option', false);
+            ->assertSee('data-quiz-option', false)
+            ->assertDontSee('Peringkat');
 
         $question = $quiz->questions()->firstOrFail();
         $answerData = ['question_id' => $question->id, 'answer_index' => 1, 'points_awarded' => 9999];
@@ -254,10 +492,12 @@ class QuizRoomFlowTest extends TestCase
         app(RoomService::class)->start($room, $host);
         $firstQuestion = $quiz->questions()->firstOrFail();
 
-        $this->actingAs($player)->post(route('rooms.answer', $room->code), ['question_id' => $firstQuestion->id, 'answer_index' => 1])->assertRedirect();
+        $response = $this->actingAs($player)->post(route('rooms.answer', $room->code), ['question_id' => $firstQuestion->id, 'answer_index' => 1])->assertRedirect();
+        $this->get($response->headers->get('Location'))->assertOk()->assertSee('Jawaban benar!')->assertSee('data-room-feedback-next', false);
         $this->get(route('rooms.show', $room->code))->assertOk()->assertSee('Pertanyaan kedua?');
         $this->actingAs($host)->get(route('rooms.show', $room->code))->assertOk()->assertSee('Pertanyaan pertama?');
-        $this->actingAs($player)->post(route('rooms.answer', $room->code), ['question_id' => $secondQuestion->id, 'answer_index' => 1])->assertRedirect();
+        $response = $this->actingAs($player)->post(route('rooms.answer', $room->code), ['question_id' => $secondQuestion->id, 'answer_index' => 1])->assertRedirect();
+        $this->get($response->headers->get('Location'))->assertSee('Jawaban benar!');
         $this->get(route('rooms.show', $room->code))->assertOk()->assertSee('Kamu sudah menjawab semua soal!');
         $this->assertSame('active', $room->fresh()->status);
         $this->actingAs($host)->post(route('rooms.answer', $room->code), ['question_id' => $firstQuestion->id, 'answer_index' => 1])->assertRedirect();
@@ -266,13 +506,13 @@ class QuizRoomFlowTest extends TestCase
         $this->assertSame('finished', $room->fresh()->status);
     }
 
-    public function test_timed_room_advances_everyone_at_deadline_and_rejects_late_answers(): void
+    public function test_timed_room_advances_each_player_after_answer_and_expires_other_players_answers(): void
     {
         $this->freezeTime();
         $host = User::factory()->create();
         $player = User::factory()->create();
         $quiz = $this->createQuiz($host);
-        $quiz->update(['seconds_per_question' => 10]);
+        $quiz->update(['seconds_per_question' => 10, 'show_answers_immediately' => false]);
         $secondQuestion = $quiz->questions()->create([
             'prompt' => 'Soal berikutnya?',
             'options' => ['Salah', 'Benar'],
@@ -285,18 +525,61 @@ class QuizRoomFlowTest extends TestCase
         $firstQuestion = $quiz->questions()->firstOrFail();
 
         $this->actingAs($player)->post(route('rooms.answer', $room->code), ['question_id' => $firstQuestion->id, 'answer_index' => 1])->assertRedirect();
+        $this->assertSame(10, $room->participants()->where('user_id', $player->id)->firstOrFail()->question_ends_at->timestamp - now()->timestamp);
         $this->get(route('rooms.show', $room->code))
-            ->assertSee('Soal berikutnya muncul saat waktu habis.')
+            ->assertSee('Soal berikutnya?')
             ->assertSee('data-room-time-progress', false)
             ->assertSee('data-room-countdown', false);
+        $this->actingAs($host)->get(route('rooms.show', $room->code))->assertSee('Pertanyaan pertama?')->assertDontSee('Soal berikutnya?');
+        $this->assertSame(1, $room->participants()->where('user_id', $player->id)->firstOrFail()->question_position);
+        $this->assertSame(0, $room->participants()->where('user_id', $host->id)->firstOrFail()->question_position);
+        $this->actingAs($player)->post(route('rooms.answer', $room->code), ['question_id' => $secondQuestion->id, 'answer_index' => 1])->assertSessionHasNoErrors();
+        $this->assertSame('active', $room->fresh()->status);
         $this->travel(11)->seconds();
         $this->actingAs($host)->get(route('rooms.status', $room->code))->assertNoContent();
-        $this->assertSame($secondQuestion->id, $room->fresh()->current_question_id);
-        $this->actingAs($player)->get(route('rooms.show', $room->code))->assertSee('Soal berikutnya?');
+        $this->assertSame(1, $room->participants()->where('user_id', $host->id)->firstOrFail()->question_position);
+        $this->actingAs($host)->get(route('rooms.show', $room->code))->assertSee('Soal berikutnya?');
         $this->actingAs($host)->post(route('rooms.answer', $room->code), ['question_id' => $firstQuestion->id, 'answer_index' => 1])->assertSessionHasErrors('question_id');
         $this->travel(10)->seconds();
         $this->get(route('rooms.status', $room->code))->assertNoContent();
         $this->assertSame('finished', $room->fresh()->status);
+    }
+
+    public function test_timed_quiz_shows_feedback_briefly_then_continues_for_that_player(): void
+    {
+        $this->freezeTime();
+        $host = User::factory()->create();
+        $player = User::factory()->create();
+        $quiz = $this->createQuiz($host);
+        $quiz->update(['show_answers_immediately' => true, 'seconds_per_question' => 15]);
+        $quiz->questions()->create([
+            'prompt' => 'Soal kedua?', 'options' => ['A', 'B'], 'correct_option' => 0, 'sort_order' => 2,
+        ]);
+        $room = app(RoomService::class)->create($quiz, $host);
+        app(RoomService::class)->join($room->code, $player);
+        app(RoomService::class)->start($room, $host);
+        $firstQuestion = $quiz->questions()->firstOrFail();
+
+        $response = $this->actingAs($player)->post(route('rooms.answer', $room->code), [
+            'question_id' => $firstQuestion->id, 'answer_index' => 0,
+        ])->assertRedirect();
+        $this->get($response->headers->get('Location'))
+            ->assertSee('Jawaban belum tepat')
+            ->assertSee('Jawaban benar')
+            ->assertSee('data-room-feedback-next', false);
+        $participant = $room->participants()->where('user_id', $player->id)->firstOrFail();
+        $this->assertSame(18, $participant->question_ends_at->timestamp - now()->timestamp);
+
+        $this->travel(3)->seconds();
+        $this->assertSame(15, $participant->question_ends_at->timestamp - now()->timestamp);
+        $this->get(route('rooms.show', $room->code))->assertSee('Soal kedua?');
+        $this->actingAs($host)->get(route('rooms.show', $room->code))->assertSee('Pertanyaan pertama?');
+
+        $this->travel(14)->seconds();
+        $secondQuestion = $quiz->questions()->where('sort_order', 2)->firstOrFail();
+        $this->actingAs($player)->post(route('rooms.answer', $room->code), [
+            'question_id' => $secondQuestion->id, 'answer_index' => 0,
+        ])->assertSessionHasNoErrors();
     }
 
     public function test_timed_room_catches_up_after_clients_were_offline(): void

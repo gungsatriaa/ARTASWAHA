@@ -5,7 +5,7 @@
         </a>
 
         @if (session('status'))
-            <p role="status" class="mb-6 rounded-2xl border border-primary/30 bg-primary/15 p-4 text-foreground">{{ session('status') }}</p>
+            <x-flash-notice class="mb-6">{{ session('status') }}</x-flash-notice>
         @endif
 
         <div class="grid items-start gap-8 lg:grid-cols-[minmax(0,21rem)_minmax(0,1fr)] lg:gap-10">
@@ -16,11 +16,19 @@
                 <div class="mt-6 flex flex-wrap items-center gap-3 text-sm font-bold">
                     <span class="rounded-full border border-white/10 px-4 py-2 text-foreground/75">{{ $quiz->questions->count() }} pertanyaan</span>
                     <span class="rounded-full border border-white/10 px-4 py-2 text-foreground/75">Bermain bersama</span>
+                    <span class="rounded-full border border-white/10 px-4 py-2 text-foreground/75">{{ $quiz->show_answers_immediately ? 'Jawaban langsung' : 'Hasil di akhir' }}</span>
                 </div>
-                <form method="POST" action="{{ route('rooms.store', $quiz) }}" class="mt-8 border-t border-white/10 pt-6">
-                    @csrf
-                    <button class="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-accent px-5 py-3 font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Buat room kuis</button>
-                </form>
+                @if ($quiz->is_archived)
+                    <p class="mt-8 border-t border-white/10 pt-6 text-sm leading-6 text-foreground/60">Ini versi lama yang tersimpan untuk riwayat room. Versi terbaru tersedia di daftar kuis.</p>
+                @else
+                    <div class="mt-8 space-y-3 border-t border-white/10 pt-6">
+                        <a href="{{ route('quizzes.edit', $quiz) }}" class="inline-flex min-h-12 w-full items-center justify-center rounded-full border border-white/15 px-5 py-3 font-bold transition hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Edit kuis</a>
+                        <form method="POST" action="{{ route('rooms.store', $quiz) }}">
+                            @csrf
+                            <button class="inline-flex min-h-12 w-full cursor-pointer items-center justify-center rounded-full bg-accent px-5 py-3 font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Buat room kuis</button>
+                        </form>
+                    </div>
+                @endif
             </section>
 
             <section class="min-w-0" aria-labelledby="quiz-questions-title">

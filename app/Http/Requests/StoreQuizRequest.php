@@ -20,6 +20,7 @@ class StoreQuizRequest extends FormRequest
             'title' => ['required', 'string', 'max:120'],
             'description' => ['nullable', 'string', 'max:500'],
             'leaderboard_enabled' => ['sometimes', 'boolean'],
+            'show_answers_immediately' => ['sometimes', 'boolean'],
             'seconds_per_question' => ['nullable', 'integer', 'min:5', 'max:300'],
             'questions' => ['required', 'array', 'min:1', 'max:20'],
             'questions.*.prompt' => ['required', 'string', 'max:500'],

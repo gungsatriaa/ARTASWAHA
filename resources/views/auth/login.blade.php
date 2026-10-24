@@ -5,7 +5,7 @@
     </p>
     <h1 class="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">Senang bertemu lagi!</h1>
     <p class="mt-1.5 font-readable leading-6 text-foreground/60">Masuk dan lanjutkan petualanganmu mengenal bahasa Bali.</p>
-    @if (session('status'))<p role="status" class="mt-5 rounded-2xl border border-primary/30 bg-primary/15 p-4 text-sm font-semibold text-accent">{{ session('status') }}</p>@endif
+    @if (session('status'))<x-flash-notice class="mt-5">{{ session('status') }}</x-flash-notice>@endif
     @if ($errors->any())<p role="alert" class="mt-5 rounded-2xl border border-danger/25 bg-danger/10 p-4 text-sm text-danger">{{ $errors->first() }}</p>@endif
     <form method="POST" action="{{ route('login.store') }}" class="mt-5 space-y-4">
         @csrf

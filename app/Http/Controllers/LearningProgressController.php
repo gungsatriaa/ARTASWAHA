@@ -34,6 +34,7 @@ class LearningProgressController extends Controller
 
         return to_route('learning.lessons.show', $lesson)
             ->with('status', $isCorrect ? 'Benar! Pelajaran selesai dan 10 poin tersimpan.' : 'Belum tepat. Coba ingat lagi materi di atas, lalu pilih jawaban lain.')
+            ->with('status_tone', $isCorrect ? 'success' : 'info')
             ->withCookie(Cookie::make('artaswaha_device', $deviceId, 60 * 24 * 365, '/', null, $request->isSecure(), true, false, 'lax'));
     }
 

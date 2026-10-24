@@ -13,11 +13,11 @@ class RoomParticipant extends Model
     /** @use HasFactory<RoomParticipantFactory> */
     use HasFactory;
 
-    protected $fillable = ['room_id', 'user_id', 'display_name', 'score', 'joined_at'];
+    protected $fillable = ['room_id', 'user_id', 'display_name', 'score', 'joined_at', 'question_position', 'question_ends_at'];
 
     protected function casts(): array
     {
-        return ['joined_at' => 'datetime'];
+        return ['joined_at' => 'datetime', 'question_ends_at' => 'datetime', 'question_position' => 'integer'];
     }
 
     public function room(): BelongsTo

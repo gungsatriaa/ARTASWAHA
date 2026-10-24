@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\LearnerProfile;
 use App\Models\LearningProgress;
 use App\Models\Lesson;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class LearningProgressService
@@ -55,5 +57,19 @@ class LearningProgressService
             ->where('visitor_id', $deviceId)
             ->whereNull('user_id')
             ->update(['user_id' => $user->id]);
+
+        $profile = LearnerProfile::query()
+            ->where('visitor_id', $deviceId)
+            ->whereNull('user_id')
+            ->first();
+
+        if ($profile !== null) {
+            $previousAvatar = $profile->avatar;
+            $profile->update(['user_id' => $user->id, 'name' => $user->name, 'avatar' => $user->avatar, 'mode' => 'account']);
+
+            if ($previousAvatar !== $user->avatar && str_starts_with($previousAvatar ?? '', 'avatars/')) {
+                Storage::disk('local')->delete($previousAvatar);
+            }
+        }
     }
 }

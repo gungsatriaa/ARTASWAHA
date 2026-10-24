@@ -4,7 +4,7 @@
             <a href="{{ route('home') }}" class="font-display text-xl font-bold">ARTASWAHA</a>
             <h1 class="mt-8 font-display text-3xl font-bold">Pulihkan akun</h1>
             <p class="mt-2 font-readable leading-7 text-foreground/65">Masukkan email akun. Jika terdaftar, kami akan mengirim tautan pemulihan.</p>
-            @if (session('status'))<p role="status" class="mt-5 rounded-2xl bg-primary/20 p-4 text-sm text-accent">{{ session('status') }}</p>@endif
+            @if (session('status'))<x-flash-notice tone="info" class="mt-5">{{ session('status') }}</x-flash-notice>@endif
             @if ($errors->any())<p role="alert" class="mt-5 rounded-2xl bg-danger/10 p-4 text-sm text-danger">{{ $errors->first() }}</p>@endif
             <form method="POST" action="{{ route('password.email') }}" class="mt-7 space-y-5">
                 @csrf

@@ -82,7 +82,7 @@
         </aside>
         <main class="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-12">
             @if (session('status'))
-                <p role="status" class="mb-6 rounded-2xl bg-primary/20 p-4 text-sm font-semibold text-accent">{{ session('status') }}</p>
+                <x-flash-notice class="mb-6">{{ session('status') }}</x-flash-notice>
             @endif
             @yield('content')
         </main>

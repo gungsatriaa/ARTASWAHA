@@ -1,13 +1,25 @@
 <x-layouts.app :learning-paths="$learningPaths">
+            @if (session('status'))
+                <div class="mx-auto max-w-7xl px-5 pt-6 md:px-6 lg:px-10">
+                    <x-flash-notice>{{ session('status') }}</x-flash-notice>
+                </div>
+            @endif
             <section class="mx-auto grid min-h-[calc(100svh-6rem)] max-w-7xl items-center gap-10 overflow-x-clip px-5 pb-12 pt-8 md:gap-12 md:px-6 md:pb-16 md:pt-16 lg:grid-cols-[1.05fr_.95fr] lg:px-10">
                 <div class="max-w-2xl">
                     <h1 class="font-display text-5xl font-bold leading-[1.08] tracking-tight sm:text-6xl lg:text-7xl">Bahasa Bali jadi <span class="text-accent">seru</span> dipelajari.</h1>
                     <p class="mt-6 max-w-xl font-readable text-lg leading-8 text-foreground/75 sm:text-xl">Kenali paribasa dan aksara Bali lewat cerita, latihan singkat, dan permainan yang bisa langsung dicoba. Mulai tanpa akun; progres tersimpan di perangkatmu.</p>
                     <div id="mulai" class="mt-9 flex flex-wrap gap-3">
-                        <button type="button" data-learning-picker-open aria-haspopup="dialog" aria-controls="learning-picker" class="inline-flex min-h-14 items-center justify-center rounded-full bg-primary px-8 py-4 font-bold text-white shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Mulai belajar gratis</button>
+                        @if ($hasCompletedInterview)
+                            <button type="button" data-learning-picker-open aria-haspopup="dialog" aria-controls="learning-picker" class="inline-flex min-h-14 items-center justify-center rounded-full bg-primary px-8 py-4 font-bold text-white shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Mulai belajar</button>
+                        @else
+                            <a href="{{ route('learning.interview.show') }}" class="inline-flex min-h-14 items-center justify-center rounded-full bg-primary px-8 py-4 font-bold text-white shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Mulai belajar gratis</a>
+                        @endif
                         <a href="{{ auth()->check() ? route('quizzes.index') : route('login') }}" class="inline-flex min-h-14 items-center justify-center rounded-full border border-white/15 px-7 py-4 font-bold transition hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Gabung kuis</a>
                     </div>
                     <p class="mt-4 text-sm text-foreground/55">Belajar mandiri tanpa akun. Untuk kuis bersama, masuk atau daftar terlebih dahulu.</p>
+                    @unless ($hasCompletedInterview)
+                        <button type="button" data-learning-picker-open aria-haspopup="dialog" aria-controls="learning-picker" class="mt-2 rounded-full text-sm font-bold text-accent transition hover:underline focus-visible:outline-2 focus-visible:outline-accent">Atau lihat semua materi</button>
+                    @endunless
                 </div>
 
                 <div class="mx-auto w-full max-w-lg py-4 lg:pl-8">

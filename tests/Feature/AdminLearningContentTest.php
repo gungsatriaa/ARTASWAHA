@@ -77,7 +77,11 @@ class AdminLearningContentTest extends TestCase
 
         $visitorId = (string) Str::uuid();
         $answerRoute = route('learning.exercises.answer', $lesson->slug);
-        $this->withCookie('artaswaha_device', $visitorId)->post($answerRoute, ['answer_index' => 1])->assertRedirect()->assertSessionHas('status', 'Belum tepat. Coba ingat lagi materi di atas, lalu pilih jawaban lain.');
+        $this->withCookie('artaswaha_device', $visitorId)->post($answerRoute, ['answer_index' => 1])->assertRedirect()->assertSessionHas('status', 'Belum tepat. Coba ingat lagi materi di atas, lalu pilih jawaban lain.')->assertSessionHas('status_tone', 'info');
+        $this->withSession(['status' => 'Belum tepat. Coba lagi.', 'status_tone' => 'info'])
+            ->get(route('learning.lessons.show', $lesson->slug))
+            ->assertOk()
+            ->assertSee('border-l-primary', false);
         $this->assertDatabaseCount('learning_progress', 0);
         $this->withCookie('artaswaha_device', $visitorId)->post(route('learning.progress.store', $lesson->slug))->assertForbidden();
         $this->assertDatabaseCount('learning_progress', 0);

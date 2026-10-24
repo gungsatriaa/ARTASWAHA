@@ -83,7 +83,7 @@
 
         <div class="min-w-0">
             @if (session('status'))
-                <p role="status" class="mb-4 rounded-2xl bg-primary/15 px-5 py-3 text-sm font-semibold text-accent">{{ session('status') }}</p>
+                <x-flash-notice class="mb-4">{{ session('status') }}</x-flash-notice>
             @endif
             {{ $slot }}
         </div>

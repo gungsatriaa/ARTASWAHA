@@ -117,8 +117,32 @@ if (roomPage && import.meta.env.VITE_REVERB_APP_KEY && import.meta.env.VITE_REVE
 document.querySelectorAll('[data-quiz-builder]').forEach((form) => {
     const list = form.querySelector('[data-question-list]');
     const template = form.querySelector('[data-question-template]');
+    const optionTemplate = form.querySelector('[data-option-template]');
     const addButton = form.querySelector('[data-add-question]');
-    let nextIndex = list.querySelectorAll('[data-question]').length;
+
+    const refreshQuestions = () => {
+        list.querySelectorAll('[data-question]').forEach((question, questionIndex) => {
+            question.querySelector('[data-question-number]').textContent = questionIndex + 1;
+            question.querySelectorAll('[name]').forEach((field) => {
+                field.name = field.name.replace(/questions\[(?:\d+|__INDEX__)\]/, `questions[${questionIndex}]`);
+            });
+            const options = question.querySelectorAll('[data-option-row]');
+            options.forEach((option, optionIndex) => {
+                const radio = option.querySelector('input[type="radio"]');
+                const input = option.querySelector('input[name$="[options][]"]');
+                radio.value = optionIndex;
+                radio.setAttribute('aria-label', `Jawaban benar: pilihan ${optionIndex + 1}`);
+                input.setAttribute('aria-label', `Pilihan ${optionIndex + 1}`);
+                input.placeholder = `Pilihan ${optionIndex + 1}`;
+                option.querySelector('[data-remove-option]').setAttribute('aria-label', `Hapus pilihan ${optionIndex + 1}`);
+            });
+            question.querySelector('[data-add-option]').disabled = options.length >= 5;
+            question.querySelectorAll('[data-remove-option]').forEach((button) => { button.disabled = options.length <= 2; });
+        });
+        addButton.disabled = list.querySelectorAll('[data-question]').length >= 20;
+    };
+
+    refreshQuestions();
 
     document.querySelector('[data-ai-submit]')?.addEventListener('click', async () => {
         const panel = document.querySelector('[data-ai-quiz]');
@@ -137,7 +161,10 @@ document.querySelectorAll('[data-quiz-builder]').forEach((form) => {
             result.questions.forEach((item, position) => {
                 if (position > 0) addButton.click();
                 const fieldset = list.querySelectorAll('[data-question]')[position];
+                if (!fieldset) return;
                 fieldset.querySelector('textarea[name$="[prompt]"]').value = item.prompt;
+                while (fieldset.querySelectorAll('[data-option-row]').length < Math.min(item.options.length, 5)) fieldset.querySelector('[data-add-option]').click();
+                while (fieldset.querySelectorAll('[data-option-row]').length > Math.max(item.options.length, 2)) fieldset.querySelector('[data-option-row]:last-child [data-remove-option]').click();
                 fieldset.querySelectorAll('input[name$="[options][]"]').forEach((input, index) => { input.value = item.options[index] ?? ''; });
                 const radio = fieldset.querySelector(`input[type="radio"][value="${item.correct_option}"]`); if (radio) radio.checked = true;
                 fieldset.querySelector('input[name$="[explanation]"]').value = item.explanation ?? '';
@@ -153,14 +180,8 @@ document.querySelectorAll('[data-quiz-builder]').forEach((form) => {
             return;
         }
 
-        const question = template.content.cloneNode(true);
-        question.querySelectorAll('[name]').forEach((field) => {
-            field.name = field.name.replaceAll('__INDEX__', nextIndex);
-        });
-        question.querySelector('[data-question-number]').textContent = nextIndex + 1;
-        list.append(question);
-        nextIndex += 1;
-        addButton.disabled = list.querySelectorAll('[data-question]').length >= 20;
+        list.append(template.content.cloneNode(true));
+        refreshQuestions();
     });
 
     list.addEventListener('click', (event) => {
@@ -168,7 +189,21 @@ document.querySelectorAll('[data-quiz-builder]').forEach((form) => {
 
         if (removeButton && list.querySelectorAll('[data-question]').length > 1) {
             removeButton.closest('[data-question]').remove();
-            addButton.disabled = false;
+            refreshQuestions();
+            return;
+        }
+
+        const addOptionButton = event.target.closest('[data-add-option]');
+        if (addOptionButton && !addOptionButton.disabled) {
+            addOptionButton.closest('[data-question]').querySelector('[data-options]').append(optionTemplate.content.cloneNode(true));
+            refreshQuestions();
+            return;
+        }
+
+        const removeOptionButton = event.target.closest('[data-remove-option]');
+        if (removeOptionButton && !removeOptionButton.disabled) {
+            removeOptionButton.closest('[data-option-row]').remove();
+            refreshQuestions();
         }
     });
 });
@@ -198,6 +233,18 @@ document.querySelectorAll('[data-copy-room]').forEach((button) => {
         }
     });
 });
+
+const roomJoinClosedDialog = document.querySelector('[data-room-join-closed-dialog]');
+if (roomJoinClosedDialog) {
+    roomJoinClosedDialog.showModal();
+    scrollLockedDialogs.add(roomJoinClosedDialog);
+    syncPageScrollLock();
+    roomJoinClosedDialog.querySelector('[data-room-join-closed-close]').addEventListener('click', () => roomJoinClosedDialog.close());
+    roomJoinClosedDialog.addEventListener('close', () => {
+        scrollLockedDialogs.delete(roomJoinClosedDialog);
+        syncPageScrollLock();
+    });
+}
 
 document.querySelectorAll('[data-avatar-dialog]').forEach((dialog) => {
     document.querySelector('[data-avatar-open]')?.addEventListener('click', () => {
@@ -493,6 +540,10 @@ const checkRoomStillExists = async (reloadIfPresent = false) => {
 };
 
 if (roomPage) {
+    if (roomPage.dataset.roomFeedbackNext) {
+        window.setTimeout(() => window.location.replace(roomPage.dataset.roomFeedbackNext), 3000);
+    }
+
     const countdown = roomPage.querySelector('[data-room-countdown]');
 
     if (countdown && roomPage.dataset.questionEndsAt) {
@@ -549,14 +600,6 @@ if (window.Echo && roomPage) {
 
         roomPage.querySelectorAll('[data-room-presence-user]').forEach((row) => {
             row.hidden = !onlineUserIds.has(row.dataset.roomPresenceUser);
-        });
-
-        let rank = 0;
-        roomPage.querySelectorAll('[data-room-leaderboard-user]').forEach((row) => {
-            if (!row.hidden) {
-                rank += 1;
-                row.querySelector('[data-room-rank]').textContent = `${rank}.`;
-            }
         });
 
         if (roomStatus) {

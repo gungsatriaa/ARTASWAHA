@@ -6,6 +6,7 @@ use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\ResetPasswordRequest;
 use App\Http\Requests\SendPasswordResetLinkRequest;
+use App\Models\LearningPath;
 use App\Services\AuthService;
 use App\Services\LearningProgressService;
 use Illuminate\Http\RedirectResponse;
@@ -31,7 +32,7 @@ class AuthController extends Controller
     {
         $authService->register($request->validated(), $request, $progressService);
 
-        return to_route('home')->with('status', 'Akun berhasil dibuat. Selamat belajar!');
+        return $this->learningDestination($request)->with('status', 'Akun berhasil dibuat. Selamat belajar!');
     }
 
     public function login(LoginRequest $request, AuthService $authService, LearningProgressService $progressService): RedirectResponse
@@ -40,7 +41,7 @@ class AuthController extends Controller
             return back()->withErrors(['email' => 'Email atau kata sandi tidak cocok.'])->onlyInput('email');
         }
 
-        return to_route('home');
+        return $this->learningDestination($request);
     }
 
     public function redirectToGoogle(): RedirectResponse
@@ -66,7 +67,7 @@ class AuthController extends Controller
             return to_route('login')->withErrors(['google' => 'Akun Google tidak memiliki email terverifikasi atau tidak dapat ditautkan.']);
         }
 
-        return to_route('home')->with('status', 'Berhasil masuk dengan Google. Selamat belajar!');
+        return $this->learningDestination($request)->with('status', 'Berhasil masuk dengan Google. Selamat belajar!');
     }
 
     public function logout(Request $request, AuthService $authService): RedirectResponse
@@ -100,5 +101,13 @@ class AuthController extends Controller
         return $status === Password::PASSWORD_RESET
             ? to_route('login')->with('status', 'Kata sandi berhasil diperbarui. Silakan masuk.')
             : back()->withErrors(['email' => 'Tautan pemulihan tidak valid atau sudah kedaluwarsa.']);
+    }
+
+    private function learningDestination(Request $request): RedirectResponse
+    {
+        $pathId = $request->session()->pull('learning_interview_destination');
+        $path = is_numeric($pathId) ? LearningPath::query()->where('is_published', true)->find($pathId) : null;
+
+        return $path ? to_route('learning.paths.show', $path->slug) : to_route('home');
     }
 }

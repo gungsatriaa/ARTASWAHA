@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\LearningPathController as AdminLearningPathController;
 use App\Http\Controllers\Admin\LessonController as AdminLessonController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\LearningInterviewController;
 use App\Http\Controllers\LearningPathController;
 use App\Http\Controllers\LearningProgressController;
 use App\Http\Controllers\LessonController;
@@ -16,6 +17,10 @@ use App\Http\Controllers\UpdateProfileAvatarController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LearningPathController::class, 'index'])->name('home');
+Route::get('/mulai-belajar', [LearningInterviewController::class, 'show'])->name('learning.interview.show');
+Route::post('/mulai-belajar', [LearningInterviewController::class, 'store'])->middleware('throttle:20,1')->name('learning.interview.store');
+Route::get('/mulai-belajar/avatar', [LearningInterviewController::class, 'avatar'])->name('learning.interview.avatar');
+Route::get('/profil-anonim', [LearningInterviewController::class, 'profile'])->name('learning.anonymous-profile.show');
 Route::get('/belajar/{learningPath:slug}', [LearningPathController::class, 'show'])->name('learning.paths.show');
 Route::get('/pelajaran/{lesson:slug}', [LessonController::class, 'show'])->name('learning.lessons.show');
 Route::post('/pelajaran/{lesson:slug}/selesai', [LearningProgressController::class, 'store'])->name('learning.progress.store');
@@ -66,6 +71,8 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/kuis/draf-ai/{quizDraft}', [QuizDraftController::class, 'show'])->name('quizzes.drafts.show');
     Route::post('/kuis', [QuizController::class, 'store'])->middleware('throttle:10,1')->name('quizzes.store');
     Route::get('/kuis/{quiz}', [QuizController::class, 'show'])->name('quizzes.show');
+    Route::get('/kuis/{quiz}/edit', [QuizController::class, 'edit'])->name('quizzes.edit');
+    Route::put('/kuis/{quiz}', [QuizController::class, 'update'])->name('quizzes.update');
     Route::post('/kuis/{quiz}/room', [RoomController::class, 'store'])->middleware('throttle:10,1')->name('rooms.store');
     Route::post('/room/gabung', [RoomController::class, 'join'])->middleware('throttle:10,1')->name('rooms.join');
     Route::get('/room/{room:code}/status', [RoomController::class, 'status'])->name('rooms.status');

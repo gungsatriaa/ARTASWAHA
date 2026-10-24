@@ -16,10 +16,19 @@
         </header>
 
         @if (session('status'))
-            <p role="status" class="mb-6 rounded-2xl border border-success/20 bg-success/10 p-4 text-success">{{ session('status') }}</p>
+            <x-flash-notice class="mb-6">{{ session('status') }}</x-flash-notice>
         @endif
-        @if ($errors->any())
+        @if ($errors->any() && ! $errors->has('room_started') && ! $errors->has('room_finished'))
             <p role="alert" class="mb-6 rounded-2xl border border-danger/20 bg-danger/10 p-4 text-danger">{{ $errors->first() }}</p>
+        @endif
+
+        @if ($errors->has('room_started') || $errors->has('room_finished'))
+            <dialog data-room-join-closed-dialog aria-labelledby="room-join-closed-title" aria-describedby="room-join-closed-description" class="fixed inset-0 m-auto w-[min(28rem,calc(100vw-2rem))] rounded-[1.75rem] border border-accent/30 bg-surface p-6 text-foreground shadow-2xl backdrop:bg-black/85 sm:p-8">
+                <span class="grid size-12 place-items-center rounded-2xl bg-accent/10 text-2xl text-accent" aria-hidden="true">!</span>
+                <h2 id="room-join-closed-title" class="mt-5 font-display text-2xl font-bold">{{ $errors->has('room_started') ? 'Kuis sudah dimulai' : 'Kuis sudah selesai' }}</h2>
+                <p id="room-join-closed-description" class="mt-3 text-sm leading-6 text-foreground/65">{{ $errors->first('room_started') ?: $errors->first('room_finished') }} Pilih room lain yang masih menunggu peserta.</p>
+                <button type="button" data-room-join-closed-close class="mt-7 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-accent px-5 font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Mengerti</button>
+            </dialog>
         @endif
 
         <section aria-labelledby="join-room-title" class="rounded-[2rem] border border-white/10 bg-surface p-6 sm:p-8 lg:p-10">

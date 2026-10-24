@@ -6,7 +6,7 @@
             <p class="mt-4 font-readable text-lg leading-8 text-foreground/70">{{ $lesson->summary }}</p>
 
             @if (session('status'))
-                <p role="status" class="mt-8 rounded-2xl bg-primary/20 p-4 font-semibold text-accent">{{ session('status') }}</p>
+                <x-flash-notice :tone="session('status_tone', 'success')" class="mt-8">{{ session('status') }}</x-flash-notice>
             @endif
 
             <article class="mt-8 rounded-card bg-surface p-6 font-readable text-lg leading-8 sm:p-8">

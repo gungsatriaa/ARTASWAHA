@@ -10,6 +10,7 @@ use App\Models\RoomAnswer;
 use App\Models\RoomParticipant;
 use App\Models\User;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -19,11 +20,14 @@ class RoomService
     public function create(Quiz $quiz, User $host): Room
     {
         abort_unless($quiz->user_id === $host->id, 403);
-        abort_if($quiz->questions()->doesntExist(), 422, 'Tambahkan setidaknya satu pertanyaan terlebih dahulu.');
 
         for ($attempt = 0; $attempt < 10; $attempt++) {
             try {
                 $room = DB::transaction(function () use ($quiz, $host): Room {
+                    $quiz = Quiz::query()->whereKey($quiz->id)->lockForUpdate()->firstOrFail();
+                    abort_if($quiz->is_archived, 422, 'Versi kuis ini sudah diarsipkan. Pilih versi terbaru.');
+                    abort_if($quiz->questions()->doesntExist(), 422, 'Tambahkan setidaknya satu pertanyaan terlebih dahulu.');
+
                     $room = Room::query()->create([
                         'quiz_id' => $quiz->id,
                         'host_id' => $host->id,
@@ -57,7 +61,11 @@ class RoomService
     {
         $room = DB::transaction(function () use ($code, $user): Room {
             $room = Room::query()->where('code', Str::upper(trim($code)))->lockForUpdate()->firstOrFail();
-            abort_unless($room->status === 'waiting', 422, 'Room tidak menerima peserta baru.');
+            if ($room->status !== 'waiting') {
+                throw ValidationException::withMessages($room->status === 'active'
+                    ? ['room_started' => 'Kuis sudah dimulai. Kamu tidak bisa bergabung lagi.']
+                    : ['room_finished' => 'Kuis sudah selesai. Kamu tidak bisa bergabung lagi.']);
+            }
 
             $room->participants()->firstOrCreate(
                 ['user_id' => $user->id],
@@ -79,7 +87,11 @@ class RoomService
         DB::transaction(function () use ($room, $user): void {
             $room = Room::query()->whereKey($room->id)->lockForUpdate()->firstOrFail();
             $room->participants()->where('user_id', $user->id)->firstOrFail()->delete();
-            $this->finishUntimedIfComplete($room);
+            if ($room->seconds_per_question) {
+                $this->finishTimedIfComplete($room);
+            } else {
+                $this->finishUntimedIfComplete($room);
+            }
         });
 
         $this->broadcastRoomUpdate($room->fresh());
@@ -114,6 +126,13 @@ class RoomService
                 'question_ends_at' => $room->seconds_per_question ? now()->addSeconds($room->seconds_per_question) : null,
             ]);
 
+            if ($room->seconds_per_question) {
+                $room->participants()->update([
+                    'question_position' => 0,
+                    'question_ends_at' => $room->question_ends_at,
+                ]);
+            }
+
             return $room->refresh();
         });
 
@@ -137,12 +156,12 @@ class RoomService
             }
 
             $question = $room->seconds_per_question
-                ? $room->currentQuestion
+                ? $room->quiz->questions()->skip($participant->question_position)->first()
                 : $this->nextQuestionFor($room, $participant);
             if (! $question || (int) $data['question_id'] !== $question->id) {
                 throw ValidationException::withMessages(['question_id' => 'Pertanyaan ini sudah tidak aktif.']);
             }
-            if ($room->question_ends_at && now()->greaterThanOrEqualTo($room->question_ends_at)) {
+            if ($participant->question_ends_at && now()->greaterThanOrEqualTo($participant->question_ends_at)) {
                 throw ValidationException::withMessages(['question_id' => 'Waktu soal ini sudah habis.']);
             }
 
@@ -167,7 +186,16 @@ class RoomService
                 $participant->increment('score', $answer->points_awarded);
             }
 
-            if (! $room->seconds_per_question) {
+            if ($room->seconds_per_question) {
+                $nextPosition = $participant->question_position + 1;
+                $participant->update([
+                    'question_position' => $nextPosition,
+                    'question_ends_at' => $nextPosition < $room->quiz->questions()->count()
+                        ? now()->addSeconds($room->seconds_per_question + ($room->quiz->show_answers_immediately ? 3 : 0))
+                        : null,
+                ]);
+                $this->finishTimedIfComplete($room);
+            } else {
                 $this->finishUntimedIfComplete($room);
             }
 
@@ -185,24 +213,36 @@ class RoomService
     {
         $changed = DB::transaction(function () use ($room): bool {
             $room = Room::query()->whereKey($room->id)->lockForUpdate()->firstOrFail();
-            if ($room->status !== 'active' || ! $room->seconds_per_question || ! $room->question_ends_at) {
+            if ($room->status !== 'active' || ! $room->seconds_per_question) {
                 return false;
             }
 
+            $questions = $room->quiz->questions()->get();
+            $questionCount = $questions->count();
             $changed = false;
-            while ($room->status === 'active' && now()->greaterThanOrEqualTo($room->question_ends_at)) {
-                $nextQuestion = $room->quiz->questions()
-                    ->where('sort_order', '>', $room->currentQuestion->sort_order)
-                    ->first();
+            foreach ($room->participants as $participant) {
+                if ($participant->question_ends_at === null && $participant->question_position === 0) {
+                    $participant->question_position = max(0, $questions->search(fn ($question) => $question->id === $room->current_question_id));
+                    $participant->question_ends_at = $room->question_ends_at ?? now()->addSeconds($room->seconds_per_question);
+                    $changed = true;
+                }
 
-                $room->update($nextQuestion
-                    ? ['current_question_id' => $nextQuestion->id, 'question_ends_at' => $room->question_ends_at->copy()->addSeconds($room->seconds_per_question)]
-                    : ['status' => 'finished', 'finished_at' => $room->question_ends_at, 'question_ends_at' => null]);
-                $room->unsetRelation('currentQuestion');
-                $changed = true;
+                while ($participant->question_position < $questionCount && $participant->question_ends_at && now()->greaterThanOrEqualTo($participant->question_ends_at)) {
+                    $participant->question_position++;
+                    $participant->question_ends_at = $participant->question_position < $questionCount
+                        ? $participant->question_ends_at->copy()->addSeconds($room->seconds_per_question)
+                        : null;
+                    $changed = true;
+                }
+
+                if ($participant->isDirty()) {
+                    $participant->save();
+                }
             }
 
-            return $changed;
+            $this->finishTimedIfComplete($room);
+
+            return $changed || $room->status === 'finished';
         });
 
         if ($changed) {
@@ -210,7 +250,7 @@ class RoomService
         }
     }
 
-    /** @return array{room: Room, participant: RoomParticipant, activeQuestion: QuizQuestion|null, currentAnswer: RoomAnswer|null} */
+    /** @return array{room: Room, participant: RoomParticipant|null, activeQuestion: QuizQuestion|null, currentAnswer: RoomAnswer|null, isFeedback: bool, answersByQuestion: Collection} */
     public function viewData(Room $room, User $user): array
     {
         abort_unless(
@@ -222,14 +262,24 @@ class RoomService
         $room->refresh();
         $room->load(['quiz.questions', 'currentQuestion', 'participants.user']);
         $participant = $room->participants->firstWhere('user_id', $user->id);
-        $activeQuestion = $room->status === 'active'
-            ? ($room->seconds_per_question ? $room->currentQuestion : $this->nextQuestionFor($room, $participant))
+        $feedbackAnswer = $participant && $room->quiz->show_answers_immediately
+            ? $participant->answers()->whereKey(request()->query('feedback'))->first()
             : null;
-        $currentAnswer = $room->seconds_per_question && $activeQuestion
-            ? $participant->answers()->where('quiz_question_id', $activeQuestion->id)->first()
-            : null;
+        $isFeedback = $feedbackAnswer !== null;
+        $activeQuestion = null;
+        if ($feedbackAnswer) {
+            $activeQuestion = $room->quiz->questions->firstWhere('id', $feedbackAnswer->quiz_question_id);
+        } elseif ($room->status === 'active' && $participant) {
+            $activeQuestion = $room->seconds_per_question
+                ? $room->quiz->questions->get($participant->question_position)
+                : $this->nextQuestionFor($room, $participant);
+        }
+        $currentAnswer = $feedbackAnswer;
+        $answersByQuestion = $room->status === 'finished' && $participant
+            ? $participant->answers()->get()->keyBy('quiz_question_id')
+            : collect();
 
-        return compact('room', 'participant', 'activeQuestion', 'currentAnswer');
+        return compact('room', 'participant', 'activeQuestion', 'currentAnswer', 'isFeedback', 'answersByQuestion');
     }
 
     private function nextQuestionFor(Room $room, RoomParticipant $participant): ?QuizQuestion
@@ -253,10 +303,17 @@ class RoomService
         }
     }
 
+    private function finishTimedIfComplete(Room $room): void
+    {
+        if ($room->status === 'active' && $room->participants()->where('question_position', '<', $room->quiz->questions()->count())->doesntExist()) {
+            $room->update(['status' => 'finished', 'finished_at' => now(), 'question_ends_at' => null]);
+        }
+    }
+
     private function broadcastRoomUpdate(Room $room): void
     {
         $room->load('currentQuestion');
-        $question = $room->currentQuestion;
+        $question = $room->seconds_per_question ? null : $room->currentQuestion;
 
         event(new RoomUpdated($room->code, [
             'status' => $room->status,

@@ -64,7 +64,11 @@ class RoomController extends Controller
 
     public function answer(StoreRoomAnswerRequest $request, Room $room, RoomService $roomService): RedirectResponse
     {
-        $roomService->answer($room, $request->user(), $request->validated());
+        $answer = $roomService->answer($room, $request->user(), $request->validated());
+
+        if ($room->quiz->show_answers_immediately) {
+            return to_route('rooms.show', ['room' => $room->code, 'feedback' => $answer->id]);
+        }
 
         return to_route('rooms.show', $room->code);
     }

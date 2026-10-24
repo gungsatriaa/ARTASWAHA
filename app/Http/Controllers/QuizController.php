@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreQuizRequest;
+use App\Http\Requests\UpdateQuizRequest;
 use App\Models\Quiz;
 use App\Services\QuizService;
 use Illuminate\Http\RedirectResponse;
@@ -15,6 +16,7 @@ class QuizController extends Controller
     {
         $quizzes = Quiz::query()
             ->where('user_id', Auth::id())
+            ->where('is_archived', false)
             ->withCount('questions')
             ->latest()
             ->paginate(12);
@@ -40,5 +42,23 @@ class QuizController extends Controller
         $quiz->load('questions');
 
         return view('quizzes.show', compact('quiz'));
+    }
+
+    public function edit(Quiz $quiz): View
+    {
+        abort_unless($quiz->user_id === Auth::id() && ! $quiz->is_archived, 404);
+        $quiz->load('questions');
+        $hasRooms = $quiz->rooms()->exists();
+
+        return view('quizzes.create', compact('quiz', 'hasRooms'));
+    }
+
+    public function update(UpdateQuizRequest $request, Quiz $quiz, QuizService $quizService): RedirectResponse
+    {
+        $updatedQuiz = $quizService->update($quiz, $request->user(), $request->validated());
+
+        return to_route('quizzes.show', $updatedQuiz)->with('status', $updatedQuiz->id !== $quiz->id
+            ? 'Perubahan disimpan sebagai versi baru. Room lama tetap memakai versi sebelumnya.'
+            : 'Kuis berhasil diperbarui.');
     }
 }

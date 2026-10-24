@@ -23,6 +23,7 @@ class QuizFactory extends Factory
             'title' => fake()->sentence(3),
             'description' => fake()->sentence(),
             'leaderboard_enabled' => true,
+            'show_answers_immediately' => true,
         ];
     }
 }

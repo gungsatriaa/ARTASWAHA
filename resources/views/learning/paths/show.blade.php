@@ -1,4 +1,7 @@
 <x-layouts.app :show-footer="false" :title="$learningPath->title . ' — ARTASWAHA'">
+    @if (session('status'))
+        <div class="mx-auto max-w-6xl px-5 pt-5"><x-flash-notice>{{ session('status') }}</x-flash-notice></div>
+    @endif
     <div class="mx-auto grid w-full max-w-6xl gap-6 px-5 py-8 sm:px-6 sm:py-12 lg:grid-cols-[.82fr_1.18fr] lg:items-start lg:gap-8 lg:px-10 lg:py-14">
         <aside class="rounded-card border border-white/8 bg-surface p-6 sm:p-8 lg:sticky lg:top-32">
             <a href="{{ route('home') }}" class="inline-flex min-h-10 items-center gap-2 rounded-full px-3 text-sm font-semibold text-foreground/65 transition hover:bg-background hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
@@ -17,6 +20,17 @@
             <p class="mt-5 text-sm font-bold text-accent">{{ $learningPath->group === 'paribasa' ? 'Paribasa Bali' : 'Aksara Bali' }}</p>
             <h1 class="mt-2 break-words font-display text-3xl font-bold leading-tight sm:text-4xl">{{ $learningPath->title }}</h1>
             <p class="mt-4 font-readable leading-7 text-foreground/65">{{ $learningPath->description }}</p>
+
+            @if ($profile)
+                <div class="mt-6 flex items-center gap-3 rounded-2xl border border-accent/20 bg-accent/5 p-3">
+                    @if (str_starts_with($profile->avatar ?? '', 'avatars/'))
+                        <img src="{{ route('learning.interview.avatar') }}" alt="" class="size-11 rounded-full object-cover">
+                    @elseif ($profile->avatar)
+                        <img src="{{ asset($profile->avatar) }}" alt="" class="size-11 rounded-full object-cover">
+                    @endif
+                    <div><p class="text-sm font-bold">Halo, {{ $profile->name }}!</p><p class="text-xs text-foreground/55">Belajar sebagai {{ ['murid' => 'murid', 'guru' => 'guru', 'pendatang' => 'pendatang', 'masyarakat' => 'masyarakat umum'][$profile->role] ?? $profile->role }}</p></div>
+                </div>
+            @endif
 
             <div class="mt-7 flex items-center gap-3 border-t border-white/10 pt-5">
                 <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-background font-display text-lg font-bold text-accent" aria-hidden="true">{{ $learningPath->lessons->count() }}</span>

@@ -3,6 +3,18 @@
 @php
     $currentLearningPath = request()->route('learningPath');
     $currentLearningPathSlug = $currentLearningPath instanceof \App\Models\LearningPath ? $currentLearningPath->slug : $currentLearningPath;
+    $anonymousProfile = auth()->guest()
+        ? \App\Models\LearnerProfile::query()
+            ->where('visitor_id', request()->cookie('artaswaha_device'))
+            ->where('mode', 'anonymous')
+            ->whereNull('user_id')
+            ->first()
+        : null;
+    $anonymousAvatar = $anonymousProfile
+        ? (str_starts_with($anonymousProfile->avatar ?? '', 'avatars/')
+            ? route('learning.interview.avatar')
+            : asset($anonymousProfile->avatar ?? array_key_first(\App\Services\ProfileAvatarService::DEFAULT_AVATARS)))
+        : null;
 @endphp
 
 <header class="sticky top-0 z-50 border-b border-white/10 bg-background">
@@ -48,6 +60,21 @@
                 Kuis
             </a>
             @guest
+                @if ($anonymousProfile)
+                    <div class="group relative">
+                        <button type="button" class="relative grid size-11 place-items-center overflow-hidden rounded-full bg-accent font-display font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent" aria-label="Menu profil anonim {{ $anonymousProfile->name }}">
+                            <img src="{{ $anonymousAvatar }}" alt="" class="absolute inset-0 size-full object-cover">
+                        </button>
+                        <div class="invisible absolute right-0 top-full z-20 w-56 translate-y-2 pt-3 opacity-0 transition duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-has-[:focus-visible]:visible group-has-[:focus-visible]:translate-y-0 group-has-[:focus-visible]:opacity-100">
+                            <div class="rounded-2xl border border-white/10 bg-surface p-2 shadow-2xl shadow-black/40">
+                                <div class="px-4 py-3"><p class="truncate text-sm font-semibold text-foreground">{{ $anonymousProfile->name }}</p><p class="text-xs text-accent">Akun anonim</p></div>
+                                <a href="{{ route('learning.anonymous-profile.show') }}" class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">Profil</a>
+                                <a href="{{ route('login') }}" class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">Masuk</a>
+                                <a href="{{ route('register') }}" class="block rounded-xl px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">Daftar akun</a>
+                            </div>
+                        </div>
+                    </div>
+                @else
                 <a class="hidden min-h-11 items-center gap-2 rounded-full px-3 py-3 text-sm font-semibold text-foreground/80 transition hover:bg-surface sm:inline-flex" href="{{ route('login') }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-4 shrink-0" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3"/><path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"/></svg>
                     Login
@@ -56,6 +83,7 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-4 shrink-0" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>
                     Daftar
                 </a>
+                @endif
             @else
                 <div class="group relative">
                     <button type="button" class="relative grid size-11 place-items-center overflow-hidden rounded-full bg-accent font-display font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent" aria-label="Menu profil {{ auth()->user()->name }}">
@@ -149,6 +177,9 @@
                         </a>
                     @endif
                 @else
+                    @if ($anonymousProfile)
+                        <a href="{{ route('learning.anonymous-profile.show') }}" class="flex min-h-12 items-center gap-3 rounded-full px-4 py-3 text-sm font-bold text-foreground/75 transition hover:bg-surface hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"><img src="{{ $anonymousAvatar }}" alt="" class="size-7 rounded-full object-cover"> Profil anonim</a>
+                    @else
                     <a href="{{ route('login') }}" @class([
                         'flex min-h-12 items-center gap-3 rounded-full px-4 py-3 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-accent',
                         'bg-primary/20 text-accent' => request()->routeIs('login'),
@@ -161,6 +192,7 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5 shrink-0" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>
                         Daftar
                     </a>
+                    @endif
                 @endauth
                 </div>
             </nav>
@@ -181,4 +213,10 @@
                     </form>
                 </div>
             @endauth
+            @if ($anonymousProfile)
+                <a href="{{ route('learning.anonymous-profile.show') }}" class="flex min-w-0 items-center gap-3 border-t border-white/10 pt-4 transition hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" aria-label="Profil anonim {{ $anonymousProfile->name }}">
+                    <img src="{{ $anonymousAvatar }}" alt="" class="size-11 shrink-0 rounded-full object-cover ring-1 ring-white/10">
+                    <span class="min-w-0"><span class="block truncate text-sm font-bold">{{ $anonymousProfile->name }}</span><span class="block text-xs text-accent">Akun anonim</span></span>
+                </a>
+            @endif
 </aside>

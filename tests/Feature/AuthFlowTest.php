@@ -59,6 +59,11 @@ class AuthFlowTest extends TestCase
             'visitor_id' => $visitorId,
             'user_id' => auth()->id(),
         ]);
+        $this->withSession(['status' => 'Akun berhasil dibuat. Selamat belajar!'])
+            ->get(route('home'))
+            ->assertOk()
+            ->assertSee('Akun berhasil dibuat. Selamat belajar!')
+            ->assertSee('border-l-success', false);
 
         $this->post(route('logout'))->assertRedirect(route('home'));
         $this->assertGuest();
