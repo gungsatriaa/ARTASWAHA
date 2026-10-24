@@ -60,6 +60,21 @@ button:disabled {
     cursor: not-allowed;
 }
 
+[data-quiz-option]:has(input:checked) {
+    border-color: var(--color-accent);
+    background-color: rgb(255 199 0 / 0.1);
+}
+
+[data-quiz-option]:has(input:checked) [data-quiz-option-indicator] {
+    border: 6px solid var(--color-accent);
+    background-color: var(--color-background);
+}
+
+[data-quiz-option]:has(input:focus-visible) {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
 body.dialog-open {
     overflow: hidden;
     overscroll-behavior: none;

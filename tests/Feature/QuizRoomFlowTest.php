@@ -220,8 +220,9 @@ class QuizRoomFlowTest extends TestCase
 
         $this->actingAs($player)->get(route('rooms.show', $room->code))
             ->assertOk()
-            ->assertSee('Pertanyaan 1 dari 1')
-            ->assertSee('Pilih satu jawaban');
+            ->assertSee('Soal 1')
+            ->assertSee('Pilih satu jawaban')
+            ->assertSee('data-quiz-option', false);
 
         $question = $quiz->questions()->firstOrFail();
         $answerData = ['question_id' => $question->id, 'answer_index' => 1, 'points_awarded' => 9999];
@@ -284,7 +285,10 @@ class QuizRoomFlowTest extends TestCase
         $firstQuestion = $quiz->questions()->firstOrFail();
 
         $this->actingAs($player)->post(route('rooms.answer', $room->code), ['question_id' => $firstQuestion->id, 'answer_index' => 1])->assertRedirect();
-        $this->get(route('rooms.show', $room->code))->assertSee('Soal berikutnya muncul saat waktu habis.');
+        $this->get(route('rooms.show', $room->code))
+            ->assertSee('Soal berikutnya muncul saat waktu habis.')
+            ->assertSee('data-room-time-progress', false)
+            ->assertSee('data-room-countdown', false);
         $this->travel(11)->seconds();
         $this->actingAs($host)->get(route('rooms.status', $room->code))->assertNoContent();
         $this->assertSame($secondQuestion->id, $room->fresh()->current_question_id);

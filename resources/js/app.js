@@ -498,11 +498,21 @@ if (roomPage) {
     if (countdown && roomPage.dataset.questionEndsAt) {
         const deadline = Date.parse(roomPage.dataset.questionEndsAt);
         const timeOffset = Date.parse(roomPage.dataset.serverNow) - Date.now();
+        const timeProgress = roomPage.querySelector('[data-room-time-progress]');
+        const timeBar = roomPage.querySelector('[data-room-time-bar]');
+        const totalSeconds = Number(timeProgress?.getAttribute('aria-valuemax'));
         let lastExpiryCheck = 0;
 
         const updateCountdown = () => {
             const secondsLeft = Math.max(0, Math.ceil((deadline - Date.now() - timeOffset) / 1000));
-            countdown.textContent = `${secondsLeft} detik`;
+            countdown.textContent = `${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, '0')}`;
+            countdown.classList.toggle('text-accent', secondsLeft > 5);
+            countdown.classList.toggle('text-danger', secondsLeft <= 5);
+
+            if (timeBar && totalSeconds > 0) {
+                timeBar.style.width = `${Math.min(100, secondsLeft / totalSeconds * 100)}%`;
+                timeProgress.setAttribute('aria-valuenow', secondsLeft);
+            }
 
             if (secondsLeft === 0 && Date.now() - lastExpiryCheck >= 3000) {
                 lastExpiryCheck = Date.now();

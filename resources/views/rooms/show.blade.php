@@ -24,29 +24,44 @@
             <p role="alert" class="mb-6 rounded-2xl border border-danger/20 bg-danger/10 p-4 text-danger">{{ $errors->first() }}</p>
         @endif
 
-        <section class="overflow-hidden rounded-[2rem] border border-white/10 bg-surface lg:grid lg:grid-cols-[minmax(0,1fr)_20rem]" aria-labelledby="room-title">
-            <div class="p-6 sm:p-8 lg:p-10">
-                <span class="inline-flex items-center gap-2 rounded-full bg-primary/20 px-4 py-2 text-sm font-bold text-accent">
-                    <span class="size-2 rounded-full bg-accent" aria-hidden="true"></span>
-                    {{ $room->status === 'waiting' ? 'Menunggu pemain' : ($room->status === 'active' ? 'Kuis berlangsung' : 'Kuis selesai') }}
-                </span>
-                <p class="mt-7 text-sm font-bold text-foreground/55">{{ $room->quiz->title }}</p>
-                <h1 id="room-title" class="mt-2 font-display text-3xl font-bold sm:text-4xl">{{ $room->status === 'waiting' ? 'Siap belajar bareng?' : ($room->status === 'active' ? 'Saatnya menjawab!' : 'Permainan selesai!') }}</h1>
-                <p class="mt-4 max-w-xl font-readable leading-7 text-foreground/65">{{ $room->status === 'waiting' ? 'Bagikan kode ke temanmu. Host bisa memulai kapan saja setelah semua siap.' : ($room->status === 'active' ? 'Pilih jawabanmu, lalu lihat siapa yang naik peringkat.' : 'Terima kasih sudah bermain bersama. Sampai jumpa di kuis berikutnya!') }}</p>
-                <p data-live-status role="status" class="mt-5 min-h-5 text-xs text-foreground/45">Memeriksa koneksi room…</p>
-            </div>
-            <div class="flex flex-col justify-between bg-accent p-6 text-background sm:p-8">
-                <div>
-                    <p class="text-sm font-bold text-background/70">Kode room</p>
-                    <p class="mt-2 break-all font-display text-5xl font-extrabold tracking-[0.12em] sm:text-6xl" aria-label="Kode room {{ $room->code }}">{{ $room->code }}</p>
-                    <p class="mt-4 text-sm leading-6 text-background/70">Temanmu dapat memasukkan kode ini di halaman kuis.</p>
+        @if ($room->status === 'active')
+            <section class="flex flex-wrap items-center justify-between gap-5 rounded-[1.75rem] border border-white/10 bg-surface px-6 py-5 sm:px-8" aria-labelledby="room-title">
+                <div class="min-w-0">
+                    <p class="text-sm font-bold text-accent">Kuis berlangsung</p>
+                    <h1 id="room-title" class="mt-1 break-words font-display text-2xl font-bold sm:text-3xl">{{ $room->quiz->title }}</h1>
+                    <p data-live-status role="status" class="mt-2 text-xs text-foreground/45">Memeriksa koneksi room…</p>
                 </div>
-                <div class="mt-7">
-                    <button type="button" data-copy-room="{{ route('quizzes.index', ['code' => $room->code]) }}" class="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-background px-5 py-3 text-sm font-extrabold text-foreground transition hover:bg-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-background">Salin tautan undangan</button>
-                    <p role="status" data-copy-status class="mt-2 min-h-5 text-xs font-semibold text-background/70"></p>
+                <div class="flex flex-wrap items-center gap-3">
+                    <span class="rounded-full border border-accent/30 bg-accent/10 px-4 py-2 font-display text-lg font-bold tracking-widest text-accent" aria-label="Kode room {{ $room->code }}">{{ $room->code }}</span>
+                    <button type="button" data-copy-room="{{ route('quizzes.index', ['code' => $room->code]) }}" class="min-h-11 rounded-full border border-white/15 px-4 text-sm font-bold text-foreground transition hover:border-accent/60 hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Salin undangan</button>
+                    <p role="status" data-copy-status class="w-full text-xs font-semibold text-foreground/55"></p>
                 </div>
-            </div>
-        </section>
+            </section>
+        @else
+            <section class="overflow-hidden rounded-[2rem] border border-white/10 bg-surface lg:grid lg:grid-cols-[minmax(0,1fr)_20rem]" aria-labelledby="room-title">
+                <div class="p-6 sm:p-8 lg:p-10">
+                    <span class="inline-flex items-center gap-2 rounded-full bg-primary/20 px-4 py-2 text-sm font-bold text-accent">
+                        <span class="size-2 rounded-full bg-accent" aria-hidden="true"></span>
+                        {{ $room->status === 'waiting' ? 'Menunggu pemain' : 'Kuis selesai' }}
+                    </span>
+                    <p class="mt-7 text-sm font-bold text-foreground/55">{{ $room->quiz->title }}</p>
+                    <h1 id="room-title" class="mt-2 font-display text-3xl font-bold sm:text-4xl">{{ $room->status === 'waiting' ? 'Siap belajar bareng?' : 'Permainan selesai!' }}</h1>
+                    <p class="mt-4 max-w-xl font-readable leading-7 text-foreground/65">{{ $room->status === 'waiting' ? 'Bagikan kode ke temanmu. Host bisa memulai kapan saja setelah semua siap.' : 'Terima kasih sudah bermain bersama. Sampai jumpa di kuis berikutnya!' }}</p>
+                    <p data-live-status role="status" class="mt-5 min-h-5 text-xs text-foreground/45">Memeriksa koneksi room…</p>
+                </div>
+                <div class="flex flex-col justify-between bg-accent p-6 text-background sm:p-8">
+                    <div>
+                        <p class="text-sm font-bold text-background/70">Kode room</p>
+                        <p class="mt-2 break-all font-display text-5xl font-extrabold tracking-[0.12em] sm:text-6xl" aria-label="Kode room {{ $room->code }}">{{ $room->code }}</p>
+                        <p class="mt-4 text-sm leading-6 text-background/70">Temanmu dapat memasukkan kode ini di halaman kuis.</p>
+                    </div>
+                    <div class="mt-7">
+                        <button type="button" data-copy-room="{{ route('quizzes.index', ['code' => $room->code]) }}" class="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-background px-5 py-3 text-sm font-extrabold text-foreground transition hover:bg-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-background">Salin tautan undangan</button>
+                        <p role="status" data-copy-status class="mt-2 min-h-5 text-xs font-semibold text-background/70"></p>
+                    </div>
+                </div>
+            </section>
+        @endif
 
         <div class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_19rem]">
             <div>
@@ -75,41 +90,51 @@
                         @endif
                     </section>
                 @elseif ($room->status === 'active' && $activeQuestion)
-                    <section class="rounded-[1.75rem] border border-white/10 bg-surface p-6 sm:p-8" aria-labelledby="question-title">
-                        <div class="flex items-center justify-between gap-4 text-sm font-bold">
-                            <span class="text-accent">Pertanyaan {{ $questionPosition }} dari {{ $questionCount }}</span>
-                            <span class="text-foreground/55">{{ $questionCount ? round($questionPosition / $questionCount * 100) : 0 }}%</span>
+                    <section class="rounded-[1.75rem] border border-white/10 bg-surface p-5 sm:p-8" aria-labelledby="question-title">
+                        <div class="flex items-center justify-between gap-4">
+                            <span class="font-display text-lg font-bold">Soal {{ $questionPosition }} <span class="text-foreground/50">dari {{ $questionCount }}</span></span>
+                            <span class="grid size-12 shrink-0 place-items-center rounded-full border-[3px] border-accent/70 bg-accent/10 font-display text-sm font-bold text-accent" aria-hidden="true">{{ $questionPosition }}/{{ $questionCount }}</span>
                         </div>
-                        <div role="progressbar" aria-label="Progres kuis" aria-valuenow="{{ $questionPosition }}" aria-valuemin="0" aria-valuemax="{{ $questionCount }}" class="mt-4 h-3 overflow-hidden rounded-full bg-background">
-                            <div class="h-full rounded-full bg-accent transition-[width]" style="width: {{ $questionCount ? round($questionPosition / $questionCount * 100) : 0 }}%"></div>
+                        <div role="progressbar" aria-label="Progres kuis" aria-valuenow="{{ $questionPosition }}" aria-valuemin="0" aria-valuemax="{{ $questionCount }}" class="mt-5 h-2.5 overflow-hidden rounded-full bg-background">
+                            <div class="h-full rounded-full bg-accent" style="width: {{ $questionCount ? round($questionPosition / $questionCount * 100) : 0 }}%"></div>
                         </div>
-                        @if ($room->question_ends_at)
-                            <p class="mt-6 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-2 text-sm font-bold text-accent" role="timer" aria-live="off">Sisa waktu <span data-room-countdown>—</span></p>
-                        @else
-                            <p class="mt-6 text-sm text-foreground/55">Tanpa batas waktu · lanjut otomatis setelah menjawab.</p>
-                        @endif
-                        <h2 id="question-title" class="mt-6 break-words font-display text-2xl font-bold leading-snug sm:text-3xl">{{ $activeQuestion->prompt }}</h2>
+
+                        <div class="mt-7 flex min-h-44 items-center justify-center rounded-[1.5rem] border border-primary/35 bg-primary/15 px-5 py-10 text-center sm:min-h-52 sm:px-10">
+                            <h2 id="question-title" class="max-w-2xl break-words font-display text-2xl font-bold leading-snug sm:text-3xl">{{ $activeQuestion->prompt }}</h2>
+                        </div>
+
+                        <div class="mt-7 flex items-center gap-3 text-sm font-semibold">
+                            @if ($room->question_ends_at)
+                                <span class="shrink-0 text-foreground/65">Sisa waktu</span>
+                                <div class="h-2 flex-1 overflow-hidden rounded-full bg-background" role="progressbar" aria-label="Sisa waktu soal" aria-valuemin="0" aria-valuemax="{{ $room->seconds_per_question }}" data-room-time-progress>
+                                    <div data-room-time-bar class="h-full rounded-full bg-primary transition-[width] duration-700"></div>
+                                </div>
+                                <span class="min-w-14 text-right font-display text-base font-bold text-accent" role="timer" aria-live="off" data-room-countdown>—</span>
+                            @else
+                                <span class="text-foreground/65">Tanpa batas waktu. Kamu langsung lanjut setelah menjawab.</span>
+                            @endif
+                        </div>
+
                         @if ($currentAnswer)
-                            <p role="status" class="mt-7 rounded-2xl border border-primary/40 bg-primary/20 p-5 font-semibold text-foreground">{{ $currentAnswer->is_correct ? 'Jawaban benar! Kamu mendapat '.$currentAnswer->points_awarded.' poin.' : 'Jawaban tersimpan. Tetap semangat!' }} Soal berikutnya muncul saat waktu habis.</p>
+                            <p role="status" class="mt-8 rounded-2xl border border-primary/40 bg-primary/20 p-5 font-semibold text-foreground">{{ $currentAnswer->is_correct ? 'Jawaban benar! Kamu mendapat '.$currentAnswer->points_awarded.' poin.' : 'Jawaban tersimpan. Tetap semangat!' }} Soal berikutnya muncul saat waktu habis.</p>
                         @else
-                            <form method="POST" action="{{ route('rooms.answer', $room->code) }}" class="mt-7">
+                            <form method="POST" action="{{ route('rooms.answer', $room->code) }}" class="mt-8">
                                 @csrf
                                 <input type="hidden" name="question_id" value="{{ $activeQuestion->id }}">
                                 <fieldset>
-                                    <legend class="mb-4 text-sm font-semibold text-foreground/55">Pilih satu jawaban</legend>
-                                    <div class="grid gap-3 sm:grid-cols-2">
+                                    <legend class="mb-4 text-sm font-semibold text-foreground/65">Pilih satu jawaban</legend>
+                                    <div class="grid gap-3">
                                         @foreach ($activeQuestion->options as $index => $option)
-                                            <label class="cursor-pointer">
-                                                <input required type="radio" name="answer_index" value="{{ $index }}" class="peer sr-only">
-                                                <span class="flex min-h-20 items-center gap-4 rounded-2xl border-2 border-white/10 bg-background p-4 font-semibold transition hover:border-accent/60 peer-checked:border-accent peer-checked:bg-accent/10 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent">
-                                                    <span class="grid size-10 shrink-0 place-items-center rounded-xl border border-white/15 font-display text-lg font-bold text-accent">{{ chr(65 + $index) }}</span>
-                                                    <span class="break-words">{{ $option }}</span>
-                                                </span>
+                                            <label data-quiz-option class="flex min-h-16 cursor-pointer items-center gap-4 rounded-2xl border-2 border-white/10 bg-background px-4 py-3 transition-colors hover:border-accent/60 sm:min-h-18">
+                                                <input required type="radio" name="answer_index" value="{{ $index }}" class="sr-only">
+                                                <span class="grid size-9 shrink-0 place-items-center rounded-lg bg-surface font-display text-base font-bold text-accent">{{ chr(65 + $index) }}</span>
+                                                <span class="min-w-0 flex-1 break-words font-semibold">{{ $option }}</span>
+                                                <span data-quiz-option-indicator class="size-5 shrink-0 rounded-full border-2 border-foreground/55" aria-hidden="true"></span>
                                             </label>
                                         @endforeach
                                     </div>
                                 </fieldset>
-                                <button class="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-accent px-7 py-3 font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:w-auto" type="submit">Kirim jawaban</button>
+                                <button class="mt-7 inline-flex min-h-14 w-full items-center justify-center rounded-full bg-accent px-7 py-3 font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent" type="submit">Kirim jawaban</button>
                             </form>
                         @endif
                     </section>
