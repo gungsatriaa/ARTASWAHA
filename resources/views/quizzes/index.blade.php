@@ -1,35 +1,85 @@
 <x-layouts.app :show-footer="false" title="Kuis — ARTASWAHA">
-        <div class="mx-auto w-full max-w-6xl px-5 py-8 sm:px-6 sm:py-12">
-            <div class="mb-6 flex justify-end"><a href="{{ route('quizzes.create') }}" class="inline-flex min-h-11 items-center rounded-full bg-accent px-5 py-3 text-sm font-extrabold text-background">Buat kuis</a></div>
-            <h1 class="font-display text-4xl font-bold">Kuis bersama</h1>
-            <p class="mt-3 font-readable text-foreground/65">Buat kuis sendiri atau gunakan kode untuk bergabung ke room.</p>
+    <div class="mx-auto w-full max-w-6xl px-5 py-8 sm:px-6 sm:py-12 lg:px-10">
+        <header class="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div class="max-w-2xl">
+                <p class="inline-flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1.5 text-sm font-bold text-accent">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true"><path d="m13 2-3 8h7l-6 12 2-9H6l7-11Z"/></svg>
+                    Arena kuis Bali
+                </p>
+                <h1 class="mt-4 font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl">Belajar lebih seru kalau dimainkan.</h1>
+                <p class="mt-3 max-w-xl font-readable leading-7 text-foreground/65">Pilih kuis, tantang teman, dan kenali bahasa Bali sambil bermain.</p>
+            </div>
+            <a href="{{ route('quizzes.create') }}" class="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 font-extrabold text-background transition hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="size-4" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                Buat kuis
+            </a>
+        </header>
 
-            @if (session('status'))<p role="status" class="mt-6 rounded-2xl bg-primary/20 p-4 text-accent">{{ session('status') }}</p>@endif
-            @if ($errors->any())<p role="alert" class="mt-6 rounded-2xl bg-danger/10 p-4 text-danger">{{ $errors->first() }}</p>@endif
+        @if (session('status'))
+            <p role="status" class="mb-6 rounded-2xl border border-success/20 bg-success/10 p-4 text-success">{{ session('status') }}</p>
+        @endif
+        @if ($errors->any())
+            <p role="alert" class="mb-6 rounded-2xl border border-danger/20 bg-danger/10 p-4 text-danger">{{ $errors->first() }}</p>
+        @endif
 
-            <form method="POST" action="{{ route('rooms.join') }}" class="mt-8 flex flex-col gap-3 rounded-card bg-surface p-5 sm:flex-row sm:items-end">
-                @csrf
-                <label class="flex-1 text-sm font-semibold">Kode room
-                    <input name="code" value="{{ old('code', request('code')) }}" required minlength="10" maxlength="10" pattern="[A-Za-z0-9]{10}" autocomplete="off" class="mt-2 min-h-12 w-full rounded-control border border-white/10 bg-background px-4 uppercase tracking-widest outline-none focus:border-accent">
-                </label>
-                <button class="min-h-12 rounded-full bg-primary px-7 py-3 font-bold text-white" type="submit">Gabung room</button>
-            </form>
+        <section aria-labelledby="join-room-title" class="relative isolate overflow-hidden rounded-[2rem] bg-accent p-6 text-background sm:p-8 lg:p-10">
+            <div class="pointer-events-none absolute -right-10 -top-16 -z-10 size-56 rounded-full border-[2.5rem] border-background/5 sm:right-8 sm:top-1/2 sm:-translate-y-1/2" aria-hidden="true"></div>
+            <div class="relative max-w-3xl">
+                <p class="text-sm font-bold text-background/70">Sudah ada yang mengajak?</p>
+                <h2 id="join-room-title" class="mt-1 font-display text-2xl font-bold sm:text-3xl">Masukkan kode room</h2>
+                <p class="mt-2 max-w-xl text-sm leading-6 text-background/75">Gabung ke permainan temanmu. Kode terdiri dari 10 huruf atau angka.</p>
+                <form method="POST" action="{{ route('rooms.join') }}" class="mt-6 flex flex-col gap-3 sm:flex-row">
+                    @csrf
+                    <label for="room-code" class="sr-only">Kode room</label>
+                    <input id="room-code" name="code" value="{{ old('code', request('code')) }}" required minlength="10" maxlength="10" pattern="[A-Za-z0-9]{10}" autocomplete="off" autocapitalize="characters" placeholder="CONTOH1234" class="min-h-14 min-w-0 flex-1 rounded-2xl border border-background/15 bg-background/10 px-5 font-bold uppercase tracking-[0.22em] text-background placeholder:text-background/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-background">
+                    <button class="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-background px-7 py-4 font-extrabold text-foreground transition hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-background" type="submit">
+                        Gabung room
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
+                    </button>
+                </form>
+            </div>
+        </section>
 
-            <section class="mt-12" aria-labelledby="quiz-list-title">
-                <h2 id="quiz-list-title" class="font-display text-2xl font-bold">Kuis milikmu dan kuis publik</h2>
-                <div class="mt-5 grid gap-4 md:grid-cols-2">
-                    @forelse ($quizzes as $quiz)
-                        <a href="{{ route('quizzes.show', $quiz) }}" class="rounded-card bg-surface p-6 transition hover:bg-surface/80">
-                            <span class="text-sm font-semibold text-accent">Kuis pribadi</span>
-                            <h3 class="mt-2 font-display text-xl font-bold">{{ $quiz->title }}</h3>
-                            <p class="mt-2 font-readable text-sm text-foreground/65">{{ $quiz->description ?: 'Belum ada deskripsi.' }}</p>
-                            <p class="mt-4 text-sm text-foreground/50">{{ $quiz->questions_count }} pertanyaan</p>
-                        </a>
-                    @empty
-                        <p class="rounded-card bg-surface p-6 font-readable text-foreground/65">Belum ada kuis. Buat kuis pertamamu untuk mulai bermain bersama.</p>
-                    @endforelse
+        <section class="mt-12 sm:mt-16" aria-labelledby="quiz-list-title">
+            <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+                <div>
+                    <p class="text-sm font-bold text-accent">Koleksimu</p>
+                    <h2 id="quiz-list-title" class="mt-1 font-display text-2xl font-bold sm:text-3xl">Kuis buatanmu</h2>
                 </div>
-                <div class="mt-6">{{ $quizzes->links() }}</div>
-            </section>
-        </div>
+                <span class="rounded-full bg-surface px-3 py-1.5 text-sm font-semibold text-foreground/65">{{ $quizzes->total() }} kuis</span>
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                @forelse ($quizzes as $quiz)
+                    <a href="{{ route('quizzes.show', $quiz) }}" class="group flex min-h-64 flex-col rounded-[1.75rem] border border-white/8 bg-surface p-5 transition duration-150 hover:-translate-y-1 hover:border-accent/35 hover:bg-surface/80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:p-6">
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="grid size-12 place-items-center rounded-2xl bg-primary/20 text-accent transition-colors group-hover:bg-accent group-hover:text-background" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-6"><path d="M5 4.5A2.5 2.5 0 0 1 7.5 2H20v17H7.5A2.5 2.5 0 0 0 5 21.5z"/><path d="M5 4.5v17M9 7h7M9 11h7"/></svg>
+                            </span>
+                            <span class="rounded-full bg-background px-3 py-1 text-xs font-bold text-foreground/55">Kuis pribadi</span>
+                        </div>
+                        <h3 class="mt-5 line-clamp-2 font-display text-xl font-bold leading-snug transition-colors group-hover:text-accent">{{ $quiz->title }}</h3>
+                        <p class="mt-2 line-clamp-2 flex-1 font-readable text-sm leading-6 text-foreground/60">{{ $quiz->description ?: 'Siap dimainkan sendiri atau bersama teman.' }}</p>
+                        <div class="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
+                            <span class="inline-flex items-center gap-2 text-sm font-semibold text-foreground/60">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-4 text-accent" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+                                {{ $quiz->questions_count }} soal
+                            </span>
+                            <span class="inline-flex items-center gap-1.5 text-sm font-extrabold text-accent">Buka kuis <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4 transition-transform group-hover:translate-x-1" aria-hidden="true"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></span>
+                        </div>
+                    </a>
+                @empty
+                    <div class="flex min-h-64 flex-col items-start justify-center rounded-[1.75rem] border border-dashed border-white/15 bg-surface p-6 sm:p-8">
+                        <span class="grid size-12 place-items-center rounded-2xl bg-accent/10 text-accent" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-6"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>
+                        </span>
+                        <h3 class="mt-4 font-display text-xl font-bold">Koleksimu masih kosong</h3>
+                        <p class="mt-2 max-w-sm text-sm leading-6 text-foreground/60">Buat kuis pertamamu, tambahkan soal, lalu ajak teman bermain.</p>
+                        <a href="{{ route('quizzes.create') }}" class="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-accent px-5 py-2.5 text-sm font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Buat kuis pertama</a>
+                    </div>
+                @endforelse
+            </div>
+            <div class="mt-6">{{ $quizzes->links() }}</div>
+        </section>
+    </div>
 </x-layouts.app>
