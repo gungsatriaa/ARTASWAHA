@@ -52,6 +52,14 @@ body {
     font-family: var(--font-sans);
 }
 
+button:not(:disabled) {
+    cursor: pointer;
+}
+
+button:disabled {
+    cursor: not-allowed;
+}
+
 body.dialog-open {
     overflow: hidden;
     overscroll-behavior: none;
