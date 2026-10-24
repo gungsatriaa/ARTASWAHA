@@ -22,17 +22,16 @@
             <p role="alert" class="mb-6 rounded-2xl border border-danger/20 bg-danger/10 p-4 text-danger">{{ $errors->first() }}</p>
         @endif
 
-        <section aria-labelledby="join-room-title" class="relative isolate overflow-hidden rounded-[2rem] bg-accent p-6 text-background sm:p-8 lg:p-10">
-            <div class="pointer-events-none absolute -right-10 -top-16 -z-10 size-56 rounded-full border-[2.5rem] border-background/5 sm:right-8 sm:top-1/2 sm:-translate-y-1/2" aria-hidden="true"></div>
-            <div class="relative max-w-3xl">
-                <p class="text-sm font-bold text-background/70">Sudah ada yang mengajak?</p>
+        <section aria-labelledby="join-room-title" class="rounded-[2rem] border border-white/10 bg-surface p-6 sm:p-8 lg:p-10">
+            <div class="max-w-3xl">
+                <p class="text-sm font-bold text-accent">Sudah ada yang mengajak?</p>
                 <h2 id="join-room-title" class="mt-1 font-display text-2xl font-bold sm:text-3xl">Masukkan kode room</h2>
-                <p class="mt-2 max-w-xl text-sm leading-6 text-background/75">Gabung ke permainan temanmu. Kode baru terdiri dari 4 huruf atau angka.</p>
+                <p class="mt-2 max-w-xl text-sm leading-6 text-foreground/60">Gabung ke permainan temanmu. Kode baru terdiri dari 4 huruf atau angka.</p>
                 <form method="POST" action="{{ route('rooms.join') }}" class="mt-6 flex flex-col gap-3 sm:flex-row">
                     @csrf
                     <label for="room-code" class="sr-only">Kode room</label>
-                    <input id="room-code" name="code" value="{{ old('code', request('code')) }}" required minlength="4" maxlength="10" pattern="[A-Za-z0-9]{4}([A-Za-z0-9]{6})?" autocomplete="off" autocapitalize="characters" placeholder="AB12" class="min-h-14 min-w-0 flex-1 rounded-2xl border border-background bg-background px-5 font-bold uppercase tracking-[0.22em] text-foreground placeholder:text-foreground/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground">
-                    <button class="inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-background px-7 py-4 font-extrabold text-foreground transition hover:bg-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-background" type="submit">
+                    <input id="room-code" name="code" value="{{ old('code', request('code')) }}" required minlength="4" maxlength="10" pattern="[A-Za-z0-9]{4}([A-Za-z0-9]{6})?" autocomplete="off" autocapitalize="characters" placeholder="AB12" class="min-h-14 min-w-0 flex-1 rounded-2xl border border-white/15 bg-background px-5 font-bold uppercase tracking-[0.22em] text-foreground placeholder:text-foreground/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+                    <button class="inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-accent px-7 py-4 font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" type="submit">
                         Gabung room
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
                     </button>
