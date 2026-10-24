@@ -87,6 +87,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/room/{room:code}/avatar/{user}', [ShowProfileAvatarController::class, 'forRoom'])->name('rooms.participant-avatar');
     Route::get('/room/{room:code}', [RoomController::class, 'show'])->name('rooms.show');
     Route::post('/room/{room:code}/keluar', [RoomController::class, 'leave'])->name('rooms.leave');
+    Route::post('/room/{room:code}/heartbeat', [RoomController::class, 'heartbeat'])->middleware('throttle:10,1')->name('rooms.heartbeat');
     Route::delete('/room/{room:code}', [RoomController::class, 'destroy'])->name('rooms.destroy');
     Route::post('/room/{room:code}/mulai', [RoomController::class, 'start'])->name('rooms.start');
     Route::post('/room/{room:code}/jawab', [RoomController::class, 'answer'])->middleware('throttle:30,1')->name('rooms.answer');

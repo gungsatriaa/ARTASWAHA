@@ -34,6 +34,7 @@ class RoomService
                         'code' => Str::upper(Str::random(4)),
                         'leaderboard_enabled' => $quiz->leaderboard_enabled,
                         'seconds_per_question' => $quiz->seconds_per_question,
+                        'host_last_seen_at' => now(),
                     ]);
 
                     $room->participants()->create([
@@ -59,12 +60,16 @@ class RoomService
 
     public function join(string $code, User $user): Room
     {
+        $this->deactivateIfHostAbsent(Room::query()->where('code', Str::upper(trim($code)))->firstOrFail());
+
         $room = DB::transaction(function () use ($code, $user): Room {
             $room = Room::query()->where('code', Str::upper(trim($code)))->lockForUpdate()->firstOrFail();
             if ($room->status !== 'waiting') {
-                throw ValidationException::withMessages($room->status === 'active'
-                    ? ['room_started' => 'Kuis sudah dimulai. Kamu tidak bisa bergabung lagi.']
-                    : ['room_finished' => 'Kuis sudah selesai. Kamu tidak bisa bergabung lagi.']);
+                throw ValidationException::withMessages(match ($room->status) {
+                    'active' => ['room_started' => 'Kuis sudah dimulai. Kamu tidak bisa bergabung lagi.'],
+                    'inactive' => ['room_inactive' => 'Host sudah keluar. Room ini tidak aktif lagi.'],
+                    default => ['room_finished' => 'Kuis sudah selesai. Kamu tidak bisa bergabung lagi.'],
+                });
             }
 
             $room->participants()->firstOrCreate(
@@ -82,19 +87,62 @@ class RoomService
 
     public function leave(Room $room, User $user): void
     {
-        abort_unless($room->host_id !== $user->id, 403, 'Host tidak dapat keluar dari room.');
-
-        DB::transaction(function () use ($room, $user): void {
+        $changed = DB::transaction(function () use ($room, $user): bool {
             $room = Room::query()->whereKey($room->id)->lockForUpdate()->firstOrFail();
+            if ($room->host_id === $user->id) {
+                if (! in_array($room->status, ['waiting', 'active'], true)) {
+                    return false;
+                }
+
+                $room->update(['status' => 'inactive', 'question_ends_at' => null]);
+
+                return true;
+            }
+
             $room->participants()->where('user_id', $user->id)->firstOrFail()->delete();
             if ($room->seconds_per_question) {
                 $this->finishTimedIfComplete($room);
             } else {
                 $this->finishUntimedIfComplete($room);
             }
+
+            return true;
         });
 
-        $this->broadcastRoomUpdate($room->fresh());
+        if ($changed) {
+            $this->broadcastRoomUpdate($room->fresh());
+        }
+    }
+
+    public function heartbeat(Room $room, User $host): void
+    {
+        abort_unless($room->host_id === $host->id, 403);
+        $this->deactivateIfHostAbsent($room);
+
+        DB::transaction(function () use ($room): void {
+            $room = Room::query()->whereKey($room->id)->lockForUpdate()->firstOrFail();
+            abort_unless(in_array($room->status, ['waiting', 'active'], true), 410, 'Room sudah tidak aktif.');
+            $room->update(['host_last_seen_at' => now()]);
+        });
+    }
+
+    public function deactivateIfHostAbsent(Room $room): void
+    {
+        $deactivated = DB::transaction(function () use ($room): bool {
+            $lockedRoom = Room::query()->whereKey($room->id)->lockForUpdate()->firstOrFail();
+            if (! in_array($lockedRoom->status, ['waiting', 'active'], true)
+                || ($lockedRoom->host_last_seen_at && $lockedRoom->host_last_seen_at->greaterThan(now()->subSeconds(90)))) {
+                return false;
+            }
+
+            $lockedRoom->update(['status' => 'inactive', 'question_ends_at' => null]);
+
+            return true;
+        });
+
+        if ($deactivated) {
+            $this->broadcastRoomUpdate($room->fresh());
+        }
     }
 
     public function destroy(Room $room, User $host): void
@@ -111,6 +159,8 @@ class RoomService
 
     public function start(Room $room, User $user): Room
     {
+        $this->deactivateIfHostAbsent($room);
+
         $room = DB::transaction(function () use ($room, $user): Room {
             $room = Room::query()->whereKey($room->id)->lockForUpdate()->firstOrFail();
             abort_unless($room->host_id === $user->id, 403);
@@ -211,6 +261,8 @@ class RoomService
 
     public function syncTimedRoom(Room $room): void
     {
+        $this->deactivateIfHostAbsent($room);
+
         $changed = DB::transaction(function () use ($room): bool {
             $room = Room::query()->whereKey($room->id)->lockForUpdate()->firstOrFail();
             if ($room->status !== 'active' || ! $room->seconds_per_question) {
@@ -313,7 +365,7 @@ class RoomService
     private function broadcastRoomUpdate(Room $room): void
     {
         $room->load('currentQuestion');
-        $question = $room->seconds_per_question ? null : $room->currentQuestion;
+        $question = $room->status === 'active' && ! $room->seconds_per_question ? $room->currentQuestion : null;
 
         event(new RoomUpdated($room->code, [
             'status' => $room->status,

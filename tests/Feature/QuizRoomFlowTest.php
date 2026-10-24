@@ -621,15 +621,89 @@ class QuizRoomFlowTest extends TestCase
         Event::assertDispatched(RoomUpdated::class);
     }
 
-    public function test_room_host_cannot_leave_and_orphan_the_room(): void
+    public function test_host_leaving_deactivates_room_without_deleting_participants(): void
     {
         $host = User::factory()->create();
+        $player = User::factory()->create();
         $room = Room::factory()->create(['host_id' => $host->id]);
         RoomParticipant::factory()->create(['room_id' => $room->id, 'user_id' => $host->id]);
+        RoomParticipant::factory()->create(['room_id' => $room->id, 'user_id' => $player->id]);
+        Event::fake([RoomUpdated::class]);
 
-        $this->actingAs($host)->post(route('rooms.leave', $room->code))->assertForbidden();
+        $this->actingAs($host)->post(route('rooms.leave', $room->code))
+            ->assertRedirect(route('quizzes.index'))
+            ->assertSessionHas('status', 'Room dinonaktifkan. Peserta tidak dapat melanjutkan kuis.');
 
+        $this->assertSame('inactive', $room->fresh()->status);
         $this->assertDatabaseHas('room_participants', ['room_id' => $room->id, 'user_id' => $host->id]);
+        $this->assertDatabaseHas('room_participants', ['room_id' => $room->id, 'user_id' => $player->id]);
+        $this->actingAs($player)->get(route('rooms.status', $room->code))->assertStatus(410);
+        $this->get(route('rooms.show', $room->code))->assertOk()->assertSee('Host sudah keluar dari room');
+        $this->from(route('quizzes.index'))->post(route('rooms.join'), ['code' => $room->code])
+            ->assertRedirect(route('quizzes.index'))
+            ->assertSessionHasErrors('room_inactive');
+        Event::assertDispatched(RoomUpdated::class, fn (RoomUpdated $event) => $event->broadcastWith()['status'] === 'inactive');
+    }
+
+    public function test_absent_host_is_deactivated_but_recent_heartbeat_keeps_room_open(): void
+    {
+        $host = User::factory()->create();
+        $player = User::factory()->create();
+        $room = Room::factory()->create(['host_id' => $host->id]);
+        RoomParticipant::factory()->create(['room_id' => $room->id, 'user_id' => $player->id]);
+
+        $this->actingAs($player)->post(route('rooms.heartbeat', $room->code))->assertForbidden();
+        $this->actingAs($host)->post(route('rooms.heartbeat', $room->code))->assertNoContent();
+        $this->travel(80)->seconds();
+        $this->post(route('rooms.heartbeat', $room->code))->assertNoContent();
+        $this->travel(50)->seconds();
+        $this->actingAs($player)->get(route('rooms.status', $room->code))->assertNoContent();
+        $this->travel(41)->seconds();
+        $this->get(route('rooms.status', $room->code))->assertStatus(410);
+        $this->assertSame('inactive', $room->fresh()->status);
+        $this->actingAs($host)->post(route('rooms.heartbeat', $room->code))->assertStatus(410);
+    }
+
+    public function test_host_leaving_active_room_preserves_answers_and_blocks_new_answers(): void
+    {
+        $host = User::factory()->create();
+        $player = User::factory()->create();
+        $quiz = $this->createQuiz($host);
+        $room = Room::factory()->create(['quiz_id' => $quiz->id, 'host_id' => $host->id]);
+        RoomParticipant::factory()->create(['room_id' => $room->id, 'user_id' => $host->id]);
+        $participant = RoomParticipant::factory()->create(['room_id' => $room->id, 'user_id' => $player->id]);
+        $question = $quiz->questions()->firstOrFail();
+
+        $this->actingAs($host)->post(route('rooms.start', $room->code))->assertRedirect();
+        $this->actingAs($player)->post(route('rooms.answer', $room->code), ['question_id' => $question->id, 'answer_index' => 1])->assertRedirect();
+        $this->assertDatabaseHas('room_answers', ['room_participant_id' => $participant->id]);
+
+        $this->actingAs($host)->post(route('rooms.leave', $room->code))->assertRedirect(route('quizzes.index'));
+        $this->assertSame('inactive', $room->fresh()->status);
+        $this->assertDatabaseHas('room_answers', ['room_participant_id' => $participant->id]);
+        $this->actingAs($host)->post(route('rooms.answer', $room->code), ['question_id' => $question->id, 'answer_index' => 1])->assertStatus(422);
+    }
+
+    public function test_scheduler_deactivates_orphaned_room_even_without_a_visitor_request(): void
+    {
+        $room = Room::factory()->create();
+        Event::fake([RoomUpdated::class]);
+
+        $this->travel(91)->seconds();
+        $this->artisan('schedule:run')->assertSuccessful();
+
+        $this->assertSame('inactive', $room->fresh()->status);
+        Event::assertDispatched(RoomUpdated::class, fn (RoomUpdated $event) => $event->roomCode === $room->code
+            && $event->broadcastWith()['status'] === 'inactive');
+    }
+
+    public function test_leaving_finished_room_keeps_its_result(): void
+    {
+        $host = User::factory()->create();
+        $room = Room::factory()->create(['host_id' => $host->id, 'status' => 'finished']);
+
+        $this->actingAs($host)->post(route('rooms.leave', $room->code))->assertRedirect(route('quizzes.index'));
+        $this->assertSame('finished', $room->fresh()->status);
     }
 
     public function test_only_host_can_delete_room_and_participants_receive_deletion_event(): void

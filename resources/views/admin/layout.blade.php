@@ -12,7 +12,7 @@
         <title>@yield('title') — Admin ARTASWAHA</title>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body data-presence-url="{{ route('presence.ping') }}" class="min-h-screen bg-background font-sans text-foreground antialiased">
+    <body class="min-h-screen bg-background font-sans text-foreground antialiased">
         <div class="lg:grid lg:min-h-screen lg:grid-cols-[16rem_minmax(0,1fr)]">
             <aside class="sticky top-0 hidden h-screen flex-col border-r border-white/10 bg-surface lg:flex" aria-label="Navigasi admin">
                 <a href="{{ route('admin.index') }}" class="flex min-h-20 items-center gap-3 border-b border-white/10 px-6 focus-visible:outline-2 focus-visible:outline-accent" aria-label="Dashboard admin ARTASWAHA">
@@ -34,7 +34,7 @@
                     <div class="flex min-h-20 items-center justify-between gap-4 px-5 sm:px-8 xl:px-10">
                         <div class="flex min-w-0 items-center gap-3">
                             <button type="button" data-mobile-nav-open aria-controls="admin-mobile-navigation" aria-expanded="false" aria-label="Buka menu admin" class="grid size-11 shrink-0 place-items-center rounded-xl border border-white/10 text-foreground/80 transition hover:border-accent/50 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent lg:hidden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" class="size-5" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-                            <div class="min-w-0"><p class="text-xs font-semibold text-foreground/45">Panel admin / @yield('section', 'Konten pembelajaran')</p><p class="truncate font-display text-lg font-bold">@yield('title')</p></div>
+                            <div class="min-w-0"><p class="text-xs font-semibold text-foreground/45">Panel admin / Konten pembelajaran</p><p class="truncate font-display text-lg font-bold">@yield('title')</p></div>
                         </div>
                         <a href="{{ route('home') }}" class="inline-flex min-h-10 shrink-0 items-center rounded-xl border border-white/10 px-3 text-xs font-bold text-foreground/75 transition hover:border-accent/50 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent sm:px-4 sm:text-sm">Lihat situs <span class="ml-2" aria-hidden="true">↗</span></a>
                     </div>

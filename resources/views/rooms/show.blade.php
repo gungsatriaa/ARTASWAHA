@@ -7,16 +7,18 @@
             : 0;
     @endphp
 
-    <div class="mx-auto w-full max-w-6xl px-5 sm:px-6 lg:px-10 {{ $room->status === 'active' || $isFeedback ? 'py-4 sm:py-6' : 'py-8 sm:py-12' }}" data-room-code="{{ $room->code }}" data-room-status-url="{{ route('rooms.status', $room->code) }}" @if ($isFeedback) data-room-feedback-next="{{ route('rooms.show', $room->code) }}" @endif @if ($participant?->question_ends_at && $room->status === 'active' && ! $isFeedback) data-question-ends-at="{{ $participant->question_ends_at->toIso8601String() }}" data-server-now="{{ now()->toIso8601String() }}" @endif>
+    <div class="mx-auto w-full max-w-6xl px-5 sm:px-6 lg:px-10 {{ $room->status === 'active' || $isFeedback ? 'py-4 sm:py-6' : 'py-8 sm:py-12' }}" data-room-code="{{ $room->code }}" data-room-status="{{ $room->status }}" data-room-status-url="{{ route('rooms.status', $room->code) }}" @if ($isHost && in_array($room->status, ['waiting', 'active'], true)) data-room-heartbeat-url="{{ route('rooms.heartbeat', $room->code) }}" @endif @if ($isFeedback) data-room-feedback-next="{{ route('rooms.show', $room->code) }}" @endif @if ($participant?->question_ends_at && $room->status === 'active' && ! $isFeedback) data-question-ends-at="{{ $participant->question_ends_at->toIso8601String() }}" data-server-now="{{ now()->toIso8601String() }}" @endif>
         <div class="flex flex-wrap items-center justify-between gap-3 {{ $room->status === 'active' ? 'mb-4' : 'mb-6' }}">
-            <a href="{{ route('quizzes.index') }}" class="inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-semibold text-foreground/65 transition hover:bg-surface hover:text-foreground focus-visible:outline-2 focus-visible:outline-accent"><span aria-hidden="true">←</span> Kembali ke kuis</a>
-            @if ($isHost)
-                <button type="button" data-room-delete-open class="min-h-11 rounded-full border border-danger/35 px-5 text-sm font-bold text-danger transition hover:bg-danger/10 focus-visible:outline-2 focus-visible:outline-danger">Hapus room</button>
-            @else
+            @if (in_array($room->status, ['waiting', 'active'], true))
                 <form method="POST" action="{{ route('rooms.leave', $room->code) }}">
                     @csrf
-                    <button class="min-h-11 rounded-full border border-white/15 px-5 text-sm font-bold text-foreground/75 transition hover:bg-surface focus-visible:outline-2 focus-visible:outline-accent">Keluar dari room</button>
+                    <button type="submit" class="inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-semibold text-foreground/65 transition hover:bg-surface hover:text-foreground focus-visible:outline-2 focus-visible:outline-accent"><span aria-hidden="true">←</span> {{ $isHost ? 'Keluar & nonaktifkan room' : 'Keluar dari room' }}</button>
                 </form>
+            @else
+                <a href="{{ route('quizzes.index') }}" class="inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-semibold text-foreground/65 transition hover:bg-surface hover:text-foreground focus-visible:outline-2 focus-visible:outline-accent"><span aria-hidden="true">←</span> Kembali ke kuis</a>
+            @endif
+            @if ($isHost)
+                <button type="button" data-room-delete-open class="min-h-11 rounded-full border border-danger/35 px-5 text-sm font-bold text-danger transition hover:bg-danger/10 focus-visible:outline-2 focus-visible:outline-danger">Hapus room</button>
             @endif
         </div>
 
@@ -80,6 +82,13 @@
                         @else
                             <p class="mt-7 text-sm text-foreground/55">Host akan memulai kuis saat semua pemain siap.</p>
                         @endif
+                    </section>
+                @elseif ($room->status === 'inactive')
+                    <section class="rounded-[1.75rem] border border-accent/25 bg-surface p-7 sm:p-10" aria-labelledby="inactive-title">
+                        <span class="inline-flex rounded-full bg-accent/10 px-4 py-2 text-sm font-bold text-accent">Room nonaktif</span>
+                        <h1 id="inactive-title" class="mt-5 font-display text-3xl font-bold">Host sudah keluar dari room</h1>
+                        <p class="mt-3 max-w-xl text-foreground/65">Permainan dihentikan. Jawaban yang sudah tercatat tetap tersimpan, tetapi room ini tidak menerima pemain atau jawaban baru.</p>
+                        <a href="{{ route('quizzes.index') }}" class="mt-7 inline-flex min-h-12 items-center justify-center rounded-full bg-accent px-6 font-bold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-accent">Lihat kuis lain</a>
                     </section>
                 @elseif ($activeQuestion)
                     <section class="rounded-[1.75rem] border border-white/10 bg-surface p-5 sm:p-6" aria-labelledby="question-title">
@@ -203,6 +212,12 @@
         <span class="grid size-12 place-items-center rounded-2xl bg-accent/10 text-2xl text-accent" aria-hidden="true">!</span>
         <h2 id="room-deleted-title" class="mt-5 font-display text-2xl font-bold">Room dihapus oleh host</h2>
         <p class="mt-3 text-sm leading-6 text-foreground/65">Kamu sudah terputus dari room. Kuis lainnya masih bisa dimainkan.</p>
+        <a href="{{ route('quizzes.index') }}" class="mt-7 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-accent px-5 font-extrabold text-background">Kembali ke kuis</a>
+    </dialog>
+    <dialog data-room-inactive-dialog aria-labelledby="room-inactive-dialog-title" class="fixed inset-0 m-auto w-[min(28rem,calc(100vw-2rem))] rounded-[1.75rem] border border-accent/30 bg-surface p-6 text-foreground shadow-2xl backdrop:bg-black/85 sm:p-8">
+        <span class="grid size-12 place-items-center rounded-2xl bg-accent/10 text-2xl text-accent" aria-hidden="true">!</span>
+        <h2 id="room-inactive-dialog-title" class="mt-5 font-display text-2xl font-bold">Room dinonaktifkan</h2>
+        <p class="mt-3 text-sm leading-6 text-foreground/65">Host telah keluar. Kuis di room ini tidak dapat dilanjutkan, tetapi jawaban yang sudah tersimpan tidak dihapus.</p>
         <a href="{{ route('quizzes.index') }}" class="mt-7 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-accent px-5 font-extrabold text-background">Kembali ke kuis</a>
     </dialog>
 </x-layouts.app>

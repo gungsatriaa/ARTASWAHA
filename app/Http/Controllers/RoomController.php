@@ -37,15 +37,24 @@ class RoomController extends Controller
         $user = request()->user();
         abort_unless($room->host_id === $user->id || $room->participants()->where('user_id', $user->id)->exists(), 403);
         $roomService->syncTimedRoom($room);
+        abort_if($room->fresh()->status === 'inactive', 410, 'Room sudah tidak aktif.');
 
         return response()->noContent();
     }
 
     public function leave(Room $room, RoomService $roomService): RedirectResponse
     {
+        $isActiveHost = $room->host_id === request()->user()->id && in_array($room->status, ['waiting', 'active'], true);
         $roomService->leave($room, request()->user());
 
-        return to_route('quizzes.index')->with('status', 'Kamu sudah keluar dari room.');
+        return to_route('quizzes.index')->with('status', $isActiveHost ? 'Room dinonaktifkan. Peserta tidak dapat melanjutkan kuis.' : 'Kamu sudah keluar dari room.');
+    }
+
+    public function heartbeat(Room $room, RoomService $roomService): Response
+    {
+        $roomService->heartbeat($room, request()->user());
+
+        return response()->noContent();
     }
 
     public function destroy(Room $room, RoomService $roomService): RedirectResponse

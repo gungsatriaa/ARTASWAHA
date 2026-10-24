@@ -532,10 +532,13 @@ document.querySelectorAll('[data-testimonial-carousel]').forEach((carousel) => {
 });
 
 const roomDeletedDialog = document.querySelector('[data-room-deleted-dialog]');
+const roomInactiveDialog = document.querySelector('[data-room-inactive-dialog]');
+const liveRoomPage = roomPage && roomPage.dataset.roomStatus !== 'inactive';
 let roomWasDeleted = false;
+let roomWasInactive = false;
 
 const showRoomDeleted = () => {
-    if (roomWasDeleted || !roomDeletedDialog) {
+    if (roomWasDeleted || roomWasInactive || !roomDeletedDialog) {
         return;
     }
 
@@ -546,8 +549,20 @@ const showRoomDeleted = () => {
     syncPageScrollLock();
 };
 
+const showRoomInactive = () => {
+    if (roomWasDeleted || roomWasInactive || !roomInactiveDialog) {
+        return;
+    }
+
+    roomWasInactive = true;
+    window.Echo?.leave(`rooms.${roomPage.dataset.roomCode}`);
+    roomInactiveDialog.showModal();
+    scrollLockedDialogs.add(roomInactiveDialog);
+    syncPageScrollLock();
+};
+
 const checkRoomStillExists = async (reloadIfPresent = false) => {
-    if (roomWasDeleted) {
+    if (roomWasDeleted || roomWasInactive) {
         return;
     }
 
@@ -556,6 +571,8 @@ const checkRoomStillExists = async (reloadIfPresent = false) => {
 
         if (response.status === 404) {
             showRoomDeleted();
+        } else if (response.status === 410) {
+            showRoomInactive();
         } else if (reloadIfPresent && response.ok) {
             window.location.reload();
         }
@@ -564,7 +581,24 @@ const checkRoomStillExists = async (reloadIfPresent = false) => {
     }
 };
 
-if (roomPage) {
+if (liveRoomPage) {
+    if (roomPage.dataset.roomHeartbeatUrl) {
+        const pingHost = async () => {
+            try {
+                const response = await fetch(roomPage.dataset.roomHeartbeatUrl, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '' },
+                });
+                if (response.status === 410) showRoomInactive();
+            } catch {
+                // A failed ping is retried; the server expires an absent host.
+            }
+        };
+
+        pingHost();
+        window.setInterval(pingHost, 20000);
+    }
+
     if (roomPage.dataset.roomFeedbackNext) {
         window.setTimeout(() => window.location.replace(roomPage.dataset.roomFeedbackNext), 3000);
     }
@@ -612,10 +646,11 @@ if (roomPage) {
         syncPageScrollLock();
     });
     roomDeletedDialog?.addEventListener('cancel', (event) => event.preventDefault());
+    roomInactiveDialog?.addEventListener('cancel', (event) => event.preventDefault());
     window.setInterval(checkRoomStillExists, 15000);
 }
 
-if (window.Echo && roomPage) {
+if (window.Echo && liveRoomPage) {
     const roomStatus = roomPage.querySelector('[data-live-status]');
     let roomPresenceUsers = [];
 
@@ -639,7 +674,9 @@ if (window.Echo && roomPage) {
         .listen('.room.updated', (event) => {
             if (event.status === 'deleted') {
                 showRoomDeleted();
-            } else if (!roomWasDeleted) {
+            } else if (event.status === 'inactive') {
+                showRoomInactive();
+            } else if (!roomWasDeleted && !roomWasInactive) {
                 window.location.reload();
             }
         })
@@ -666,7 +703,7 @@ if (window.Echo && roomPage) {
             roomStatus.textContent = 'Koneksi realtime terputus. Menyambungkan kembali…';
         }
     });
-} else if (roomPage) {
+} else if (liveRoomPage) {
     const roomStatus = roomPage.querySelector('[data-live-status]');
 
     if (roomStatus) {

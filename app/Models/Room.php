@@ -13,11 +13,11 @@ class Room extends Model
     /** @use HasFactory<RoomFactory> */
     use HasFactory;
 
-    protected $fillable = ['quiz_id', 'host_id', 'code', 'status', 'leaderboard_enabled', 'current_question_id', 'started_at', 'finished_at', 'seconds_per_question', 'question_ends_at'];
+    protected $fillable = ['quiz_id', 'host_id', 'code', 'status', 'leaderboard_enabled', 'current_question_id', 'started_at', 'finished_at', 'seconds_per_question', 'question_ends_at', 'host_last_seen_at'];
 
     protected function casts(): array
     {
-        return ['leaderboard_enabled' => 'boolean', 'started_at' => 'datetime', 'finished_at' => 'datetime', 'seconds_per_question' => 'integer', 'question_ends_at' => 'datetime'];
+        return ['leaderboard_enabled' => 'boolean', 'started_at' => 'datetime', 'finished_at' => 'datetime', 'seconds_per_question' => 'integer', 'question_ends_at' => 'datetime', 'host_last_seen_at' => 'datetime'];
     }
 
     public function quiz(): BelongsTo

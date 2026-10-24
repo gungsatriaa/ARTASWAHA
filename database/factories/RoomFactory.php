@@ -25,6 +25,7 @@ class RoomFactory extends Factory
             'host_id' => User::factory(),
             'code' => Str::upper(Str::random(4)),
             'status' => 'waiting',
+            'host_last_seen_at' => now(),
             'leaderboard_enabled' => true,
         ];
     }
