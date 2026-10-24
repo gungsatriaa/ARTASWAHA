@@ -2,12 +2,12 @@
     @php
         $isHost = auth()->id() === $room->host_id;
         $questionCount = $room->quiz->questions->count();
-        $questionPosition = $room->currentQuestion
-            ? $room->quiz->questions->search(fn ($question) => $question->id === $room->currentQuestion->id) + 1
+        $questionPosition = $activeQuestion
+            ? $room->quiz->questions->search(fn ($question) => $question->id === $activeQuestion->id) + 1
             : 0;
     @endphp
 
-    <div class="mx-auto w-full max-w-6xl px-5 py-8 sm:px-6 sm:py-12 lg:px-10" data-room-code="{{ $room->code }}" data-room-status-url="{{ route('rooms.status', $room->code) }}">
+    <div class="mx-auto w-full max-w-6xl px-5 py-8 sm:px-6 sm:py-12 lg:px-10" data-room-code="{{ $room->code }}" data-room-status-url="{{ route('rooms.status', $room->code) }}" @if ($room->question_ends_at && $room->status === 'active') data-question-ends-at="{{ $room->question_ends_at->toIso8601String() }}" data-server-now="{{ now()->toIso8601String() }}" @endif>
         <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
             <a href="{{ route('quizzes.index') }}" class="inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-semibold text-foreground/65 transition hover:bg-surface hover:text-foreground focus-visible:outline-2 focus-visible:outline-accent"><span aria-hidden="true">←</span> Kembali ke kuis</a>
             @if ($isHost)
@@ -74,7 +74,7 @@
                             <p class="mt-7 text-sm text-foreground/55">Host akan memulai kuis saat semua pemain siap.</p>
                         @endif
                     </section>
-                @elseif ($room->status === 'active' && $room->currentQuestion)
+                @elseif ($room->status === 'active' && $activeQuestion)
                     <section class="rounded-[1.75rem] border border-white/10 bg-surface p-6 sm:p-8" aria-labelledby="question-title">
                         <div class="flex items-center justify-between gap-4 text-sm font-bold">
                             <span class="text-accent">Pertanyaan {{ $questionPosition }} dari {{ $questionCount }}</span>
@@ -83,17 +83,22 @@
                         <div role="progressbar" aria-label="Progres kuis" aria-valuenow="{{ $questionPosition }}" aria-valuemin="0" aria-valuemax="{{ $questionCount }}" class="mt-4 h-3 overflow-hidden rounded-full bg-background">
                             <div class="h-full rounded-full bg-accent transition-[width]" style="width: {{ $questionCount ? round($questionPosition / $questionCount * 100) : 0 }}%"></div>
                         </div>
-                        <h2 id="question-title" class="mt-8 break-words font-display text-2xl font-bold leading-snug sm:text-3xl">{{ $room->currentQuestion->prompt }}</h2>
+                        @if ($room->question_ends_at)
+                            <p class="mt-6 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-2 text-sm font-bold text-accent" role="timer" aria-live="off">Sisa waktu <span data-room-countdown>—</span></p>
+                        @else
+                            <p class="mt-6 text-sm text-foreground/55">Tanpa batas waktu · lanjut otomatis setelah menjawab.</p>
+                        @endif
+                        <h2 id="question-title" class="mt-6 break-words font-display text-2xl font-bold leading-snug sm:text-3xl">{{ $activeQuestion->prompt }}</h2>
                         @if ($currentAnswer)
-                            <p role="status" class="mt-7 rounded-2xl border border-primary/40 bg-primary/20 p-5 font-semibold text-foreground">{{ $currentAnswer->is_correct ? 'Jawaban benar! Kamu mendapat 10 poin.' : 'Jawaban tersimpan. Tetap semangat!' }} Tunggu host melanjutkan.</p>
+                            <p role="status" class="mt-7 rounded-2xl border border-primary/40 bg-primary/20 p-5 font-semibold text-foreground">{{ $currentAnswer->is_correct ? 'Jawaban benar! Kamu mendapat '.$currentAnswer->points_awarded.' poin.' : 'Jawaban tersimpan. Tetap semangat!' }} Soal berikutnya muncul saat waktu habis.</p>
                         @else
                             <form method="POST" action="{{ route('rooms.answer', $room->code) }}" class="mt-7">
                                 @csrf
-                                <input type="hidden" name="question_id" value="{{ $room->currentQuestion->id }}">
+                                <input type="hidden" name="question_id" value="{{ $activeQuestion->id }}">
                                 <fieldset>
                                     <legend class="mb-4 text-sm font-semibold text-foreground/55">Pilih satu jawaban</legend>
                                     <div class="grid gap-3 sm:grid-cols-2">
-                                        @foreach ($room->currentQuestion->options as $index => $option)
+                                        @foreach ($activeQuestion->options as $index => $option)
                                             <label class="cursor-pointer">
                                                 <input required type="radio" name="answer_index" value="{{ $index }}" class="peer sr-only">
                                                 <span class="flex min-h-20 items-center gap-4 rounded-2xl border-2 border-white/10 bg-background p-4 font-semibold transition hover:border-accent/60 peer-checked:border-accent peer-checked:bg-accent/10 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent">
@@ -107,18 +112,12 @@
                                 <button class="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-accent px-7 py-3 font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:w-auto" type="submit">Kirim jawaban</button>
                             </form>
                         @endif
-                        @if ($isHost)
-                            <form method="POST" action="{{ route('rooms.advance', $room->code) }}" class="mt-8 border-t border-white/10 pt-6">
-                                @csrf
-                                <button class="min-h-11 rounded-full border border-white/20 px-5 text-sm font-bold text-foreground/80 transition hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-accent">Pertanyaan berikutnya</button>
-                            </form>
-                        @endif
                     </section>
                 @else
                     <section class="rounded-[1.75rem] border border-accent/30 bg-accent/10 p-8" aria-labelledby="finished-title">
                         <span class="text-4xl text-accent" aria-hidden="true">✦</span>
-                        <h2 id="finished-title" class="mt-4 font-display text-3xl font-bold">Kuis selesai!</h2>
-                        <p class="mt-3 text-foreground/70">Lihat peringkat akhir, lalu pilih kuis lain untuk dimainkan bersama.</p>
+                        <h2 id="finished-title" class="mt-4 font-display text-3xl font-bold">{{ $room->status === 'finished' ? 'Kuis selesai!' : 'Kamu sudah menjawab semua soal!' }}</h2>
+                        <p class="mt-3 text-foreground/70">{{ $room->status === 'finished' ? 'Lihat peringkat akhir, lalu pilih kuis lain untuk dimainkan bersama.' : 'Pemain lain masih menjawab. Peringkat akan diperbarui otomatis.' }}</p>
                         <a href="{{ route('quizzes.index') }}" class="mt-6 inline-flex min-h-11 items-center rounded-full bg-accent px-5 font-bold text-background">Lihat kuis lain</a>
                     </section>
                 @endif

@@ -75,5 +75,4 @@ Route::middleware('auth')->group(function (): void {
     Route::delete('/room/{room:code}', [RoomController::class, 'destroy'])->name('rooms.destroy');
     Route::post('/room/{room:code}/mulai', [RoomController::class, 'start'])->name('rooms.start');
     Route::post('/room/{room:code}/jawab', [RoomController::class, 'answer'])->middleware('throttle:30,1')->name('rooms.answer');
-    Route::post('/room/{room:code}/selanjutnya', [RoomController::class, 'advance'])->name('rooms.advance');
 });

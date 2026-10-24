@@ -57,6 +57,24 @@ class QuizRoomFlowTest extends TestCase
         $this->assertDatabaseCount('quizzes', 0);
     }
 
+    public function test_quiz_timer_is_optional_and_validated(): void
+    {
+        $user = User::factory()->create();
+        $question = ['prompt' => 'Soal?', 'options' => ['A', 'B'], 'correct_option' => 1];
+
+        $this->actingAs($user)->post(route('quizzes.store'), [
+            'title' => 'Kuis cepat', 'seconds_per_question' => 10, 'questions' => [$question],
+        ])->assertRedirect();
+        $quiz = Quiz::query()->firstOrFail();
+        $this->assertSame(10, $quiz->seconds_per_question);
+        $this->assertSame(10, app(RoomService::class)->create($quiz, $user)->seconds_per_question);
+
+        $this->post(route('quizzes.store'), [
+            'title' => 'Terlalu cepat', 'seconds_per_question' => 1, 'questions' => [$question],
+        ])->assertSessionHasErrors('seconds_per_question');
+        $this->assertDatabaseCount('quizzes', 1);
+    }
+
     public function test_quiz_allows_duplicate_options(): void
     {
         $response = $this->actingAs(User::factory()->create())->post(route('quizzes.store'), [
@@ -213,8 +231,88 @@ class QuizRoomFlowTest extends TestCase
         $this->assertSame(10, RoomParticipant::query()->where('room_id', $room->id)->where('user_id', $player->id)->value('score'));
         $this->assertSame(1, RoomAnswer::query()->count());
 
-        $this->actingAs($host)->post(route('rooms.advance', $room->code))->assertRedirect(route('rooms.show', $room->code));
+        $this->assertDatabaseHas('rooms', ['id' => $room->id, 'status' => 'active']);
+        $this->actingAs($host)->post(route('rooms.answer', $room->code), $answerData)->assertRedirect();
+        $this->assertSame(9, RoomParticipant::query()->where('room_id', $room->id)->where('user_id', $host->id)->value('score'));
         $this->assertDatabaseHas('rooms', ['id' => $room->id, 'status' => 'finished']);
+    }
+
+    public function test_untimed_players_advance_independently_and_receive_speed_rank_points(): void
+    {
+        $host = User::factory()->create();
+        $player = User::factory()->create();
+        $quiz = $this->createQuiz($host);
+        $secondQuestion = $quiz->questions()->create([
+            'prompt' => 'Pertanyaan kedua?',
+            'options' => ['Salah', 'Benar'],
+            'correct_option' => 1,
+            'sort_order' => 2,
+        ]);
+        $room = app(RoomService::class)->create($quiz, $host);
+        app(RoomService::class)->join($room->code, $player);
+        app(RoomService::class)->start($room, $host);
+        $firstQuestion = $quiz->questions()->firstOrFail();
+
+        $this->actingAs($player)->post(route('rooms.answer', $room->code), ['question_id' => $firstQuestion->id, 'answer_index' => 1])->assertRedirect();
+        $this->get(route('rooms.show', $room->code))->assertOk()->assertSee('Pertanyaan kedua?');
+        $this->actingAs($host)->get(route('rooms.show', $room->code))->assertOk()->assertSee('Pertanyaan pertama?');
+        $this->actingAs($player)->post(route('rooms.answer', $room->code), ['question_id' => $secondQuestion->id, 'answer_index' => 1])->assertRedirect();
+        $this->get(route('rooms.show', $room->code))->assertOk()->assertSee('Kamu sudah menjawab semua soal!');
+        $this->assertSame('active', $room->fresh()->status);
+        $this->actingAs($host)->post(route('rooms.answer', $room->code), ['question_id' => $firstQuestion->id, 'answer_index' => 1])->assertRedirect();
+        $this->assertSame(9, $room->participants()->where('user_id', $host->id)->value('score'));
+        $this->post(route('rooms.answer', $room->code), ['question_id' => $secondQuestion->id, 'answer_index' => 1])->assertRedirect();
+        $this->assertSame('finished', $room->fresh()->status);
+    }
+
+    public function test_timed_room_advances_everyone_at_deadline_and_rejects_late_answers(): void
+    {
+        $this->freezeTime();
+        $host = User::factory()->create();
+        $player = User::factory()->create();
+        $quiz = $this->createQuiz($host);
+        $quiz->update(['seconds_per_question' => 10]);
+        $secondQuestion = $quiz->questions()->create([
+            'prompt' => 'Soal berikutnya?',
+            'options' => ['Salah', 'Benar'],
+            'correct_option' => 1,
+            'sort_order' => 2,
+        ]);
+        $room = app(RoomService::class)->create($quiz, $host);
+        app(RoomService::class)->join($room->code, $player);
+        app(RoomService::class)->start($room, $host);
+        $firstQuestion = $quiz->questions()->firstOrFail();
+
+        $this->actingAs($player)->post(route('rooms.answer', $room->code), ['question_id' => $firstQuestion->id, 'answer_index' => 1])->assertRedirect();
+        $this->get(route('rooms.show', $room->code))->assertSee('Soal berikutnya muncul saat waktu habis.');
+        $this->travel(11)->seconds();
+        $this->actingAs($host)->get(route('rooms.status', $room->code))->assertNoContent();
+        $this->assertSame($secondQuestion->id, $room->fresh()->current_question_id);
+        $this->actingAs($player)->get(route('rooms.show', $room->code))->assertSee('Soal berikutnya?');
+        $this->actingAs($host)->post(route('rooms.answer', $room->code), ['question_id' => $firstQuestion->id, 'answer_index' => 1])->assertSessionHasErrors('question_id');
+        $this->travel(10)->seconds();
+        $this->get(route('rooms.status', $room->code))->assertNoContent();
+        $this->assertSame('finished', $room->fresh()->status);
+    }
+
+    public function test_timed_room_catches_up_after_clients_were_offline(): void
+    {
+        $this->freezeTime();
+        $host = User::factory()->create();
+        $quiz = $this->createQuiz($host);
+        $quiz->update(['seconds_per_question' => 5]);
+        $quiz->questions()->create([
+            'prompt' => 'Pertanyaan kedua?',
+            'options' => ['Salah', 'Benar'],
+            'correct_option' => 1,
+            'sort_order' => 2,
+        ]);
+        $room = app(RoomService::class)->create($quiz, $host);
+        app(RoomService::class)->start($room, $host);
+
+        $this->travel(11)->seconds();
+        $this->actingAs($host)->get(route('rooms.status', $room->code))->assertNoContent();
+        $this->assertSame('finished', $room->fresh()->status);
     }
 
     public function test_participant_can_leave_room_and_is_removed_from_live_room_data(): void

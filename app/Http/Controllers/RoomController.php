@@ -32,10 +32,11 @@ class RoomController extends Controller
         return view('rooms.show', $roomService->viewData($room, request()->user()));
     }
 
-    public function status(Room $room): Response
+    public function status(Room $room, RoomService $roomService): Response
     {
         $user = request()->user();
         abort_unless($room->host_id === $user->id || $room->participants()->where('user_id', $user->id)->exists(), 403);
+        $roomService->syncTimedRoom($room);
 
         return response()->noContent();
     }
@@ -64,13 +65,6 @@ class RoomController extends Controller
     public function answer(StoreRoomAnswerRequest $request, Room $room, RoomService $roomService): RedirectResponse
     {
         $roomService->answer($room, $request->user(), $request->validated());
-
-        return to_route('rooms.show', $room->code);
-    }
-
-    public function advance(Room $room, RoomService $roomService): RedirectResponse
-    {
-        $roomService->advance($room, request()->user());
 
         return to_route('rooms.show', $room->code);
     }

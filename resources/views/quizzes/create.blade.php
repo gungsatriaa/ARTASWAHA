@@ -20,6 +20,10 @@
                     <label class="mt-5 block text-sm font-semibold">Deskripsi <span class="font-normal text-foreground/50">(opsional)</span>
                         <textarea name="description" maxlength="500" rows="3" class="mt-2 w-full rounded-control border border-white/10 bg-background p-4 outline-none focus:border-accent">{{ old('description') }}</textarea>
                     </label>
+                    <label class="mt-5 block text-sm font-semibold">Waktu per soal <span class="font-normal text-foreground/50">(opsional)</span>
+                        <input type="number" name="seconds_per_question" value="{{ old('seconds_per_question') }}" min="5" max="300" step="1" placeholder="Tanpa batas waktu" class="mt-2 min-h-12 w-full rounded-control border border-white/10 bg-background px-4 outline-none focus:border-accent sm:max-w-xs">
+                    </label>
+                    <p class="mt-2 text-sm text-foreground/55">Isi 5–300 detik agar semua pemain berganti soal bersamaan. Kosongkan agar setiap pemain maju sendiri setelah menjawab.</p>
                     <div class="mt-5 flex flex-wrap gap-6 text-sm">
                         <p class="text-foreground/60">Kuis hanya terlihat olehmu; room dibagikan terpisah memakai kode undangan.</p>
                         <label class="flex items-center gap-2"><input type="checkbox" name="leaderboard_enabled" value="1" checked class="accent-[var(--color-accent)]"> Tampilkan peringkat</label>

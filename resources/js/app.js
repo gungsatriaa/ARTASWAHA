@@ -493,6 +493,27 @@ const checkRoomStillExists = async (reloadIfPresent = false) => {
 };
 
 if (roomPage) {
+    const countdown = roomPage.querySelector('[data-room-countdown]');
+
+    if (countdown && roomPage.dataset.questionEndsAt) {
+        const deadline = Date.parse(roomPage.dataset.questionEndsAt);
+        const timeOffset = Date.parse(roomPage.dataset.serverNow) - Date.now();
+        let lastExpiryCheck = 0;
+
+        const updateCountdown = () => {
+            const secondsLeft = Math.max(0, Math.ceil((deadline - Date.now() - timeOffset) / 1000));
+            countdown.textContent = `${secondsLeft} detik`;
+
+            if (secondsLeft === 0 && Date.now() - lastExpiryCheck >= 3000) {
+                lastExpiryCheck = Date.now();
+                checkRoomStillExists(true);
+            }
+        };
+
+        updateCountdown();
+        window.setInterval(updateCountdown, 1000);
+    }
+
     const deleteConfirmation = document.querySelector('[data-room-delete-confirm]');
     document.querySelector('[data-room-delete-open]')?.addEventListener('click', () => {
         deleteConfirmation.showModal();

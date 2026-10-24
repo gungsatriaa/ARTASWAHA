@@ -13,11 +13,11 @@ class Quiz extends Model
     /** @use HasFactory<QuizFactory> */
     use HasFactory;
 
-    protected $fillable = ['user_id', 'title', 'description', 'leaderboard_enabled'];
+    protected $fillable = ['user_id', 'title', 'description', 'leaderboard_enabled', 'seconds_per_question'];
 
     protected function casts(): array
     {
-        return ['leaderboard_enabled' => 'boolean'];
+        return ['leaderboard_enabled' => 'boolean', 'seconds_per_question' => 'integer'];
     }
 
     public function user(): BelongsTo

@@ -9,7 +9,7 @@ use Illuminate\Validation\ValidationException;
 
 class QuizService
 {
-    /** @param array{title: string, description?: string|null, leaderboard_enabled?: bool, questions: array<int, array{prompt: string, options: array<int, string>, correct_option: int, explanation?: string|null}>} $data */
+    /** @param array{title: string, description?: string|null, leaderboard_enabled?: bool, seconds_per_question?: int|null, questions: array<int, array{prompt: string, options: array<int, string>, correct_option: int, explanation?: string|null}>} $data */
     public function create(User $user, array $data): Quiz
     {
         foreach ($data['questions'] as $index => $question) {
@@ -25,6 +25,7 @@ class QuizService
                 'title' => $data['title'],
                 'description' => $data['description'] ?? null,
                 'leaderboard_enabled' => $data['leaderboard_enabled'] ?? true,
+                'seconds_per_question' => $data['seconds_per_question'] ?? null,
             ]);
 
             foreach ($data['questions'] as $index => $question) {
