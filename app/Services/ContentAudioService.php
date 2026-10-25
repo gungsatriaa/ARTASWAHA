@@ -23,6 +23,17 @@ class ContentAudioService
         if (! config('services.tts.enabled')) {
             return false;
         }
+        if (config('services.tts.engine') === 'chatterbox') {
+            $directory = rtrim((string) config('services.tts.chatterbox_path'), '/\\');
+            foreach (['manifest.json', 'base/ve.pt', 'base/s3gen.pt', 'base/tokenizer.json', 'base/conds.pt', 'indonesian/t3_cfg.safetensors'] as $file) {
+                if (! is_file($directory.'/'.$file) || ! is_readable($directory.'/'.$file) || filesize($directory.'/'.$file) === 0) {
+                    return false;
+                }
+            }
+
+            return is_file((string) config('services.tts.python'))
+                && in_array(config('services.tts.device'), ['cpu', 'cuda'], true);
+        }
         if (config('services.tts.engine') === 'openai') {
             $url = (string) config('services.tts.url');
 
@@ -90,7 +101,7 @@ class ContentAudioService
         if ($data['action'] === 'generate' && $data['language'] === 'ban') {
             throw ValidationException::withMessages(['language' => 'Untuk Bahasa Bali, unggah rekaman yang sudah diperiksa pengajar.']);
         }
-        if ($data['action'] === 'generate' && in_array(config('services.tts.engine'), ['mms', 'openai'], true) && $data['language'] !== 'id') {
+        if ($data['action'] === 'generate' && in_array(config('services.tts.engine'), ['mms', 'openai', 'chatterbox'], true) && $data['language'] !== 'id') {
             throw ValidationException::withMessages(['language' => 'Model neural saat ini mendukung Bahasa Indonesia. Untuk bahasa lain, unggah rekaman.']);
         }
         $newPath = $upload?->store('content-audio', 'local');
@@ -188,10 +199,12 @@ class ContentAudioService
                 if (filled(config('services.tts.data_path'))) {
                     $environment['ESPEAK_DATA_PATH'] = (string) config('services.tts.data_path');
                 }
-                $command = config('services.tts.engine') === 'mms'
-                    ? [(string) config('services.tts.python'), base_path('app/Services/tts_mms.py'), '--model-dir', (string) config('services.tts.model_path'), '-v', $audio->language, '-s', (string) $audio->speed, '-w', $disk->path($path)]
-                    : [(string) config('services.tts.binary'), '-v', $audio->language, '-s', (string) $audio->speed, '-b', '1', '-w', $disk->path($path), '--stdin'];
-                $result = Process::timeout(config('services.tts.engine') === 'mms' ? 240 : 90)->env($environment)->input($audio->spoken_text)->run($command);
+                $command = match (config('services.tts.engine')) {
+                    'chatterbox' => [(string) config('services.tts.python'), base_path('app/Services/tts_chatterbox.py'), 'synthesize', '--model-dir', (string) config('services.tts.chatterbox_path'), '--device', (string) config('services.tts.device'), '-v', $audio->language, '-s', (string) $audio->speed, '-w', $disk->path($path)],
+                    'mms' => [(string) config('services.tts.python'), base_path('app/Services/tts_mms.py'), '--model-dir', (string) config('services.tts.model_path'), '-v', $audio->language, '-s', (string) $audio->speed, '-w', $disk->path($path)],
+                    default => [(string) config('services.tts.binary'), '-v', $audio->language, '-s', (string) $audio->speed, '-b', '1', '-w', $disk->path($path), '--stdin'],
+                };
+                $result = Process::timeout(config('services.tts.engine') === 'espeak' ? 90 : 240)->env($environment)->input($audio->spoken_text)->run($command);
                 if (! $result->successful()) {
                     throw new RuntimeException('TTS gagal menghasilkan audio.');
                 }

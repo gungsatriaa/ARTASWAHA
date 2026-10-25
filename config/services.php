@@ -44,7 +44,7 @@ return [
     'ocr' => ['url' => env('OCR_API_URL', 'http://127.0.0.1:18001'), 'key' => env('OCR_API_KEY')],
     'tts' => [
         'enabled' => env('TTS_ENABLED', false),
-        'engine' => env('TTS_ENGINE', 'openai'),
+        'engine' => env('TTS_ENGINE', 'chatterbox'),
         'url' => env('TTS_API_URL', ''),
         'key' => env('TTS_API_KEY', ''),
         'model' => env('TTS_API_MODEL', ''),
@@ -53,6 +53,8 @@ return [
         'data_path' => env('TTS_ESPEAK_DATA_PATH', ''),
         'python' => env('TTS_PYTHON', ''),
         'model_path' => env('TTS_MMS_MODEL_PATH', ''),
+        'chatterbox_path' => env('TTS_CHATTERBOX_MODEL_PATH', storage_path('app/private/tools/chatterbox/models')),
+        'device' => env('TTS_DEVICE', 'cpu'),
     ],
 
     'learner_analysis' => [

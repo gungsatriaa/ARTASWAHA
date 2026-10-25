@@ -144,6 +144,64 @@ class ContentAudioTest extends TestCase
             && $process->environment['TRANSFORMERS_OFFLINE'] === '1');
     }
 
+    public function test_chatterbox_cli_generates_review_audio_without_http_or_shell_interpolation(): void
+    {
+        Http::preventStrayRequests();
+        Queue::fake([GenerateContentAudio::class]);
+        $directory = Storage::disk('local')->path('chatterbox model');
+        foreach (['manifest.json', 'base/ve.pt', 'base/s3gen.pt', 'base/tokenizer.json', 'base/conds.pt', 'indonesian/t3_cfg.safetensors'] as $file) {
+            Storage::disk('local')->put('chatterbox model/'.$file, '{}');
+        }
+        config(['services.tts.enabled' => true, 'services.tts.engine' => 'chatterbox', 'services.tts.python' => PHP_BINARY, 'services.tts.chatterbox_path' => $directory, 'services.tts.device' => 'cpu']);
+        $service = app(ContentAudioService::class);
+        $data = [...$this->data(), 'spoken_text' => 'Narasi; $(jangan jalankan)', 'action' => 'generate'];
+        $audio = $service->save(Lesson::factory()->create(), $data);
+        $service->save($audio->lesson, [...$data, 'version' => $audio->version]);
+        Process::fake(function ($process) {
+            file_put_contents($process->command[array_search('-w', $process->command, true) + 1], $this->wav());
+
+            return Process::result(exitCode: 0);
+        });
+
+        (new GenerateContentAudio($audio->id, $audio->version))->handle($service);
+
+        $this->assertSame('chatterbox', $audio->fresh()->engine);
+        $this->assertSame('review', $audio->fresh()->status);
+        $this->assertNull($audio->fresh()->reviewed_at);
+        Storage::disk('local')->assertExists($audio->fresh()->path);
+        Process::assertRan(fn ($process): bool => $process->command[0] === PHP_BINARY
+            && $process->command[1] === base_path('app/Services/tts_chatterbox.py')
+            && $process->command[2] === 'synthesize' && $process->command[4] === $directory
+            && $process->command[6] === 'cpu' && $process->input === $data['spoken_text']
+            && ! in_array($data['spoken_text'], $process->command, true)
+            && $process->timeout === 240 && $process->environment['HF_HUB_OFFLINE'] === '1');
+        Queue::assertPushed(GenerateContentAudio::class, 1);
+        Http::assertNothingSent();
+    }
+
+    public function test_chatterbox_incomplete_assets_or_invalid_device_cannot_queue_and_other_languages_are_rejected(): void
+    {
+        Http::preventStrayRequests();
+        Queue::fake([GenerateContentAudio::class]);
+        $lesson = Lesson::factory()->create();
+        $directory = Storage::disk('local')->path('chatterbox');
+        config(['services.tts.enabled' => true, 'services.tts.engine' => 'chatterbox', 'services.tts.python' => PHP_BINARY, 'services.tts.chatterbox_path' => $directory, 'services.tts.device' => 'cpu']);
+        $service = app(ContentAudioService::class);
+        $audio = $service->save($lesson, [...$this->data(), 'action' => 'generate']);
+        $this->assertSame('unavailable', $audio->status);
+        foreach (['manifest.json', 'base/ve.pt', 'base/s3gen.pt', 'base/tokenizer.json', 'base/conds.pt', 'indonesian/t3_cfg.safetensors'] as $file) {
+            Storage::disk('local')->put('chatterbox/'.$file, '{}');
+        }
+        config(['services.tts.device' => 'unsupported']);
+        $audio = $service->save($lesson, [...$this->data(), 'action' => 'generate', 'version' => $audio->version]);
+        $this->assertSame('unavailable', $audio->status);
+        $this->actingAs(User::factory()->create(['is_admin' => true]));
+        $this->post(route('admin.audio.lessons.store', $lesson), [...$this->data(), 'action' => 'generate', 'language' => 'en', 'version' => $audio->version])->assertSessionHasErrors('language');
+        Queue::assertNotPushed(GenerateContentAudio::class);
+        Process::assertNothingRan();
+        Http::assertNothingSent();
+    }
+
     public function test_internal_tts_api_generates_private_audio_without_local_models(): void
     {
         Http::preventStrayRequests();

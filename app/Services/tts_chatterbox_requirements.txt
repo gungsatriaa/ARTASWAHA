@@ -1,0 +1,7 @@
+chatterbox-tts==0.1.1
+s3tokenizer==0.3.0
+huggingface-hub==0.36.2
+safetensors==0.5.3
+ml_dtypes==0.5.3
+numba==0.61.2
+setuptools==80.9.0
