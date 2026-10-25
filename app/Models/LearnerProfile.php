@@ -7,7 +7,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LearnerProfile extends Model
 {
-    protected $fillable = ['visitor_id', 'user_id', 'learning_path_id', 'role', 'name', 'avatar', 'mode'];
+    protected $fillable = ['visitor_id', 'user_id', 'learning_path_id', 'learning_path_ids', 'role', 'name', 'avatar', 'mode'];
+
+    protected function casts(): array
+    {
+        return ['learning_path_ids' => 'array'];
+    }
 
     public static function completedFor(?int $userId, mixed $visitorId): ?self
     {

@@ -34,7 +34,7 @@ class LearningInterviewController extends Controller
         $learningPaths = LearningPath::query()->where('is_published', true)->orderBy('group')->orderBy('sort_order')->get();
         $answers = $request->session()->get('learning_interview', []);
         $requestedStep = (int) $request->query('step', 1);
-        $availableStep = ! isset($answers['learning_path_id']) ? 1 : (! isset($answers['role']) ? 2 : (! isset($answers['mode']) ? 3 : 4));
+        $availableStep = ! isset($answers['learning_path_ids']) ? 1 : (! isset($answers['role']) ? 2 : (! isset($answers['mode']) ? 3 : 4));
 
         return view('learning.interview', [
             'learningPaths' => $learningPaths,
@@ -54,26 +54,29 @@ class LearningInterviewController extends Controller
         $answers = $request->session()->get('learning_interview', []);
 
         if ($step === 1) {
-            $data = $request->validate(['learning_path_id' => ['required', 'integer', Rule::exists('learning_paths', 'id')->where('is_published', true)]]);
+            $data = $request->validate([
+                'learning_path_ids' => ['required', 'array', 'min:1'],
+                'learning_path_ids.*' => ['required', 'integer', 'distinct', Rule::exists('learning_paths', 'id')->where('is_published', true)],
+            ]);
             $request->session()->forget('learning_interview_destination');
-            $request->session()->put('learning_interview', ['learning_path_id' => $data['learning_path_id']]);
+            $request->session()->put('learning_interview', ['learning_path_ids' => array_map('intval', array_values($data['learning_path_ids']))]);
 
             return to_route('learning.interview.show', ['step' => 2]);
         }
 
-        if (! isset($answers['learning_path_id'])) {
+        if (! isset($answers['learning_path_ids'])) {
             return to_route('learning.interview.show');
         }
 
-        if (! LearningPath::query()->whereKey($answers['learning_path_id'])->where('is_published', true)->exists()) {
+        if (LearningPath::query()->whereKey($answers['learning_path_ids'])->where('is_published', true)->count() !== count($answers['learning_path_ids'])) {
             $request->session()->forget('learning_interview');
 
-            return to_route('learning.interview.show')->withErrors(['learning_path_id' => 'Materi ini sudah tidak tersedia. Silakan pilih materi lain.']);
+            return to_route('learning.interview.show')->withErrors(['learning_path_ids' => 'Salah satu materi sudah tidak tersedia. Silakan pilih ulang.']);
         }
 
         if ($step === 2) {
             $data = $request->validate(['role' => ['required', Rule::in(array_keys(self::ROLES))]]);
-            $request->session()->put('learning_interview', ['learning_path_id' => $answers['learning_path_id'], 'role' => $data['role']]);
+            $request->session()->put('learning_interview', ['learning_path_ids' => $answers['learning_path_ids'], 'role' => $data['role']]);
 
             return to_route('learning.interview.show', ['step' => 3]);
         }
@@ -148,7 +151,7 @@ class LearningInterviewController extends Controller
         return Storage::disk('local')->response($profile->avatar, 'avatar', ['Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff']);
     }
 
-    /** @param array{learning_path_id: int, role: string, mode: string} $answers */
+    /** @param array{learning_path_ids: list<int>, role: string, mode: string} $answers */
     private function saveProfile(Request $request, LearningProgressService $progressService, array $answers, ?string $name = null, ?string $uploadedAvatar = null): LearnerProfile
     {
         $deviceId = $progressService->deviceId($request);
@@ -157,7 +160,8 @@ class LearningInterviewController extends Controller
         $previousUserId = $profile->user_id;
         $profile->fill([
             'user_id' => $request->user()?->id,
-            'learning_path_id' => $answers['learning_path_id'],
+            'learning_path_id' => $answers['learning_path_ids'][0],
+            'learning_path_ids' => $answers['learning_path_ids'],
             'role' => $answers['role'],
             'mode' => $answers['mode'],
             'name' => $name ?? $request->user()?->name,
