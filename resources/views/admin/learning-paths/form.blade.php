@@ -6,6 +6,7 @@
     <div class="max-w-3xl">
         <a href="{{ route('admin.learning-paths.index') }}" class="text-sm font-semibold text-accent">← Kembali ke jalur belajar</a>
         <h1 class="mt-4 font-display text-3xl font-bold">{{ $learningPath->exists ? 'Ubah jalur' : 'Jalur belajar baru' }}</h1>
+<p class="mt-3 text-sm leading-6 text-foreground/60">Jalur mengelompokkan beberapa modul. Setelah disimpan, tambahkan modul dan atur urutan belajarnya.</p>
         <form method="POST" action="{{ $learningPath->exists ? route('admin.learning-paths.update', $learningPath) : route('admin.learning-paths.store') }}" class="mt-7 space-y-5 rounded-card bg-surface p-5 sm:p-8">
             @csrf
             @if ($learningPath->exists) @method('PUT') @endif
@@ -21,7 +22,7 @@
                 @error('title') <span class="mt-1 block text-danger">{{ $message }}</span> @enderror
             </label>
             <label class="block text-sm font-bold" for="slug">Slug URL
-                <input id="slug" name="slug" required maxlength="150" value="{{ old('slug', $learningPath->slug) }}" class="mt-2 min-h-12 w-full rounded-control border border-white/10 bg-background px-4 text-foreground">
+                <input id="slug" name="slug" placeholder="Otomatis dari judul jika dikosongkan" maxlength="150" value="{{ old('slug', $learningPath->slug) }}" class="mt-2 min-h-12 w-full rounded-control border border-white/10 bg-background px-4 text-foreground">
                 @error('slug') <span class="mt-1 block text-danger">{{ $message }}</span> @enderror
             </label>
             <label class="block text-sm font-bold" for="description">Deskripsi

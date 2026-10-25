@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\LearnerProfile;
 use App\Models\LearningPath;
+use App\Services\LearnerInterviewAnalyzer;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 class LearningPathController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request, LearnerInterviewAnalyzer $analyzer): View
     {
         $user = $request->user();
         $profile = LearnerProfile::completedFor($user?->id, $request->cookie('artaswaha_device'));
@@ -41,11 +42,12 @@ class LearningPathController extends Controller
             ?? $dashboardPaths->first();
 
         $hasCompletedInterview = $profile !== null;
+        $analysis = $analyzer->presentation($profile, $learningPaths);
 
-        return view('welcome', compact('learningPaths', 'hasCompletedInterview', 'showMobileDashboard', 'dashboardPaths', 'featuredPath', 'profile', 'user'));
+        return view('welcome', compact('learningPaths', 'hasCompletedInterview', 'showMobileDashboard', 'dashboardPaths', 'featuredPath', 'profile', 'user', 'analysis'));
     }
 
-    public function show(Request $request, LearningPath $learningPath): View
+    public function show(Request $request, LearningPath $learningPath, LearnerInterviewAnalyzer $analyzer): View
     {
         abort_unless($learningPath->is_published, 404);
 
@@ -57,6 +59,9 @@ class LearningPathController extends Controller
             ->where('user_id', $request->user()?->id)
             ->first();
 
-        return view('learning.paths.show', compact('learningPath', 'profile'));
+        $analysisProfile = LearnerProfile::completedFor($request->user()?->id, $request->cookie('artaswaha_device'));
+        $analysis = $analyzer->presentation($analysisProfile, collect([$learningPath]));
+
+        return view('learning.paths.show', compact('learningPath', 'profile', 'analysis'));
     }
 }

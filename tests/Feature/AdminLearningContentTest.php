@@ -72,9 +72,10 @@ class AdminLearningContentTest extends TestCase
             'exercise_options' => ['Rahajeng semeng', 'Rahajeng wengi', 'Suksma', 'Napi kabar'],
             'correct_option' => 0,
             'exercise_explanation' => 'Rahajeng semeng berarti selamat pagi.',
-        ])->assertRedirect(route('admin.lessons.index'));
+        ])->assertRedirect();
 
         $lesson = Lesson::query()->where('slug', 'salam-bali')->firstOrFail();
+        $this->get(route('admin.lessons.preview', $lesson))->assertOk()->assertSee('Preview khusus admin');
         $this->assertFalse($lesson->is_published);
         $this->assertNull($lesson->reviewed_at);
         $this->get(route('learning.lessons.show', $lesson->slug))->assertNotFound();
@@ -109,7 +110,7 @@ class AdminLearningContentTest extends TestCase
             'summary' => 'Ungkapan salam sehari-hari.',
             'content' => 'Rahajeng wengi.',
             'sort_order' => 1,
-        ])->assertRedirect(route('admin.lessons.index'));
+        ])->assertRedirect(route('admin.lessons.preview', $lesson));
         $this->assertFalse($lesson->fresh()->is_published);
         $this->assertNull($lesson->fresh()->reviewed_at);
         $this->get(route('learning.lessons.show', $lesson->slug))->assertNotFound();

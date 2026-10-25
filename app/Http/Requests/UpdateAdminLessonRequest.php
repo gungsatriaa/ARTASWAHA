@@ -4,10 +4,18 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class UpdateAdminLessonRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if (! $this->filled('slug') && $this->filled('title')) {
+            $this->merge(['slug' => Str::slug((string) $this->input('title'))]);
+        }
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */

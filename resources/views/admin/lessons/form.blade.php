@@ -1,6 +1,6 @@
 @extends('admin.layout')
 
-@section('title', $lesson->exists ? 'Ubah pelajaran' : 'Buat pelajaran')
+@section('title', $lesson->exists ? 'Ubah modul' : 'Buat modul')
 
 @section('content')
     @php
@@ -8,11 +8,15 @@
         $exerciseOptions = old('exercise_options', $lesson->exercise_options ?? ['', '', '', '']);
     @endphp
     <div class="max-w-3xl">
-        <a href="{{ route('admin.lessons.index') }}" class="text-sm font-semibold text-accent">← Kembali ke pelajaran</a>
-        <h1 class="mt-4 font-display text-3xl font-bold">{{ $lesson->exists ? 'Ubah pelajaran' : 'Pelajaran baru' }}</h1>
+        <a href="{{ route('admin.lessons.index') }}" class="text-sm font-semibold text-accent">← Kembali ke modul</a>
+        <h1 class="mt-4 font-display text-3xl font-bold">{{ $lesson->exists ? 'Ubah modul' : 'Modul baru' }}</h1>
         @if ($lesson->exists && $lesson->is_published)
-            <p class="mt-3 rounded-2xl bg-accent/10 p-4 text-sm text-accent">Menyimpan perubahan akan menarik pelajaran dari situs sampai ditinjau dan diterbitkan kembali.</p>
+            <p class="mt-3 rounded-2xl bg-accent/10 p-4 text-sm text-accent">Menyimpan perubahan akan menarik modul dari situs sampai ditinjau dan diterbitkan kembali.</p>
         @endif
+        <ol class="mt-5 flex flex-wrap gap-3 text-xs font-bold text-foreground/55" aria-label="Alur modul"><li>1. Pilih jalur</li><li class="text-accent" aria-current="step">2. Isi modul</li><li>3. Preview & tinjau</li><li>4. Terbitkan</li></ol>
+        @if ($learningPaths->isEmpty())
+            <div class="mt-6 rounded-card border border-accent/25 bg-surface p-6"><p class="font-bold">Buat jalur belajar terlebih dahulu.</p><p class="mt-2 text-sm text-foreground/60">Setiap modul perlu berada dalam satu jalur agar urutan belajarnya jelas.</p><a href="{{ route('admin.learning-paths.create') }}" class="mt-4 inline-flex min-h-11 items-center rounded-full bg-accent px-5 font-bold text-background">Buat jalur belajar</a></div>
+        @else
         <form method="POST" action="{{ $lesson->exists ? route('admin.lessons.update', $lesson) : route('admin.lessons.store') }}" class="mt-7 space-y-5 rounded-card bg-surface p-5 sm:p-8">
             @csrf
             @if ($lesson->exists) @method('PUT') @endif
@@ -29,7 +33,7 @@
                 @error('title') <span class="mt-1 block text-danger">{{ $message }}</span> @enderror
             </label>
             <label class="block text-sm font-bold" for="slug">Slug URL
-                <input id="slug" name="slug" required maxlength="150" value="{{ old('slug', $lesson->slug) }}" class="mt-2 min-h-12 w-full rounded-control border border-white/10 bg-background px-4 text-foreground">
+                <input id="slug" name="slug" placeholder="Otomatis dari judul jika dikosongkan" maxlength="150" value="{{ old('slug', $lesson->slug) }}" class="mt-2 min-h-12 w-full rounded-control border border-white/10 bg-background px-4 text-foreground">
                 @error('slug') <span class="mt-1 block text-danger">{{ $message }}</span> @enderror
             </label>
             <label class="block text-sm font-bold" for="summary">Ringkasan
@@ -72,5 +76,9 @@
             </section>
             <button class="min-h-12 rounded-full bg-primary px-7 py-3 font-bold text-white">Simpan sebagai draf</button>
         </form>
+        @if ($lesson->exists)
+            <div class="mt-4 flex flex-wrap gap-4"><a href="{{ route('admin.lessons.preview', $lesson) }}" class="inline-flex min-h-11 items-center text-sm font-bold text-accent">Preview modul tersimpan ?</a><a href="{{ route('admin.audio.lessons.edit', $lesson) }}" class="inline-flex min-h-11 items-center text-sm font-bold text-accent">Siapkan audio</a></div>
+        @endif
+        @endif
     </div>
 @endsection

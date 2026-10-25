@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\ContentAudio;
 use App\Models\Quiz;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class QuizService
@@ -53,7 +55,9 @@ class QuizService
                 $quiz->update(['is_archived' => true]);
             } else {
                 $quiz->update($attributes);
+                $obsoleteAudio = ContentAudio::whereIn('quiz_question_id', $quiz->questions()->select('id'))->whereNotNull('path')->pluck('path')->all();
                 $quiz->questions()->delete();
+                DB::afterCommit(fn () => Storage::disk('local')->delete($obsoleteAudio));
                 $updatedQuiz = $quiz;
             }
 

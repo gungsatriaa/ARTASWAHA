@@ -6,6 +6,8 @@ use App\Http\Requests\StoreQuizRequest;
 use App\Http\Requests\UpdateQuizRequest;
 use App\Models\LearnerProfile;
 use App\Models\Quiz;
+use App\Models\QuizQuestion;
+use App\Services\ContentAudioService;
 use App\Services\QuizService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -38,12 +40,17 @@ class QuizController extends Controller
         return to_route('quizzes.show', $quiz)->with('status', 'Kuis berhasil dibuat.');
     }
 
-    public function show(Quiz $quiz): View
+    public function show(Quiz $quiz, ContentAudioService $audioService): View
     {
         abort_unless($quiz->user_id === Auth::id(), 404);
-        $quiz->load('questions');
+        $quiz->load('questions.audio');
+        $audioByQuestion = $quiz->questions->mapWithKeys(function (QuizQuestion $question) use ($audioService): array {
+            $audio = $audioService->forContent($question);
 
-        return view('quizzes.show', compact('quiz'));
+            return $audioService->isPlayable($audio) ? [$question->id => $audio] : [];
+        });
+
+        return view('quizzes.show', compact('quiz', 'audioByQuestion'));
     }
 
     public function edit(Quiz $quiz): View

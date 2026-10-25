@@ -4,7 +4,10 @@ namespace App\Services;
 
 use App\Models\LearningPath;
 use App\Models\Lesson;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Str;
 
 class AdminLearningContentService
 {
@@ -17,13 +20,17 @@ class AdminLearningContentService
             ->get();
     }
 
-    public function lessons(): Collection
+    public function lessons(?int $pathId = null, ?string $status = null): LengthAwarePaginator
     {
         return Lesson::query()
             ->with('learningPath:id,title')
+            ->when($pathId !== null, fn (Builder $query): Builder => $query->where('learning_path_id', $pathId))
+            ->when($status === 'draft', fn (Builder $query): Builder => $query->whereNull('reviewed_at'))
+            ->when($status === 'published', fn (Builder $query): Builder => $query->where('is_published', true)->whereNotNull('reviewed_at'))
+            ->when($status === 'archived', fn (Builder $query): Builder => $query->where('is_published', false)->whereNotNull('reviewed_at'))
             ->orderBy('learning_path_id')
-            ->orderBy('sort_order')
-            ->get();
+            ->orderBy('sort_order')->orderBy('id')
+            ->paginate(20)->withQueryString();
     }
 
     public function storeLearningPath(array $data): LearningPath
@@ -44,6 +51,9 @@ class AdminLearningContentService
     public function updateLesson(Lesson $lesson, array $data): void
     {
         $lesson->update([...$this->lessonData($data), 'is_published' => false, 'reviewed_at' => null]);
+        if ($lesson->wasChanged(['title', 'content'])) {
+            $lesson->audio()->update(['status' => 'stale', 'reviewed_at' => null, 'version' => (string) Str::uuid()]);
+        }
     }
 
     public function publishLesson(Lesson $lesson): void

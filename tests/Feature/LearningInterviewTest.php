@@ -18,6 +18,19 @@ class LearningInterviewTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_missing_learning_selection_shows_a_friendly_message_above_the_choices(): void
+    {
+        $path = LearningPath::factory()->create(['is_published' => true]);
+        $message = 'Silakan pilih minimal satu materi yang ingin kamu pelajari untuk melanjutkan, ya.';
+
+        $this->from(route('learning.interview.show'))
+            ->followingRedirects()
+            ->post(route('learning.interview.store'), ['step' => 1])
+            ->assertOk()
+            ->assertSeeInOrder([$message, 'Budaya Bali apa yang ingin kamu pelajari?', $path->title, 'Lanjutkan'])
+            ->assertDontSee('validation.required');
+    }
+
     public function test_anonymous_interview_is_saved_for_the_device_and_rejects_invalid_uploads(): void
     {
         Storage::fake('local');

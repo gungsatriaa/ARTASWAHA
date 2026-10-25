@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LearnerProfile;
 use App\Models\LearningPath;
+use App\Services\LearnerInterviewAnalyzer;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -28,7 +29,7 @@ class ProfileController extends Controller
         return view('profile.about', compact('learningPaths', 'profile', 'user'));
     }
 
-    public function __invoke(Request $request): View|RedirectResponse
+    public function __invoke(Request $request, LearnerInterviewAnalyzer $analyzer): View|RedirectResponse
     {
         $user = $request->user();
         $profile = $user === null ? LearnerProfile::completedFor(null, $request->cookie('artaswaha_device')) : null;
@@ -57,6 +58,9 @@ class ProfileController extends Controller
         $totalLessons = $learningPaths->sum('lessons_count');
         $completedLessons = $learningPaths->sum('completed_lessons_count');
 
-        return view('profile.show', compact('completedLessons', 'learningPaths', 'learningPathsByGroup', 'profile', 'totalLessons', 'user'));
+        $analysisProfile = $user === null ? $profile : LearnerProfile::completedFor($user->id, null);
+        $analysis = $analyzer->presentation($analysisProfile, $learningPaths);
+
+        return view('profile.show', compact('completedLessons', 'learningPaths', 'learningPathsByGroup', 'profile', 'totalLessons', 'user', 'analysisProfile', 'analysis'));
     }
 }

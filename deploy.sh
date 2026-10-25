@@ -7,6 +7,7 @@ DEPLOY_REMOTE="${DEPLOY_REMOTE:-origin}"
 DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
 DEPLOY_SSH_KEY="${DEPLOY_SSH_KEY:-/root/.ssh/aapanel/artaswaha_78175}"
 QUEUE_PROGRAM="${QUEUE_SUPERVISOR_PROGRAM:-artaswaha-queue:*}"
+LEARNER_QUEUE_PROGRAM="${LEARNER_QUEUE_SUPERVISOR_PROGRAM:-artaswaha-learner:*}"
 REVERB_PROGRAM="${REVERB_SUPERVISOR_PROGRAM:-artaswaha-reverb}"
 SUPERVISORCTL_BIN="${SUPERVISORCTL_BIN:-$(command -v supervisorctl || true)}"
 
@@ -128,6 +129,7 @@ printf '\n[5/15] Mem-build frontend...\n'
 npm run build
 
 printf '\n[6/15] Menjalankan migrasi database...\n'
+php artisan config:clear
 php artisan migrate --force
 
 printf '\n[7/15] Membuat symbolic link storage...\n'
@@ -149,10 +151,12 @@ sleep 2
 printf '\n[12/15] Memeriksa status queue worker dan Reverb...\n'
 if [[ -n "$SUPERVISORCTL_BIN" ]]; then
     check_supervisor_program "Queue worker" "$QUEUE_PROGRAM"
+    check_supervisor_program "AI/TTS worker" "$LEARNER_QUEUE_PROGRAM"
     check_supervisor_program "Reverb process" "$REVERB_PROGRAM"
 else
     printf 'Supervisor CLI tidak tersedia; memeriksa proses aktif langsung.\n'
     check_process "Queue worker" '[a]rtisan queue:work'
+    check_process "AI/TTS worker" '[a]rtisan queue:work learner-analysis'
     check_process "Reverb process" '[a]rtisan reverb:start'
 fi
 
@@ -169,8 +173,6 @@ REVERB_SERVER_HOST="$(dotenv_value REVERB_SERVER_HOST)"
 REVERB_SERVER_PORT="$(dotenv_value REVERB_SERVER_PORT)"
 
 [[ -n "$APP_URL" ]] || fail "APP_URL belum diisi di .env."
-[[ -n "$OCR_API_URL" ]] || fail "OCR_API_URL belum diisi di .env."
-[[ -n "$AI_API_URL" ]] || fail "AI_API_URL belum diisi di .env."
 [[ -n "$REVERB_SERVER_PORT" ]] || REVERB_SERVER_PORT=8080
 
 check_http "Laravel /up" "${APP_URL%/}/up"
@@ -179,13 +181,45 @@ OCR_HEADERS=()
 if [[ -n "$OCR_API_KEY" ]]; then
     OCR_HEADERS+=(--header "X-API-Key: $OCR_API_KEY")
 fi
-check_http "OCR API" "${OCR_API_URL%/}/health" "${OCR_HEADERS[@]}"
+if [[ -n "$OCR_API_URL" ]]; then
+    check_http "OCR API" "${OCR_API_URL%/}/health" "${OCR_HEADERS[@]}"
+else
+    printf 'SKIP OCR belum dikonfigurasi; pembuatan soal dari dokumen belum tersedia.\n'
+fi
 
 AI_HEADERS=()
 if [[ -n "$AI_API_KEY" ]]; then
     AI_HEADERS+=(--header "Authorization: Bearer $AI_API_KEY")
 fi
-check_http "AI API models" "${AI_API_URL%/}/models" "${AI_HEADERS[@]}"
+if [[ -n "$AI_API_URL" ]]; then
+    check_http "AI API models" "${AI_API_URL%/}/models" "${AI_HEADERS[@]}"
+else
+    printf 'SKIP AI kuis belum dikonfigurasi; pembuatan soal dari dokumen belum tersedia.\n'
+fi
+
+if [[ "$(dotenv_value LEARNER_ANALYSIS_ENABLED)" == "true" ]]; then
+    LEARNER_ANALYSIS_URL="$(dotenv_value LEARNER_ANALYSIS_URL)"
+    LEARNER_ANALYSIS_PROVIDER="$(dotenv_value LEARNER_ANALYSIS_PROVIDER)"
+    LEARNER_ANALYSIS_KEY="$(dotenv_value LEARNER_ANALYSIS_KEY)"
+    [[ -n "$(dotenv_value LEARNER_ANALYSIS_MODEL)" ]] || fail "LEARNER_ANALYSIS_MODEL belum diisi."
+    [[ -n "$LEARNER_ANALYSIS_URL" ]] || fail "LEARNER_ANALYSIS_URL belum diisi."
+    LEARNER_HEADERS=()
+    if [[ -n "$LEARNER_ANALYSIS_KEY" ]]; then
+        LEARNER_HEADERS+=(--header "Authorization: Bearer $LEARNER_ANALYSIS_KEY")
+    fi
+    if [[ "$LEARNER_ANALYSIS_PROVIDER" == "ollama" ]]; then
+        check_http "Ollama model list" "${LEARNER_ANALYSIS_URL%/}/api/tags" "${LEARNER_HEADERS[@]}"
+    elif [[ "$LEARNER_ANALYSIS_PROVIDER" == "openai" ]]; then
+        check_http "Analysis models" "${LEARNER_ANALYSIS_URL%/}/models" "${LEARNER_HEADERS[@]}"
+    else
+        fail "LEARNER_ANALYSIS_PROVIDER harus ollama atau openai."
+    fi
+fi
+
+if [[ "$(dotenv_value TTS_ENABLED)" == "true" ]]; then
+    php -r 'require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); exit(app(App\Services\ContentAudioService::class)->isConfigured() ? 0 : 1);' || fail "Konfigurasi TTS belum lengkap."
+    printf 'OK  TTS terkonfigurasi; lakukan uji Generate di admin untuk memastikan inferensi.\n'
+fi
 
 wait_for_reverb "$REVERB_SERVER_HOST" "$REVERB_SERVER_PORT"
 

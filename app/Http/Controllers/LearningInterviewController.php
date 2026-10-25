@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LearnerProfile;
 use App\Models\LearningPath;
+use App\Services\LearnerInterviewAnalyzer;
 use App\Services\LearningProgressService;
 use App\Services\ProfileAvatarService;
 use Illuminate\Http\RedirectResponse;
@@ -18,6 +19,8 @@ use Throwable;
 
 class LearningInterviewController extends Controller
 {
+    public function __construct(private LearnerInterviewAnalyzer $analyzer) {}
+
     private const ROLES = [
         'murid' => 'Murid',
         'guru' => 'Guru',
@@ -57,6 +60,9 @@ class LearningInterviewController extends Controller
             $data = $request->validate([
                 'learning_path_ids' => ['required', 'array', 'min:1'],
                 'learning_path_ids.*' => ['required', 'integer', 'distinct', Rule::exists('learning_paths', 'id')->where('is_published', true)],
+            ], [
+                'learning_path_ids.required' => 'Silakan pilih minimal satu materi yang ingin kamu pelajari untuk melanjutkan, ya.',
+                'learning_path_ids.min' => 'Silakan pilih minimal satu materi yang ingin kamu pelajari untuk melanjutkan, ya.',
             ]);
             $request->session()->forget('learning_interview_destination');
             $request->session()->put('learning_interview', ['learning_path_ids' => array_map('intval', array_values($data['learning_path_ids']))]);
@@ -171,6 +177,8 @@ class LearningInterviewController extends Controller
         if ($previousUserId === null && $previousAvatar !== $profile->avatar && str_starts_with($previousAvatar ?? '', 'avatars/')) {
             Storage::disk('local')->delete($previousAvatar);
         }
+
+        $this->analyzer->enqueue($profile);
 
         return $profile;
     }

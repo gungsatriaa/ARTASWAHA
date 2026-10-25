@@ -13,6 +13,9 @@
 
         <div class="rounded-card border border-white/10 bg-surface">
             <div class="p-4 sm:p-6">
+                @if ($errors->any())
+                    <p role="alert" class="mb-4 rounded-2xl border border-danger/30 bg-danger/10 p-4 text-sm text-danger">{{ $errors->first() }}</p>
+                @endif
                 <p class="font-bold text-accent">Kenalan dulu, yuk</p>
                 @if ($step === 1)
                     <h1 class="mt-1 font-display text-2xl font-extrabold tracking-tight sm:text-3xl">Budaya Bali apa yang ingin kamu pelajari?</h1>
@@ -101,9 +104,6 @@
                         </div>
                         <div class="flex justify-end border-t border-white/10 pt-4 lg:col-span-2"><button type="submit" class="min-h-12 w-full rounded-full bg-accent px-6 font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto">Mulai belajar <span aria-hidden="true">→</span></button></div>
                     </form>
-                @endif
-                @if ($errors->any())
-                    <p role="alert" class="mt-5 rounded-2xl border border-danger/30 bg-danger/10 p-4 text-sm text-danger">{{ $errors->first() }}</p>
                 @endif
             </div>
         </div>

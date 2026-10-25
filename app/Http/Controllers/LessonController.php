@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Lesson;
+use App\Services\ContentAudioService;
 use App\Services\LearningProgressService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
@@ -10,16 +11,18 @@ use Symfony\Component\HttpFoundation\Response;
 
 class LessonController extends Controller
 {
-    public function show(Request $request, Lesson $lesson, LearningProgressService $progressService): Response
+    public function show(Request $request, Lesson $lesson, LearningProgressService $progressService, ContentAudioService $audioService): Response
     {
         $lesson->loadMissing('learningPath:id,slug,title,is_published');
         abort_unless($lesson->is_published && $lesson->reviewed_at !== null && $lesson->learningPath->is_published, 404);
 
         $deviceId = $progressService->deviceId($request);
         $progress = $lesson->progress()->where('visitor_id', $deviceId)->first();
+        $audio = $audioService->forContent($lesson);
+        $audio = $audioService->isPlayable($audio) ? $audio : null;
 
         return response()
-            ->view('learning.lessons.show', compact('lesson', 'progress'))
+            ->view('learning.lessons.show', compact('lesson', 'progress', 'audio'))
             ->withCookie(Cookie::make('artaswaha_device', $deviceId, 60 * 24 * 365, '/', null, $request->isSecure(), true, false, 'lax'));
     }
 }

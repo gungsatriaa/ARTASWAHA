@@ -1,0 +1,3 @@
+@props(['status' => null])
+@php($labels = ['draft' => 'Draf', 'queued' => 'Mengantre', 'processing' => 'Diproses', 'review' => 'Perlu ditinjau', 'ready' => 'Siap', 'completed' => 'Selesai', 'failed' => 'Gagal', 'stale' => 'Kedaluwarsa', 'outdated' => 'Perlu diperbarui', 'unavailable' => 'Layanan belum tersedia'])
+<span @class(['inline-flex w-fit items-center rounded-full border px-3 py-1 text-xs font-bold', 'border-accent/30 bg-accent/10 text-accent' => in_array($status, ['ready', 'completed']), 'border-danger/30 bg-danger/10 text-danger' => $status === 'failed', 'border-white/15 bg-background text-foreground/65' => ! in_array($status, ['ready', 'completed', 'failed'])])>{{ $labels[$status] ?? 'Belum diminta' }}</span>

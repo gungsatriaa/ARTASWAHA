@@ -12,6 +12,9 @@
             @endif
         </header>
 
+        @if ($audio)
+            <div class="mt-5"><x-content-audio-player :src="route('content-audio.show', $audio)" label="Dengarkan materi" /></div>
+        @endif
         @if (session('status'))
             <x-flash-notice :tone="session('status_tone', 'success')" class="mt-5">{{ session('status') }}</x-flash-notice>
         @endif

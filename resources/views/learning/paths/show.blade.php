@@ -35,6 +35,13 @@
             @endif
         </header>
 
+        @if ($analysis['recommendations'] !== [])
+            <aside class="mt-5 rounded-2xl border border-accent/25 bg-accent/5 p-5" aria-label="Alasan rekomendasi">
+                <p class="text-sm font-bold text-accent">Direkomendasikan untuk pilihan belajarmu</p>
+                <p class="mt-2 text-sm leading-6 text-foreground/70">{{ $analysis['recommendations'][0]['reason'] }}</p>
+                <a href="{{ route('profile.show') }}#analisis" class="mt-3 inline-flex min-h-11 items-center text-sm font-bold text-accent underline underline-offset-4">Lihat peta belajarmu</a>
+            </aside>
+        @endif
         <section class="mt-8 sm:mt-10" aria-labelledby="lesson-list-title">
             <div class="mb-5">
                 <h2 id="lesson-list-title" class="font-display text-2xl font-bold sm:text-3xl">Pilih pelajaran</h2>

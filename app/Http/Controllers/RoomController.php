@@ -8,6 +8,7 @@ use App\Models\LearnerProfile;
 use App\Models\Quiz;
 use App\Models\Room;
 use App\Models\User;
+use App\Services\ContentAudioService;
 use App\Services\RoomService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
@@ -33,14 +34,18 @@ class RoomController extends Controller
         return to_route('rooms.show', $room->code);
     }
 
-    public function show(Room $room, RoomService $roomService): View|RedirectResponse
+    public function show(Room $room, RoomService $roomService, ContentAudioService $audioService): View|RedirectResponse
     {
         $player = $this->player();
         if ($player === null) {
             return to_route('learning.interview.show');
         }
 
-        return view('rooms.show', $roomService->viewData($room, $player));
+        $data = $roomService->viewData($room, $player);
+        $audio = $data['activeQuestion'] !== null ? $audioService->forContent($data['activeQuestion']) : null;
+        $data['audio'] = $audioService->isPlayable($audio) ? $audio : null;
+
+        return view('rooms.show', $data);
     }
 
     public function status(Room $room, RoomService $roomService): Response

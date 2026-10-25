@@ -45,6 +45,12 @@
                             <span class="grid size-11 shrink-0 place-items-center rounded-2xl bg-accent/10 font-display text-lg font-bold text-accent">{{ $index + 1 }}</span>
                             <div class="min-w-0">
                                 <h3 class="break-words font-display text-lg font-semibold leading-snug">{{ $question->prompt }}</h3>
+                                @if (isset($audioByQuestion[$question->id]))
+                                    <div class="mt-3"><x-content-audio-player :src="route('content-audio.show', $audioByQuestion[$question->id])" label="Dengarkan soal" /></div>
+                                @endif
+                                @if (auth()->user()?->is_admin)
+                                    <a href="{{ route('admin.audio.questions.edit', $question) }}" class="mt-2 inline-flex min-h-11 items-center text-xs font-bold text-accent">Siapkan audio soal →</a>
+                                @endif
                                 <p class="mt-2 text-sm text-foreground/50">{{ count($question->options) }} pilihan jawaban</p>
                             </div>
                         </li>

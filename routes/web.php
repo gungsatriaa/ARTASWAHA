@@ -1,10 +1,14 @@
 <?php
 
+use App\Http\Controllers\Admin\AiController as AdminAiController;
 use App\Http\Controllers\Admin\AnalyticsController as AdminAnalyticsController;
+use App\Http\Controllers\Admin\ContentAudioController as AdminContentAudioController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\LearningPathController as AdminLearningPathController;
 use App\Http\Controllers\Admin\LessonController as AdminLessonController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ContentAudioController;
+use App\Http\Controllers\LearnerAnalysisController;
 use App\Http\Controllers\LearningInterviewController;
 use App\Http\Controllers\LearningPathController;
 use App\Http\Controllers\LearningProgressController;
@@ -31,6 +35,9 @@ Route::get('/mulai-belajar/avatar', [LearningInterviewController::class, 'avatar
 Route::redirect('/profil-anonim', '/profil');
 Route::redirect('/profil-anonim/tentang', '/profil/tentang');
 Route::get('/profil', ProfileController::class)->name('profile.show');
+Route::get('/audio/{contentAudio}', ContentAudioController::class)->name('content-audio.show');
+Route::get('/profil/analisis', [LearnerAnalysisController::class, 'show'])->middleware('throttle:learner-analysis-read')->name('profile.analysis.show');
+Route::post('/profil/analisis', [LearnerAnalysisController::class, 'store'])->middleware('throttle:learner-analysis-write')->name('profile.analysis.store');
 Route::get('/profil/tentang', [ProfileController::class, 'about'])->name('profile.about');
 Route::get('/profil/avatar', ShowProfileAvatarController::class)->name('profile.avatar.show');
 Route::put('/profil/avatar', UpdateProfileAvatarController::class)->middleware('throttle:10,1')->name('profile.avatar.update');
@@ -59,6 +66,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/', AdminDashboardController::class)->name('index');
     Route::get('/analitik', [AdminAnalyticsController::class, 'index'])->name('analytics.index');
     Route::get('/analitik/online', [AdminAnalyticsController::class, 'online'])->name('analytics.online');
+    Route::get('/ai', [AdminAiController::class, 'index'])->name('ai.index');
+    Route::get('/ai/interview/{learnerProfile}', [AdminAiController::class, 'profile'])->name('ai.profiles.show');
+    Route::post('/ai/interview/{learnerProfile}', [AdminAiController::class, 'retry'])->middleware('throttle:admin-ai-write')->name('ai.profiles.retry');
+    Route::get('/ai/draf/{quizDraft}', [AdminAiController::class, 'draft'])->name('ai.drafts.show');
+    Route::post('/ai/laporan', [AdminAiController::class, 'requestReport'])->middleware('throttle:admin-ai-write')->name('ai.reports.store');
+    Route::get('/ai/laporan/{aiReport}', [AdminAiController::class, 'report'])->name('ai.reports.show');
+    Route::get('/audio', [AdminContentAudioController::class, 'index'])->name('audio.index');
+    Route::get('/audio/modul/{lesson}', [AdminContentAudioController::class, 'lesson'])->name('audio.lessons.edit');
+    Route::post('/audio/modul/{lesson}', [AdminContentAudioController::class, 'saveLesson'])->middleware('throttle:admin-ai-write')->name('audio.lessons.store');
+    Route::get('/audio/soal/{question}', [AdminContentAudioController::class, 'question'])->name('audio.questions.edit');
+    Route::post('/audio/soal/{question}', [AdminContentAudioController::class, 'saveQuestion'])->middleware('throttle:admin-ai-write')->name('audio.questions.store');
+    Route::post('/audio/{contentAudio}/setujui', [AdminContentAudioController::class, 'approve'])->name('audio.approve');
 
     Route::get('/jalur', [AdminLearningPathController::class, 'index'])->name('learning-paths.index');
     Route::get('/jalur/buat', [AdminLearningPathController::class, 'create'])->name('learning-paths.create');
@@ -70,6 +89,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/pelajaran/buat', [AdminLessonController::class, 'create'])->name('lessons.create');
     Route::post('/pelajaran', [AdminLessonController::class, 'store'])->name('lessons.store');
     Route::get('/pelajaran/{lesson}/edit', [AdminLessonController::class, 'edit'])->name('lessons.edit');
+    Route::get('/pelajaran/{lesson}/preview', [AdminLessonController::class, 'preview'])->name('lessons.preview');
     Route::put('/pelajaran/{lesson}', [AdminLessonController::class, 'update'])->name('lessons.update');
     Route::post('/pelajaran/{lesson}/terbitkan', [AdminLessonController::class, 'publish'])->name('lessons.publish');
     Route::post('/pelajaran/{lesson}/arsipkan', [AdminLessonController::class, 'archive'])->name('lessons.archive');

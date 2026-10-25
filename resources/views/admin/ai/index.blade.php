@@ -1,0 +1,52 @@
+@extends('admin.layout')
+@section('title', 'Pusat AI')
+@section('content')
+<header class="flex flex-wrap items-start justify-between gap-4">
+    <div><p class="text-sm font-bold text-accent">Pantau, periksa, tindak lanjuti</p><h1 class="mt-2 font-display text-3xl font-bold">Pusat AI</h1><p class="mt-2 max-w-2xl text-sm leading-6 text-foreground/60">Kelola analisis interview, interpretasi statistik, dan draf kuis. Membuka halaman ini tidak menjalankan AI.</p></div>
+    <a href="{{ route('admin.audio.index') }}" class="inline-flex min-h-11 items-center rounded-xl border border-accent/30 px-4 text-sm font-bold text-accent">Audio pembelajaran →</a>
+</header>
+<nav class="my-6 flex flex-wrap gap-2" aria-label="Bagian Pusat AI">
+    @foreach (['overview' => 'Statistik AI', 'interviews' => 'Analisis interview', 'drafts' => 'Draf kuis AI', 'services' => 'Status layanan'] as $key => $label)
+        <a href="{{ route('admin.ai.index', ['tab' => $key, 'start' => $start->toDateString(), 'end' => $end->toDateString()]) }}" @if ($tab === $key) aria-current="page" @endif @class(['inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-bold', 'border-accent/40 bg-accent/10 text-accent' => $tab === $key, 'border-white/10 text-foreground/60' => $tab !== $key])>{{ $label }}</a>
+    @endforeach
+</nav>
+@if (in_array($tab, ['overview', 'interviews']))
+    <form method="GET" class="mb-6 flex flex-wrap items-end gap-3 rounded-2xl border border-white/10 bg-surface p-4">
+        <input type="hidden" name="tab" value="{{ $tab }}">
+        <label class="text-xs font-bold">Mulai<input type="date" name="start" required value="{{ $start->toDateString() }}" class="mt-2 block min-h-11 rounded-xl border border-white/15 bg-background px-3 text-sm"></label>
+        <label class="text-xs font-bold">Sampai<input type="date" name="end" required value="{{ $end->toDateString() }}" class="mt-2 block min-h-11 rounded-xl border border-white/15 bg-background px-3 text-sm"></label>
+        @if ($tab === 'interviews')
+            <label class="text-xs font-bold">Peran<select name="role" class="mt-2 block min-h-11 rounded-xl border border-white/15 bg-background px-3 text-sm"><option value="">Semua</option>@foreach (\App\Services\LearnerInterviewAnalyzer::ROLES as $value => $label)<option value="{{ $value }}" @selected(request('role') === $value)>{{ $label }}</option>@endforeach</select></label>
+            <label class="text-xs font-bold">Status<select name="status" class="mt-2 block min-h-11 rounded-xl border border-white/15 bg-background px-3 text-sm"><option value="">Semua</option>@foreach (['queued' => 'Mengantre', 'processing' => 'Diproses', 'completed' => 'Selesai', 'failed' => 'Gagal', 'unavailable' => 'Belum tersedia', 'not_requested' => 'Belum diminta'] as $value => $label)<option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>@endforeach</select></label>
+            <label class="text-xs font-bold">Profil<select name="mode" class="mt-2 block min-h-11 rounded-xl border border-white/15 bg-background px-3 text-sm"><option value="">Semua</option><option value="account" @selected(request('mode') === 'account')>Akun</option><option value="anonymous" @selected(request('mode') === 'anonymous')>Anonim</option></select></label>
+            <label class="min-w-0 text-xs font-bold">Materi utama<select name="learning_path_id" class="mt-2 block min-h-11 max-w-full rounded-xl border border-white/15 bg-background px-3 text-sm"><option value="">Semua</option>@foreach ($learningPaths as $path)<option value="{{ $path->id }}" @selected((string) request('learning_path_id') === (string) $path->id)>{{ $path->title }}</option>@endforeach</select></label>
+        @endif
+        <button class="min-h-11 rounded-xl bg-accent px-4 text-sm font-bold text-background">Terapkan</button>
+    </form>
+@endif
+@if ($tab === 'overview')
+    <x-ai-statistics :snapshot="$snapshot" />
+    <div class="mt-6 grid gap-5 xl:grid-cols-2">
+        <section class="rounded-card border border-white/10 bg-surface p-5"><h2 class="font-display text-lg font-bold">Status analisis interview · seluruh waktu</h2><ul class="mt-4 space-y-3">@forelse ($statuses as $item)<li class="flex items-center justify-between gap-3"><x-job-status :status="$item->analysis_status" /><span class="font-bold">{{ $item->total }}</span></li>@empty<li class="text-sm text-foreground/55">Belum ada interview.</li>@endforelse</ul></section>
+        <section class="rounded-card border border-white/10 bg-surface p-5"><h2 class="font-display text-lg font-bold">Materi utama dipilih · periode terpilih</h2><p class="mt-1 text-xs leading-6 text-foreground/55">Materi pertama dari pilihan interview, bukan seluruh pilihan atau penilaian kemampuan.</p><ul class="mt-4 space-y-3">@forelse ($snapshot['primary_materials'] as $item)<li class="flex items-start justify-between gap-3 text-sm"><span class="break-words">{{ $item['title'] }}</span><span class="font-bold">{{ $item['total'] }}</span></li>@empty<li class="text-sm text-foreground/55">Belum ada data pada periode ini.</li>@endforelse</ul></section>
+    </div>
+    <section class="mt-6 rounded-card border border-accent/20 bg-surface p-5">
+        <h2 class="font-display text-xl font-bold">Interpretasi statistik oleh AI</h2><p class="mt-2 text-sm leading-6 text-foreground/60">Ringkasan dan saran berdasarkan snapshot agregat. Identitas dan jawaban pribadi tidak dikirim untuk laporan ini.</p>
+        <form method="POST" action="{{ route('admin.ai.reports.store') }}" class="mt-4">@csrf<input type="hidden" name="start" value="{{ $start->toDateString() }}"><input type="hidden" name="end" value="{{ $end->toDateString() }}"><button class="min-h-11 rounded-full bg-accent px-5 text-sm font-bold text-background">Buat ringkasan AI</button></form>
+        @unless ($aiConfigured)<p class="mt-3 text-xs text-foreground/55">AI belum dikonfigurasi. Statistik faktual tetap tersedia.</p>@endunless
+        <ul class="mt-5 space-y-3">@forelse ($reports as $report)<li><a href="{{ route('admin.ai.reports.show', $report) }}" class="flex min-h-14 flex-wrap items-center justify-between gap-3 rounded-xl bg-background p-4 text-sm"><span>{{ $report->period_start->format('d M Y') }} – {{ $report->period_end->format('d M Y') }}<span class="mt-1 block text-xs text-foreground/50">Diminta {{ $report->created_at->format('d M Y H:i') }}</span></span><x-job-status :status="$report->status" /></a></li>@empty<li class="text-sm text-foreground/55">Belum ada laporan AI.</li>@endforelse</ul><div class="mt-4">{{ $reports->links() }}</div>
+    </section>
+@elseif ($tab === 'interviews')
+    <div class="space-y-3">@forelse ($profiles as $profile)<a href="{{ route('admin.ai.profiles.show', $profile) }}" class="flex min-h-20 flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-surface p-5"><span class="min-w-0"><span class="block font-bold">Pelajar #{{ $profile->id }} · {{ $profile->mode === 'account' ? 'Akun' : 'Anonim' }}</span><span class="mt-1 block break-words text-sm text-foreground/60">{{ \App\Services\LearnerInterviewAnalyzer::ROLES[$profile->role] ?? $profile->role }} · {{ $profile->learningPath?->title }} · {{ $profile->created_at->format('d M Y') }}</span></span><x-job-status :status="$profile->analysis_status" /></a>@empty<p class="rounded-2xl bg-surface p-6 text-sm text-foreground/60">Tidak ada interview yang sesuai filter.</p>@endforelse</div><div class="mt-5">{{ $profiles->links() }}</div>
+@elseif ($tab === 'drafts')
+    <p class="mb-4 text-sm text-foreground/60">Draf berasal dari fitur pembuatan kuis AI. Hasilnya perlu diperiksa pemilik kuis sebelum digunakan.</p>
+    <div class="space-y-3">@forelse ($drafts as $draft)<a href="{{ route('admin.ai.drafts.show', $draft) }}" class="flex min-h-16 items-center justify-between gap-4 rounded-2xl bg-surface p-5"><span class="text-sm font-bold">Draf #{{ $draft->id }} · akun #{{ $draft->user_id }}<span class="mt-1 block text-xs font-normal text-foreground/55">{{ $draft->created_at->format('d M Y H:i') }}</span></span><x-job-status :status="$draft->status" /></a>@empty<p class="rounded-2xl bg-surface p-6 text-sm text-foreground/60">Belum ada draf kuis AI.</p>@endforelse</div><div class="mt-5">{{ $drafts->links() }}</div>
+@else
+    <div class="grid gap-5 xl:grid-cols-2">
+        <section class="rounded-card border border-white/10 bg-surface p-6"><h2 class="font-display text-xl font-bold">Analisis & ringkasan AI</h2><p class="mt-3 text-sm">{{ $aiConfigured ? 'Konfigurasi siap' : 'Belum dikonfigurasi' }}</p><p class="mt-2 break-words text-sm text-foreground/60">Provider: {{ config('services.learner_analysis.provider') }} · model: {{ config('services.learner_analysis.model') ?: 'belum dipilih' }}</p><p class="mt-3 text-xs leading-6 text-foreground/50">Koneksi model belum diuji oleh halaman ini. Lihat status pekerjaan untuk mengetahui hasil pemrosesan terakhir.</p></section>
+        <section class="rounded-card border border-white/10 bg-surface p-6"><h2 class="font-display text-xl font-bold">TTS offline</h2><p class="mt-3 text-sm">{{ $ttsConfigured ? 'Konfigurasi TTS offline siap' : 'Mesin belum dikonfigurasi' }}</p><p class="mt-2 text-sm leading-6 text-foreground/60">Unggah rekaman tetap tersedia. Untuk Bahasa Bali, gunakan rekaman yang diperiksa pengajar.</p><a href="{{ route('admin.audio.index') }}" class="mt-3 inline-flex min-h-11 items-center font-bold text-accent">Kelola audio →</a></section>
+        <section class="rounded-card border border-white/10 bg-surface p-6"><h2 class="font-display text-xl font-bold">Antrean pemrosesan lokal</h2><p class="mt-3 font-display text-3xl font-bold">{{ $pendingJobs }}</p><p class="mt-2 text-sm text-foreground/60">Pekerjaan tersimpan di antrean lokal. Satu inferensi berjalan bersamaan.</p><p class="mt-3 text-xs leading-6 text-foreground/50">Jumlah antrean bukan bukti worker sedang aktif. Periksa status proses worker di lingkungan server.</p></section>
+        <section class="rounded-card border border-white/10 bg-surface p-6"><h2 class="font-display text-xl font-bold">Audio perlu tindakan</h2><p class="mt-3 text-sm">Perlu ditinjau: {{ $audioCounts['review'] ?? 0 }} · gagal: {{ $audioCounts['failed'] ?? 0 }} · kedaluwarsa: {{ $audioCounts['stale'] ?? 0 }}</p></section>
+    </div>
+@endif
+@endsection

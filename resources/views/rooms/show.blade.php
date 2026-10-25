@@ -101,8 +101,11 @@
                             <div class="h-full rounded-full bg-accent" style="width: {{ $questionCount ? round($questionPosition / $questionCount * 100) : 0 }}%"></div>
                         </div>
 
-                        <div class="mt-4 flex min-h-28 items-center justify-center rounded-[1.5rem] border border-primary/35 bg-primary/15 px-5 py-6 text-center sm:min-h-32 sm:px-8">
+                        <div class="mt-4 flex min-h-28 flex-col items-center justify-center rounded-[1.5rem] border border-primary/35 bg-primary/15 px-5 py-6 text-center sm:min-h-32 sm:px-8">
                             <h2 id="question-title" class="max-w-2xl break-words font-display text-xl font-bold leading-snug sm:text-2xl">{{ $activeQuestion->prompt }}</h2>
+                            @if ($audio)
+                                <div class="mt-4 w-full text-left"><x-content-audio-player :src="route('content-audio.show', ['contentAudio' => $audio, 'room' => $room->code, 'feedback' => $isFeedback ? $currentAnswer?->id : null])" label="Dengarkan soal dan pilihan jawaban" /></div>
+                            @endif
                         </div>
 
                         <div class="mt-4 flex items-center gap-3 text-sm font-semibold">

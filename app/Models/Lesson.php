@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Hidden(['correct_option'])]
 class Lesson extends Model
@@ -25,6 +26,11 @@ class Lesson extends Model
     public function learningPath(): BelongsTo
     {
         return $this->belongsTo(LearningPath::class);
+    }
+
+    public function audio(): HasOne
+    {
+        return $this->hasOne(ContentAudio::class);
     }
 
     public function progress(): HasMany

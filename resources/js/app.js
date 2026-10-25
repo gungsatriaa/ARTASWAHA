@@ -1,6 +1,14 @@
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 
+if (document.querySelector('[data-content-audio]')) {
+    import('./content-audio.js');
+}
+
+if (document.querySelector('[data-learner-analysis-url]')) {
+    import('./learner-analysis.js');
+}
+
 const presenceUrl = document.body.dataset.presenceUrl;
 
 if (presenceUrl) {

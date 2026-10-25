@@ -8,6 +8,12 @@
             <a href="{{ route('register') }}" class="mt-4 inline-flex min-h-11 items-center rounded-full bg-accent px-5 text-sm font-bold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-accent">Daftar akun</a>
         </div>
     @endif
+    @if (session('status'))
+        <x-flash-notice class="mb-5">{{ session('status') }}</x-flash-notice>
+    @endif
+    @if ($analysisProfile)
+        <x-learner-analysis :analysis="$analysis" />
+    @endif
     <section id="progres" class="min-w-0" aria-labelledby="progress-title">
         <header class="mb-5 flex flex-wrap items-end justify-between gap-3">
             <div>

@@ -15,6 +15,11 @@
         </div>
     </div>
 
+    <section class="mt-6 grid gap-3 sm:grid-cols-3" aria-label="Tindak lanjut AI dan audio">
+        <a href="{{ route('admin.ai.index', ['tab' => 'interviews', 'status' => 'failed']) }}" class="rounded-2xl border border-white/10 bg-surface p-4"><span class="text-xs text-foreground/55">Analisis interview gagal</span><span class="mt-2 block font-display text-2xl font-bold">{{ $aiTasks['failed_interviews'] }}</span></a>
+        <a href="{{ route('admin.audio.index', ['status' => 'review']) }}" class="rounded-2xl border border-accent/20 bg-surface p-4"><span class="text-xs text-foreground/55">Audio menunggu tinjauan</span><span class="mt-2 block font-display text-2xl font-bold text-accent">{{ $aiTasks['audio_review'] }}</span></a>
+        <a href="{{ route('admin.audio.index') }}" class="rounded-2xl border border-white/10 bg-surface p-4"><span class="text-xs text-foreground/55">Audio gagal/kedaluwarsa</span><span class="mt-2 block font-display text-2xl font-bold">{{ $aiTasks['audio_failed'] }}</span></a>
+    </section>
     <section class="mt-7 grid gap-3 sm:grid-cols-2 2xl:grid-cols-4" aria-label="Statistik modul">
         @foreach ([
             ['label' => 'Semua modul', 'value' => $lessonCounts->total ?? 0, 'note' => 'Seluruh materi tercatat', 'tone' => 'text-foreground'],
@@ -61,7 +66,7 @@
             <section class="rounded-2xl border border-accent/25 bg-accent/10 p-5 sm:p-6" aria-labelledby="review-heading">
                 <div class="flex items-start justify-between gap-4"><h2 id="review-heading" class="font-display text-xl font-bold">Antrean peninjauan</h2><span class="grid size-10 shrink-0 place-items-center rounded-xl bg-accent/15 font-display text-lg font-bold text-accent">{{ $lessonCounts->drafts ?? 0 }}</span></div>
                 <p class="mt-3 text-sm leading-6 text-foreground/65">{{ ($lessonCounts->drafts ?? 0) > 0 ? 'Periksa draf sebelum menerbitkannya ke pengunjung.' : 'Tidak ada draf yang menunggu. Semua perubahan sudah tertangani.' }}</p>
-                <a href="{{ route('admin.lessons.index') }}" class="mt-5 inline-flex min-h-10 items-center rounded-xl border border-accent/30 px-4 text-sm font-bold text-accent transition hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-accent">Buka pelajaran</a>
+                <a href="{{ route('admin.lessons.index') }}" class="mt-5 inline-flex min-h-10 items-center rounded-xl border border-accent/30 px-4 text-sm font-bold text-accent transition hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-accent">Buka modul</a>
             </section>
 
             <section class="overflow-hidden rounded-2xl border border-white/10 bg-surface" aria-labelledby="paths-heading">

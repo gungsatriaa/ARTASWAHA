@@ -11,7 +11,13 @@ class LearnerProfile extends Model
 
     protected function casts(): array
     {
-        return ['learning_path_ids' => 'array'];
+        return [
+            'learning_path_ids' => 'array',
+            'analysis_input' => 'array',
+            'analysis_result' => 'array',
+            'analysis_requested_at' => 'datetime',
+            'analysis_completed_at' => 'datetime',
+        ];
     }
 
     public static function completedFor(?int $userId, mixed $visitorId): ?self

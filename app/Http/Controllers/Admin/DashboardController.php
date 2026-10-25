@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ContentAudio;
+use App\Models\LearnerProfile;
 use App\Models\LearningPath;
 use App\Models\Lesson;
 use Illuminate\Contracts\View\View;
@@ -30,6 +32,12 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        return view('admin.dashboard', compact('lessonCounts', 'learningPaths', 'recentLessons'));
+        $aiTasks = [
+            'failed_interviews' => LearnerProfile::where('analysis_status', 'failed')->count(),
+            'audio_review' => ContentAudio::where('status', 'review')->count(),
+            'audio_failed' => ContentAudio::whereIn('status', ['failed', 'stale'])->count(),
+        ];
+
+        return view('admin.dashboard', compact('lessonCounts', 'learningPaths', 'recentLessons', 'aiTasks'));
     }
 }

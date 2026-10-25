@@ -1,4 +1,4 @@
-@props(['user', 'profile', 'dashboardPaths', 'featuredPath'])
+@props(['user', 'profile', 'dashboardPaths', 'featuredPath', 'analysis'])
 
 @php
     $name = $user?->name ?? $profile->name;
@@ -72,6 +72,9 @@
         </div>
     </section>
 
+    @if ($profile)
+        <div class="mt-7"><x-learner-analysis :analysis="$analysis" :compact="true" /></div>
+    @endif
     <a href="{{ route('quizzes.index') }}" class="mt-7 flex items-center justify-between gap-4 rounded-2xl border border-primary/35 bg-primary/15 p-5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
         <span><span class="block font-display text-lg font-bold">Main kuis bareng</span><span class="mt-1 block text-sm text-foreground/60">{{ $user ? 'Buat kuis atau gabung dengan teman.' : 'Masukkan kode untuk gabung kuis.' }}</span></span>
         <span class="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-xl font-bold text-white" aria-hidden="true">→</span>
