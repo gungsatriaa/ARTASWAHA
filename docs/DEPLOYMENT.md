@@ -64,7 +64,7 @@ npm run build
 
 Gunakan Node yang memenuhi package/lock proyek; Vite saat persiapan memerlukan Node 20.19+ atau 22.12+. Jangan menjalankan `composer update`, `key:generate`, `migrate:fresh`, atau seeder demo pada database production yang sudah ada.
 
-Aplikasi dapat tetap berjalan dengan TTS nonaktif selama runtime diunduh. Jangan menjalankan `deploy.sh` untuk pembaruan pertama sebelum program worker learner tersedia: skrip tersebut memeriksa worker baru. Setelah langkah berikut selesai, skrip deploy normal bisa digunakan lagi.
+Aplikasi dapat tetap berjalan dengan TTS nonaktif selama runtime diunduh. Skrip deploy memeriksa worker learner sebelum menyalakan maintenance jika TTS atau analisis diaktifkan. Jika keduanya nonaktif, worker tersebut dilewati. Jika worker hilang sesudah restart, kegagalan dilaporkan setelah aplikasi dibuka kembali; pemeriksaan ini tidak meninggalkan situs dalam maintenance.
 
 ## 4. Install runtime dan model: satu perintah
 
@@ -216,6 +216,8 @@ supervisorctl status
 ```
 
 Periksa log Laravel dan `storage/logs/learner-worker.log`. Bedakan error lama dari pengujian baru. `/up` yang sukses tidak membuktikan model/worker berhasil. Jika terjadi kegagalan pemasangan, pertahankan `TTS_ENABLED=false`; modul manual, unggah rekaman, dan audio yang sudah disetujui tetap dapat dipakai.
+
+Jika versi skrip deploy lama berhenti pada pemeriksaan worker setelah migration/build selesai dan situs menampilkan 503 maintenance, jalankan `php artisan up` dari folder proyek untuk membuka aplikasi kembali. Periksa pesan kegagalan deploy sebelum mengulanginya. Jangan menghapus atau me-rollback database untuk menangani maintenance yang tertinggal.
 
 ## 9. Git, backup, dan pembaruan berikutnya
 

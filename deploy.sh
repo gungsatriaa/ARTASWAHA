@@ -49,6 +49,14 @@ check_process() {
     printf 'OK  %-18s proses aktif\n' "$label"
 }
 
+check_learner_worker() {
+    if [[ -n "$SUPERVISORCTL_BIN" ]]; then
+        check_supervisor_program "AI/TTS worker" "$LEARNER_QUEUE_PROGRAM"
+    else
+        check_process "AI/TTS worker" '[a]rtisan queue:work learner-analysis'
+    fi
+}
+
 check_reverb_port() {
     local host="$1"
     local port="$2"
@@ -106,6 +114,14 @@ git diff --quiet && git diff --cached --quiet || fail "Ada perubahan file tracke
 [[ "$(dotenv_value APP_ENV)" == "production" ]] || fail "APP_ENV harus production."
 [[ "$(dotenv_value APP_DEBUG)" == "false" ]] || fail "APP_DEBUG harus false."
 
+LEARNER_WORKER_REQUIRED=false
+if [[ "$(dotenv_value TTS_ENABLED)" == "true" || "$(dotenv_value LEARNER_ANALYSIS_ENABLED)" == "true" ]]; then
+    LEARNER_WORKER_REQUIRED=true
+    check_learner_worker
+else
+    printf 'SKIP AI/TTS worker: kedua fitur belum diaktifkan.\n'
+fi
+
 printf '\n[1/15] Menyalakan mode maintenance...\n'
 php artisan down --render="errors::503" --retry=60
 
@@ -151,17 +167,19 @@ sleep 2
 printf '\n[12/15] Memeriksa status queue worker dan Reverb...\n'
 if [[ -n "$SUPERVISORCTL_BIN" ]]; then
     check_supervisor_program "Queue worker" "$QUEUE_PROGRAM"
-    check_supervisor_program "AI/TTS worker" "$LEARNER_QUEUE_PROGRAM"
     check_supervisor_program "Reverb process" "$REVERB_PROGRAM"
 else
     printf 'Supervisor CLI tidak tersedia; memeriksa proses aktif langsung.\n'
     check_process "Queue worker" '[a]rtisan queue:work'
-    check_process "AI/TTS worker" '[a]rtisan queue:work learner-analysis'
     check_process "Reverb process" '[a]rtisan reverb:start'
 fi
 
 printf '\n[13/15] Mematikan mode maintenance...\n'
 php artisan up
+
+if [[ "$LEARNER_WORKER_REQUIRED" == "true" ]]; then
+    check_learner_worker
+fi
 
 printf '\n[14/15] Menjalankan health check Laravel, OCR, AI, dan WebSocket...\n'
 APP_URL="$(dotenv_value APP_URL)"
