@@ -1,4 +1,4 @@
-<x-layouts.app :show-footer="false" title="Kuis — ARTASWAHA">
+<x-layouts.app :show-footer="false" title="Kuis Bahasa Bali — ARTASWAHA" description="Gabung kuis bahasa Bali bersama teman dengan kode room, jawab pertanyaan, dan belajar sambil bermain di ARTASWAHA." :canonical="route('quizzes.index')">
     <div class="mx-auto w-full max-w-6xl px-5 py-8 sm:px-6 sm:py-12 lg:px-10">
         <header class="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div class="max-w-2xl">

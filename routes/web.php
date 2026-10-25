@@ -16,10 +16,13 @@ use App\Http\Controllers\QuizController;
 use App\Http\Controllers\QuizDraftController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\ShowProfileAvatarController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\UpdateProfileAvatarController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LearningPathController::class, 'index'])->name('home');
+Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('robots');
+Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 Route::get('/kebijakan-privasi', PrivacyPolicyController::class)->name('privacy-policy');
 Route::post('/presence', PresenceController::class)->middleware('throttle:30,1')->name('presence.ping');
 Route::get('/mulai-belajar', [LearningInterviewController::class, 'show'])->name('learning.interview.show');

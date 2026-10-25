@@ -1,4 +1,4 @@
-@props(['learningPaths' => null, 'title' => 'ARTASWAHA - Platform Edukasi Bahasa, Sastra, dan Aksara Bali.', 'showFooter' => true, 'mobileDashboard' => false, 'mobileLearningPath' => null])
+@props(['learningPaths' => null, 'title' => 'ARTASWAHA - Platform Edukasi Bahasa, Sastra, dan Aksara Bali.', 'description' => 'Pelajari bahasa, sastra, paribasa, dan aksara Bali melalui materi interaktif dan kuis di ARTASWAHA.', 'canonical' => null, 'showFooter' => true, 'mobileDashboard' => false, 'mobileLearningPath' => null])
 
 <!DOCTYPE html>
 <html lang="id">
@@ -7,7 +7,18 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#0a0a0a">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="description" content="ARTASWAHA - Platform Edukasi Bahasa, Sastra, dan Aksara Bali.">
+        <meta name="description" content="{{ $description }}">
+        @if ($canonical)
+            <link rel="canonical" href="{{ $canonical }}">
+            <meta property="og:type" content="website">
+            <meta property="og:locale" content="id_ID">
+            <meta property="og:site_name" content="ARTASWAHA">
+            <meta property="og:title" content="{{ $title }}">
+            <meta property="og:description" content="{{ $description }}">
+            <meta property="og:url" content="{{ $canonical }}">
+        @else
+            <meta name="robots" content="noindex, nofollow">
+        @endif
         <link rel="icon" type="image/webp" href="{{ asset('image/maskot.webp') }}">
         <link rel="apple-touch-icon" href="{{ asset('image/maskot.webp') }}">
         <link rel="preconnect" href="https://fonts.googleapis.com">

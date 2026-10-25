@@ -1,4 +1,4 @@
-<x-layouts.app :learning-paths="$learningPaths" :mobile-dashboard="$showMobileDashboard" :mobile-learning-path="$featuredPath">
+<x-layouts.app :learning-paths="$learningPaths" :mobile-dashboard="$showMobileDashboard" :mobile-learning-path="$featuredPath" :canonical="route('home')">
             @if (session('status'))
                 <div class="mx-auto max-w-7xl px-5 pt-6 md:px-6 lg:px-10">
                     <x-flash-notice>{{ session('status') }}</x-flash-notice>

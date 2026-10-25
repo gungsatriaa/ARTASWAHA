@@ -1,4 +1,4 @@
-<x-layouts.app :show-footer="false" :title="$lesson->title . ' — ARTASWAHA'">
+<x-layouts.app :show-footer="false" :title="$lesson->title . ' — ARTASWAHA'" :description="\Illuminate\Support\Str::limit($lesson->summary ?: 'Pelajari ' . $lesson->title . ' dalam materi ' . $lesson->learningPath->title . ' di ARTASWAHA.', 160)" :canonical="route('learning.lessons.show', $lesson->slug)">
     <div class="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 sm:py-9">
         <a href="{{ route('learning.paths.show', $lesson->learningPath->slug) }}" class="mb-5 inline-flex min-h-10 items-center gap-2 rounded-full text-sm font-semibold text-foreground/65 transition hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
             <span aria-hidden="true">←</span> Daftar pelajaran

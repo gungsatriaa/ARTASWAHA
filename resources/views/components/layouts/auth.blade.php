@@ -8,6 +8,7 @@
         <meta name="theme-color" content="#0a0a0a">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="description" content="Masuk atau daftar untuk belajar bahasa dan aksara Bali bersama ARTASWAHA.">
+        <meta name="robots" content="noindex, nofollow">
         <link rel="icon" type="image/webp" href="{{ asset('image/maskot.webp') }}">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,7 +29,7 @@
                                 <span class="size-2 rounded-full bg-accent" aria-hidden="true"></span>
                                 Belajar budaya Bali
                             </p>
-                            <h1 class="mt-3 font-display text-2xl font-bold leading-tight tracking-tight sm:text-3xl lg:mt-5 lg:text-4xl xl:text-5xl">Belajar Bali,<br><span class="text-accent">sambil bermain!</span></h1>
+                            <p class="mt-3 font-display text-2xl font-bold leading-tight tracking-tight sm:text-3xl lg:mt-5 lg:text-4xl xl:text-5xl">Belajar Bali,<br><span class="text-accent">sambil bermain!</span></p>
                             <p class="mt-2 max-w-[38rem] font-readable text-sm leading-6 text-foreground/65 lg:mt-4 lg:text-base lg:leading-7">Dari makna paribasa sampai bentuk aksara, semuanya bisa kamu pelajari lewat contoh sederhana dan kuis seru bersama teman.</p>
                             <ul class="mt-6 grid max-w-2xl grid-cols-1 gap-3 border-t border-white/10 pt-5 text-sm font-semibold text-foreground/75 sm:grid-cols-3 lg:mt-8 lg:gap-4 lg:pt-6">
                                 <li class="flex items-center gap-2"><span class="size-2 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>Temukan makna paribasa</li>

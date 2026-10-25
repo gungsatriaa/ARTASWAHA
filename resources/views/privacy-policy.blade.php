@@ -1,4 +1,4 @@
-<x-layouts.app :learning-paths="$learningPaths" title="Kebijakan privasi — ARTASWAHA">
+<x-layouts.app :learning-paths="$learningPaths" title="Kebijakan privasi — ARTASWAHA" description="Ketahui data yang dikumpulkan ARTASWAHA, alasan penggunaannya, masa penyimpanan, dan cara mengendalikan data pribadi Anda." :canonical="route('privacy-policy')">
     <div class="mx-auto max-w-7xl px-5 pb-20 pt-12 sm:px-6 lg:px-10 lg:pt-16">
         <header class="max-w-3xl border-l-4 border-accent pl-5 sm:pl-7">
             <h1 class="font-display text-4xl font-bold tracking-tight sm:text-5xl">Kebijakan privasi</h1>
