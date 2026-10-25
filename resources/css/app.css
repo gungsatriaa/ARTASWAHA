@@ -52,6 +52,16 @@ body {
     font-family: var(--font-sans);
 }
 
+@media (max-width: 767px) {
+    body.mobile-dashboard > footer {
+        display: none;
+    }
+
+    body:has([data-mobile-app-nav]) > main {
+        padding-bottom: calc(7rem + env(safe-area-inset-bottom));
+    }
+}
+
 button:not(:disabled) {
     cursor: pointer;
 }

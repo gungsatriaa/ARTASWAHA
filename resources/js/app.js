@@ -271,6 +271,20 @@ if (roomJoinClosedDialog) {
     });
 }
 
+const quizLoginDialog = document.querySelector('[data-quiz-login-dialog]');
+if (quizLoginDialog) {
+    document.querySelector('[data-quiz-login-open]').addEventListener('click', () => {
+        quizLoginDialog.showModal();
+        scrollLockedDialogs.add(quizLoginDialog);
+        syncPageScrollLock();
+    });
+    quizLoginDialog.querySelector('[data-quiz-login-close]').addEventListener('click', () => quizLoginDialog.close());
+    quizLoginDialog.addEventListener('close', () => {
+        scrollLockedDialogs.delete(quizLoginDialog);
+        syncPageScrollLock();
+    });
+}
+
 document.querySelectorAll('[data-avatar-dialog]').forEach((dialog) => {
     document.querySelector('[data-avatar-open]')?.addEventListener('click', () => {
         dialog.showModal();

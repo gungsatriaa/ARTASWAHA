@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\LearnerProfile;
 use App\Models\LearningPath;
 use App\Models\LearningProgress;
 use App\Models\Lesson;
@@ -98,6 +99,113 @@ class LearningFlowTest extends TestCase
             $response->assertSee($learningPath->title)
                 ->assertSee(route('learning.paths.show', $learningPath->slug));
         }
+    }
+
+    public function test_mobile_dashboard_is_only_rendered_for_a_signed_in_user_or_completed_anonymous_profile(): void
+    {
+        $path = LearningPath::factory()->create(['title' => 'Cecimpedan', 'is_published' => true]);
+        $lesson = Lesson::factory()->for($path, 'learningPath')->create();
+        $user = User::factory()->create(['name' => 'Komang']);
+        LearningProgress::factory()->for($user)->for($lesson)->create();
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertDontSee('id="mobile-featured-title"', false)
+            ->assertSee('Bahasa Bali jadi');
+
+        $this->actingAs($user)->get(route('home'))
+            ->assertOk()
+            ->assertSee('id="mobile-featured-title"', false)
+            ->assertSee('Pilih materi pertamamu')
+            ->assertSee('Pilih minat belajar')
+            ->assertSee('hidden md:block', false)
+            ->assertSee('Bahasa Bali jadi');
+
+        LearnerProfile::query()->create([
+            'visitor_id' => (string) Str::uuid(),
+            'user_id' => $user->id,
+            'learning_path_id' => $path->id,
+            'learning_path_ids' => [$path->id],
+            'role' => 'murid',
+            'name' => $user->name,
+            'mode' => 'account',
+        ]);
+
+        $this->actingAs($user)->get(route('home'))
+            ->assertOk()
+            ->assertSee('id="mobile-featured-title"', false)
+            ->assertSee('1 dari 1 pelajaran selesai')
+            ->assertSee('hidden md:block', false)
+            ->assertSee('Bahasa Bali jadi');
+
+        $this->post(route('logout'));
+        $profile = LearnerProfile::query()->create([
+            'visitor_id' => (string) Str::uuid(),
+            'learning_path_id' => $path->id,
+            'learning_path_ids' => [$path->id],
+            'role' => 'murid',
+            'name' => 'Made',
+            'mode' => 'anonymous',
+        ]);
+
+        $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('home'))
+            ->assertOk()
+            ->assertSee('id="mobile-featured-title"', false)
+            ->assertSee('Akun anonim · di perangkat ini')
+            ->assertSee('Made')
+            ->assertSee('0 dari 1 pelajaran selesai');
+
+        $this->withCookie('artaswaha_device', (string) Str::uuid())->get(route('home'))
+            ->assertOk()
+            ->assertDontSee('id="mobile-featured-title"', false);
+    }
+
+    public function test_mobile_app_navigation_stays_on_the_main_pages_but_not_during_a_lesson(): void
+    {
+        $path = LearningPath::factory()->create();
+        $lesson = Lesson::factory()->for($path, 'learningPath')->create();
+        $user = User::factory()->create();
+
+        foreach (['home', 'learning.paths.show', 'quizzes.index', 'profile.show'] as $routeName) {
+            $url = $routeName === 'learning.paths.show' ? route($routeName, $path->slug) : route($routeName);
+            $this->actingAs($user)->get($url)->assertOk()->assertSee('data-mobile-app-nav', false);
+        }
+
+        $this->actingAs($user)->get(route('learning.lessons.show', $lesson->slug))
+            ->assertOk()
+            ->assertDontSee('data-mobile-app-nav', false);
+    }
+
+    public function test_mobile_learning_tab_falls_back_when_anonymous_selected_material_is_unpublished(): void
+    {
+        $unpublishedPath = LearningPath::factory()->create(['is_published' => false]);
+        $publishedPath = LearningPath::factory()->create(['is_published' => true]);
+        $profile = LearnerProfile::query()->create([
+            'visitor_id' => (string) Str::uuid(),
+            'learning_path_id' => $unpublishedPath->id,
+            'learning_path_ids' => [$unpublishedPath->id],
+            'role' => 'murid',
+            'name' => 'Made',
+            'mode' => 'anonymous',
+        ]);
+
+        $response = $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('home'))->assertOk();
+        preg_match('/<nav data-mobile-app-nav.*?<\/nav>/s', $response->getContent(), $navigation);
+        $this->assertNotEmpty($navigation);
+        $this->assertStringContainsString('href="'.route('learning.paths.show', $publishedPath->slug).'"', $navigation[0]);
+        $this->assertStringNotContainsString('href="'.route('learning.interview.show').'"', $navigation[0]);
+
+        foreach (['quizzes.index', 'profile.show'] as $routeName) {
+            $this->withCookie('artaswaha_device', $profile->visitor_id)
+                ->get(route($routeName))
+                ->assertOk()
+                ->assertSee('data-mobile-app-nav', false);
+        }
+
+        $publishedPath->update(['is_published' => false]);
+        $response = $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('home'))->assertOk();
+        preg_match('/<nav data-mobile-app-nav.*?<\/nav>/s', $response->getContent(), $navigation);
+        $this->assertStringContainsString('href="'.route('profile.show').'#progres"', $navigation[0]);
     }
 
     public function test_unreviewed_lessons_are_not_accessible(): void

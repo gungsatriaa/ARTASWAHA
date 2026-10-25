@@ -14,8 +14,25 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="size-4" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
                 Buat kuis
             </a>
+            @elseif ($profile)
+            <button type="button" data-quiz-login-open aria-haspopup="dialog" aria-controls="quiz-login-dialog" class="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 font-extrabold text-background transition hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="size-4" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                Buat kuis
+            </button>
             @endauth
         </header>
+
+        @if ($profile)
+            <dialog id="quiz-login-dialog" data-quiz-login-dialog aria-labelledby="quiz-login-title" aria-describedby="quiz-login-description" class="fixed inset-0 m-auto w-[min(28rem,calc(100vw-2rem))] rounded-[1.75rem] border border-accent/30 bg-surface p-6 text-foreground shadow-2xl backdrop:bg-black/85 sm:p-8">
+                <span class="grid size-12 place-items-center rounded-2xl bg-accent/10 text-accent" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-6"><path d="M12 16v-4m0-4h.01M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z"/></svg></span>
+                <h2 id="quiz-login-title" class="mt-5 font-display text-2xl font-bold">Masuk untuk membuat kuis</h2>
+                <p id="quiz-login-description" class="mt-3 text-sm leading-6 text-foreground/65">Anda harus login untuk membuat kuis. Profil anonim tetap bisa bergabung dan menjawab kuis.</p>
+                <div class="mt-7 flex flex-wrap gap-3">
+                    <a href="{{ route('login') }}" class="inline-flex min-h-12 flex-1 items-center justify-center rounded-full bg-accent px-5 font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Masuk</a>
+                    <button type="button" data-quiz-login-close class="inline-flex min-h-12 flex-1 items-center justify-center rounded-full border border-white/15 px-5 font-bold text-foreground transition hover:bg-background focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Nanti saja</button>
+                </div>
+            </dialog>
+        @endif
 
         @if (session('status'))
             <x-flash-notice class="mb-6">{{ session('status') }}</x-flash-notice>

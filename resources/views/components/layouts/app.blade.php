@@ -1,4 +1,4 @@
-@props(['learningPaths' => null, 'title' => 'ARTASWAHA - Platform Edukasi Bahasa, Sastra, dan Aksara Bali.', 'showFooter' => true])
+@props(['learningPaths' => null, 'title' => 'ARTASWAHA - Platform Edukasi Bahasa, Sastra, dan Aksara Bali.', 'showFooter' => true, 'mobileDashboard' => false, 'mobileLearningPath' => null])
 
 <!DOCTYPE html>
 <html lang="id">
@@ -16,8 +16,8 @@
         <title>{{ $title }}</title>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body data-presence-url="{{ route('presence.ping') }}" @class(['min-h-screen bg-background font-sans text-foreground antialiased', 'flex flex-col' => ! $showFooter])>
-        <x-site-nav :learning-paths="$learningPaths" />
+    <body data-presence-url="{{ route('presence.ping') }}" @class(['min-h-screen bg-background font-sans text-foreground antialiased', 'flex flex-col' => ! $showFooter, 'mobile-dashboard' => $mobileDashboard])>
+        <x-site-nav :learning-paths="$learningPaths" :mobile-learning-path="$mobileLearningPath" />
         <main @class(['flex-1' => ! $showFooter])>
             {{ $slot }}
         </main>

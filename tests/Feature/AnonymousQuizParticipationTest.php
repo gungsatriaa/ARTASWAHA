@@ -42,7 +42,13 @@ class AnonymousQuizParticipationTest extends TestCase
         $this->post(route('rooms.join'), ['code' => $room->code])->assertRedirect(route('learning.interview.show'));
 
         $this->withCookie('artaswaha_device', $profile->visitor_id)
-            ->get(route('quizzes.index'))->assertOk()->assertDontSee('buat profil anonim');
+            ->get(route('quizzes.index'))
+            ->assertOk()
+            ->assertDontSee('buat profil anonim')
+            ->assertSee('data-quiz-login-open', false)
+            ->assertSee('Anda harus login untuk membuat kuis.')
+            ->assertSee(route('login'), false);
+        $this->get(route('quizzes.create'))->assertRedirect(route('login'));
         $this->post(route('rooms.join'), ['code' => $room->code])->assertRedirect(route('rooms.show', $room->code));
         $this->post(route('rooms.join'), ['code' => $room->code])->assertRedirect(route('rooms.show', $room->code));
         $this->assertDatabaseHas('room_participants', ['room_id' => $room->id, 'learner_profile_id' => $profile->id, 'user_id' => null]);
