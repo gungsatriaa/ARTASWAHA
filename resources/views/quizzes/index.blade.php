@@ -9,10 +9,12 @@
                 <h1 class="mt-4 font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl">Belajar lebih seru kalau dimainkan.</h1>
                 <p class="mt-3 max-w-xl font-readable leading-7 text-foreground/65">Pilih kuis, tantang teman, dan kenali bahasa Bali sambil bermain.</p>
             </div>
+            @auth
             <a href="{{ route('quizzes.create') }}" class="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 font-extrabold text-background transition hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="size-4" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
                 Buat kuis
             </a>
+            @endauth
         </header>
 
         @if (session('status'))
@@ -48,6 +50,11 @@
             </div>
         </section>
 
+        @if (auth()->guest() && $profile === null)
+            <p class="mt-4 text-sm text-foreground/65">Untuk bergabung, <a href="{{ route('learning.interview.show') }}" class="font-bold text-accent underline underline-offset-2">buat profil anonim</a> terlebih dahulu. Tidak perlu login.</p>
+        @endif
+
+        @auth
         <section class="mt-12 sm:mt-16" aria-labelledby="quiz-list-title">
             <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
                 <div>
@@ -89,5 +96,6 @@
             </div>
             <div class="mt-6">{{ $quizzes->links() }}</div>
         </section>
+        @endauth
     </div>
 </x-layouts.app>

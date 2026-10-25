@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Events\RoomUpdated;
+use App\Models\LearnerProfile;
 use App\Models\Quiz;
 use App\Models\QuizQuestion;
 use App\Models\Room;
@@ -58,11 +59,11 @@ class RoomService
         return $room;
     }
 
-    public function join(string $code, User $user): Room
+    public function join(string $code, User|LearnerProfile $player): Room
     {
         $this->deactivateIfHostAbsent(Room::query()->where('code', Str::upper(trim($code)))->firstOrFail());
 
-        $room = DB::transaction(function () use ($code, $user): Room {
+        $room = DB::transaction(function () use ($code, $player): Room {
             $room = Room::query()->where('code', Str::upper(trim($code)))->lockForUpdate()->firstOrFail();
             if ($room->status !== 'waiting') {
                 throw ValidationException::withMessages(match ($room->status) {
@@ -73,8 +74,8 @@ class RoomService
             }
 
             $room->participants()->firstOrCreate(
-                ['user_id' => $user->id],
-                ['display_name' => $user->name],
+                $this->participantKey($player),
+                ['display_name' => $player->name],
             );
 
             return $room;
@@ -85,11 +86,11 @@ class RoomService
         return $room;
     }
 
-    public function leave(Room $room, User $user): void
+    public function leave(Room $room, User|LearnerProfile $player): void
     {
-        $changed = DB::transaction(function () use ($room, $user): bool {
+        $changed = DB::transaction(function () use ($room, $player): bool {
             $room = Room::query()->whereKey($room->id)->lockForUpdate()->firstOrFail();
-            if ($room->host_id === $user->id) {
+            if ($player instanceof User && $room->host_id === $player->id) {
                 if (! in_array($room->status, ['waiting', 'active'], true)) {
                     return false;
                 }
@@ -99,7 +100,7 @@ class RoomService
                 return true;
             }
 
-            $room->participants()->where('user_id', $user->id)->firstOrFail()->delete();
+            $room->participants()->where($this->participantKey($player))->firstOrFail()->delete();
             if ($room->seconds_per_question) {
                 $this->finishTimedIfComplete($room);
             } else {
@@ -191,15 +192,15 @@ class RoomService
         return $room;
     }
 
-    public function answer(Room $room, User $user, array $data): RoomAnswer
+    public function answer(Room $room, User|LearnerProfile $player, array $data): RoomAnswer
     {
         $this->syncTimedRoom($room);
 
-        $answer = DB::transaction(function () use ($room, $user, $data): RoomAnswer {
+        $answer = DB::transaction(function () use ($room, $player, $data): RoomAnswer {
             $room = Room::query()->whereKey($room->id)->lockForUpdate()->firstOrFail();
             abort_unless($room->status === 'active', 422, 'Room belum aktif.');
 
-            $participant = $room->participants()->where('user_id', $user->id)->firstOrFail();
+            $participant = $room->participants()->where($this->participantKey($player))->firstOrFail();
             $existingAnswer = $participant->answers()->where('quiz_question_id', $data['question_id'])->first();
             if ($existingAnswer) {
                 return $existingAnswer;
@@ -303,17 +304,17 @@ class RoomService
     }
 
     /** @return array{room: Room, participant: RoomParticipant|null, activeQuestion: QuizQuestion|null, currentAnswer: RoomAnswer|null, isFeedback: bool, answersByQuestion: Collection} */
-    public function viewData(Room $room, User $user): array
+    public function viewData(Room $room, User|LearnerProfile $player): array
     {
         abort_unless(
-            $room->host_id === $user->id || $room->participants()->where('user_id', $user->id)->exists(),
+            ($player instanceof User && $room->host_id === $player->id) || $room->participants()->where($this->participantKey($player))->exists(),
             403,
         );
 
         $this->syncTimedRoom($room);
         $room->refresh();
-        $room->load(['quiz.questions', 'currentQuestion', 'participants.user']);
-        $participant = $room->participants->firstWhere('user_id', $user->id);
+        $room->load(['quiz.questions', 'currentQuestion', 'participants.user', 'participants.learnerProfile']);
+        $participant = $room->participants->first(fn (RoomParticipant $participant): bool => $participant->getAttribute(key($this->participantKey($player))) === $player->id);
         $feedbackAnswer = $participant && $room->quiz->show_answers_immediately
             ? $participant->answers()->whereKey(request()->query('feedback'))->first()
             : null;
@@ -332,6 +333,12 @@ class RoomService
             : collect();
 
         return compact('room', 'participant', 'activeQuestion', 'currentAnswer', 'isFeedback', 'answersByQuestion');
+    }
+
+    /** @return array{user_id: int}|array{learner_profile_id: int} */
+    public function participantKey(User|LearnerProfile $player): array
+    {
+        return $player instanceof User ? ['user_id' => $player->id] : ['learner_profile_id' => $player->id];
     }
 
     private function nextQuestionFor(Room $room, RoomParticipant $participant): ?QuizQuestion

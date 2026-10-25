@@ -73,7 +73,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 });
 
 Route::middleware('auth')->group(function (): void {
-    Route::get('/kuis', [QuizController::class, 'index'])->name('quizzes.index');
     Route::get('/kuis/buat', [QuizController::class, 'create'])->name('quizzes.create');
     Route::post('/kuis/draf-ai', [QuizDraftController::class, 'store'])->middleware('throttle:5,1')->name('quizzes.drafts.store');
     Route::get('/kuis/draf-ai/{quizDraft}', [QuizDraftController::class, 'show'])->name('quizzes.drafts.show');
@@ -82,13 +81,16 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/kuis/{quiz}/edit', [QuizController::class, 'edit'])->name('quizzes.edit');
     Route::put('/kuis/{quiz}', [QuizController::class, 'update'])->name('quizzes.update');
     Route::post('/kuis/{quiz}/room', [RoomController::class, 'store'])->middleware('throttle:10,1')->name('rooms.store');
-    Route::post('/room/gabung', [RoomController::class, 'join'])->middleware('throttle:10,1')->name('rooms.join');
-    Route::get('/room/{room:code}/status', [RoomController::class, 'status'])->name('rooms.status');
-    Route::get('/room/{room:code}/avatar/{user}', [ShowProfileAvatarController::class, 'forRoom'])->name('rooms.participant-avatar');
-    Route::get('/room/{room:code}', [RoomController::class, 'show'])->name('rooms.show');
-    Route::post('/room/{room:code}/keluar', [RoomController::class, 'leave'])->name('rooms.leave');
     Route::post('/room/{room:code}/heartbeat', [RoomController::class, 'heartbeat'])->middleware('throttle:10,1')->name('rooms.heartbeat');
     Route::delete('/room/{room:code}', [RoomController::class, 'destroy'])->name('rooms.destroy');
     Route::post('/room/{room:code}/mulai', [RoomController::class, 'start'])->name('rooms.start');
-    Route::post('/room/{room:code}/jawab', [RoomController::class, 'answer'])->middleware('throttle:30,1')->name('rooms.answer');
 });
+
+Route::get('/kuis', [QuizController::class, 'index'])->name('quizzes.index');
+Route::post('/room/gabung', [RoomController::class, 'join'])->middleware('throttle:10,1')->name('rooms.join');
+Route::get('/room/{room:code}/status', [RoomController::class, 'status'])->name('rooms.status');
+Route::get('/room/{room:code}/avatar/{user}', [ShowProfileAvatarController::class, 'forRoom'])->name('rooms.participant-avatar');
+Route::get('/room/{room:code}/avatar-anonim/{learnerProfile}', [ShowProfileAvatarController::class, 'forAnonymousRoom'])->name('rooms.anonymous-avatar');
+Route::get('/room/{room:code}', [RoomController::class, 'show'])->name('rooms.show');
+Route::post('/room/{room:code}/keluar', [RoomController::class, 'leave'])->name('rooms.leave');
+Route::post('/room/{room:code}/jawab', [RoomController::class, 'answer'])->middleware('throttle:30,1')->name('rooms.answer');

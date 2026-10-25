@@ -56,7 +56,6 @@
                     <div class="flex flex-1 items-center">
                         <div class="mx-auto w-full max-w-md">
                         {{ $slot }}
-                        <p class="mt-5 text-center text-xs leading-5 text-foreground/55">Lihat cara kami menggunakan datamu dalam <a href="{{ route('privacy-policy') }}" class="font-bold text-accent underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-accent">kebijakan privasi</a>.</p>
                         </div>
                     </div>
                 </section>

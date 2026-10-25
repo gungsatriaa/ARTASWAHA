@@ -205,10 +205,21 @@ class LearningFlowTest extends TestCase
             ->assertOk()
             ->assertSee('Pilih pelajaran')
             ->assertSee('1 pelajaran')
-            ->assertSee('lg:grid-cols-[.82fr_1.18fr]', false)
+            ->assertSee('md:grid-cols-2', false)
             ->assertSee('Pelajaran yang ditinjau')
             ->assertSee(route('learning.lessons.show', 'pelajaran-yang-ditinjau'))
             ->assertDontSee('Draf internal');
+    }
+
+    public function test_empty_learning_path_offers_another_topic(): void
+    {
+        $path = LearningPath::factory()->create(['is_published' => true]);
+
+        $this->get(route('learning.paths.show', $path->slug))
+            ->assertOk()
+            ->assertSee('Pelajaran sedang disiapkan')
+            ->assertSee('Lihat materi lain')
+            ->assertSee(route('home'), false);
     }
 
     public function test_anonymous_progress_is_saved_once_for_the_device(): void

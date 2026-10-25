@@ -23,8 +23,8 @@
                 <a href="{{ route('profile.about') }}" @class(['flex min-h-11 items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-accent', 'bg-primary/15 text-accent' => $active === 'about', 'text-foreground/75 hover:bg-background hover:text-accent' => $active !== 'about'])>
                     <span aria-hidden="true">ⓘ</span> Tentang aplikasi ini
                 </a>
-                <a href="{{ route($isAnonymous ? 'login' : 'quizzes.index') }}" class="flex min-h-11 items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-foreground/75 transition hover:bg-background hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">
-                    <span aria-hidden="true">♫</span> Kuis saya @if ($isAnonymous)<span class="ml-auto text-xs text-foreground/45">Perlu akun</span>@endif
+                <a href="{{ route('quizzes.index') }}" class="flex min-h-11 items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-foreground/75 transition hover:bg-background hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">
+                    <span aria-hidden="true">♫</span> {{ $isAnonymous ? 'Gabung kuis' : 'Kuis saya' }}
                 </a>
                 @if ($isAnonymous)
                     <a href="{{ route('login') }}" class="flex min-h-11 items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-foreground/75 transition hover:bg-background hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"><span aria-hidden="true">↗</span> Masuk</a>

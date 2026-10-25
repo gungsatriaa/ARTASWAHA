@@ -7,7 +7,7 @@
             : 0;
     @endphp
 
-    <div class="mx-auto w-full max-w-6xl px-5 sm:px-6 lg:px-10 {{ $room->status === 'active' || $isFeedback ? 'py-4 sm:py-6' : 'py-8 sm:py-12' }}" data-room-code="{{ $room->code }}" data-room-status="{{ $room->status }}" data-room-status-url="{{ route('rooms.status', $room->code) }}" @if ($isHost && in_array($room->status, ['waiting', 'active'], true)) data-room-heartbeat-url="{{ route('rooms.heartbeat', $room->code) }}" @endif @if ($isFeedback) data-room-feedback-next="{{ route('rooms.show', $room->code) }}" @endif @if ($participant?->question_ends_at && $room->status === 'active' && ! $isFeedback) data-question-ends-at="{{ $participant->question_ends_at->toIso8601String() }}" data-server-now="{{ now()->toIso8601String() }}" @endif>
+    <div class="mx-auto w-full max-w-6xl px-5 sm:px-6 lg:px-10 {{ $room->status === 'active' || $isFeedback ? 'py-4 sm:py-6' : 'py-8 sm:py-12' }}" data-room-code="{{ $room->code }}" data-room-status="{{ $room->status }}" data-room-participants="{{ $room->participants->count() }}" @if (auth()->guest()) data-room-anonymous @endif data-room-status-url="{{ route('rooms.status', $room->code) }}" @if ($isHost && in_array($room->status, ['waiting', 'active'], true)) data-room-heartbeat-url="{{ route('rooms.heartbeat', $room->code) }}" @endif @if ($isFeedback) data-room-feedback-next="{{ route('rooms.show', $room->code) }}" @endif @if ($participant?->question_ends_at && $room->status === 'active' && ! $isFeedback) data-question-ends-at="{{ $participant->question_ends_at->toIso8601String() }}" data-server-now="{{ now()->toIso8601String() }}" @endif>
         <div class="flex flex-wrap items-center justify-between gap-3 {{ $room->status === 'active' ? 'mb-4' : 'mb-6' }}">
             @if (in_array($room->status, ['waiting', 'active'], true))
                 <form method="POST" action="{{ route('rooms.leave', $room->code) }}">
@@ -67,9 +67,10 @@
                         </div>
                         <ul class="mt-6 grid gap-3 sm:grid-cols-2">
                             @foreach ($room->participants as $roomParticipant)
-                                <li data-room-presence-user="{{ $roomParticipant->user_id }}" class="flex items-center gap-3 rounded-2xl border border-white/10 bg-background p-3">
-                                    <img src="{{ str_starts_with($roomParticipant->user->avatar ?? '', 'avatars/') ? route('rooms.participant-avatar', [$room->code, $roomParticipant->user_id]) : asset($roomParticipant->user->avatar ?? array_key_first(\App\Services\ProfileAvatarService::DEFAULT_AVATARS)) }}" alt="" class="size-10 shrink-0 rounded-full object-cover ring-2 ring-primary/40">
-                                    <span class="min-w-0 truncate text-sm font-bold">{{ $roomParticipant->user->name }}</span>
+                                @php $member = $roomParticipant->user ?? $roomParticipant->learnerProfile; @endphp
+                                <li data-room-presence-user="{{ $roomParticipant->user_id ?? 'anon-'.$roomParticipant->learner_profile_id }}" class="flex items-center gap-3 rounded-2xl border border-white/10 bg-background p-3">
+                                    <img src="{{ str_starts_with($member?->avatar ?? '', 'avatars/') ? ($roomParticipant->user_id ? route('rooms.participant-avatar', [$room->code, $roomParticipant->user_id]) : route('rooms.anonymous-avatar', [$room->code, $roomParticipant->learner_profile_id])) : asset($member?->avatar ?? array_key_first(\App\Services\ProfileAvatarService::DEFAULT_AVATARS)) }}" alt="" class="size-10 shrink-0 rounded-full object-cover ring-2 ring-primary/40">
+                                    <span class="min-w-0 truncate text-sm font-bold">{{ $member?->name ?? $roomParticipant->display_name }}</span>
                                     @if ($roomParticipant->user_id === $room->host_id)<span class="ml-auto rounded-full bg-accent/10 px-2.5 py-1 text-xs font-bold text-accent">Host</span>@endif
                                 </li>
                             @endforeach

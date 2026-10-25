@@ -1,44 +1,59 @@
 <x-layouts.app :show-footer="false" :title="$lesson->title . ' — ARTASWAHA'">
-        <div class="mx-auto w-full max-w-3xl px-5 py-8 sm:px-6 sm:py-12 lg:py-16">
-            <a href="{{ route('learning.paths.show', $lesson->learningPath->slug) }}" class="mb-8 inline-flex min-h-10 items-center rounded-full px-4 text-sm font-semibold text-foreground/70 transition hover:bg-surface hover:text-accent">← Daftar pelajaran</a>
-            <p class="font-semibold text-accent">{{ $lesson->learningPath->title }}</p>
-            <h1 class="mt-2 break-words font-display text-3xl font-bold sm:text-5xl">{{ $lesson->title }}</h1>
-            <p class="mt-4 font-readable text-lg leading-8 text-foreground/70">{{ $lesson->summary }}</p>
+    <div class="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 sm:py-9">
+        <a href="{{ route('learning.paths.show', $lesson->learningPath->slug) }}" class="mb-5 inline-flex min-h-10 items-center gap-2 rounded-full text-sm font-semibold text-foreground/65 transition hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+            <span aria-hidden="true">←</span> Daftar pelajaran
+        </a>
 
-            @if (session('status'))
-                <x-flash-notice :tone="session('status_tone', 'success')" class="mt-8">{{ session('status') }}</x-flash-notice>
+        <header class="rounded-card border border-white/10 bg-surface p-5 sm:p-7 lg:p-9">
+            <p class="text-sm font-bold text-accent">{{ $lesson->learningPath->title }}</p>
+            <h1 class="mt-2 break-words font-display text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">{{ $lesson->title }}</h1>
+            @if ($lesson->summary)
+                <p class="mt-3 text-sm leading-7 text-foreground/65 sm:text-base">{{ $lesson->summary }}</p>
             @endif
+        </header>
 
-            <article class="mt-8 rounded-card bg-surface p-6 font-readable text-lg leading-8 sm:p-8">
-                {{ $lesson->content }}
-            </article>
+        @if (session('status'))
+            <x-flash-notice :tone="session('status_tone', 'success')" class="mt-5">{{ session('status') }}</x-flash-notice>
+        @endif
 
-            @if ($progress?->completed_at)
-                <p class="mt-6 rounded-2xl bg-surface px-5 py-4 font-semibold text-accent">Pelajaran selesai · {{ $progress->points }} poin</p>
+        <article class="mt-5 rounded-card border border-white/10 bg-surface p-5 sm:p-7 lg:p-9" aria-labelledby="lesson-content-title">
+            <h2 id="lesson-content-title" class="mb-4 font-display text-xl font-bold">Materi pelajaran</h2>
+            <div class="whitespace-pre-line break-words font-readable text-base leading-8 text-foreground/85 sm:text-lg">{{ $lesson->content }}</div>
+        </article>
+
+        @if ($progress?->completed_at)
+            <section class="mt-5 rounded-card border border-accent/25 bg-accent/10 p-5 sm:p-6" aria-label="Hasil pelajaran">
+                <p class="font-bold text-accent">Pelajaran selesai · {{ $progress->points }} poin</p>
                 @if ($lesson->exercise_explanation)
-                    <p class="mt-4 rounded-2xl bg-primary/15 p-5 font-readable leading-7 text-foreground/80">{{ $lesson->exercise_explanation }}</p>
+                    <p class="mt-3 whitespace-pre-line break-words text-sm leading-7 text-foreground/75">{{ $lesson->exercise_explanation }}</p>
                 @endif
-            @elseif ($lesson->exercise_prompt)
-                <section class="mt-8 rounded-card bg-surface p-6 sm:p-8" aria-labelledby="exercise-title">
-                    <p class="text-sm font-semibold text-accent">Latihan singkat</p>
-                    <h2 id="exercise-title" class="mt-2 font-display text-2xl font-bold">{{ $lesson->exercise_prompt }}</h2>
-                    <form method="POST" action="{{ route('learning.exercises.answer', $lesson->slug) }}" class="mt-6 space-y-3">
-                        @csrf
+            </section>
+        @elseif ($lesson->exercise_prompt)
+            <section class="mt-5 rounded-card border border-white/10 bg-surface p-5 sm:p-7 lg:p-9" aria-labelledby="exercise-title">
+                <p class="text-sm font-bold text-accent">Latihan singkat</p>
+                <h2 id="exercise-title" class="mt-2 break-words font-display text-xl font-bold leading-snug sm:text-2xl">{{ $lesson->exercise_prompt }}</h2>
+                <p class="mt-2 text-sm text-foreground/60">Pilih satu jawaban yang paling tepat.</p>
+                <form method="POST" action="{{ route('learning.exercises.answer', $lesson->slug) }}" class="mt-5">
+                    @csrf
+                    <div class="grid gap-3 sm:grid-cols-2">
                         @foreach ($lesson->exercise_options as $index => $option)
-                            <label class="flex cursor-pointer items-center gap-3 rounded-2xl bg-background p-4 transition hover:bg-white/5">
-                                <input type="radio" name="answer_index" value="{{ $index }}" required class="size-5 accent-[var(--color-accent)]">
-                                <span>{{ $option }}</span>
+                            <label class="flex min-h-16 cursor-pointer items-center gap-3 rounded-2xl border border-white/10 bg-background p-4 text-sm font-semibold transition-colors hover:border-accent/40 has-[:checked]:border-accent has-[:checked]:bg-accent/10 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent sm:text-base">
+                                <input type="radio" name="answer_index" value="{{ $index }}" required class="size-5 shrink-0 accent-[var(--color-accent)]">
+                                <span class="min-w-0 break-words">{{ $option }}</span>
                             </label>
                         @endforeach
-                        @error('answer_index') <span role="alert" class="block text-danger">{{ $message }}</span> @enderror
-                        <button class="min-h-12 w-full rounded-full bg-primary px-7 py-3 font-bold text-white transition hover:brightness-110 sm:w-auto" type="submit">Periksa jawaban</button>
-                    </form>
-                </section>
-            @else
-                <form method="POST" action="{{ route('learning.progress.store', $lesson->slug) }}" class="mt-8">
-                    @csrf
-                    <button class="min-h-14 w-full rounded-full bg-primary px-7 py-4 font-bold text-white transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent" type="submit">Tandai pelajaran selesai</button>
+                    </div>
+                    @error('answer_index') <p role="alert" class="mt-3 text-sm text-danger">{{ $message }}</p> @enderror
+                    <div class="mt-5 flex justify-end border-t border-white/10 pt-4">
+                        <button class="min-h-12 w-full rounded-full bg-accent px-6 font-bold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto" type="submit">Periksa jawaban</button>
+                    </div>
                 </form>
-            @endif
-        </div>
+            </section>
+        @else
+            <form method="POST" action="{{ route('learning.progress.store', $lesson->slug) }}" class="mt-5 flex justify-end">
+                @csrf
+                <button class="min-h-12 w-full rounded-full bg-accent px-6 font-bold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto" type="submit">Tandai pelajaran selesai</button>
+            </form>
+        @endif
+    </div>
 </x-layouts.app>

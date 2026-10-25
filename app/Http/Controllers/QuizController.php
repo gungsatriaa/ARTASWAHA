@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreQuizRequest;
 use App\Http\Requests\UpdateQuizRequest;
+use App\Models\LearnerProfile;
 use App\Models\Quiz;
 use App\Services\QuizService;
 use Illuminate\Http\RedirectResponse;
@@ -14,14 +15,15 @@ class QuizController extends Controller
 {
     public function index(): View
     {
+        $profile = Auth::guest() ? LearnerProfile::completedFor(null, request()->cookie('artaswaha_device')) : null;
         $quizzes = Quiz::query()
-            ->where('user_id', Auth::id())
+            ->where('user_id', Auth::id() ?? 0)
             ->where('is_archived', false)
             ->withCount('questions')
             ->latest()
             ->paginate(12);
 
-        return view('quizzes.index', compact('quizzes'));
+        return view('quizzes.index', compact('quizzes', 'profile'));
     }
 
     public function create(): View

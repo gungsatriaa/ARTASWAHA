@@ -14,9 +14,9 @@
                         @else
                             <a href="{{ route('learning.interview.show') }}" class="inline-flex min-h-14 items-center justify-center rounded-full bg-primary px-8 py-4 font-bold text-white shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Mulai belajar gratis</a>
                         @endif
-                        <a href="{{ auth()->check() ? route('quizzes.index') : route('login') }}" class="inline-flex min-h-14 items-center justify-center rounded-full border border-white/15 px-7 py-4 font-bold transition hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Gabung kuis</a>
+                        <a href="{{ route('quizzes.index') }}" class="inline-flex min-h-14 items-center justify-center rounded-full border border-white/15 px-7 py-4 font-bold transition hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Gabung kuis</a>
                     </div>
-                    <p class="mt-4 text-sm text-foreground/55">Belajar mandiri tanpa akun. Untuk kuis bersama, masuk atau daftar terlebih dahulu.</p>
+                    <p class="mt-4 text-sm text-foreground/55">Belajar dan gabung kuis tanpa login dengan profil anonim. Masuk atau daftar jika ingin membuat kuis.</p>
                     @unless ($hasCompletedInterview)
                         <button type="button" data-learning-picker-open aria-haspopup="dialog" aria-controls="learning-picker" class="mt-2 rounded-full text-sm font-bold text-accent transition hover:underline focus-visible:outline-2 focus-visible:outline-accent">Atau lihat semua materi</button>
                     @endunless
@@ -242,7 +242,7 @@
                             Apakah harus membuat akun untuk mulai belajar?
                             <span class="text-xl text-accent transition-transform group-open:rotate-45" aria-hidden="true">＋</span>
                         </summary>
-                        <p class="mt-4 max-w-3xl font-readable leading-7 text-foreground/65">Belajar mandiri bisa dimulai tanpa akun dan progres tersimpan di perangkat. Untuk membuat atau bergabung ke kuis bersama, kamu perlu masuk.</p>
+                        <p class="mt-4 max-w-3xl font-readable leading-7 text-foreground/65">Belajar dan bergabung ke kuis bisa memakai profil anonim di perangkat ini. Untuk membuat kuis sendiri, kamu perlu masuk atau mendaftar.</p>
                     </details>
                 </div>
             </section>

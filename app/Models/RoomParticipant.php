@@ -13,7 +13,7 @@ class RoomParticipant extends Model
     /** @use HasFactory<RoomParticipantFactory> */
     use HasFactory;
 
-    protected $fillable = ['room_id', 'user_id', 'display_name', 'score', 'joined_at', 'question_position', 'question_ends_at'];
+    protected $fillable = ['room_id', 'user_id', 'learner_profile_id', 'display_name', 'score', 'joined_at', 'question_position', 'question_ends_at'];
 
     protected function casts(): array
     {
@@ -28,6 +28,11 @@ class RoomParticipant extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function learnerProfile(): BelongsTo
+    {
+        return $this->belongsTo(LearnerProfile::class);
     }
 
     public function answers(): HasMany

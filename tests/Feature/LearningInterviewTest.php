@@ -222,7 +222,8 @@ class LearningInterviewTest extends TestCase
             ->assertSee('Akun anonim')
             ->assertSee('Belajar sebagai Made')
             ->assertSee('1 dari 2 pelajaran selesai')
-            ->assertSee('Perlu akun')
+            ->assertSee('Gabung kuis')
+            ->assertSee(route('quizzes.index'), false)
             ->assertSee(route('profile.about'), false)
             ->assertSee(route('profile.avatar.update'), false);
 

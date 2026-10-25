@@ -24,11 +24,20 @@ class ShowProfileAvatarController extends Controller
 
     public function forRoom(Request $request, Room $room, User $user): StreamedResponse
     {
-        $viewerId = $request->user()->id;
-        abort_unless($room->host_id === $viewerId || $room->participants()->where('user_id', $viewerId)->exists(), 403);
+        $viewer = $request->user() ?? LearnerProfile::completedFor(null, $request->cookie('artaswaha_device'));
+        abort_unless($viewer && (($viewer instanceof User && $room->host_id === $viewer->id) || $room->participants()->where($viewer instanceof User ? 'user_id' : 'learner_profile_id', $viewer->id)->exists()), 403);
         abort_unless($room->participants()->where('user_id', $user->id)->exists(), 404);
 
         return $this->respond($user);
+    }
+
+    public function forAnonymousRoom(Request $request, Room $room, LearnerProfile $learnerProfile): StreamedResponse
+    {
+        $viewer = $request->user() ?? LearnerProfile::completedFor(null, $request->cookie('artaswaha_device'));
+        abort_unless($viewer && (($viewer instanceof User && $room->host_id === $viewer->id) || $room->participants()->where($viewer instanceof User ? 'user_id' : 'learner_profile_id', $viewer->id)->exists()), 403);
+        abort_unless($room->participants()->where('learner_profile_id', $learnerProfile->id)->exists(), 404);
+
+        return $this->respond($learnerProfile);
     }
 
     private function respond(User|LearnerProfile $user): StreamedResponse

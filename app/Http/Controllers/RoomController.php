@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\JoinRoomRequest;
 use App\Http\Requests\StoreRoomAnswerRequest;
+use App\Models\LearnerProfile;
 use App\Models\Quiz;
 use App\Models\Room;
+use App\Models\User;
 use App\Services\RoomService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
@@ -22,30 +24,45 @@ class RoomController extends Controller
 
     public function join(JoinRoomRequest $request, RoomService $roomService): RedirectResponse
     {
-        $room = $roomService->join($request->validated('code'), $request->user());
+        $player = $this->player();
+        if ($player === null) {
+            return to_route('learning.interview.show');
+        }
+        $room = $roomService->join($request->validated('code'), $player);
 
         return to_route('rooms.show', $room->code);
     }
 
-    public function show(Room $room, RoomService $roomService): View
+    public function show(Room $room, RoomService $roomService): View|RedirectResponse
     {
-        return view('rooms.show', $roomService->viewData($room, request()->user()));
+        $player = $this->player();
+        if ($player === null) {
+            return to_route('learning.interview.show');
+        }
+
+        return view('rooms.show', $roomService->viewData($room, $player));
     }
 
     public function status(Room $room, RoomService $roomService): Response
     {
-        $user = request()->user();
-        abort_unless($room->host_id === $user->id || $room->participants()->where('user_id', $user->id)->exists(), 403);
+        $player = $this->player();
+        abort_unless($player && (($player instanceof User && $room->host_id === $player->id) || $room->participants()->where($roomService->participantKey($player))->exists()), 403);
         $roomService->syncTimedRoom($room);
-        abort_if($room->fresh()->status === 'inactive', 410, 'Room sudah tidak aktif.');
+        $room->refresh();
+        abort_if($room->status === 'inactive', 410, 'Room sudah tidak aktif.');
 
-        return response()->noContent();
+        return response()->noContent(headers: [
+            'X-Room-Status' => $room->status,
+            'X-Room-Participants' => (string) $room->participants()->count(),
+        ]);
     }
 
     public function leave(Room $room, RoomService $roomService): RedirectResponse
     {
-        $isActiveHost = $room->host_id === request()->user()->id && in_array($room->status, ['waiting', 'active'], true);
-        $roomService->leave($room, request()->user());
+        $player = $this->player();
+        abort_unless($player, 403);
+        $isActiveHost = $player instanceof User && $room->host_id === $player->id && in_array($room->status, ['waiting', 'active'], true);
+        $roomService->leave($room, $player);
 
         return to_route('quizzes.index')->with('status', $isActiveHost ? 'Room dinonaktifkan. Peserta tidak dapat melanjutkan kuis.' : 'Kamu sudah keluar dari room.');
     }
@@ -73,12 +90,19 @@ class RoomController extends Controller
 
     public function answer(StoreRoomAnswerRequest $request, Room $room, RoomService $roomService): RedirectResponse
     {
-        $answer = $roomService->answer($room, $request->user(), $request->validated());
+        $player = $this->player();
+        abort_unless($player, 403);
+        $answer = $roomService->answer($room, $player, $request->validated());
 
         if ($room->quiz->show_answers_immediately) {
             return to_route('rooms.show', ['room' => $room->code, 'feedback' => $answer->id]);
         }
 
         return to_route('rooms.show', $room->code);
+    }
+
+    private function player(): User|LearnerProfile|null
+    {
+        return request()->user() ?? LearnerProfile::completedFor(null, request()->cookie('artaswaha_device'));
     }
 }

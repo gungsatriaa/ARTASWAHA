@@ -573,6 +573,11 @@ const checkRoomStillExists = async (reloadIfPresent = false) => {
             showRoomDeleted();
         } else if (response.status === 410) {
             showRoomInactive();
+        } else if (response.ok && roomPage.hasAttribute('data-room-anonymous') && (
+            response.headers.get('X-Room-Status') !== roomPage.dataset.roomStatus ||
+            response.headers.get('X-Room-Participants') !== roomPage.dataset.roomParticipants
+        )) {
+            window.location.reload();
         } else if (reloadIfPresent && response.ok) {
             window.location.reload();
         }
@@ -647,10 +652,10 @@ if (liveRoomPage) {
     });
     roomDeletedDialog?.addEventListener('cancel', (event) => event.preventDefault());
     roomInactiveDialog?.addEventListener('cancel', (event) => event.preventDefault());
-    window.setInterval(checkRoomStillExists, 15000);
+    window.setInterval(checkRoomStillExists, roomPage.hasAttribute('data-room-anonymous') ? 5000 : 15000);
 }
 
-if (window.Echo && liveRoomPage) {
+if (window.Echo && liveRoomPage && !roomPage.hasAttribute('data-room-anonymous')) {
     const roomStatus = roomPage.querySelector('[data-live-status]');
     let roomPresenceUsers = [];
 
@@ -659,7 +664,7 @@ if (window.Echo && liveRoomPage) {
         const onlineUserIds = new Set(roomPresenceUsers.map((user) => String(user.id)));
 
         roomPage.querySelectorAll('[data-room-presence-user]').forEach((row) => {
-            row.hidden = !onlineUserIds.has(row.dataset.roomPresenceUser);
+            row.hidden = !row.dataset.roomPresenceUser.startsWith('anon-') && !onlineUserIds.has(row.dataset.roomPresenceUser);
         });
 
         if (roomStatus) {
@@ -707,6 +712,6 @@ if (window.Echo && liveRoomPage) {
     const roomStatus = roomPage.querySelector('[data-live-status]');
 
     if (roomStatus) {
-        roomStatus.textContent = 'Realtime belum dikonfigurasi pada aplikasi ini.';
+        roomStatus.textContent = roomPage.hasAttribute('data-room-anonymous') ? 'Memeriksa pembaruan room secara berkala.' : 'Realtime belum dikonfigurasi pada aplikasi ini.';
     }
 }

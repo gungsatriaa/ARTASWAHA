@@ -55,7 +55,7 @@
                     </div>
                 </div>
             @endforeach
-            <a class="hidden min-h-11 items-center gap-2 rounded-full px-3 py-3 text-sm font-semibold text-foreground/80 transition hover:bg-surface sm:inline-flex" href="{{ auth()->check() ? route('quizzes.index') : route('login') }}">
+            <a class="hidden min-h-11 items-center gap-2 rounded-full px-3 py-3 text-sm font-semibold text-foreground/80 transition hover:bg-surface sm:inline-flex" href="{{ route('quizzes.index') }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-4 shrink-0" aria-hidden="true"><path d="M8 5V3h8v2"/><path d="M6 5h12v16H6z"/><path d="M9 10h6M9 14h6M9 18h3"/></svg>
                 Kuis
             </a>
@@ -161,7 +161,7 @@
                     </details>
                 @endforeach
                 <div class="space-y-1 border-t border-white/10 pt-4">
-                    <a href="{{ auth()->check() ? route('quizzes.index') : route('login') }}" @class([
+                    <a href="{{ route('quizzes.index') }}" @class([
                         'flex min-h-12 items-center gap-3 rounded-full px-4 py-3 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-accent',
                         'bg-primary/20 text-accent shadow-[inset_0_0_0_1px_rgba(0,124,128,0.35)]' => request()->routeIs('quizzes.*', 'rooms.*'),
                         'text-foreground/75 hover:bg-surface hover:text-accent' => ! request()->routeIs('quizzes.*', 'rooms.*'),
