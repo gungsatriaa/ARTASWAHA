@@ -54,11 +54,16 @@ class ProfileController extends Controller
             ->orderBy('sort_order')
             ->get();
 
-        $learningPathsByGroup = $learningPaths->groupBy('group');
-        $totalLessons = $learningPaths->sum('lessons_count');
-        $completedLessons = $learningPaths->sum('completed_lessons_count');
+        $studiedPaths = $learningPaths->where('completed_lessons_count', '>', 0);
+        $learningPathsByGroup = $studiedPaths->groupBy('group');
+        $totalLessons = $studiedPaths->sum('lessons_count');
+        $completedLessons = $studiedPaths->sum('completed_lessons_count');
 
         $analysisProfile = $user === null ? $profile : LearnerProfile::completedFor($user->id, null);
+        if ($analysisProfile !== null && $analyzer->isConfigured()) {
+            $analyzer->enqueue($analysisProfile);
+            $analysisProfile->refresh();
+        }
         $analysis = $analyzer->presentation($analysisProfile, $learningPaths);
 
         return view('profile.show', compact('completedLessons', 'learningPaths', 'learningPathsByGroup', 'profile', 'totalLessons', 'user', 'analysisProfile', 'analysis'));

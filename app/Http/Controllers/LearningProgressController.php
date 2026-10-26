@@ -17,7 +17,7 @@ class LearningProgressController extends Controller
         abort_if($lesson->exercise_prompt !== null, 403, 'Jawab latihan sebelum menyelesaikan pelajaran.');
 
         $deviceId = $progressService->deviceId($request);
-        $progressService->completeLesson($deviceId, $lesson);
+        $progressService->completeLesson($deviceId, $lesson, $request->user());
 
         return to_route('learning.lessons.show', $lesson)
             ->with('status', 'Pelajaran selesai! Kamu mendapat 10 poin.')
@@ -30,7 +30,7 @@ class LearningProgressController extends Controller
         abort_if($lesson->exercise_prompt === null, 404);
 
         $deviceId = $progressService->deviceId($request);
-        $isCorrect = $progressService->answerExercise($deviceId, $lesson, (int) $request->validated('answer_index'));
+        $isCorrect = $progressService->answerExercise($deviceId, $lesson, (int) $request->validated('answer_index'), $request->user());
 
         return to_route('learning.lessons.show', $lesson)
             ->with('status', $isCorrect ? 'Benar! Pelajaran selesai dan 10 poin tersimpan.' : 'Belum tepat. Coba ingat lagi materi di atas, lalu pilih jawaban lain.')

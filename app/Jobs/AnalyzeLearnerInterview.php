@@ -63,7 +63,7 @@ class AnalyzeLearnerInterview implements ShouldBeUnique, ShouldQueue
     {
         $profile = LearnerProfile::find($this->profileId);
         if ($profile === null || $profile->analysis_hash !== $this->inputHash || $profile->analysis_status === 'completed'
-            || $analyzer->hash($analyzer->input($profile)) !== $this->inputHash) {
+            || ! $analyzer->isCurrentInput($profile)) {
             return;
         }
         if (! $analyzer->isConfigured()) {
@@ -76,7 +76,7 @@ class AnalyzeLearnerInterview implements ShouldBeUnique, ShouldQueue
         try {
             $result = $analyzer->generate($profile->analysis_input);
             $currentProfile = $profile->fresh();
-            if ($currentProfile !== null && $analyzer->hash($analyzer->input($currentProfile)) === $this->inputHash) {
+            if ($currentProfile !== null && $currentProfile->analysis_hash === $this->inputHash && $analyzer->isCurrentInput($currentProfile)) {
                 LearnerProfile::query()->whereKey($this->profileId)->where('analysis_hash', $this->inputHash)
                     ->update(['analysis_status' => 'completed', 'analysis_result' => json_encode($result, JSON_THROW_ON_ERROR), 'analysis_completed_at' => now()]);
             }

@@ -26,7 +26,7 @@ class AdminAiManagementTest extends TestCase
     {
         parent::setUp();
         Http::preventStrayRequests();
-        config(['services.learner_analysis' => ['enabled' => true, 'provider' => 'ollama', 'url' => 'http://localhost:11434', 'model' => 'test-model', 'key' => 'private-secret']]);
+        config(['services.ai' => ['url' => 'http://localhost:20128/v1', 'model' => 'test-model', 'key' => 'private-secret']]);
     }
 
     public function test_ai_management_and_audio_require_admin_access(): void
@@ -89,7 +89,8 @@ class AdminAiManagementTest extends TestCase
         $profile = $this->profile($path);
         $snapshot = app(AdminAiService::class)->snapshot(now()->subDays(13), now());
         $report = AiReport::factory()->create(['snapshot' => $snapshot, 'status' => 'queued']);
-        Http::fake(['localhost:11434/api/chat' => Http::response(['message' => ['content' => json_encode(['summary' => '<script>unsafe()</script>', 'observations' => ['Data periode tersedia.'], 'suggestions' => ['Tinjau materi pilihan.']])]])]);
+        $result = ['summary' => '<script>unsafe()</script>', 'observations' => ['Data periode tersedia.'], 'suggestions' => ['Tinjau materi pilihan.']];
+        Http::fake(['localhost:20128/v1/chat/completions' => Http::response(['choices' => [['message' => ['content' => json_encode($result)]]]])]);
 
         (new GenerateAiReport($report->id))->handle(app(AdminAiService::class));
 
@@ -103,7 +104,7 @@ class AdminAiManagementTest extends TestCase
     public function test_invalid_report_output_is_failed_and_not_displayed_as_statistics(): void
     {
         $report = AiReport::factory()->create(['status' => 'queued']);
-        Http::fake(['localhost:11434/api/chat' => Http::response(['message' => ['content' => '{"summary":"Bad","invented_metric":100}']])]);
+        Http::fake(['localhost:20128/v1/chat/completions' => Http::response(['choices' => [['message' => ['content' => '{"summary":"Bad","invented_metric":100}']]]])]);
 
         (new GenerateAiReport($report->id))->handle(app(AdminAiService::class));
 
@@ -114,7 +115,7 @@ class AdminAiManagementTest extends TestCase
     public function test_unconfigured_reports_keep_statistics_available_without_jobs(): void
     {
         Queue::fake([GenerateAiReport::class]);
-        config(['services.learner_analysis.model' => '']);
+        config(['services.ai.model' => '']);
         $this->actingAs(User::factory()->create(['is_admin' => true]));
         $this->post(route('admin.ai.reports.store'), ['start' => now()->toDateString(), 'end' => now()->toDateString()])->assertRedirect();
         $report = AiReport::firstOrFail();

@@ -20,15 +20,15 @@ class LearningProgressService
         return is_string($deviceId) && Str::isUuid($deviceId) ? $deviceId : (string) Str::uuid();
     }
 
-    public function completeLesson(string $deviceId, Lesson $lesson): LearningProgress
+    public function completeLesson(string $deviceId, Lesson $lesson, ?User $user = null): LearningProgress
     {
         return DB::transaction(fn (): LearningProgress => LearningProgress::query()->firstOrCreate(
             ['visitor_id' => $deviceId, 'lesson_id' => $lesson->id],
-            ['points' => 10, 'completed_at' => now()],
+            ['user_id' => $user?->id, 'points' => 10, 'completed_at' => now()],
         ));
     }
 
-    public function answerExercise(string $deviceId, Lesson $lesson, int $answerIndex): bool
+    public function answerExercise(string $deviceId, Lesson $lesson, int $answerIndex, ?User $user = null): bool
     {
         if (LearningProgress::query()->where('visitor_id', $deviceId)->where('lesson_id', $lesson->id)->exists()) {
             return true;
@@ -40,7 +40,7 @@ class LearningProgressService
             return false;
         }
 
-        $this->completeLesson($deviceId, $lesson);
+        $this->completeLesson($deviceId, $lesson, $user);
 
         return true;
     }

@@ -63,7 +63,7 @@ class AuthFlowTest extends TestCase
             ->get(route('home'))
             ->assertOk()
             ->assertSee('Akun berhasil dibuat. Selamat belajar!')
-            ->assertSee('border-l-success', false);
+            ->assertSee('bg-[#15803d]', false);
 
         $this->post(route('logout'))->assertRedirect(route('home'));
         $this->assertGuest();

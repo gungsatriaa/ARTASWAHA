@@ -5,6 +5,10 @@ namespace Tests\Feature;
 use App\Jobs\AnalyzeLearnerInterview;
 use App\Models\LearnerProfile;
 use App\Models\LearningPath;
+use App\Models\LearningProgress;
+use App\Models\Lesson;
+use App\Models\RoomAnswer;
+use App\Models\RoomParticipant;
 use App\Models\User;
 use App\Services\LearnerInterviewAnalyzer;
 use App\Services\LearningProgressService;
@@ -27,8 +31,8 @@ class LearnerAnalysisTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['services.learner_analysis' => [
-            'enabled' => true, 'provider' => 'ollama', 'url' => 'http://localhost:11434', 'model' => 'local-test', 'key' => '',
+        config(['services.ai' => [
+            'url' => 'http://localhost:20128/v1', 'model' => 'local-test', 'key' => '',
         ]]);
         Http::preventStrayRequests();
         $this->withCredentials();
@@ -46,17 +50,19 @@ class LearnerAnalysisTest extends TestCase
             ->assertRedirect(route('learning.paths.show', $path->slug));
 
         $profile = LearnerProfile::firstOrFail();
-        $this->assertSame(['role' => 'murid', 'learning_path_ids' => [$path->id]], $profile->analysis_input);
+        $this->assertSame('murid', $profile->analysis_input['role']);
+        $this->assertSame([$path->id], $profile->analysis_input['learning_path_ids']);
+        $this->assertSame(0, $profile->analysis_input['activity']['active_days_7']);
         $this->assertSame('queued', $profile->analysis_status);
         $this->withCookie('artaswaha_device', $profile->visitor_id)->post(route('profile.analysis.store'))->assertRedirect();
         Queue::assertPushed(AnalyzeLearnerInterview::class, 1);
         Http::assertNothingSent();
     }
 
-    public function test_unconfigured_ollama_keeps_learning_available_without_queuing(): void
+    public function test_unconfigured_shared_ai_keeps_learning_available_without_queuing(): void
     {
         Queue::fake([AnalyzeLearnerInterview::class]);
-        config(['services.learner_analysis.model' => '']);
+        config(['services.ai.model' => '']);
         $path = LearningPath::factory()->create(['is_published' => true]);
         $profile = $this->profile($path);
 
@@ -69,25 +75,46 @@ class LearnerAnalysisTest extends TestCase
         Http::assertNothingSent();
     }
 
-    public function test_ollama_result_is_saved_and_shown_with_valid_graph_in_all_user_outputs(): void
+    public function test_opening_profile_and_home_automatically_queues_analysis_once_without_a_button(): void
+    {
+        Queue::fake([AnalyzeLearnerInterview::class]);
+        $path = LearningPath::factory()->create(['is_published' => true]);
+        $profile = $this->profile($path);
+
+        $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('profile.show'))
+            ->assertOk()
+            ->assertSee('Rekomendasi sedang disiapkan')
+            ->assertSee('data-learner-analysis-url', false)
+            ->assertDontSee('Coba analisis')
+            ->assertDontSee('Periksa lagi');
+        $this->get(route('home'))->assertOk();
+        $this->get(route('profile.show'))->assertOk();
+
+        $this->assertSame('queued', $profile->fresh()->analysis_status);
+        Queue::assertPushed(AnalyzeLearnerInterview::class, 1);
+        Http::assertNothingSent();
+    }
+
+    public function test_shared_ai_result_is_saved_and_shown_with_valid_graph_in_all_user_outputs(): void
     {
         $path = LearningPath::factory()->create(['is_published' => true, 'title' => 'Aksara pilihan']);
         $profile = $this->profile($path);
         $analyzer = app(LearnerInterviewAnalyzer::class);
         $this->prepare($profile, $analyzer);
-        Http::fake(['localhost:11434/api/chat' => Http::response(['message' => ['content' => json_encode($this->analysisResult($path))]])]);
+        Http::fake(['localhost:20128/v1/chat/completions' => Http::response(['choices' => [['message' => ['content' => json_encode($this->analysisResult($path))]]]])]);
 
         (new AnalyzeLearnerInterview($profile->id, $profile->analysis_hash))->handle($analyzer);
 
         $this->assertSame('completed', $profile->fresh()->analysis_status);
         $this->assertNotNull($profile->fresh()->analysis_completed_at);
-        Http::assertSent(function (ClientRequest $request) use ($path): bool {
+        Http::assertSent(function (ClientRequest $request): bool {
             $input = json_decode($request['messages'][1]['content'], true);
 
-            return $request->url() === 'http://localhost:11434/api/chat'
+            return $request->url() === 'http://localhost:20128/v1/chat/completions'
                 && $request['model'] === 'local-test' && $request['stream'] === false
-                && $request['format']['properties']['recommendations']['items']['properties']['learning_path_id']['enum'] === [$path->id]
-                && $request['options']['num_predict'] === 1000
+                && $request['response_format']['type'] === 'json_object'
+                && $request['max_tokens'] === 1000
+                && str_contains($request['messages'][2]['content'], 'learning_path_id')
                 && ! str_contains(json_encode($input), 'Private name')
                 && str_contains($request['messages'][0]['content'], 'Jangan menebak');
         });
@@ -99,7 +126,10 @@ class LearnerAnalysisTest extends TestCase
             ->assertJsonPath('analysis.graph.edges.0', ['source' => 'role', 'target' => 'path-'.$path->id]);
         $this->assertCount(3, $response->json('analysis.graph.nodes'));
         $this->assertCount(2, $response->json('analysis.graph.edges'));
-        $this->get(route('home'))->assertOk()->assertSee('Lihat analisis dan peta belajarmu');
+        $homepage = $this->get(route('home'))->assertOk()->assertSee('Lihat analisis dan peta belajarmu');
+        $this->assertSame(1, substr_count($homepage->getContent(), 'Analisis belajarmu'));
+        $desktopContent = explode('hidden md:block', $homepage->getContent(), 2)[1];
+        $this->assertStringNotContainsString('Analisis belajarmu', $desktopContent);
         $this->get(route('learning.paths.show', $path->slug))->assertOk()->assertSee('Direkomendasikan untuk pilihan belajarmu');
         $analyzer->enqueue($profile->fresh());
         (new AnalyzeLearnerInterview($profile->id, $profile->analysis_hash))->handle($analyzer);
@@ -108,7 +138,7 @@ class LearnerAnalysisTest extends TestCase
 
     public function test_openai_compatible_local_server_can_be_configured(): void
     {
-        config(['services.learner_analysis.provider' => 'openai', 'services.learner_analysis.url' => 'http://localhost:8000/v1', 'services.learner_analysis.key' => 'test-key']);
+        config(['services.ai.url' => 'http://localhost:8000/v1', 'services.ai.key' => 'test-key']);
         $path = LearningPath::factory()->create(['is_published' => true]);
         Http::fake(['localhost:8000/v1/chat/completions' => Http::response(['choices' => [['message' => ['content' => json_encode($this->analysisResult($path))]]]])]);
 
@@ -122,7 +152,7 @@ class LearnerAnalysisTest extends TestCase
     public function test_rejects_invalid_or_unsupported_ai_results(string $content): void
     {
         LearningPath::factory()->create(['id' => 101, 'is_published' => true]);
-        Http::fake(['localhost:11434/api/chat' => Http::response(['message' => ['content' => $content]])]);
+        Http::fake(['localhost:20128/v1/chat/completions' => Http::response(['choices' => [['message' => ['content' => $content]]]])]);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('invalid result');
@@ -224,7 +254,7 @@ class LearnerAnalysisTest extends TestCase
         Http::fake(function () use ($profile, $path) {
             $profile->update(['role' => 'guru']);
 
-            return Http::response(['message' => ['content' => json_encode($this->analysisResult($path))]]);
+            return Http::response(['choices' => [['message' => ['content' => json_encode($this->analysisResult($path))]]]]);
         });
 
         $job->handle($analyzer);
@@ -253,7 +283,7 @@ class LearnerAnalysisTest extends TestCase
         $profile = $this->profile($path);
         $analyzer = app(LearnerInterviewAnalyzer::class);
         $this->prepare($profile, $analyzer);
-        Http::fake(['localhost:11434/api/chat' => Http::response([], 503)]);
+        Http::fake(['localhost:20128/v1/chat/completions' => Http::response([], 503)]);
         $job = new AnalyzeLearnerInterview($profile->id, $profile->analysis_hash);
         try {
             $job->handle($analyzer);
@@ -313,7 +343,7 @@ class LearnerAnalysisTest extends TestCase
         $this->assertSame('queued', $profile->fresh()->analysis_status);
         Http::assertNothingSent();
 
-        Http::fake(['localhost:11434/api/chat' => Http::response(['message' => ['content' => json_encode($this->analysisResult($path))]])]);
+        Http::fake(['localhost:20128/v1/chat/completions' => Http::response(['choices' => [['message' => ['content' => json_encode($this->analysisResult($path))]]]])]);
         $this->artisan('queue:work', ['connection' => 'learner-analysis', '--queue' => 'learner-analysis', '--once' => true, '--sleep' => 0])
             ->assertExitCode(0);
         $this->assertDatabaseCount('jobs', 0);
@@ -327,7 +357,7 @@ class LearnerAnalysisTest extends TestCase
         $profile = $this->profile($path);
         $analyzer = app(LearnerInterviewAnalyzer::class);
         $this->prepare($profile, $analyzer);
-        Http::fake(['localhost:11434/api/chat' => Http::failedConnection()]);
+        Http::fake(['localhost:20128/v1/chat/completions' => Http::failedConnection()]);
 
         try {
             (new AnalyzeLearnerInterview($profile->id, $profile->analysis_hash))->handle($analyzer);
@@ -344,7 +374,7 @@ class LearnerAnalysisTest extends TestCase
         $profile = $this->profile($path);
         $analyzer = app(LearnerInterviewAnalyzer::class);
         $this->prepare($profile, $analyzer);
-        Http::fake(['localhost:11434/api/chat' => Http::response(['message' => ['content' => 'invalid']])]);
+        Http::fake(['localhost:20128/v1/chat/completions' => Http::response(['choices' => [['message' => ['content' => 'invalid']]]])]);
 
         (new AnalyzeLearnerInterview($profile->id, $profile->analysis_hash))->handle($analyzer);
 
@@ -359,12 +389,137 @@ class LearnerAnalysisTest extends TestCase
         $path = LearningPath::factory()->create(['is_published' => true]);
         $profile = $this->profile($path);
         $this->complete($profile, $path);
-        config(['services.learner_analysis.model' => 'new-local-model']);
+        config(['services.ai.model' => 'new-local-model']);
 
         $this->withCookie('artaswaha_device', $profile->visitor_id)->getJson(route('profile.analysis.show'))
             ->assertOk()->assertJsonPath('analysis.status', 'outdated')->assertJsonPath('analysis.recommendations', []);
         $this->post(route('profile.analysis.store'))->assertRedirect();
         Queue::assertPushed(AnalyzeLearnerInterview::class, 1);
+    }
+
+    public function test_scheduled_analysis_refreshes_after_six_hours_without_duplicate_requests(): void
+    {
+        $this->travelTo(now()->setDate(2026, 10, 26)->setTime(12, 0));
+        Queue::fake([AnalyzeLearnerInterview::class]);
+        $path = LearningPath::factory()->create();
+        $profile = $this->profile($path);
+        $this->complete($profile, $path);
+
+        $this->artisan('learning:analyze')->assertExitCode(0);
+        Queue::assertNotPushed(AnalyzeLearnerInterview::class);
+        LearningProgress::factory()->create(['visitor_id' => $profile->visitor_id]);
+        $this->artisan('learning:analyze')->assertExitCode(0);
+        Queue::assertNotPushed(AnalyzeLearnerInterview::class);
+        $this->travel(6)->hours();
+        $this->artisan('learning:analyze')->assertExitCode(0);
+        $this->artisan('learning:analyze')->assertExitCode(0);
+
+        Queue::assertPushed(AnalyzeLearnerInterview::class, 1);
+        $this->assertSame('queued', $profile->fresh()->analysis_status);
+        $this->assertSame(1, $profile->fresh()->analysis_input['activity']['lessons_completed_7']);
+        Http::assertNothingSent();
+    }
+
+    public function test_scheduler_uses_only_latest_account_profile_and_skips_unconfigured_ai(): void
+    {
+        Queue::fake([AnalyzeLearnerInterview::class]);
+        $user = User::factory()->create();
+        $path = LearningPath::factory()->create();
+        $olderProfile = $this->profile($path, $user);
+        $latestProfile = $this->profile($path, $user);
+        $anonymousProfile = $this->profile($path);
+        config(['services.ai.model' => '']);
+        $this->artisan('learning:analyze')->assertExitCode(0);
+        Queue::assertNotPushed(AnalyzeLearnerInterview::class);
+
+        config(['services.ai.model' => 'local-test']);
+        $this->artisan('learning:analyze')->assertExitCode(0);
+
+        $this->assertNull($olderProfile->fresh()->analysis_requested_at);
+        $this->assertSame('queued', $latestProfile->fresh()->analysis_status);
+        $this->assertSame('queued', $anonymousProfile->fresh()->analysis_status);
+        Queue::assertPushed(AnalyzeLearnerInterview::class, 2);
+        Http::assertNothingSent();
+    }
+
+    public function test_activity_snapshot_compares_weeks_and_excludes_other_accounts(): void
+    {
+        $this->travelTo(now()->setDate(2026, 10, 26)->setTime(12, 0));
+        $user = User::factory()->create();
+        $profile = $this->profile(LearningPath::factory()->create(), $user);
+        LearningProgress::factory()->for($user)->create(['completed_at' => now()->subDay()]);
+        LearningProgress::factory()->for($user)->create(['completed_at' => now()->subDays(8)]);
+        LearningProgress::factory()->for($user)->create(['completed_at' => now()->subDays(15)]);
+        LearningProgress::factory()->create(['visitor_id' => $profile->visitor_id]);
+        $participant = RoomParticipant::factory()->for($user)->create();
+        RoomAnswer::factory()->for($participant, 'participant')->create(['answered_at' => now()->subDays(2)]);
+        RoomAnswer::factory()->for($participant, 'participant')->create(['is_correct' => false, 'answered_at' => now()->subDays(2)]);
+        RoomAnswer::factory()->create();
+
+        $activity = app(LearnerInterviewAnalyzer::class)->activity($profile);
+
+        $this->assertSame(2, $activity['active_days_7']);
+        $this->assertSame(1, $activity['active_days_previous_7']);
+        $this->assertSame(1, $activity['lessons_completed_7']);
+        $this->assertSame(1, $activity['lessons_completed_previous_7']);
+        $this->assertSame(2, $activity['quiz_answers_14']);
+        $this->assertSame(1, $activity['quiz_correct_14']);
+        $this->assertCount(14, $activity['daily']);
+    }
+
+    public function test_anonymous_activity_only_includes_its_unclaimed_progress_and_quiz_answers(): void
+    {
+        $this->freezeTime();
+        $profile = $this->profile(LearningPath::factory()->create());
+        LearningProgress::factory()->create(['visitor_id' => $profile->visitor_id]);
+        LearningProgress::factory()->for(User::factory())->create(['visitor_id' => $profile->visitor_id]);
+        LearningProgress::factory()->create();
+        $participant = RoomParticipant::factory()->create(['learner_profile_id' => $profile->id, 'user_id' => null]);
+        RoomAnswer::factory()->for($participant, 'participant')->create();
+        RoomAnswer::factory()->create();
+
+        $activity = app(LearnerInterviewAnalyzer::class)->activity($profile);
+
+        $this->assertSame(1, $activity['active_days_7']);
+        $this->assertSame(1, $activity['lessons_completed_7']);
+        $this->assertSame(1, $activity['quiz_answers_14']);
+        $this->assertSame(1, $activity['quiz_correct_14']);
+    }
+
+    public function test_learning_during_ai_generation_does_not_discard_the_snapshot_result(): void
+    {
+        $this->freezeTime();
+        $path = LearningPath::factory()->create();
+        $profile = $this->profile($path);
+        $analyzer = app(LearnerInterviewAnalyzer::class);
+        $this->prepare($profile, $analyzer);
+        Http::fake(function (ClientRequest $request) use ($profile, $path) {
+            $input = json_decode($request['messages'][1]['content'], true);
+            $this->assertSame(0, $input['learning_activity']['lessons_completed_7']);
+            $this->assertArrayNotHasKey('visitor_id', $input);
+            LearningProgress::factory()->create(['visitor_id' => $profile->visitor_id]);
+
+            return Http::response(['choices' => [['message' => ['content' => json_encode($this->analysisResult($path))]]]]);
+        });
+
+        (new AnalyzeLearnerInterview($profile->id, $profile->analysis_hash))->handle($analyzer);
+
+        $this->assertSame('completed', $profile->fresh()->analysis_status);
+        $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('profile.show'))
+            ->assertOk()->assertSee('Mulai dari materi pilihanmu.')->assertSee('Terakhir diperbarui');
+        Http::assertSentCount(1);
+    }
+
+    public function test_authenticated_lesson_completion_is_attributed_to_the_account_for_analysis(): void
+    {
+        $user = User::factory()->create();
+        $path = LearningPath::factory()->create();
+        $lesson = Lesson::factory()->for($path, 'learningPath')->create(['exercise_prompt' => null]);
+        $this->actingAs($user)->post(route('learning.progress.store', $lesson->slug))->assertRedirect();
+
+        $this->assertDatabaseHas('learning_progress', ['user_id' => $user->id, 'lesson_id' => $lesson->id]);
+        $profile = $this->profile($path, $user);
+        $this->assertSame(1, app(LearnerInterviewAnalyzer::class)->activity($profile)['lessons_completed_7']);
     }
 
     private function profile(LearningPath $path, ?User $user = null): LearnerProfile

@@ -41,6 +41,7 @@ Route::post('/profil/analisis', [LearnerAnalysisController::class, 'store'])->mi
 Route::get('/profil/tentang', [ProfileController::class, 'about'])->name('profile.about');
 Route::get('/profil/avatar', ShowProfileAvatarController::class)->name('profile.avatar.show');
 Route::put('/profil/avatar', UpdateProfileAvatarController::class)->middleware('throttle:10,1')->name('profile.avatar.update');
+Route::get('/belajar', [LearningPathController::class, 'catalog'])->name('learning.paths.index');
 Route::get('/belajar/{learningPath:slug}', [LearningPathController::class, 'show'])->name('learning.paths.show');
 Route::get('/pelajaran/{lesson:slug}', [LessonController::class, 'show'])->name('learning.lessons.show');
 Route::post('/pelajaran/{lesson:slug}/selesai', [LearningProgressController::class, 'store'])->name('learning.progress.store');

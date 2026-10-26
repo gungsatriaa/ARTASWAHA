@@ -39,7 +39,7 @@ class AdminAiService
     public function requestReport(Carbon $start, Carbon $end): AiReport
     {
         $snapshot = $this->snapshot($start, $end);
-        $hash = hash('sha256', json_encode([$snapshot, LearnerInterviewAnalyzer::VERSION, config('services.learner_analysis.provider'), config('services.learner_analysis.model'), config('services.learner_analysis.url')], JSON_THROW_ON_ERROR));
+        $hash = hash('sha256', json_encode([$snapshot, LearnerInterviewAnalyzer::VERSION, config('services.ai.model'), config('services.ai.url')], JSON_THROW_ON_ERROR));
         $report = AiReport::firstOrCreate(['input_hash' => $hash], [
             'period_start' => $start->toDateString(), 'period_end' => $end->toDateString(), 'snapshot' => $snapshot,
             'status' => $this->analyzer->isConfigured() ? 'queued' : 'unavailable',

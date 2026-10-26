@@ -60,14 +60,6 @@ return [
         'persistent' => env('TTS_PERSISTENT', false),
     ],
 
-    'learner_analysis' => [
-        'enabled' => env('LEARNER_ANALYSIS_ENABLED', true),
-        'provider' => env('LEARNER_ANALYSIS_PROVIDER', 'ollama'),
-        'url' => env('LEARNER_ANALYSIS_URL', 'http://127.0.0.1:11434'),
-        'model' => env('LEARNER_ANALYSIS_MODEL', ''),
-        'key' => env('LEARNER_ANALYSIS_KEY', ''),
-    ],
-
     'ai' => [
         'url' => env('AI_API_URL', 'http://127.0.0.1:20128/v1'),
         'key' => env('AI_API_KEY'),

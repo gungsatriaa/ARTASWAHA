@@ -1,4 +1,4 @@
-@props(['user', 'profile', 'dashboardPaths', 'featuredPath', 'analysis'])
+@props(['user', 'profile', 'dashboardPaths', 'lastLearningProgress' => null, 'analysis'])
 
 @php
     $name = $user?->name ?? $profile->name;
@@ -6,8 +6,6 @@
     $avatarUrl = str_starts_with($avatar ?? '', 'avatars/')
         ? route('profile.avatar.show')
         : asset($avatar ?? array_key_first(\App\Services\ProfileAvatarService::DEFAULT_AVATARS));
-    $featuredTotal = $featuredPath?->lessons_count ?? 0;
-    $featuredCompleted = $featuredPath?->completed_lessons_count ?? 0;
 @endphp
 
 <div class="mx-auto max-w-lg px-4 pt-6 md:hidden">
@@ -27,18 +25,16 @@
     <section class="relative mt-7 overflow-hidden rounded-card bg-accent p-6 text-background" aria-labelledby="mobile-featured-title">
         <span class="pointer-events-none absolute -right-10 -top-16 size-44 rounded-full border-[24px] border-background/8" aria-hidden="true"></span>
         <div class="relative">
-            <p class="text-sm font-semibold text-background/70">{{ $profile === null ? 'Mulai petualangan belajarmu' : 'Lanjutkan belajarmu' }}</p>
-            <h2 id="mobile-featured-title" class="mt-2 max-w-[17rem] font-display text-2xl font-bold leading-tight">{{ $profile ? ($featuredPath?->title ?? 'Materi pilihanmu') : 'Pilih materi pertamamu' }}</h2>
-            @if ($profile && $featuredPath && $featuredTotal > 0)
-                <p class="mt-4 text-sm font-semibold">{{ $featuredCompleted }} dari {{ $featuredTotal }} pelajaran selesai</p>
-                <div class="mt-2 h-2 overflow-hidden rounded-full bg-background/20" role="progressbar" aria-label="Progres {{ $featuredPath->title }}" aria-valuemin="0" aria-valuemax="{{ $featuredTotal }}" aria-valuenow="{{ $featuredCompleted }}">
-                    <div class="h-full rounded-full bg-background" style="width: {{ round($featuredCompleted / $featuredTotal * 100) }}%"></div>
-                </div>
+            <p class="text-sm font-semibold text-background/70">Riwayat belajar terakhir</p>
+            <h2 id="mobile-featured-title" class="mt-2 break-words font-display text-2xl font-bold leading-tight">{{ $lastLearningProgress?->lesson->title ?? 'Belum ada riwayat belajar' }}</h2>
+            @if ($lastLearningProgress)
+                <p class="mt-3 text-sm font-semibold text-background/75">{{ $lastLearningProgress->lesson->learningPath->title }}</p>
+                <p class="mt-2 text-sm text-background/70">Selesai pada <time datetime="{{ $lastLearningProgress->completed_at->toIso8601String() }}">{{ $lastLearningProgress->completed_at->timezone(config('app.timezone'))->format('d M Y, H:i') }}</time></p>
             @else
-                <p class="mt-3 max-w-[16rem] text-sm leading-6 text-background/75">{{ $profile && $featuredPath ? 'Pelajaran untuk materi ini sedang disiapkan.' : 'Jelajahi materi bahasa dan aksara Bali.' }}</p>
+                <p class="mt-3 text-sm leading-6 text-background/75">Selesaikan pelajaran pertamamu untuk melihat riwayat belajar di sini.</p>
             @endif
-            <a href="{{ $profile === null ? route('learning.interview.show') : ($featuredPath ? route('learning.paths.show', $featuredPath->slug) : route('profile.show')) }}" class="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-background px-5 text-sm font-bold text-accent transition hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-background">
-                {{ $profile === null ? 'Pilih minat belajar' : ($featuredTotal > 0 ? 'Lanjut belajar' : 'Lihat materi') }}
+            <a href="{{ $lastLearningProgress ? route('learning.lessons.show', $lastLearningProgress->lesson->slug) : route('learning.paths.index') }}" class="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-background px-5 text-sm font-bold text-accent transition hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-background">
+                {{ $lastLearningProgress ? 'Pelajari kembali' : 'Pilih materi' }}
                 <span class="ml-2" aria-hidden="true">→</span>
             </a>
         </div>
@@ -56,7 +52,16 @@
         <div class="mt-4 space-y-3">
             @forelse ($dashboardPaths as $path)
                 <a href="{{ route('learning.paths.show', $path->slug) }}" class="flex min-h-20 items-center gap-4 rounded-2xl border border-white/10 bg-surface p-4 transition hover:border-accent/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
-                    <span class="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary/20 font-balinese text-2xl text-accent" lang="ban" aria-hidden="true">{{ $path->group === 'aksara' ? 'ᬅ' : 'ᬒᬁ' }}</span>
+                    <span class="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary/20 text-accent" aria-hidden="true">
+                        @if ($path->group === 'aksara')
+                            <span class="font-balinese text-xl leading-none" lang="ban">ᬅ</span>
+                        @else
+                            <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5Z" />
+                                <path d="M8 11h.01M12 11h.01M16 11h.01" />
+                            </svg>
+                        @endif
+                    </span>
                     <span class="min-w-0 flex-1">
                         <span class="block truncate font-display text-base font-bold">{{ $path->title }}</span>
                         <span class="mt-1 block text-xs text-foreground/55">{{ $path->lessons_count > 0 ? $path->completed_lessons_count.' dari '.$path->lessons_count.' pelajaran' : 'Pelajaran sedang disiapkan' }}</span>
@@ -75,7 +80,7 @@
     @if ($profile)
         <div class="mt-7"><x-learner-analysis :analysis="$analysis" :compact="true" /></div>
     @endif
-    <a href="{{ route('quizzes.index') }}" class="mt-7 flex items-center justify-between gap-4 rounded-2xl border border-primary/35 bg-primary/15 p-5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+    <a href="{{ route('quizzes.index') }}" class="mt-7 flex items-center justify-between gap-4 rounded-card border border-primary/35 bg-primary/15 p-5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
         <span><span class="block font-display text-lg font-bold">Main kuis bareng</span><span class="mt-1 block text-sm text-foreground/60">{{ $user ? 'Buat kuis atau gabung dengan teman.' : 'Masukkan kode untuk gabung kuis.' }}</span></span>
         <span class="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-xl font-bold text-white" aria-hidden="true">→</span>
     </a>

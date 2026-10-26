@@ -1,6 +1,6 @@
 <x-layouts.app :show-footer="false" :title="$learningPath->title . ' — ARTASWAHA'" :description="\Illuminate\Support\Str::limit($learningPath->description ?: 'Pelajari ' . $learningPath->title . ' melalui materi dan latihan interaktif di ARTASWAHA.', 160)" :canonical="route('learning.paths.show', $learningPath->slug)">
     <div class="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-9 lg:px-8">
-        <a href="{{ route('home') }}" class="mb-5 inline-flex min-h-10 items-center gap-2 rounded-full text-sm font-semibold text-foreground/65 transition hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+        <a href="{{ route('learning.paths.index') }}" class="mb-5 inline-flex min-h-10 items-center gap-2 rounded-full text-sm font-semibold text-foreground/65 transition hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
             <span aria-hidden="true">←</span> Semua materi
         </a>
 

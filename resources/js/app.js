@@ -101,6 +101,11 @@ document.querySelectorAll('[data-mobile-nav]').forEach((sidebar) => {
         closeButton.focus();
     });
     closeButton?.addEventListener('click', () => closeMobileNavigation(sidebar, backdrop, openButton));
+    window.addEventListener('resize', () => {
+        if (openButton && openButton.getClientRects().length === 0) {
+            closeMobileNavigation(sidebar, backdrop, openButton);
+        }
+    });
     sidebar.querySelectorAll('a, form button').forEach((item) => {
         item.addEventListener('click', () => closeMobileNavigation(sidebar, backdrop, openButton));
     });

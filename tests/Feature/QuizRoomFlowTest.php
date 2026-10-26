@@ -351,7 +351,7 @@ class QuizRoomFlowTest extends TestCase
             ->get(route('quizzes.index'))
             ->assertOk()
             ->assertSee('Room berhasil dihapus.')
-            ->assertSee('border-l-success', false);
+            ->assertSee('bg-[#15803d]', false);
     }
 
     public function test_started_room_hides_invitation_and_shows_modal_to_new_player(): void

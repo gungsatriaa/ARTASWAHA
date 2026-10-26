@@ -42,6 +42,19 @@ class ProfileAvatarTest extends TestCase
             ->assertSee('avatar/penyu.webp');
     }
 
+    public function test_profile_notice_is_displayed_once_above_the_profile_navigation(): void
+    {
+        $message = 'Avatar profil berhasil diperbarui.';
+
+        $response = $this->actingAs(User::factory()->create())
+            ->withSession(['status' => $message])
+            ->get(route('profile.show'))
+            ->assertOk()
+            ->assertSeeInOrder([$message, 'Profil dan navigasi akun']);
+
+        $this->assertSame(1, substr_count($response->getContent(), $message));
+    }
+
     public function test_a_user_can_upload_and_replace_a_custom_avatar(): void
     {
         Storage::fake('local');

@@ -29,7 +29,6 @@ Pertahankan APP_KEY, database, akun, domain/HTTPS, Redis, Reverb, OCR, dan AI dr
 Edit `.env` yang ada, bukan menimpanya dengan template. Edit nilai yang sudah ada agar tidak duplikat:
 
 ```dotenv
-LEARNER_ANALYSIS_ENABLED=false
 TTS_ENABLED=false
 TTS_ENGINE=chatterbox
 TTS_DEVICE=cpu
@@ -144,6 +143,8 @@ Pada RAM terbatas, ukur peak memory sebelum memakai generate bersamaan dengan pe
 
 Worker default dan Reverb yang sudah ada tetap digunakan. Analisis/TTS memakai koneksi bernama `learner-analysis`, driver database, antrean `learner-analysis`; worker Redis default tidak mengonsumsinya. Nama antrean ini tidak mengaktifkan Ollama.
 
+Analisis progres memakai `AI_API_URL`, `AI_API_KEY`, dan `AI_MODEL` yang sama dengan AI kuis. Jadwal `learning:analyze` berjalan setiap enam jam melalui scheduler Laravel. Pastikan cron yang sudah ada menjalankan `php artisan schedule:run` setiap menit dari folder aplikasi; jangan menambahkan cron duplikat. Untuk lokal gunakan `php artisan schedule:work`. Worker `learner-analysis` tetap harus aktif untuk memproses antreannya. Analisis memakai ringkasan pelajaran selesai dan jawaban kuis 14 hari terakhir, bukan pelacakan durasi membaca.
+
 Untuk server production ini, gunakan program Supervisor aaPanel yang sudah ada, `laravel-worker-tts-artaswaha`. Edit program tersebut; tidak perlu memasang service systemd atau menjalankan `install-tts-worker.sh`. Isi:
 
 ```text
@@ -211,7 +212,6 @@ Jika program sudah ada, periksa dan sesuaikan; jangan membuat duplikat. `retry_a
 Installer mencetak path environment yang benar. Isi pada `.env` production:
 
 ```dotenv
-LEARNER_ANALYSIS_ENABLED=false
 TTS_ENABLED=true
 TTS_ENGINE=chatterbox
 TTS_DEVICE=cpu

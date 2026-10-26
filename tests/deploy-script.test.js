@@ -36,13 +36,11 @@ if [[ "$1" == -r ]]; then
         APP_ENV) printf production;;
         APP_DEBUG) printf false;;
         TTS_ENABLED) printf '%s' "$TEST_TTS";;
-        LEARNER_ANALYSIS_ENABLED) printf '%s' "$TEST_ANALYSIS";;
         APP_URL) printf 'https://site.invalid';;
         REVERB_SERVER_HOST) printf '127.0.0.1';;
         REVERB_SERVER_PORT) printf 8080;;
-        LEARNER_ANALYSIS_PROVIDER) printf ollama;;
-        LEARNER_ANALYSIS_URL) printf 'http://model.invalid';;
-        LEARNER_ANALYSIS_MODEL) printf test-model;;
+        AI_API_URL) if [[ "$TEST_ANALYSIS" == true ]]; then printf 'http://model.invalid/v1'; fi;;
+        AI_MODEL) if [[ "$TEST_ANALYSIS" == true ]]; then printf test-model; fi;;
         LEARNER_QUEUE_SUPERVISOR_PROGRAM) printf '%s' "$TEST_WORKER_PROGRAM";;
     esac
 elif [[ "$1" == artisan ]]; then

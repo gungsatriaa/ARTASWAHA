@@ -116,8 +116,8 @@ class LearningFlowTest extends TestCase
         $this->actingAs($user)->get(route('home'))
             ->assertOk()
             ->assertSee('id="mobile-featured-title"', false)
-            ->assertSee('Pilih materi pertamamu')
-            ->assertSee('Pilih minat belajar')
+            ->assertSee('Riwayat belajar terakhir')
+            ->assertSee('Pelajari kembali')
             ->assertSee('hidden md:block', false)
             ->assertSee('Bahasa Bali jadi');
 
@@ -134,7 +134,7 @@ class LearningFlowTest extends TestCase
         $this->actingAs($user)->get(route('home'))
             ->assertOk()
             ->assertSee('id="mobile-featured-title"', false)
-            ->assertSee('1 dari 1 pelajaran selesai')
+            ->assertSee('1 dari 1 pelajaran')
             ->assertSee('hidden md:block', false)
             ->assertSee('Bahasa Bali jadi');
 
@@ -153,11 +153,46 @@ class LearningFlowTest extends TestCase
             ->assertSee('id="mobile-featured-title"', false)
             ->assertSee('Akun anonim · di perangkat ini')
             ->assertSee('Made')
-            ->assertSee('0 dari 1 pelajaran selesai');
+            ->assertSee('Belum ada riwayat belajar');
 
         $this->withCookie('artaswaha_device', (string) Str::uuid())->get(route('home'))
             ->assertOk()
             ->assertDontSee('id="mobile-featured-title"', false);
+    }
+
+    public function test_dashboard_shows_the_users_latest_available_completed_lesson(): void
+    {
+        $user = User::factory()->create();
+        LearningProgress::factory()->for($user)->create(['completed_at' => now()->subDays(2)]);
+        $latest = LearningProgress::factory()->for($user)->create(['completed_at' => now()->subDay()]);
+        LearningProgress::factory()->for(User::factory())->create();
+        LearningProgress::factory()->for($user)->for(Lesson::factory()->create(['is_published' => false]))->create();
+
+        $this->actingAs($user)->get(route('home'))
+            ->assertOk()
+            ->assertViewHas('lastLearningProgress', fn (LearningProgress $progress): bool => $progress->is($latest))
+            ->assertSee(route('learning.lessons.show', $latest->lesson->slug))
+            ->assertSee('Pelajari kembali');
+    }
+
+    public function test_anonymous_learning_history_only_uses_unclaimed_progress_from_its_device(): void
+    {
+        $path = LearningPath::factory()->create();
+        $profile = LearnerProfile::query()->create([
+            'visitor_id' => (string) Str::uuid(),
+            'learning_path_id' => $path->id,
+            'role' => 'murid',
+            'name' => 'Made',
+            'mode' => 'anonymous',
+        ]);
+        $latest = LearningProgress::factory()->create(['visitor_id' => $profile->visitor_id, 'completed_at' => now()->subDay()]);
+        LearningProgress::factory()->create();
+        LearningProgress::factory()->for(User::factory())->create(['visitor_id' => $profile->visitor_id]);
+
+        $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('home'))
+            ->assertOk()
+            ->assertViewHas('lastLearningProgress', fn (LearningProgress $progress): bool => $progress->is($latest))
+            ->assertSee(route('learning.lessons.show', $latest->lesson->slug));
     }
 
     public function test_mobile_app_navigation_stays_on_the_main_pages_but_not_during_a_lesson(): void
@@ -176,7 +211,7 @@ class LearningFlowTest extends TestCase
             ->assertDontSee('data-mobile-app-nav', false);
     }
 
-    public function test_mobile_learning_tab_falls_back_when_anonymous_selected_material_is_unpublished(): void
+    public function test_mobile_learning_tab_opens_catalog_when_anonymous_selected_material_is_unpublished(): void
     {
         $unpublishedPath = LearningPath::factory()->create(['is_published' => false]);
         $publishedPath = LearningPath::factory()->create(['is_published' => true]);
@@ -192,7 +227,7 @@ class LearningFlowTest extends TestCase
         $response = $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('home'))->assertOk();
         preg_match('/<nav data-mobile-app-nav.*?<\/nav>/s', $response->getContent(), $navigation);
         $this->assertNotEmpty($navigation);
-        $this->assertStringContainsString('href="'.route('learning.paths.show', $publishedPath->slug).'"', $navigation[0]);
+        $this->assertStringContainsString('href="'.route('learning.paths.index').'"', $navigation[0]);
         $this->assertStringNotContainsString('href="'.route('learning.interview.show').'"', $navigation[0]);
 
         foreach (['quizzes.index', 'profile.show'] as $routeName) {
@@ -205,7 +240,31 @@ class LearningFlowTest extends TestCase
         $publishedPath->update(['is_published' => false]);
         $response = $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('home'))->assertOk();
         preg_match('/<nav data-mobile-app-nav.*?<\/nav>/s', $response->getContent(), $navigation);
-        $this->assertStringContainsString('href="'.route('profile.show').'#progres"', $navigation[0]);
+        $this->assertStringContainsString('href="'.route('learning.paths.index').'"', $navigation[0]);
+    }
+
+    public function test_learning_catalog_lists_published_materials_and_lesson_counts(): void
+    {
+        $path = LearningPath::factory()->create(['is_published' => true, 'group' => 'aksara']);
+        Lesson::factory()->create(['learning_path_id' => $path->id]);
+        $hiddenPath = LearningPath::factory()->create(['is_published' => false]);
+
+        $this->actingAs(User::factory()->create())->get(route('learning.paths.index'))
+            ->assertOk()
+            ->assertSee('Mau belajar apa hari ini?')
+            ->assertSee($path->title)
+            ->assertSee('1 pelajaran')
+            ->assertSee(route('learning.paths.show', $path->slug))
+            ->assertDontSee($hiddenPath->title)
+            ->assertSee('data-mobile-app-nav', false);
+    }
+
+    public function test_learning_catalog_is_accessible_without_an_account_and_handles_no_materials(): void
+    {
+        $this->get(route('learning.paths.index'))
+            ->assertOk()
+            ->assertSee('Materi belajar sedang disiapkan.')
+            ->assertDontSee('data-mobile-app-nav', false);
     }
 
     public function test_unreviewed_lessons_are_not_accessible(): void
@@ -289,9 +348,53 @@ class LearningFlowTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->get(route('profile.show'))
             ->assertOk()
-            ->assertSee('Materi belajar sedang disiapkan')
-            ->assertSee('Segera hadir')
+            ->assertSee('Belum ada progres belajar')
+            ->assertSee('Pilih materi')
+            ->assertDontSee('Segera hadir')
             ->assertDontSee('0 dari 0 pelajaran selesai');
+    }
+
+    public function test_profile_progress_only_includes_materials_studied_by_the_current_user(): void
+    {
+        $user = User::factory()->create();
+        $studiedPath = LearningPath::factory()->create();
+        $studiedLesson = Lesson::factory()->for($studiedPath, 'learningPath')->create();
+        Lesson::factory()->for($studiedPath, 'learningPath')->create();
+        LearningProgress::factory()->for($user)->for($studiedLesson)->create();
+        $otherPath = LearningPath::factory()->create();
+        $otherLesson = Lesson::factory()->for($otherPath, 'learningPath')->create();
+        LearningProgress::factory()->for(User::factory())->for($otherLesson)->create();
+
+        $this->actingAs($user)->get(route('profile.show'))
+            ->assertOk()
+            ->assertViewHas('totalLessons', 2)
+            ->assertViewHas('completedLessons', 1)
+            ->assertViewHas('learningPathsByGroup', fn ($groups): bool => $groups->flatten()->pluck('id')->all() === [$studiedPath->id])
+            ->assertSee('1 dari 2 pelajaran selesai')
+            ->assertSee('50%')
+            ->assertDontSee('Segera hadir');
+    }
+
+    public function test_anonymous_profile_progress_excludes_other_devices_and_account_progress(): void
+    {
+        $path = LearningPath::factory()->create();
+        $profile = LearnerProfile::query()->create([
+            'visitor_id' => (string) Str::uuid(),
+            'learning_path_id' => $path->id,
+            'role' => 'murid',
+            'name' => 'Made',
+            'mode' => 'anonymous',
+        ]);
+        $lesson = Lesson::factory()->for($path, 'learningPath')->create();
+        LearningProgress::factory()->for($lesson)->create(['visitor_id' => $profile->visitor_id]);
+        LearningProgress::factory()->create();
+        LearningProgress::factory()->for(User::factory())->create(['visitor_id' => $profile->visitor_id]);
+
+        $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('profile.show'))
+            ->assertOk()
+            ->assertViewHas('totalLessons', 1)
+            ->assertViewHas('completedLessons', 1)
+            ->assertViewHas('learningPathsByGroup', fn ($groups): bool => $groups->flatten()->pluck('id')->all() === [$path->id]);
     }
 
     public function test_path_page_only_lists_published_reviewed_lessons(): void

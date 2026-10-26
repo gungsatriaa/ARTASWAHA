@@ -220,6 +220,6 @@
                 </a>
             @endif
 </aside>
-@if (request()->routeIs('home', 'learning.paths.show', 'quizzes.index', 'profile.show') && (auth()->check() || $anonymousProfile))
-    <x-mobile-app-nav :learning-path="$mobileLearningPath ?? ($currentLearningPath instanceof \App\Models\LearningPath ? $currentLearningPath : $learningPaths->first())" />
+@if (request()->routeIs('home', 'learning.paths.*', 'quizzes.index', 'profile.show') && (auth()->check() || $anonymousProfile))
+    <x-mobile-app-nav />
 @endif

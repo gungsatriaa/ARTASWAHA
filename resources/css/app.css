@@ -216,6 +216,12 @@ body {
     body:has([data-mobile-app-nav]) > main {
         padding-bottom: calc(7rem + env(safe-area-inset-bottom));
     }
+
+    body:has([data-mobile-app-nav]) [data-mobile-nav-open],
+    body:has([data-mobile-app-nav]) [data-mobile-nav],
+    body:has([data-mobile-app-nav]) [data-mobile-nav-backdrop] {
+        display: none;
+    }
 }
 
 button:not(:disabled) {

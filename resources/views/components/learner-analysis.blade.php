@@ -1,4 +1,4 @@
-@props(['analysis', 'compact' => false, 'poll' => true, 'retryUrl' => null])
+@props(['analysis', 'compact' => false, 'poll' => true])
 
 <section @if (! $compact) id="analisis" @endif class="mb-5 min-w-0 rounded-card border border-accent/20 bg-surface p-5 sm:p-6"
     @if (! $compact && $poll && in_array($analysis['status'], ['queued', 'processing'], true)) data-learner-analysis-url="{{ route('profile.analysis.show') }}" @endif>
@@ -17,7 +17,18 @@
             @endif
         </p>
     @endif
-    <p class="mt-2 text-xs leading-6 text-foreground/55">Rekomendasi awal berdasarkan peran dan materi pilihan, bukan hasil tes kemampuan.</p>
+    <p class="mt-2 text-xs leading-6 text-foreground/55">Diperbarui otomatis sekitar setiap 6 jam berdasarkan progres dan jawaban kuis yang tercatat. Analisis ini bukan penilaian kemampuan.</p>
+    @if (! empty($analysis['updated_at']))
+        <p class="mt-2 text-xs text-foreground/50">Terakhir diperbarui <time datetime="{{ $analysis['updated_at'] }}">{{ \Illuminate\Support\Carbon::parse($analysis['updated_at'])->timezone(config('app.timezone'))->format('d M Y, H:i') }}</time></p>
+    @endif
+    @if (! $compact && ! empty($analysis['activity']))
+        <dl class="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div class="rounded-2xl bg-background p-4"><dt class="text-xs leading-5 text-foreground/55">Hari aktif · 7 hari</dt><dd class="mt-1 font-display text-2xl font-bold">{{ $analysis['activity']['active_days_7'] }}<span class="text-sm text-foreground/45">/7</span></dd></div>
+            <div class="rounded-2xl bg-background p-4"><dt class="text-xs leading-5 text-foreground/55">Pelajaran selesai · 7 hari</dt><dd class="mt-1 font-display text-2xl font-bold">{{ $analysis['activity']['lessons_completed_7'] }}</dd></div>
+            <div class="rounded-2xl bg-background p-4"><dt class="text-xs leading-5 text-foreground/55">Jawaban kuis benar · 14 hari</dt><dd class="mt-1 font-display text-2xl font-bold">{{ $analysis['activity']['quiz_correct_14'] }}<span class="text-sm text-foreground/45">/{{ $analysis['activity']['quiz_answers_14'] }}</span></dd></div>
+        </dl>
+        <p class="mt-2 text-xs leading-5 text-foreground/50">Hari aktif dihitung saat ada pelajaran selesai atau jawaban kuis. Aktivitas membaca dan durasi belajar belum tercatat.</p>
+    @endif
 
     @if ($compact)
         <a href="{{ route('profile.show') }}#analisis" class="mt-3 inline-flex min-h-11 items-center text-sm font-bold text-accent underline underline-offset-4">Lihat analisis dan peta belajarmu <span aria-hidden="true" class="ml-2">→</span></a>
@@ -45,11 +56,6 @@
                     @endforeach
                 </ol>
             </div>
-        @else
-            <form method="POST" action="{{ $retryUrl ?? route('profile.analysis.store') }}" class="mt-4">
-                @csrf
-                <button type="submit" class="inline-flex min-h-11 items-center rounded-full border border-accent/30 px-4 text-sm font-bold text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">{{ in_array($analysis['status'], ['queued', 'processing'], true) ? 'Periksa lagi' : 'Coba analisis' }}</button>
-            </form>
         @endif
     @endif
 </section>

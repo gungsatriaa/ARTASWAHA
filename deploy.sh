@@ -129,11 +129,11 @@ git diff --quiet && git diff --cached --quiet || fail "Ada perubahan file tracke
 [[ "$(dotenv_value APP_DEBUG)" == "false" ]] || fail "APP_DEBUG harus false."
 
 LEARNER_WORKER_REQUIRED=false
-if [[ "$(dotenv_value TTS_ENABLED)" == "true" || "$(dotenv_value LEARNER_ANALYSIS_ENABLED)" == "true" ]]; then
+if [[ "$(dotenv_value TTS_ENABLED)" == "true" || ( -n "$(dotenv_value AI_API_URL)" && -n "$(dotenv_value AI_MODEL)" ) ]]; then
     LEARNER_WORKER_REQUIRED=true
     check_learner_worker
 else
-    printf 'SKIP AI/TTS worker: kedua fitur belum diaktifkan.\n'
+    printf 'SKIP AI/TTS worker: kedua fitur belum dikonfigurasi.\n'
 fi
 
 printf '\n[1/13] Menyalakan mode maintenance...\n'
@@ -220,25 +220,6 @@ if [[ -n "$AI_API_URL" ]]; then
     check_http "AI API models" "${AI_API_URL%/}/models" "${AI_HEADERS[@]}"
 else
     printf 'SKIP AI kuis belum dikonfigurasi; pembuatan soal dari dokumen belum tersedia.\n'
-fi
-
-if [[ "$(dotenv_value LEARNER_ANALYSIS_ENABLED)" == "true" ]]; then
-    LEARNER_ANALYSIS_URL="$(dotenv_value LEARNER_ANALYSIS_URL)"
-    LEARNER_ANALYSIS_PROVIDER="$(dotenv_value LEARNER_ANALYSIS_PROVIDER)"
-    LEARNER_ANALYSIS_KEY="$(dotenv_value LEARNER_ANALYSIS_KEY)"
-    [[ -n "$(dotenv_value LEARNER_ANALYSIS_MODEL)" ]] || fail "LEARNER_ANALYSIS_MODEL belum diisi."
-    [[ -n "$LEARNER_ANALYSIS_URL" ]] || fail "LEARNER_ANALYSIS_URL belum diisi."
-    LEARNER_HEADERS=()
-    if [[ -n "$LEARNER_ANALYSIS_KEY" ]]; then
-        LEARNER_HEADERS+=(--header "Authorization: Bearer $LEARNER_ANALYSIS_KEY")
-    fi
-    if [[ "$LEARNER_ANALYSIS_PROVIDER" == "ollama" ]]; then
-        check_http "Ollama model list" "${LEARNER_ANALYSIS_URL%/}/api/tags" "${LEARNER_HEADERS[@]}"
-    elif [[ "$LEARNER_ANALYSIS_PROVIDER" == "openai" ]]; then
-        check_http "Analysis models" "${LEARNER_ANALYSIS_URL%/}/models" "${LEARNER_HEADERS[@]}"
-    else
-        fail "LEARNER_ANALYSIS_PROVIDER harus ollama atau openai."
-    fi
 fi
 
 if [[ "$(dotenv_value TTS_ENABLED)" == "true" ]]; then

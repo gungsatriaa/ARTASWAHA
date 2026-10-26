@@ -5,7 +5,11 @@
 @endphp
 
 <x-layouts.app :learning-paths="$learningPaths" :show-footer="false" :title="$active === 'about' ? 'Tentang ARTASWAHA' : 'Profil — ARTASWAHA'">
-    <div class="mx-auto grid min-h-[calc(100svh-6rem)] max-w-7xl gap-5 px-6 py-6 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-center lg:px-10">
+    <div class="mx-auto min-h-[calc(100svh-6rem)] max-w-7xl px-6 py-6 lg:px-10">
+        @if (session('status'))
+            <x-flash-notice class="mb-5">{{ session('status') }}</x-flash-notice>
+        @endif
+        <div class="grid gap-5 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-center">
         <aside class="rounded-card bg-surface p-5 sm:p-6 lg:sticky lg:top-28 lg:self-start" aria-label="Profil dan navigasi akun">
             <div class="flex items-center gap-4 lg:flex-col lg:items-start">
                 <img src="{{ str_starts_with($person->avatar ?? '', 'avatars/') ? route('profile.avatar.show') : asset($person->avatar ?? array_key_first(\App\Services\ProfileAvatarService::DEFAULT_AVATARS)) }}" alt="Avatar {{ $person->name }}" class="size-16 shrink-0 rounded-full object-cover ring-2 ring-primary/40">
@@ -89,10 +93,8 @@
         </aside>
 
         <div class="min-w-0">
-            @if (session('status'))
-                <x-flash-notice class="mb-4">{{ session('status') }}</x-flash-notice>
-            @endif
             {{ $slot }}
+        </div>
         </div>
     </div>
 </x-layouts.app>

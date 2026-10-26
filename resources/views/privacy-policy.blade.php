@@ -3,7 +3,7 @@
         <header class="max-w-3xl border-l-4 border-accent pl-5 sm:pl-7">
             <h1 class="font-display text-4xl font-bold tracking-tight sm:text-5xl">Kebijakan privasi</h1>
             <p class="mt-4 font-readable text-lg leading-8 text-foreground/70">Apa yang ARTASWAHA kumpulkan, mengapa dibutuhkan, dan bagaimana kamu dapat mengontrol datamu.</p>
-            <p class="mt-3 text-sm text-foreground/50">Diperbarui 24 Oktober 2026</p>
+            <p class="mt-3 text-sm text-foreground/50">Diperbarui 26 Oktober 2026</p>
         </header>
 
         <div class="mt-12 grid gap-12 lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-16">
@@ -50,6 +50,7 @@
                 <section id="tujuan" class="scroll-mt-32 border-t border-white/15 pt-8" aria-labelledby="tujuan-title">
                     <h2 id="tujuan-title" class="font-display text-2xl font-bold text-foreground">Untuk apa data digunakan?</h2>
                     <p class="mt-4">Data dipakai untuk mengingat titik awal belajar dan progresmu, menyediakan akun dan pemulihan kata sandi, menampilkan avatar, menjalankan kuis serta room, menghitung hasil jawaban, memproses dokumen yang kamu unggah, dan menjaga keamanan serta keandalan layanan.</p>
+                    <p class="mt-3">Analisis belajar otomatis diperbarui sekitar setiap enam jam. Layanan AI yang dikonfigurasi pengelola menerima peran, judul dan deskripsi materi pilihan, serta ringkasan aktivitas 14 hari: tanggal aktivitas, jumlah pelajaran selesai, jumlah dan ketepatan jawaban kuis, dan usia profil dalam hari. Nama, email, avatar, dan ID akun atau perangkat tidak disertakan dalam permintaan ini. Ringkasan dan rekomendasi disimpan pada profil. Hari aktif hanya mencakup pelajaran selesai atau jawaban kuis; analisis tidak mengukur durasi membaca dan bukan penilaian kemampuan atau kepribadian.</p>
                     <p class="mt-3">Nama tampilan dan avatar peserta dapat terlihat oleh orang lain di room yang sama. Jawaban dan hasil permainan digunakan untuk menjalankan sesi kuis. Jangan gunakan nama lengkap anak atau unggah informasi sensitif yang tidak diperlukan.</p>
                 </section>
 

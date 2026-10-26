@@ -1,7 +1,10 @@
 <?php
 
+use App\Models\LearnerProfile;
 use App\Models\Room;
+use App\Services\LearnerInterviewAnalyzer;
 use App\Services\RoomService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -9,6 +12,26 @@ use Illuminate\Support\Facades\Schedule;
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+Artisan::command('learning:analyze', function (LearnerInterviewAnalyzer $analyzer): void {
+    if (! $analyzer->isConfigured()) {
+        $this->info('AI belum dikonfigurasi.');
+
+        return;
+    }
+
+    LearnerProfile::query()->whereIn('mode', ['anonymous', 'account'])
+        ->where(fn (Builder $query): Builder => $query->whereNull('user_id')->orWhereIn('id', LearnerProfile::query()
+            ->selectRaw('MAX(id)')->whereNotNull('user_id')->groupBy('user_id')))
+        ->chunkById(100, function ($profiles) use ($analyzer): void {
+            foreach ($profiles as $profile) {
+                $analyzer->enqueue($profile);
+            }
+        });
+    $this->info('Analisis belajar yang jatuh tempo sudah dijadwalkan.');
+})->purpose('Perbarui analisis progres dan kebiasaan belajar pengguna');
+
+Schedule::command('learning:analyze')->everySixHours()->withoutOverlapping();
 
 Schedule::call(function (): void {
     $roomService = app(RoomService::class);
