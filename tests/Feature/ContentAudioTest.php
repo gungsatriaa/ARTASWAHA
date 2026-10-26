@@ -10,6 +10,7 @@ use App\Models\Lesson;
 use App\Models\Quiz;
 use App\Models\QuizQuestion;
 use App\Models\User;
+use App\Services\ChatterboxProcess;
 use App\Services\ContentAudioService;
 use App\Services\QuizService;
 use App\Services\RoomService;
@@ -32,7 +33,7 @@ class ContentAudioTest extends TestCase
         parent::setUp();
         Storage::fake('local');
         Process::fake();
-        config(['services.tts.enabled' => false, 'services.tts.engine' => 'espeak', 'services.tts.binary' => '']);
+        config(['services.tts.enabled' => false, 'services.tts.engine' => 'espeak', 'services.tts.binary' => '', 'services.tts.persistent' => false]);
         $this->withCredentials();
     }
 
@@ -232,6 +233,41 @@ class ContentAudioTest extends TestCase
             && $process->timeout === 240 && $process->environment['HF_HUB_OFFLINE'] === '1');
         Queue::assertPushed(GenerateContentAudio::class, 1);
         Http::assertNothingSent();
+    }
+
+    public function test_persistent_chatterbox_uses_the_shared_process_and_keeps_review_required(): void
+    {
+        Http::preventStrayRequests();
+        Queue::fake([GenerateContentAudio::class]);
+        $directory = Storage::disk('local')->path('chatterbox');
+        foreach (['manifest.json', 'base/ve.pt', 'base/s3gen.pt', 'base/tokenizer.json', 'base/conds.pt', 'indonesian/t3_cfg.safetensors'] as $file) {
+            Storage::disk('local')->put('chatterbox/'.$file, '{}');
+        }
+        config(['services.tts.enabled' => true, 'services.tts.engine' => 'chatterbox', 'services.tts.python' => PHP_BINARY,
+            'services.tts.chatterbox_path' => $directory, 'services.tts.device' => 'cpu', 'services.tts.cpu_threads' => 4,
+            'services.tts.persistent' => true, 'services.tts.reference_audio' => '']);
+        $service = app(ContentAudioService::class);
+        $audio = $service->save(Lesson::factory()->create(), [...$this->data(), 'action' => 'generate']);
+        $this->mock(ChatterboxProcess::class)->shouldReceive('generate')->once()->andReturnUsing(function (array $command, array $environment, array $request) use ($audio): array {
+            $this->assertSame(PHP_BINARY, $command[0]);
+            $this->assertContains('serve', $command);
+            $this->assertSame('4', $environment['TTS_CPU_THREADS']);
+            $this->assertSame($audio->spoken_text, $request['text']);
+            $this->assertNull($request['reference']);
+            $this->assertNotContains($audio->spoken_text, $command);
+            file_put_contents($request['destination'], $this->wav());
+
+            return ['model_reused' => true, 'model_load_seconds' => 0];
+        });
+
+        (new GenerateContentAudio($audio->id, $audio->version))->handle($service);
+
+        $this->assertSame('review', $audio->fresh()->status);
+        $this->assertNull($audio->fresh()->reviewed_at);
+        Storage::disk('local')->assertExists($audio->fresh()->path);
+        Process::assertNothingRan();
+        Http::assertNothingSent();
+        Queue::assertPushed(GenerateContentAudio::class, 1);
     }
 
     public function test_chatterbox_incomplete_assets_or_invalid_device_cannot_queue_and_other_languages_are_rejected(): void

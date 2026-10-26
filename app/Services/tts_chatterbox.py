@@ -1,10 +1,12 @@
 """Pinned Indonesian Chatterbox CLI. Only the download command uses the network."""
 
 import argparse
+import contextlib
 import gc
 import json
 import os
 import signal
+import select
 import sys
 import time
 import wave
@@ -17,6 +19,7 @@ INDONESIAN_REPO = 'grandhigh/Chatterbox-TTS-Indonesian'
 INDONESIAN_REVISION = '15027c10d34ac7bbb2796ec5cd727a17a3bf862b'
 BASE_FILES = ('ve.pt', 's3gen.pt', 'tokenizer.json', 'conds.pt')
 MAX_BYTES = 10485760
+PROTOCOL_PREFIX = 'ARTASWAHA_TTS '
 
 
 def cpu_threads() -> int:
@@ -126,33 +129,35 @@ def validate_reference(reference: Path | None) -> None:
             raise ValueError('Gunakan referensi WAV PCM sepanjang 6 sampai 10 detik.')
 
 
-def synthesize(directory: Path, device: str, text: str, speed: int, destination: Path,
-               reference: Path | None = None) -> dict:
-    if not text.strip() or len(text) > 8000 or not 100 <= speed <= 220:
-        raise ValueError('Narasi atau kecepatan tidak valid.')
-    validate_reference(reference)
-    started = time.perf_counter()
-    check_runtime(directory, device)
+def generate_part(model, text: str):
+    # Chatterbox 0.1.1 installs a new hook and wraps forward on every inference.
+    attention = model.t3.tfmr.layers[9].self_attn
+    original_forward = attention.forward
+    original_hooks = set(attention._forward_hooks)
+    try:
+        return model.generate(text)
+    finally:
+        attention.forward = original_forward
+        for key in set(attention._forward_hooks) - original_hooks:
+            del attention._forward_hooks[key]
+        if hasattr(model.t3, 'patched_model'):
+            del model.t3.patched_model
+
+
+def render_audio(model, text: str, speed: int, destination: Path) -> None:
     import numpy as np
     import torch
     from tts_mms import chunks
 
-    torch.manual_seed(42)
-    model = load_model(directory, device)
-    loaded = time.perf_counter()
     total_bytes = 0
     try:
-        if reference is not None:
-            with torch.inference_mode():
-                model.prepare_conditionals(str(reference))
-        prepared = time.perf_counter()
         with wave.open(str(destination), 'wb') as output:
             output.setnchannels(1)
             output.setsampwidth(2)
             output.setframerate(model.sr)
             with torch.inference_mode():
                 for part in chunks(text):
-                    samples = model.generate(part).detach().cpu().numpy().reshape(-1)
+                    samples = generate_part(model, part).detach().cpu().numpy().reshape(-1)
                     if not np.isfinite(samples).all() or samples.size == 0:
                         raise ValueError('Model menghasilkan audio tidak valid.')
                     if speed != 150:
@@ -167,16 +172,114 @@ def synthesize(directory: Path, device: str, text: str, speed: int, destination:
     except BaseException:
         destination.unlink(missing_ok=True)
         raise
-    return {'model_load_seconds': round(loaded - started, 2),
-            'reference_seconds': round(prepared - loaded, 2),
-            'generation_seconds': round(time.perf_counter() - prepared, 2),
-            'threads': cpu_threads()}
+
+
+class ChatterboxSession:
+    def __init__(self, directory: Path, device: str):
+        self.directory = directory
+        self.device = device
+        self.model = None
+        self.base_conditionals = None
+        self.reference_key = None
+
+    def synthesize(self, text: str, speed: int, destination: Path,
+                   reference: Path | None = None) -> dict:
+        if not isinstance(text, str) or not text.strip() or len(text) > 8000 or type(speed) is not int or not 100 <= speed <= 220:
+            raise ValueError('Narasi atau kecepatan tidak valid.')
+        validate_reference(reference)
+        started = time.perf_counter()
+        reused = self.model is not None
+        if not reused:
+            check_runtime(self.directory, self.device)
+            self.model = load_model(self.directory, self.device)
+            self.base_conditionals = self.model.conds
+        loaded = time.perf_counter()
+        import torch
+        torch.manual_seed(42)
+        reference_key = None
+        if reference is not None:
+            attributes = reference.stat()
+            reference_key = (str(reference.resolve()), attributes.st_mtime_ns, attributes.st_size)
+        if reference_key != self.reference_key:
+            if reference is None:
+                self.model.conds = self.base_conditionals
+            else:
+                with torch.inference_mode():
+                    self.model.prepare_conditionals(str(reference))
+            self.reference_key = reference_key
+        prepared = time.perf_counter()
+        render_audio(self.model, text, speed, destination)
+        return {'model_load_seconds': round(loaded - started, 2),
+                'reference_seconds': round(prepared - loaded, 2),
+                'generation_seconds': round(time.perf_counter() - prepared, 2),
+                'model_reused': reused, 'threads': cpu_threads()}
+
+
+def synthesize(directory: Path, device: str, text: str, speed: int, destination: Path,
+               reference: Path | None = None) -> dict:
+    return ChatterboxSession(directory, device).synthesize(text, speed, destination, reference)
+
+
+def request_lines():
+    pending = b''
+    while True:
+        while b'\n' not in pending:
+            if os.name == 'posix' and not select.select([sys.stdin], [], [], 900)[0]:
+                return
+            chunk = os.read(sys.stdin.fileno(), 8192)
+            if not chunk:
+                if pending:
+                    yield pending
+                return
+            pending += chunk
+            if len(pending) > 131072:
+                raise ValueError('Permintaan TTS terlalu besar.')
+        newline = pending.index(b'\n') + 1
+        line, pending = pending[:newline], pending[newline:]
+        yield line
+
+
+def watch_parent() -> None:
+    if sys.platform.startswith('linux'):
+        import ctypes
+        parent_pid = os.getppid()
+        if ctypes.CDLL(None, use_errno=True).prctl(1, signal.SIGTERM, 0, 0, 0) != 0:
+            raise OSError('Tidak dapat mengaktifkan penghentian worker bersama proses induk.')
+        if os.getppid() != parent_pid:
+            sys.exit(143)
+
+
+def serve(directory: Path, device: str) -> None:
+    watch_parent()
+    session = ChatterboxSession(directory, device)
+    # One request at a time over private stdin/stdout; no listener or network API.
+    for number, line in zip(range(50), request_lines()):
+        request_id = None
+        started = time.perf_counter()
+        try:
+            if len(line) > 131072:
+                raise ValueError('Permintaan TTS terlalu besar.')
+            request = json.loads(line)
+            request_id = request['id']
+            if not isinstance(request_id, str) or len(request_id) > 64:
+                raise ValueError('ID permintaan tidak valid.')
+            destination = Path(request['destination'])
+            reference = Path(request['reference']) if request.get('reference') else None
+            with contextlib.redirect_stdout(sys.stderr):
+                timings = session.synthesize(request['text'], request['speed'], destination, reference)
+            result = {'id': request_id, 'status': 'generated', 'seconds': round(time.perf_counter() - started, 2),
+                      'wav_bytes': destination.stat().st_size, 'recycle': number == 49, **timings}
+        except Exception as error:
+            result = {'id': request_id, 'status': 'error', 'error': f'{type(error).__name__}: {error}'}
+            print(PROTOCOL_PREFIX + json.dumps(result), flush=True)
+            return
+        print(PROTOCOL_PREFIX + json.dumps(result), flush=True)
 
 
 def main() -> None:
     signal.signal(signal.SIGTERM, lambda signum, frame: sys.exit(143))
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['download', 'check', 'synthesize'])
+    parser.add_argument('command', choices=['download', 'check', 'synthesize', 'serve'])
     parser.add_argument('--model-dir', type=Path, required=True)
     parser.add_argument('--device', choices=['cpu', 'cuda'], default='cpu')
     parser.add_argument('--reference-audio', type=Path)
@@ -188,6 +291,8 @@ def main() -> None:
     started = time.perf_counter()
     if args.command == 'download':
         download(directory)
+    elif args.command == 'serve':
+        serve(directory, args.device)
     elif args.command == 'check':
         validate_reference(args.reference_audio)
         check_runtime(directory, args.device)

@@ -57,6 +57,7 @@ return [
         'device' => env('TTS_DEVICE', 'cpu'),
         'reference_audio' => env('TTS_CHATTERBOX_REFERENCE_AUDIO', ''),
         'cpu_threads' => env('TTS_CPU_THREADS', 2),
+        'persistent' => env('TTS_PERSISTENT', false),
     ],
 
     'learner_analysis' => [

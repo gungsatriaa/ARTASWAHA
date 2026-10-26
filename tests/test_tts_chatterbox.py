@@ -1,5 +1,6 @@
 import contextlib
 import importlib.util
+import io
 import json
 import os
 import subprocess
@@ -169,6 +170,122 @@ class ChatterboxRunnerTest(unittest.TestCase):
         self.assertTrue((self.root / 'output.wav').exists())
         self.assertEqual(2, timings['threads'])
         self.assertGreaterEqual(timings['generation_seconds'], 0)
+
+    @unittest.skipIf(np is None, 'Optional TTS runtime provides numpy')
+    def test_session_reuses_model_and_reference_but_reloads_changed_voice(self):
+        reference = self.write_reference()
+        model = MagicMock(sr=8000)
+        base_conditionals = model.conds
+        model.prepare_conditionals.side_effect = lambda path: setattr(model, 'conds', 'reference-voice')
+        model.generate.return_value.detach.return_value.cpu.return_value.numpy.return_value = np.zeros(40, dtype=np.float32)
+        torch, api, modules = self.modules()
+        with patch.dict(sys.modules, modules), patch.object(runner, 'check_runtime') as check, patch.object(runner, 'load_model', return_value=model) as loader:
+            session = runner.ChatterboxSession(self.root, 'cpu')
+            cold = session.synthesize('Kalimat pertama.', 150, self.root / 'first.wav', reference)
+            warm = session.synthesize('Kalimat berikutnya.', 150, self.root / 'second.wav', reference)
+            self.assertFalse(cold['model_reused'])
+            self.assertTrue(warm['model_reused'])
+            check.assert_called_once()
+            loader.assert_called_once()
+            model.prepare_conditionals.assert_called_once()
+            modified = reference.stat().st_mtime_ns + 1000000000
+            os.utime(reference, ns=(modified, modified))
+            session.synthesize('Referensi berubah.', 150, self.root / 'third.wav', reference)
+            self.assertEqual(2, model.prepare_conditionals.call_count)
+            session.synthesize('Kembali ke bawaan.', 150, self.root / 'fourth.wav')
+            self.assertIs(model.conds, base_conditionals)
+
+    @unittest.skipIf(np is None, 'Optional TTS runtime provides numpy')
+    def test_repeated_native_alignment_hooks_are_removed_even_when_generation_fails(self):
+        runner.configure_environment(self.root)
+        import torch
+        from chatterbox.models.t3.inference.alignment_stream_analyzer import AlignmentStreamAnalyzer
+
+        class Attention(torch.nn.Module):
+            def forward(self, **kwargs):
+                return torch.zeros(1), torch.ones(1, 1, 1, 1), None
+
+        attention = Attention()
+        original_forward = attention.forward
+        existing = attention.register_forward_hook(lambda module, inputs, output: None)
+        tfmr = types.SimpleNamespace(layers=[types.SimpleNamespace(self_attn=attention)] * 10)
+        model = types.SimpleNamespace(t3=types.SimpleNamespace(tfmr=tfmr))
+        def generate(text):
+            analyzer = AlignmentStreamAnalyzer(tfmr, None, (0, 1), alignment_layer_idx=9)
+            model.t3.patched_model = analyzer
+            attention()
+            if text == 'fail':
+                raise RuntimeError('generation failed')
+            return 'samples'
+
+        model.generate = generate
+        for text in ['first', 'second', 'third', 'fail']:
+            if text == 'fail':
+                with self.assertRaises(RuntimeError):
+                    runner.generate_part(model, text)
+            else:
+                self.assertEqual('samples', runner.generate_part(model, text))
+            self.assertEqual(original_forward, attention.forward)
+            self.assertEqual({existing.id}, set(attention._forward_hooks))
+            self.assertFalse(hasattr(model.t3, 'patched_model'))
+        existing.remove()
+
+    def test_pipe_reader_preserves_buffered_requests_and_trailing_eof(self):
+        read_fd, write_fd = os.pipe()
+        try:
+            os.write(write_fd, b'first\nsecond\nthird')
+            os.close(write_fd)
+            write_fd = None
+            with patch.object(sys, 'stdin', types.SimpleNamespace(fileno=lambda: read_fd)):
+                self.assertEqual([b'first\n', b'second\n', b'third'], list(runner.request_lines()))
+        finally:
+            os.close(read_fd)
+            if write_fd is not None:
+                os.close(write_fd)
+
+    def test_pipe_reader_releases_idle_session_and_rejects_oversized_input(self):
+        with patch.object(os, 'name', 'posix'), patch.object(runner.select, 'select', return_value=([], [], [])):
+            self.assertEqual([], list(runner.request_lines()))
+        with patch.object(runner.select, 'select', return_value=([sys.stdin], [], [])), patch.object(os, 'read', return_value=b'x' * 8192):
+            with self.assertRaisesRegex(ValueError, 'terlalu besar'):
+                list(runner.request_lines())
+
+    def test_server_returns_protocol_errors_and_recycles_after_fifty_requests(self):
+        destination = self.root / 'server.wav'
+        destination.write_bytes(b'output')
+        request = {'id': 'request-id', 'text': 'Narasi Indonesia.', 'speed': 150, 'destination': str(destination), 'reference': None}
+        output = io.StringIO()
+        with patch.object(runner, 'watch_parent'), patch.object(runner, 'request_lines', return_value=iter([json.dumps(request).encode()] * 51)), patch.object(runner, 'ChatterboxSession') as session, contextlib.redirect_stdout(output):
+            session.return_value.synthesize.return_value = {'model_reused': True}
+            runner.serve(self.root, 'cpu')
+        replies = [json.loads(line.removeprefix(runner.PROTOCOL_PREFIX)) for line in output.getvalue().splitlines()]
+        self.assertEqual(50, len(replies))
+        self.assertEqual(50, session.return_value.synthesize.call_count)
+        self.assertTrue(all(reply['status'] == 'generated' and reply['id'] == 'request-id' for reply in replies))
+        self.assertFalse(replies[0]['recycle'])
+        self.assertTrue(replies[-1]['recycle'])
+        output = io.StringIO()
+        with patch.object(runner, 'watch_parent'), patch.object(runner, 'request_lines', return_value=iter([json.dumps(request).encode()])), patch.object(runner, 'ChatterboxSession') as session, contextlib.redirect_stdout(output):
+            session.return_value.synthesize.side_effect = ValueError('invalid reference')
+            runner.serve(self.root, 'cpu')
+        reply = json.loads(output.getvalue().removeprefix(runner.PROTOCOL_PREFIX))
+        self.assertEqual('error', reply['status'])
+        self.assertIn('invalid reference', reply['error'])
+
+    def test_linux_child_exits_when_parent_dies_and_rejects_failed_registration(self):
+        with patch.object(sys, 'platform', 'linux'), patch.object(os, 'getppid', side_effect=[123, 123]), patch('ctypes.CDLL') as library:
+            library.return_value.prctl.return_value = 0
+            runner.watch_parent()
+            library.return_value.prctl.assert_called_once_with(1, runner.signal.SIGTERM, 0, 0, 0)
+        with patch.object(sys, 'platform', 'linux'), patch.object(os, 'getppid', return_value=123), patch('ctypes.CDLL') as library:
+            library.return_value.prctl.return_value = -1
+            with self.assertRaises(OSError):
+                runner.watch_parent()
+        with patch.object(sys, 'platform', 'linux'), patch.object(os, 'getppid', side_effect=[123, 1]), patch('ctypes.CDLL') as library:
+            library.return_value.prctl.return_value = 0
+            with self.assertRaises(SystemExit) as error:
+                runner.watch_parent()
+            self.assertEqual(143, error.exception.code)
 
     @unittest.skipIf(np is None, 'Optional TTS runtime provides numpy')
     def test_synthesis_writes_pcm_wav_and_applies_requested_tempo(self):

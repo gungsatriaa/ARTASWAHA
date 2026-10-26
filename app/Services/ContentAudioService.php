@@ -9,6 +9,7 @@ use App\Models\QuizQuestion;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -177,6 +178,7 @@ class ContentAudioService
         $path = 'content-audio/'.Str::uuid().'.wav';
         $disk = Storage::disk('local');
         $disk->makeDirectory('content-audio');
+        $metrics = null;
         try {
             if (config('services.tts.engine') === 'openai') {
                 $request = Http::connectTimeout(5)->timeout(240)->accept('audio/wav')
@@ -198,6 +200,15 @@ class ContentAudioService
                 if (! $response->successful()) {
                     throw new RuntimeException('Layanan TTS gagal menghasilkan audio.');
                 }
+            } elseif (config('services.tts.engine') === 'chatterbox' && config('services.tts.persistent')) {
+                $metrics = app(ChatterboxProcess::class)->generate([
+                    (string) config('services.tts.python'), '-u', base_path('app/Services/tts_chatterbox.py'),
+                    'serve', '--model-dir', (string) config('services.tts.chatterbox_path'),
+                    '--device', (string) config('services.tts.device'),
+                ], ['TTS_CPU_THREADS' => (string) config('services.tts.cpu_threads'), 'PYTHONUTF8' => '1'], [
+                    'text' => $audio->spoken_text, 'speed' => $audio->speed, 'destination' => $disk->path($path),
+                    'reference' => filled(config('services.tts.reference_audio')) ? (string) config('services.tts.reference_audio') : null,
+                ]);
             } else {
                 $environment = ['OMP_NUM_THREADS' => '2', 'MKL_NUM_THREADS' => '2', 'TOKENIZERS_PARALLELISM' => 'false', 'HF_HUB_OFFLINE' => '1', 'TRANSFORMERS_OFFLINE' => '1', 'PYTHONUTF8' => '1'];
                 if (config('services.tts.engine') === 'chatterbox') {
@@ -226,6 +237,11 @@ class ContentAudioService
             }
             if (substr($header, 0, 4) !== 'RIFF' || substr($header, 8, 4) !== 'WAVE') {
                 throw new RuntimeException('Format audio TTS tidak valid.');
+            }
+            if ($metrics !== null) {
+                Log::info('Chatterbox TTS selesai', ['audio_id' => $audio->id, ...array_intersect_key($metrics, array_flip([
+                    'seconds', 'model_load_seconds', 'reference_seconds', 'generation_seconds', 'model_reused', 'threads',
+                ]))]);
             }
 
             return $path;
