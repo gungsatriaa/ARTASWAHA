@@ -73,6 +73,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::post('/ai/laporan', [AdminAiController::class, 'requestReport'])->middleware('throttle:admin-ai-write')->name('ai.reports.store');
     Route::get('/ai/laporan/{aiReport}', [AdminAiController::class, 'report'])->name('ai.reports.show');
     Route::get('/audio', [AdminContentAudioController::class, 'index'])->name('audio.index');
+    Route::get('/audio/{contentAudio}/status', [AdminContentAudioController::class, 'status'])->middleware('throttle:60,1')->name('audio.status');
     Route::get('/audio/modul/{lesson}', [AdminContentAudioController::class, 'lesson'])->name('audio.lessons.edit');
     Route::post('/audio/modul/{lesson}', [AdminContentAudioController::class, 'saveLesson'])->middleware('throttle:admin-ai-write')->name('audio.lessons.store');
     Route::get('/audio/soal/{question}', [AdminContentAudioController::class, 'question'])->name('audio.questions.edit');

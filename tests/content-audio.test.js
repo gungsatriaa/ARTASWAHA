@@ -50,6 +50,19 @@ test('stop button resets the recording without waiting for another event', () =>
     assert.equal(players[0].currentTime, 0);
 });
 
+test('players inserted after generation are initialized without duplicate listeners', () => {
+    const { players, windowEvents } = setup();
+    const added = { ...players[0], events: {}, pauses: 0,
+        addEventListener(name, callback) { this.events[name] = callback; } };
+    players.push(added);
+    windowEvents['content-audio-updated']();
+    windowEvents['content-audio-updated']();
+    added.events.play();
+    assert.equal(players[0].pauses, 1);
+    assert.equal(players[1].pauses, 1);
+    assert.equal(added.pauses, 0);
+});
+
 test('leaving or hiding the page stops all audio', () => {
     const harness = setup();
     harness.windowEvents.pagehide();

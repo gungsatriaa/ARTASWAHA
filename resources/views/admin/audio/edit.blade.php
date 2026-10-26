@@ -3,8 +3,7 @@
 @section('content')
 <div class="max-w-4xl">
 <a href="{{ route('admin.audio.index') }}" class="inline-flex min-h-11 items-center text-sm font-bold text-accent">← Audio pembelajaran</a><h1 class="mt-3 font-display text-3xl font-bold">Siapkan audio</h1><p class="mt-2 break-words text-sm leading-6 text-foreground/65">{{ $isLesson ? 'Modul' : 'Soal' }}: {{ $title }}</p>
-@if ($audio)<div class="mt-4"><x-job-status :status="$current ? $audio->status : 'stale'" /></div>@endif
-@if (! $current)<p class="mt-4 rounded-xl border border-accent/25 bg-accent/10 p-4 text-sm">Materi berubah. Audio lama tidak akan digunakan pelajar; perbarui narasi dan buat atau unggah ulang audio.</p>@endif
+@if ($audio)@include('admin.audio.result')@endif
 <form method="POST" action="{{ $action }}" enctype="multipart/form-data" class="mt-6 space-y-5 rounded-card border border-white/10 bg-surface p-5 sm:p-7">
 @csrf<input type="hidden" name="version" value="{{ $audio?->version }}">
 <label class="block text-sm font-bold">Teks yang dibacakan<textarea name="spoken_text" required maxlength="8000" rows="9" class="mt-2 block w-full rounded-xl border border-white/15 bg-background p-4 text-sm leading-7">{{ old('spoken_text', $text) }}</textarea><span class="mt-2 block text-xs font-normal leading-6 text-foreground/55">Maksimal 8000 karakter. Untuk modul panjang, ringkas narasinya atau gunakan rekaman. Narasi soal otomatis hanya berisi pertanyaan dan pilihan jawaban.</span></label>
@@ -14,12 +13,6 @@
 <div class="flex flex-wrap gap-3"><button name="action" value="save" class="min-h-11 rounded-full border border-white/20 px-5 text-sm font-bold">Simpan narasi</button><button name="action" value="generate" class="min-h-11 rounded-full bg-accent px-5 text-sm font-bold text-background">Buat audio offline</button><button name="action" value="upload" class="min-h-11 rounded-full border border-accent/40 px-5 text-sm font-bold text-accent">Gunakan rekaman</button></div>
 @unless ($configured)<p class="text-xs leading-6 text-foreground/55">Mesin TTS belum dikonfigurasi. Tombol pembuatan audio menyimpan permintaan dengan status belum tersedia; rekaman dapat langsung diunggah.</p>@endunless
 </form>
-@if ($audio?->path)
-<section class="mt-5 rounded-card border border-white/10 bg-surface p-5"><h2 class="font-display text-lg font-bold">Dengarkan sebelum menyetujui</h2><div class="mt-4"><x-content-audio-player :src="route('content-audio.show', $audio)" label="Preview audio" /></div>
-@if ($audio->status === 'review' && $current)<form method="POST" action="{{ route('admin.audio.approve', $audio) }}" class="mt-4">@csrf<input type="hidden" name="version" value="{{ $audio->version }}"><button class="min-h-11 rounded-full bg-accent px-5 text-sm font-bold text-background">Sudah diperiksa, setujui audio</button></form>@endif
-</section>
-@endif
-@if ($audio && in_array($audio->status, ['queued', 'processing']))<a href="{{ url()->current() }}" class="mt-4 inline-flex min-h-11 items-center text-sm font-bold text-accent">Perbarui status pemrosesan</a>@endif
 @if ($isLesson)<a href="{{ route('admin.lessons.preview', $content) }}" class="mt-4 inline-flex min-h-11 items-center text-sm font-bold text-accent">Kembali ke preview modul →</a>@endif
 </div>
 @endsection

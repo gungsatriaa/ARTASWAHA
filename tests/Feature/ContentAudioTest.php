@@ -48,6 +48,57 @@ class ContentAudioTest extends TestCase
         Process::assertNothingRan();
     }
 
+    public function test_audio_status_is_private_and_only_available_to_admins(): void
+    {
+        $audio = ContentAudio::factory()->create(['status' => 'queued']);
+        $url = route('admin.audio.status', $audio);
+        $this->getJson($url)->assertUnauthorized();
+        $this->actingAs(User::factory()->create())->getJson($url)->assertForbidden();
+        $this->actingAs(User::factory()->create(['is_admin' => true]))->getJson($url)
+            ->assertOk()->assertHeader('Cache-Control', 'no-store, private')
+            ->assertExactJson(['version' => $audio->version, 'status' => 'queued', 'html' => null]);
+        $this->assertSame('queued', $audio->fresh()->status);
+        Process::assertNothingRan();
+    }
+
+    public function test_audio_status_follows_generation_and_returns_review_player_without_approval(): void
+    {
+        $audio = ContentAudio::factory()->create(['status' => 'queued']);
+        $this->actingAs(User::factory()->create(['is_admin' => true]));
+        $this->get(route('admin.audio.lessons.edit', $audio->lesson))->assertOk()
+            ->assertSee('role="progressbar"', false)->assertSee('data-audio-pending="1"', false)
+            ->assertSee('motion-safe:animate-pulse', false);
+        $url = route('admin.audio.status', $audio);
+        $audio->update(['status' => 'processing']);
+        $this->getJson($url)->assertOk()->assertJsonPath('status', 'processing')->assertJsonPath('html', null);
+        Storage::disk('local')->put('content-audio/example.wav', $this->wav());
+        $audio->update(['status' => 'review', 'path' => 'content-audio/example.wav']);
+        $response = $this->getJson($url)->assertOk()->assertJsonPath('status', 'review');
+        $this->assertStringContainsString('Preview audio', $response->json('html'));
+        $this->assertStringContainsString('Sudah diperiksa, setujui audio', $response->json('html'));
+        $this->assertStringNotContainsString('role="progressbar"', $response->json('html'));
+        $this->assertNull($audio->fresh()->reviewed_at);
+        $this->assertSame('review', $audio->fresh()->status);
+        Process::assertNothingRan();
+    }
+
+    public function test_audio_status_reports_failures_stale_sources_and_changed_versions(): void
+    {
+        $audio = ContentAudio::factory()->create(['status' => 'failed']);
+        $this->actingAs(User::factory()->create(['is_admin' => true]));
+        $url = route('admin.audio.status', $audio);
+        $response = $this->getJson($url)->assertOk()->assertJsonPath('status', 'failed');
+        $this->assertStringContainsString('Pembuatan audio gagal', $response->json('html'));
+        $audio->update(['status' => 'unavailable', 'version' => (string) Str::uuid()]);
+        $response = $this->getJson($url)->assertOk()->assertJsonPath('status', 'unavailable')->assertJsonPath('version', $audio->version);
+        $this->assertStringContainsString('Mesin TTS belum tersedia', $response->json('html'));
+        $audio->lesson->update(['content' => 'Materi berubah setelah audio dibuat.']);
+        $response = $this->getJson($url)->assertOk()->assertJsonPath('status', 'stale');
+        $this->assertStringContainsString('Materi sudah berubah', $response->json('html'));
+        $this->assertStringNotContainsString('Sudah diperiksa, setujui audio', $response->json('html'));
+        Process::assertNothingRan();
+    }
+
     public function test_upload_requires_review_then_supports_public_playback_and_byte_ranges(): void
     {
         $lesson = Lesson::factory()->create();

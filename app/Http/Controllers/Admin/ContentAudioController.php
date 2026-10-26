@@ -8,6 +8,7 @@ use App\Models\Lesson;
 use App\Models\QuizQuestion;
 use App\Services\ContentAudioService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -54,6 +55,19 @@ class ContentAudioController extends Controller
         $service->approve($contentAudio, $data['version']);
 
         return back()->with('status', 'Audio sudah ditinjau dan siap digunakan.');
+    }
+
+    public function status(ContentAudio $contentAudio, ContentAudioService $service): JsonResponse
+    {
+        $current = $service->isCurrent($contentAudio);
+        $status = $current ? $contentAudio->status : 'stale';
+
+        return response()->json([
+            'version' => $contentAudio->version,
+            'status' => $status,
+            'html' => in_array($status, ['queued', 'processing'], true) ? null
+                : view('admin.audio.result', ['audio' => $contentAudio, 'current' => $current])->render(),
+        ])->header('Cache-Control', 'private, no-store');
     }
 
     private function editor(Lesson|QuizQuestion $content, ContentAudioService $service): View

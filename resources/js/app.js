@@ -1,8 +1,12 @@
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 
-if (document.querySelector('[data-content-audio]')) {
+if (document.querySelector('[data-content-audio], [data-audio-status-panel]')) {
     import('./content-audio.js');
+}
+
+if (document.querySelector('[data-audio-pending="1"]')) {
+    import('./admin-audio-progress.js');
 }
 
 if (document.querySelector('[data-learner-analysis-url]')) {
