@@ -55,6 +55,7 @@ return [
         'model_path' => env('TTS_MMS_MODEL_PATH', ''),
         'chatterbox_path' => env('TTS_CHATTERBOX_MODEL_PATH', storage_path('app/private/tools/chatterbox/models')),
         'device' => env('TTS_DEVICE', 'cpu'),
+        'reference_audio' => env('TTS_CHATTERBOX_REFERENCE_AUDIO', ''),
     ],
 
     'learner_analysis' => [

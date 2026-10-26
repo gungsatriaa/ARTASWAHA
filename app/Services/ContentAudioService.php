@@ -24,6 +24,10 @@ class ContentAudioService
             return false;
         }
         if (config('services.tts.engine') === 'chatterbox') {
+            $reference = (string) config('services.tts.reference_audio');
+            if ($reference !== '' && (! is_file($reference) || ! is_readable($reference))) {
+                return false;
+            }
             $directory = rtrim((string) config('services.tts.chatterbox_path'), '/\\');
             foreach (['manifest.json', 'base/ve.pt', 'base/s3gen.pt', 'base/tokenizer.json', 'base/conds.pt', 'indonesian/t3_cfg.safetensors'] as $file) {
                 if (! is_file($directory.'/'.$file) || ! is_readable($directory.'/'.$file) || filesize($directory.'/'.$file) === 0) {
@@ -204,6 +208,9 @@ class ContentAudioService
                     'mms' => [(string) config('services.tts.python'), base_path('app/Services/tts_mms.py'), '--model-dir', (string) config('services.tts.model_path'), '-v', $audio->language, '-s', (string) $audio->speed, '-w', $disk->path($path)],
                     default => [(string) config('services.tts.binary'), '-v', $audio->language, '-s', (string) $audio->speed, '-b', '1', '-w', $disk->path($path), '--stdin'],
                 };
+                if (config('services.tts.engine') === 'chatterbox' && filled(config('services.tts.reference_audio'))) {
+                    $command = [...$command, '--reference-audio', (string) config('services.tts.reference_audio')];
+                }
                 $result = Process::timeout(config('services.tts.engine') === 'espeak' ? 90 : 240)->env($environment)->input($audio->spoken_text)->run($command);
                 if (! $result->successful()) {
                     throw new RuntimeException('TTS gagal menghasilkan audio.');

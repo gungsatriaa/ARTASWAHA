@@ -184,6 +184,16 @@ TTS_PYTHON=/www/wwwroot/artaswaha/storage/app/private/tools/chatterbox/venv/bin/
 TTS_CHATTERBOX_MODEL_PATH=/www/wwwroot/artaswaha/storage/app/private/tools/chatterbox/models
 ```
 
+Referensi suara Indonesia (opsional): simpan rekaman bersih satu penutur Indonesia dalam WAV PCM sepanjang 6–10 detik di `storage/app/private/tools/chatterbox/voices/indonesia.wav`. Gunakan suara sendiri atau suara yang pemiliknya mengizinkan. Pastikan file dapat dibaca pengguna worker. Isi `.env` dengan path absolut sesuai folder aplikasi, misalnya:
+
+```dotenv
+TTS_CHATTERBOX_REFERENCE_AUDIO=/www/wwwroot/artaswaha.kerthajaya.com/storage/app/private/tools/chatterbox/voices/indonesia.wav
+```
+
+Jalankan `php artisan config:cache` lalu `php artisan queue:restart`. Model tidak perlu diunduh ulang. Referensi diproses sekali per tugas dan digunakan untuk semua potongan narasi; sintesis tetap offline. Untuk pengecekan CLI, tambahkan `--reference-audio /path/ke/indonesia.wav` pada perintah `check` maupun `synthesize`. Path salah atau WAV di luar durasi tersebut akan ditolak; konfigurasi yang kosong tetap memakai suara bawaan. Perbaikan aksen harus dinilai dari hasil audio, bukan hanya status tugas.
+
+Audio lama tidak berubah otomatis: setelah mengganti referensi, pilih **Simpan narasi**, lalu **Buat audio offline** untuk menghasilkan ulang. Tinjau hasil sebelum menyetujui audio untuk pengguna.
+
 Lalu:
 
 ```bash

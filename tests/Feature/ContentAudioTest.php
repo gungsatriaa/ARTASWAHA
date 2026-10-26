@@ -152,7 +152,9 @@ class ContentAudioTest extends TestCase
         foreach (['manifest.json', 'base/ve.pt', 'base/s3gen.pt', 'base/tokenizer.json', 'base/conds.pt', 'indonesian/t3_cfg.safetensors'] as $file) {
             Storage::disk('local')->put('chatterbox model/'.$file, '{}');
         }
-        config(['services.tts.enabled' => true, 'services.tts.engine' => 'chatterbox', 'services.tts.python' => PHP_BINARY, 'services.tts.chatterbox_path' => $directory, 'services.tts.device' => 'cpu']);
+        Storage::disk('local')->put('suara indonesia.wav', $this->wav());
+        $reference = Storage::disk('local')->path('suara indonesia.wav');
+        config(['services.tts.enabled' => true, 'services.tts.engine' => 'chatterbox', 'services.tts.python' => PHP_BINARY, 'services.tts.chatterbox_path' => $directory, 'services.tts.device' => 'cpu', 'services.tts.reference_audio' => $reference]);
         $service = app(ContentAudioService::class);
         $data = [...$this->data(), 'spoken_text' => 'Narasi; $(jangan jalankan)', 'action' => 'generate'];
         $audio = $service->save(Lesson::factory()->create(), $data);
@@ -173,6 +175,7 @@ class ContentAudioTest extends TestCase
             && $process->command[1] === base_path('app/Services/tts_chatterbox.py')
             && $process->command[2] === 'synthesize' && $process->command[4] === $directory
             && $process->command[6] === 'cpu' && $process->input === $data['spoken_text']
+            && array_slice($process->command, -2) === ['--reference-audio', $reference]
             && ! in_array($data['spoken_text'], $process->command, true)
             && $process->timeout === 240 && $process->environment['HF_HUB_OFFLINE'] === '1');
         Queue::assertPushed(GenerateContentAudio::class, 1);
@@ -192,6 +195,10 @@ class ContentAudioTest extends TestCase
         foreach (['manifest.json', 'base/ve.pt', 'base/s3gen.pt', 'base/tokenizer.json', 'base/conds.pt', 'indonesian/t3_cfg.safetensors'] as $file) {
             Storage::disk('local')->put('chatterbox/'.$file, '{}');
         }
+        config(['services.tts.reference_audio' => $directory.'/missing.wav']);
+        $this->assertFalse($service->isConfigured());
+        config(['services.tts.reference_audio' => '']);
+        $this->assertTrue($service->isConfigured());
         config(['services.tts.device' => 'unsupported']);
         $audio = $service->save($lesson, [...$this->data(), 'action' => 'generate', 'version' => $audio->version]);
         $this->assertSame('unavailable', $audio->status);

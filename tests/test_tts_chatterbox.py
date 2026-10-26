@@ -120,6 +120,37 @@ class ChatterboxRunnerTest(unittest.TestCase):
         self.assertEqual(2, result.returncode)
         self.assertFalse((self.root / 'bad.wav').exists())
 
+    def write_reference(self, seconds=8):
+        reference = self.root / 'suara indonesia.wav'
+        with wave.open(str(reference), 'wb') as audio:
+            audio.setnchannels(1)
+            audio.setsampwidth(2)
+            audio.setframerate(8000)
+            audio.writeframes(b'\0\0' * 8000 * seconds)
+        return reference
+
+    def test_missing_or_wrong_duration_reference_fails_before_model_load(self):
+        with patch.object(runner, 'check_runtime') as check:
+            for seconds in [None, 5, 11]:
+                reference = self.root / 'missing.wav' if seconds is None else self.write_reference(seconds)
+                with self.assertRaises(ValueError):
+                    runner.synthesize(self.root, 'cpu', 'Narasi.', 150, self.root / 'output.wav', reference)
+            check.assert_not_called()
+        for seconds in [6, 10]:
+            runner.validate_reference(self.write_reference(seconds))
+
+    @unittest.skipIf(np is None, 'Optional TTS runtime provides numpy')
+    def test_native_voice_reference_is_prepared_once_for_multiple_chunks(self):
+        reference = self.write_reference()
+        model = MagicMock(sr=8000)
+        model.generate.return_value.detach.return_value.cpu.return_value.numpy.return_value = np.zeros(40, dtype=np.float32)
+        torch, api, modules = self.modules()
+        with patch.dict(sys.modules, modules), patch.object(runner, 'check_runtime'), patch.object(runner, 'load_model', return_value=model):
+            runner.synthesize(self.root, 'cpu', 'Kalimat satu.\nKalimat dua.', 150, self.root / 'output.wav', reference)
+        model.prepare_conditionals.assert_called_once_with(str(reference))
+        self.assertEqual(2, model.generate.call_count)
+        self.assertTrue((self.root / 'output.wav').exists())
+
     @unittest.skipIf(np is None, 'Optional TTS runtime provides numpy')
     def test_synthesis_writes_pcm_wav_and_applies_requested_tempo(self):
         model = MagicMock(sr=8000)
@@ -137,6 +168,7 @@ class ChatterboxRunnerTest(unittest.TestCase):
             self.assertEqual(3280, audio.getnframes())
         self.assertEqual(2, stretch.call_count)
         self.assertEqual(1.2, stretch.call_args.kwargs['rate'])
+        model.prepare_conditionals.assert_not_called()
 
     @unittest.skipIf(np is None, 'Optional TTS runtime provides numpy')
     def test_invalid_audio_exception_cancellation_and_size_limit_remove_output(self):

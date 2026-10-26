@@ -105,9 +105,22 @@ def load_model(directory: Path, device: str):
                         tokenizer=tokenizer, device=device, conds=conditionals)
 
 
-def synthesize(directory: Path, device: str, text: str, speed: int, destination: Path) -> None:
+def validate_reference(reference: Path | None) -> None:
+    if reference is None:
+        return
+    if not reference.is_file() or not os.access(reference, os.R_OK):
+        raise ValueError('Rekaman referensi tidak ditemukan atau tidak dapat dibaca.')
+    with wave.open(str(reference), 'rb') as audio:
+        duration = audio.getnframes() / audio.getframerate()
+        if audio.getcomptype() != 'NONE' or not 6 <= duration <= 10:
+            raise ValueError('Gunakan referensi WAV PCM sepanjang 6 sampai 10 detik.')
+
+
+def synthesize(directory: Path, device: str, text: str, speed: int, destination: Path,
+               reference: Path | None = None) -> None:
     if not text.strip() or len(text) > 8000 or not 100 <= speed <= 220:
         raise ValueError('Narasi atau kecepatan tidak valid.')
+    validate_reference(reference)
     check_runtime(directory, device)
     import numpy as np
     import torch
@@ -117,6 +130,9 @@ def synthesize(directory: Path, device: str, text: str, speed: int, destination:
     model = load_model(directory, device)
     total_bytes = 0
     try:
+        if reference is not None:
+            with torch.inference_mode():
+                model.prepare_conditionals(str(reference))
         with wave.open(str(destination), 'wb') as output:
             output.setnchannels(1)
             output.setsampwidth(2)
@@ -146,6 +162,7 @@ def main() -> None:
     parser.add_argument('command', choices=['download', 'check', 'synthesize'])
     parser.add_argument('--model-dir', type=Path, required=True)
     parser.add_argument('--device', choices=['cpu', 'cuda'], default='cpu')
+    parser.add_argument('--reference-audio', type=Path)
     parser.add_argument('-v', choices=['id'], default='id')
     parser.add_argument('-s', type=int, default=150)
     parser.add_argument('-w', type=Path)
@@ -155,13 +172,14 @@ def main() -> None:
     if args.command == 'download':
         download(directory)
     elif args.command == 'check':
+        validate_reference(args.reference_audio)
         check_runtime(directory, args.device)
         print('Runtime dan aset tersedia. Uji synthesize untuk memverifikasi bobot/inferensi.')
     else:
         if args.w is None:
             parser.error('synthesize memerlukan -w untuk lokasi output.')
         text = sys.stdin.buffer.read(32001).decode('utf-8').strip()
-        synthesize(directory, args.device, text, args.s, args.w)
+        synthesize(directory, args.device, text, args.s, args.w, args.reference_audio)
         report = {'status': 'generated', 'seconds': round(time.perf_counter() - started, 2),
                   'device': args.device, 'wav_bytes': args.w.stat().st_size}
         if sys.platform.startswith('linux'):
