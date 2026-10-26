@@ -19,7 +19,16 @@ BASE_FILES = ('ve.pt', 's3gen.pt', 'tokenizer.json', 'conds.pt')
 MAX_BYTES = 10485760
 
 
-def configure_environment(directory: Path, offline: bool = True) -> None:
+def cpu_threads() -> int:
+    requested = int(os.environ.get('TTS_CPU_THREADS', '2'))
+    if not 1 <= requested <= 32:
+        raise ValueError('TTS_CPU_THREADS harus antara 1 sampai 32.')
+    available = len(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else (os.cpu_count() or 1)
+    return min(requested, max(1, available - 1))
+
+
+def configure_environment(directory: Path, offline: bool = True) -> int:
+    threads = cpu_threads()
     cache = directory.parent / 'cache'
     cache.mkdir(parents=True, exist_ok=True)
     for name, value in {
@@ -31,11 +40,12 @@ def configure_environment(directory: Path, offline: bool = True) -> None:
         'HF_HUB_DISABLE_TELEMETRY': '1',
         'HF_HUB_DISABLE_XET': '1',
         'TOKENIZERS_PARALLELISM': 'false',
-        'OMP_NUM_THREADS': '2',
-        'MKL_NUM_THREADS': '2',
-        'NUMBA_NUM_THREADS': '2',
+        'OMP_NUM_THREADS': str(threads),
+        'MKL_NUM_THREADS': str(threads),
+        'NUMBA_NUM_THREADS': str(threads),
     }.items():
         os.environ[name] = value
+    return threads
 
 
 def download(directory: Path) -> None:
@@ -69,7 +79,7 @@ def validate_assets(directory: Path) -> None:
 
 
 def check_runtime(directory: Path, device: str) -> None:
-    configure_environment(directory)
+    threads = configure_environment(directory)
     validate_assets(directory)
     if version('chatterbox-tts') != '0.1.1':
         raise ValueError('Gunakan paket chatterbox-tts==0.1.1 dari requirements proyek.')
@@ -78,7 +88,7 @@ def check_runtime(directory: Path, device: str) -> None:
 
     if device == 'cuda' and not torch.cuda.is_available():
         raise ValueError('CUDA diminta tetapi tidak tersedia. Periksa build PyTorch dan driver.')
-    torch.set_num_threads(2)
+    torch.set_num_threads(threads)
     torch.set_num_interop_threads(1)
 
 
@@ -117,10 +127,11 @@ def validate_reference(reference: Path | None) -> None:
 
 
 def synthesize(directory: Path, device: str, text: str, speed: int, destination: Path,
-               reference: Path | None = None) -> None:
+               reference: Path | None = None) -> dict:
     if not text.strip() or len(text) > 8000 or not 100 <= speed <= 220:
         raise ValueError('Narasi atau kecepatan tidak valid.')
     validate_reference(reference)
+    started = time.perf_counter()
     check_runtime(directory, device)
     import numpy as np
     import torch
@@ -128,11 +139,13 @@ def synthesize(directory: Path, device: str, text: str, speed: int, destination:
 
     torch.manual_seed(42)
     model = load_model(directory, device)
+    loaded = time.perf_counter()
     total_bytes = 0
     try:
         if reference is not None:
             with torch.inference_mode():
                 model.prepare_conditionals(str(reference))
+        prepared = time.perf_counter()
         with wave.open(str(destination), 'wb') as output:
             output.setnchannels(1)
             output.setsampwidth(2)
@@ -154,6 +167,10 @@ def synthesize(directory: Path, device: str, text: str, speed: int, destination:
     except BaseException:
         destination.unlink(missing_ok=True)
         raise
+    return {'model_load_seconds': round(loaded - started, 2),
+            'reference_seconds': round(prepared - loaded, 2),
+            'generation_seconds': round(time.perf_counter() - prepared, 2),
+            'threads': cpu_threads()}
 
 
 def main() -> None:
@@ -179,9 +196,9 @@ def main() -> None:
         if args.w is None:
             parser.error('synthesize memerlukan -w untuk lokasi output.')
         text = sys.stdin.buffer.read(32001).decode('utf-8').strip()
-        synthesize(directory, args.device, text, args.s, args.w, args.reference_audio)
+        timings = synthesize(directory, args.device, text, args.s, args.w, args.reference_audio)
         report = {'status': 'generated', 'seconds': round(time.perf_counter() - started, 2),
-                  'device': args.device, 'wav_bytes': args.w.stat().st_size}
+                  'device': args.device, 'wav_bytes': args.w.stat().st_size, **timings}
         if sys.platform.startswith('linux'):
             import resource
             report['peak_rss_mib'] = round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024, 2)

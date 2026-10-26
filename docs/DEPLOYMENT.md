@@ -143,7 +143,26 @@ Pada RAM terbatas, ukur peak memory sebelum memakai generate bersamaan dengan pe
 
 Worker default dan Reverb yang sudah ada tetap digunakan. Analisis/TTS memakai koneksi bernama `learner-analysis`, driver database, antrean `learner-analysis`; worker Redis default tidak mengonsumsinya. Nama antrean ini tidak mengaktifkan Ollama.
 
-Jika belum ada, tambahkan melalui Supervisor aaPanel (sesuaikan binary/folder/user):
+Untuk server Ubuntu yang belum mempunyai worker ini di Supervisor aaPanel, gunakan systemd bawaan:
+
+```bash
+php artisan config:cache
+bash install-tts-worker.sh
+```
+
+Jalankan sebagai root dari folder proyek. Installer mengambil path PHP CLI aktif, memeriksa dukungan `pcntl`/`proc_open` serta akses user `www`, lalu memasang satu service `artaswaha-learner.service` yang aktif saat boot dan otomatis hidup kembali. Jika sebelumnya ada worker sementara di terminal, hentikan dengan Ctrl+C sebelum instalasi; installer menolak proses ganda di folder proyek ini. Jika worker sudah dikelola Supervisor, gunakan satu pengelola saja. Installer tidak memasang paket, mengunduh model, mengubah `.env`, atau me-restart worker Redis/Reverb. Berhenti/restart diberi waktu sampai 300 detik untuk menyelesaikan tugas aktif. Log dan restart khusus worker ini:
+
+```bash
+systemctl status artaswaha-learner --no-pager
+journalctl -u artaswaha-learner -n 50 --no-pager
+systemctl restart artaswaha-learner
+```
+
+Untuk tuning CPU, set `TTS_CPU_THREADS=4` dalam `.env`, jalankan `php artisan config:cache`, lalu restart service ini. Nilai bawaan tetap 2; coba 4 kemudian 8 pada server banyak core dengan narasi yang sama. Runner membatasi jumlah thread berdasarkan CPU yang tersedia dan menyisakan setidaknya satu CPU jika memungkinkan. Satu tugas inferensi tetap dijalankan pada satu waktu. Lebih banyak thread belum tentu lebih cepat, dan jumlah thread bukan jaminan batas penggunaan CPU seluruh proses. Model masih dimuat ulang setiap tugas; worker Laravel permanen tidak menyimpan bobot Python dalam RAM.
+
+Untuk membandingkan waktu secara langsung, jalankan `synthesize` dengan environment `TTS_CPU_THREADS=4` lalu `8`, teks/referensi/perangkat yang sama, dan output WAV berbeda. JSON CLI sekarang menampilkan `model_load_seconds` (termasuk startup/import), `reference_seconds`, `generation_seconds`, serta jumlah `threads` efektif. Penilaian kecepatan perlu dilakukan di server dengan bobot sebenarnya.
+
+Alternatif jika menggunakan Supervisor aaPanel (sesuaikan binary/folder/user; jangan dipasang bersamaan dengan service di atas):
 
 ```ini
 [program:artaswaha-learner]

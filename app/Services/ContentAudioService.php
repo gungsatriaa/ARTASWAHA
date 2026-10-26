@@ -200,6 +200,9 @@ class ContentAudioService
                 }
             } else {
                 $environment = ['OMP_NUM_THREADS' => '2', 'MKL_NUM_THREADS' => '2', 'TOKENIZERS_PARALLELISM' => 'false', 'HF_HUB_OFFLINE' => '1', 'TRANSFORMERS_OFFLINE' => '1', 'PYTHONUTF8' => '1'];
+                if (config('services.tts.engine') === 'chatterbox') {
+                    $environment['TTS_CPU_THREADS'] = (string) config('services.tts.cpu_threads');
+                }
                 if (filled(config('services.tts.data_path'))) {
                     $environment['ESPEAK_DATA_PATH'] = (string) config('services.tts.data_path');
                 }

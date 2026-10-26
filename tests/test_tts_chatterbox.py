@@ -31,6 +31,7 @@ class ChatterboxRunnerTest(unittest.TestCase):
         self.environment = patch.dict(os.environ)
         self.environment.start()
         self.addCleanup(self.environment.stop)
+        os.environ['TTS_CPU_THREADS'] = '2'
         self.write_assets()
 
     def write_assets(self):
@@ -113,6 +114,22 @@ class ChatterboxRunnerTest(unittest.TestCase):
                     runner.synthesize(self.root, 'cpu', text, speed, self.root / 'test.wav')
             loader.assert_not_called()
 
+    def test_cpu_threads_are_configurable_capped_and_reject_invalid_values(self):
+        with patch.object(os, 'sched_getaffinity', create=True, return_value=set(range(24))):
+            os.environ['TTS_CPU_THREADS'] = '8'
+            torch, api, modules = self.modules()
+            with patch.dict(sys.modules, modules), patch.object(runner, 'version', return_value='0.1.1'):
+                runner.check_runtime(self.root, 'cpu')
+            torch.set_num_threads.assert_called_once_with(8)
+            for key in ['OMP_NUM_THREADS', 'MKL_NUM_THREADS', 'NUMBA_NUM_THREADS']:
+                self.assertEqual('8', os.environ[key])
+        with patch.object(os, 'sched_getaffinity', create=True, return_value={0, 1}):
+            self.assertEqual(1, runner.cpu_threads())
+        for value in ['0', '33', 'bad']:
+            os.environ['TTS_CPU_THREADS'] = value
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                runner.cpu_threads()
+
     def test_cli_rejects_unsupported_language_before_inference(self):
         result = subprocess.run([sys.executable, str(SERVICES / 'tts_chatterbox.py'), 'synthesize',
                                  '--model-dir', str(self.root), '-v', 'ban', '-w', str(self.root / 'bad.wav')],
@@ -146,10 +163,12 @@ class ChatterboxRunnerTest(unittest.TestCase):
         model.generate.return_value.detach.return_value.cpu.return_value.numpy.return_value = np.zeros(40, dtype=np.float32)
         torch, api, modules = self.modules()
         with patch.dict(sys.modules, modules), patch.object(runner, 'check_runtime'), patch.object(runner, 'load_model', return_value=model):
-            runner.synthesize(self.root, 'cpu', 'Kalimat satu.\nKalimat dua.', 150, self.root / 'output.wav', reference)
+            timings = runner.synthesize(self.root, 'cpu', 'Kalimat satu.\nKalimat dua.', 150, self.root / 'output.wav', reference)
         model.prepare_conditionals.assert_called_once_with(str(reference))
         self.assertEqual(2, model.generate.call_count)
         self.assertTrue((self.root / 'output.wav').exists())
+        self.assertEqual(2, timings['threads'])
+        self.assertGreaterEqual(timings['generation_seconds'], 0)
 
     @unittest.skipIf(np is None, 'Optional TTS runtime provides numpy')
     def test_synthesis_writes_pcm_wav_and_applies_requested_tempo(self):

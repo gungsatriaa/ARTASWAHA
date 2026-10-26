@@ -154,7 +154,7 @@ class ContentAudioTest extends TestCase
         }
         Storage::disk('local')->put('suara indonesia.wav', $this->wav());
         $reference = Storage::disk('local')->path('suara indonesia.wav');
-        config(['services.tts.enabled' => true, 'services.tts.engine' => 'chatterbox', 'services.tts.python' => PHP_BINARY, 'services.tts.chatterbox_path' => $directory, 'services.tts.device' => 'cpu', 'services.tts.reference_audio' => $reference]);
+        config(['services.tts.enabled' => true, 'services.tts.engine' => 'chatterbox', 'services.tts.python' => PHP_BINARY, 'services.tts.chatterbox_path' => $directory, 'services.tts.device' => 'cpu', 'services.tts.reference_audio' => $reference, 'services.tts.cpu_threads' => 8]);
         $service = app(ContentAudioService::class);
         $data = [...$this->data(), 'spoken_text' => 'Narasi; $(jangan jalankan)', 'action' => 'generate'];
         $audio = $service->save(Lesson::factory()->create(), $data);
@@ -176,6 +176,7 @@ class ContentAudioTest extends TestCase
             && $process->command[2] === 'synthesize' && $process->command[4] === $directory
             && $process->command[6] === 'cpu' && $process->input === $data['spoken_text']
             && array_slice($process->command, -2) === ['--reference-audio', $reference]
+            && $process->environment['TTS_CPU_THREADS'] === '8'
             && ! in_array($data['spoken_text'], $process->command, true)
             && $process->timeout === 240 && $process->environment['HF_HUB_OFFLINE'] === '1');
         Queue::assertPushed(GenerateContentAudio::class, 1);
