@@ -104,6 +104,8 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/kuis/{quiz}', [QuizController::class, 'show'])->name('quizzes.show');
     Route::get('/kuis/{quiz}/edit', [QuizController::class, 'edit'])->name('quizzes.edit');
     Route::put('/kuis/{quiz}', [QuizController::class, 'update'])->name('quizzes.update');
+    Route::post('/kuis/{quiz}/salin', [QuizController::class, 'duplicate'])->middleware('throttle:10,1')->name('quizzes.duplicate');
+    Route::post('/kuis/{quiz}/arsipkan', [QuizController::class, 'archive'])->name('quizzes.archive');
     Route::post('/kuis/{quiz}/room', [RoomController::class, 'store'])->middleware('throttle:10,1')->name('rooms.store');
     Route::post('/room/{room:code}/heartbeat', [RoomController::class, 'heartbeat'])->middleware('throttle:10,1')->name('rooms.heartbeat');
     Route::delete('/room/{room:code}', [RoomController::class, 'destroy'])->name('rooms.destroy');

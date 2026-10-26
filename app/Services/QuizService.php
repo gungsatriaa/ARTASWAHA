@@ -4,10 +4,14 @@ namespace App\Services;
 
 use App\Models\ContentAudio;
 use App\Models\Quiz;
+use App\Models\QuizQuestion;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use RuntimeException;
+use Throwable;
 
 class QuizService
 {
@@ -36,35 +40,115 @@ class QuizService
     {
         $this->validateQuestions($data['questions']);
 
-        return DB::transaction(function () use ($quiz, $user, $data): Quiz {
-            $quiz = Quiz::query()->whereKey($quiz->id)->lockForUpdate()->firstOrFail();
-            abort_unless($quiz->user_id === $user->id && ! $quiz->is_archived, 403);
+        $copiedPaths = [];
+        try {
+            return DB::transaction(function () use ($quiz, $user, $data, &$copiedPaths): Quiz {
+                $quiz = Quiz::query()->whereKey($quiz->id)->lockForUpdate()->firstOrFail();
+                abort_unless($quiz->user_id === $user->id && ! $quiz->is_archived, 403);
+                $existing = $quiz->questions()->with('audio')->get()->keyBy('id');
+                foreach ($data['questions'] as $index => $question) {
+                    if (! empty($question['id']) && ! $existing->has($question['id'])) {
+                        throw ValidationException::withMessages(["questions.{$index}.id" => 'Soal tidak termasuk kuis ini.']);
+                    }
+                }
 
-            $attributes = [
-                'title' => $data['title'],
-                'description' => $data['description'] ?? null,
-                'show_answers_immediately' => $data['show_answers_immediately'] ?? false,
-                'seconds_per_question' => $data['seconds_per_question'] ?? null,
-            ];
+                $attributes = [
+                    'title' => $data['title'],
+                    'description' => $data['description'] ?? null,
+                    'show_answers_immediately' => $data['show_answers_immediately'] ?? false,
+                    'seconds_per_question' => $data['seconds_per_question'] ?? null,
+                ];
 
-            if ($quiz->rooms()->exists()) {
-                $updatedQuiz = $user->quizzes()->create([
-                    ...$attributes,
-                    'leaderboard_enabled' => $quiz->leaderboard_enabled,
+                if ($quiz->rooms()->exists()) {
+                    $updatedQuiz = $user->quizzes()->create([
+                        ...$attributes,
+                        'leaderboard_enabled' => $quiz->leaderboard_enabled,
+                    ]);
+                    $quiz->update(['is_archived' => true]);
+                } else {
+                    $quiz->update($attributes);
+                    $updatedQuiz = $quiz;
+                    $quiz->questions()->increment('sort_order', 20);
+                }
+
+                $retainedIds = [];
+                foreach ($data['questions'] as $index => $attributes) {
+                    $source = $existing->get($attributes['id'] ?? null);
+                    unset($attributes['id']);
+                    $attributes['keyboard_auto_open'] = (bool) ($attributes['keyboard_auto_open'] ?? false);
+                    $attributes['explanation'] = $attributes['explanation'] ?? null;
+                    $attributes['sort_order'] = $index + 1;
+                    if ($updatedQuiz->id === $quiz->id && $source !== null) {
+                        $source->fill($attributes)->save();
+                        if ($source->wasChanged(['prompt', 'options'])) {
+                            $source->audio()->update(['status' => 'stale', 'reviewed_at' => null, 'version' => (string) Str::uuid()]);
+                        }
+                        $question = $source;
+                    } else {
+                        $question = $updatedQuiz->questions()->create($attributes);
+                        if ($source !== null) {
+                            $this->copyAudio($source, $question, $copiedPaths);
+                        }
+                    }
+                    $retainedIds[] = $question->id;
+                }
+                if ($updatedQuiz->id === $quiz->id) {
+                    $removed = $quiz->questions()->whereNotIn('id', $retainedIds);
+                    $obsoleteAudio = ContentAudio::whereIn('quiz_question_id', (clone $removed)->select('id'))->whereNotNull('path')->pluck('path')->all();
+                    $removed->delete();
+                    DB::afterCommit(fn () => Storage::disk('local')->delete($obsoleteAudio));
+                }
+
+                return $updatedQuiz;
+            });
+        } catch (Throwable $exception) {
+            Storage::disk('local')->delete($copiedPaths);
+            throw $exception;
+        }
+    }
+
+    public function duplicate(Quiz $quiz, User $user): Quiz
+    {
+        $copiedPaths = [];
+        try {
+            return DB::transaction(function () use ($quiz, $user, &$copiedPaths): Quiz {
+                $quiz = Quiz::query()->whereKey($quiz->id)->lockForUpdate()->firstOrFail();
+                abort_unless($quiz->user_id === $user->id, 404);
+                $copy = $user->quizzes()->create([
+                    'title' => mb_substr($quiz->title, 0, 110).' (salinan)', 'description' => $quiz->description,
+                    'seconds_per_question' => $quiz->seconds_per_question, 'leaderboard_enabled' => $quiz->leaderboard_enabled,
+                    'show_answers_immediately' => $quiz->show_answers_immediately,
                 ]);
-                $quiz->update(['is_archived' => true]);
-            } else {
-                $quiz->update($attributes);
-                $obsoleteAudio = ContentAudio::whereIn('quiz_question_id', $quiz->questions()->select('id'))->whereNotNull('path')->pluck('path')->all();
-                $quiz->questions()->delete();
-                DB::afterCommit(fn () => Storage::disk('local')->delete($obsoleteAudio));
-                $updatedQuiz = $quiz;
-            }
+                foreach ($quiz->questions()->with('audio')->get() as $source) {
+                    $question = $copy->questions()->create($source->only(['prompt', 'options', 'correct_option', 'explanation', 'sort_order', 'keyboard_auto_open']));
+                    $this->copyAudio($source, $question, $copiedPaths);
+                }
 
-            $this->saveQuestions($updatedQuiz, $data['questions']);
+                return $copy;
+            });
+        } catch (Throwable $exception) {
+            Storage::disk('local')->delete($copiedPaths);
+            throw $exception;
+        }
+    }
 
-            return $updatedQuiz;
-        });
+    /** @param array<int, string> $copiedPaths */
+    private function copyAudio(QuizQuestion $source, QuizQuestion $destination, array &$copiedPaths): void
+    {
+        $audio = $source->audio;
+        $disk = Storage::disk('local');
+        if ($audio === null || ! in_array($audio->status, ['ready', 'review'], true) || $audio->path === null
+            || ! str_starts_with($audio->path, 'content-audio/') || ! $disk->exists($audio->path)
+            || $audio->source_hash !== app(ContentAudioService::class)->sourceHash($destination)) {
+            return;
+        }
+        $path = 'content-audio/'.Str::uuid().'.'.pathinfo($audio->path, PATHINFO_EXTENSION);
+        $copiedPaths[] = $path;
+        if (! $disk->copy($audio->path, $path)) {
+            throw new RuntimeException('Audio gagal disalin. Kuis belum disimpan; coba kembali.');
+        }
+        $copy = $audio->replicate(['quiz_question_id', 'lesson_id', 'generation_started_at', 'generation_finished_at']);
+        $copy->fill(['quiz_question_id' => $destination->id, 'version' => (string) Str::uuid(), 'path' => $path])->save();
     }
 
     /** @param array<int, array{options: array<int, string>, correct_option: int}> $questions */

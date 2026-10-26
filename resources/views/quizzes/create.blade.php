@@ -2,6 +2,7 @@
     $editing = isset($quiz);
     $questions = old('questions', $editing
         ? $quiz->questions->map(fn ($question) => [
+            'id' => $question->id,
             'prompt' => $question->prompt,
             'options' => $question->options,
             'correct_option' => $question->correct_option,
@@ -59,6 +60,7 @@
                 <div class="space-y-5" data-question-list>
                     @foreach ($questions as $index => $question)
                     <fieldset class="rounded-card bg-surface p-6 sm:p-8" data-question>
+                        @if (! empty($question['id']))<input type="hidden" name="questions[{{ $index }}][id]" value="{{ $question['id'] }}">@endif
                         <legend class="font-bold">Pertanyaan <span data-question-number>{{ $index + 1 }}</span></legend>
                         <button type="button" data-remove-question class="float-right cursor-pointer rounded-full px-3 py-2 text-sm font-semibold text-danger transition hover:bg-danger/10">Hapus soal</button>
                         <label class="mt-3 block text-sm font-semibold">Teks pertanyaan

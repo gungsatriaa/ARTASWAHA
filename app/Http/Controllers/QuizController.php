@@ -10,22 +10,25 @@ use App\Models\QuizQuestion;
 use App\Services\ContentAudioService;
 use App\Services\QuizService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class QuizController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $filters = $request->validate(['q' => ['nullable', 'string', 'max:120'], 'status' => ['nullable', 'in:active,archived']]);
         $profile = Auth::guest() ? LearnerProfile::completedFor(null, request()->cookie('artaswaha_device')) : null;
         $quizzes = Quiz::query()
             ->where('user_id', Auth::id() ?? 0)
-            ->where('is_archived', false)
-            ->withCount('questions')
+            ->where('is_archived', ($filters['status'] ?? 'active') === 'archived')
+            ->when($filters['q'] ?? null, fn ($query, string $text) => $query->where('title', 'like', '%'.$text.'%'))
+            ->withCount(['questions', 'rooms'])
             ->latest()
-            ->paginate(12);
+            ->paginate(12)->withQueryString();
 
-        return view('quizzes.index', compact('quizzes', 'profile'));
+        return view('quizzes.index', compact('quizzes', 'profile', 'filters'));
     }
 
     public function create(): View
@@ -56,7 +59,7 @@ class QuizController extends Controller
     public function edit(Quiz $quiz): View
     {
         abort_unless($quiz->user_id === Auth::id() && ! $quiz->is_archived, 404);
-        $quiz->load('questions');
+        $quiz->load('questions.audio');
         $hasRooms = $quiz->rooms()->exists();
 
         return view('quizzes.create', compact('quiz', 'hasRooms'));
@@ -69,5 +72,21 @@ class QuizController extends Controller
         return to_route('quizzes.show', $updatedQuiz)->with('status', $updatedQuiz->id !== $quiz->id
             ? 'Perubahan disimpan sebagai versi baru. Room lama tetap memakai versi sebelumnya.'
             : 'Kuis berhasil diperbarui.');
+    }
+
+    public function duplicate(Request $request, Quiz $quiz, QuizService $quizService): RedirectResponse
+    {
+        abort_unless($quiz->user_id === $request->user()->id, 404);
+        $copy = $quizService->duplicate($quiz, $request->user());
+
+        return to_route('quizzes.edit', $copy)->with('status', 'Salinan kuis dibuat. Keyboard dan audio yang masih berlaku ikut disalin; room dan jawaban tidak disalin.');
+    }
+
+    public function archive(Request $request, Quiz $quiz): RedirectResponse
+    {
+        abort_unless($quiz->user_id === $request->user()->id, 404);
+        $quiz->update(['is_archived' => true]);
+
+        return to_route('quizzes.index')->with('status', 'Kuis diarsipkan. Room dan jawaban yang sudah ada tetap tersimpan.');
     }
 }

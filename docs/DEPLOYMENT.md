@@ -304,6 +304,16 @@ Pengaturan dan pemeriksaan setelah deploy:
 
 Tes PHP modul/kuis, tes JavaScript keyboard, dan build frontend telah lolos secara lokal. Rendering gabungan aksara, gestur, dan perilaku keyboard perangkat pada browser/HP sebenarnya masih perlu diperiksa; pengujian otomatis tersebut bukan verifikasi visual atau jaminan kelancaran semua perangkat.
 
+## Kelola kuis: penyimpanan soal, audio, dan arsip
+
+Editor mengirim ID soal tersimpan agar perubahan kuis tanpa room mempertahankan soal dan audionya. Perubahan pertanyaan/pilihan menandai audio `stale`; perubahan urutan, kunci jawaban, penjelasan, atau keyboard tidak mewajibkan generate ulang. Soal yang dihapus dibersihkan bersama file audionya setelah transaksi berhasil.
+
+Kuis yang sudah memiliki room tetap membuat versi baru ketika diedit. Audio `ready`/`review` dengan hash sumber yang cocok dan file yang tersedia disalin ke file privat baru untuk soal yang dipertahankan. Duplikasi kuis memakai aturan sama dan tidak menyalin room/jawaban. Audio kedaluwarsa atau masih diproses tidak disalin; generate tetap melalui alur audio admin. Pengarsipan manual menyembunyikan kuis dari daftar aktif dan melarang room baru; riwayat room tetap tersedia. Untuk memakai arsip lagi, buat salinan agar versi lama tidak diubah.
+
+Pembaruan ini tidak menambah migration, dependency, atau environment. Gunakan alur deploy bagian 3 untuk memuat route dan frontend baru. Tidak perlu restart TTS/Reverb untuk perubahan pengelolaan kuis ini.
+
+Uji setelah deploy: ubah judul/urutan dan pastikan audio lama tetap dapat diputar; ubah teks/pilihan dan pastikan audio lama tidak diputar peserta; edit kuis yang sudah punya room dan periksa riwayat/audio versi lama; duplikasikan kuis dan cek keyboard/audio salinan; arsipkan kuis dan cari pada filter arsip. Aksi dan ID soal harus ditolak jika berasal dari kuis milik pengguna lain.
+
 ## Instalasi manual langkah demi langkah
 
 Bagian ini menjalankan langkah installer satu per satu agar prosesnya dapat dipahami. Pilih cara manual ini atau installer pada bagian 4. Contoh memakai CPU; jalankan setelah source baru dipull dan backup tersedia.
