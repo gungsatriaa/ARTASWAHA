@@ -7,6 +7,7 @@ use App\Services\LearnerInterviewAnalyzer;
 use DateTimeInterface;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
@@ -28,15 +29,18 @@ class AnalyzeLearnerInterview implements ShouldBeUnique, ShouldQueue
 
     public int $deadline;
 
-    public function __construct(public int $profileId, public string $inputHash)
+    public ?string $requestedAt = null;
+
+    public function __construct(public int $profileId, public string $inputHash, ?string $requestedAt = null)
     {
+        $this->requestedAt = $requestedAt;
         $this->onConnection('learner-analysis')->onQueue('learner-analysis');
         $this->deadline = now()->addDay()->getTimestamp();
     }
 
     public function uniqueId(): string
     {
-        return $this->profileId.':'.$this->inputHash;
+        return $this->profileId.':'.$this->inputHash.($this->requestedAt === null ? '' : ':'.hash('sha256', $this->requestedAt));
     }
 
     public function retryUntil(): DateTimeInterface
@@ -61,30 +65,40 @@ class AnalyzeLearnerInterview implements ShouldBeUnique, ShouldQueue
 
     public function handle(LearnerInterviewAnalyzer $analyzer): void
     {
-        $profile = LearnerProfile::find($this->profileId);
-        if ($profile === null || $profile->analysis_hash !== $this->inputHash || $profile->analysis_status === 'completed'
-            || ! $analyzer->isCurrentInput($profile)) {
+        $profile = $this->profileQuery()->first();
+        if ($profile === null || $profile->analysis_status === 'completed') {
             return;
         }
-        if (! $analyzer->isConfigured()) {
-            $profile->forceFill(['analysis_status' => 'unavailable'])->save();
+        if (! $analyzer->isCurrentInput($profile)) {
+            $this->profileQuery()->update(['analysis_status' => 'outdated']);
 
             return;
         }
-        $profile->forceFill(['analysis_status' => 'processing'])->save();
+        if (! $analyzer->isConfigured()) {
+            $this->profileQuery()->update(['analysis_status' => 'unavailable']);
+
+            return;
+        }
+        if ($this->profileQuery()->update(['analysis_status' => 'processing']) === 0) {
+            return;
+        }
         $started = hrtime(true);
         try {
             $result = $analyzer->generate($profile->analysis_input);
-            $currentProfile = $profile->fresh();
-            if ($currentProfile !== null && $currentProfile->analysis_hash === $this->inputHash && $analyzer->isCurrentInput($currentProfile)) {
-                LearnerProfile::query()->whereKey($this->profileId)->where('analysis_hash', $this->inputHash)
+            $currentProfile = $this->profileQuery()->first();
+            if ($currentProfile !== null && ! $analyzer->isCurrentInput($currentProfile)) {
+                $this->profileQuery()->update(['analysis_status' => 'outdated']);
+            } elseif ($currentProfile !== null) {
+                $saved = $this->profileQuery()
                     ->update(['analysis_status' => 'completed', 'analysis_result' => json_encode($result, JSON_THROW_ON_ERROR), 'analysis_completed_at' => now()]);
+                if ($saved > 0) {
+                    Log::info('Learner analysis processed.', ['profile_id' => $this->profileId, 'duration_ms' => (int) ((hrtime(true) - $started) / 1e6)]);
+                }
             }
-            Log::info('Learner analysis processed.', ['profile_id' => $this->profileId, 'duration_ms' => (int) ((hrtime(true) - $started) / 1e6)]);
         } catch (UnexpectedValueException $exception) {
             $this->failed($exception);
         } catch (Throwable $exception) {
-            LearnerProfile::query()->whereKey($this->profileId)->where('analysis_hash', $this->inputHash)
+            $this->profileQuery()->where('analysis_status', '!=', 'completed')
                 ->update(['analysis_status' => 'queued']);
             throw $exception;
         }
@@ -92,8 +106,21 @@ class AnalyzeLearnerInterview implements ShouldBeUnique, ShouldQueue
 
     public function failed(?Throwable $exception): void
     {
-        LearnerProfile::query()->whereKey($this->profileId)->where('analysis_hash', $this->inputHash)->where('analysis_status', '!=', 'completed')
+        $this->profileQuery()->where('analysis_status', '!=', 'completed')
             ->update(['analysis_status' => 'failed']);
         Log::warning('Learner analysis failed.', ['profile_id' => $this->profileId, 'exception_type' => $exception === null ? null : $exception::class]);
+    }
+
+    /**
+     * Keep jobs queued before requestedAt was introduced from changing a newer attempt.
+     *
+     * @return Builder<LearnerProfile>
+     */
+    private function profileQuery(): Builder
+    {
+        return LearnerProfile::query()->whereKey($this->profileId)->where('analysis_hash', $this->inputHash)
+            ->when($this->requestedAt !== null,
+                fn (Builder $query): Builder => $query->where('analysis_requested_at', $this->requestedAt),
+                fn (Builder $query): Builder => $query->where('analysis_requested_at', '<=', now()->setTimestamp($this->deadline)->subDay()->toDateTimeString()));
     }
 }

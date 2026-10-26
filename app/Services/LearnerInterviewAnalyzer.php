@@ -35,16 +35,18 @@ class LearnerInterviewAnalyzer
     {
         DB::transaction(function () use ($profile): void {
             $profile = LearnerProfile::query()->lockForUpdate()->findOrFail($profile->id);
-            if ($this->isCurrentInput($profile) && $profile->analysis_requested_at?->gt(now()->subHours(6))) {
-                return;
+            if ($this->isCurrentInput($profile)) {
+                if ($profile->analysis_status === 'completed' && $profile->analysis_requested_at?->gt(now()->subHours(6))) {
+                    return;
+                }
+                if (in_array($profile->analysis_status, ['queued', 'processing'], true) && $profile->analysis_requested_at?->gt(now()->subMinutes(30))) {
+                    return;
+                }
             }
             $input = $this->input($profile);
             $hash = $this->hash($input);
             if ($profile->analysis_hash === $hash) {
                 if ($profile->analysis_status === 'completed') {
-                    return;
-                }
-                if (in_array($profile->analysis_status, ['queued', 'processing'], true) && $profile->analysis_requested_at?->gt(now()->subMinutes(30))) {
                     return;
                 }
                 if ($profile->analysis_requested_at?->gt(now()->subMinutes(2))) {
@@ -65,7 +67,7 @@ class LearnerInterviewAnalyzer
             if ($configured) {
                 DB::afterCommit(function () use ($profile, $hash): void {
                     try {
-                        AnalyzeLearnerInterview::dispatch($profile->id, $hash);
+                        AnalyzeLearnerInterview::dispatch($profile->id, $hash, $profile->analysis_requested_at->toDateTimeString());
                     } catch (Throwable $exception) {
                         LearnerProfile::query()->whereKey($profile->id)->where('analysis_hash', $hash)
                             ->update(['analysis_status' => 'failed']);
@@ -235,6 +237,7 @@ class LearnerInterviewAnalyzer
         ];
         $response = $request->post('/chat/completions', $payload);
         if (! $response->successful()) {
+            Log::warning('Learner analysis provider returned an error.', ['http_status' => $response->status()]);
             if ($response->clientError() && $response->status() !== 429) {
                 throw new UnexpectedValueException('Learner analysis provider rejected the request.');
             }

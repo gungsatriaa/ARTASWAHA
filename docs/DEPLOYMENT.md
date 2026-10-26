@@ -145,6 +145,10 @@ Worker default dan Reverb yang sudah ada tetap digunakan. Analisis/TTS memakai k
 
 Analisis progres memakai `AI_API_URL`, `AI_API_KEY`, dan `AI_MODEL` yang sama dengan AI kuis. Jadwal `learning:analyze` berjalan setiap enam jam melalui scheduler Laravel. Pastikan cron yang sudah ada menjalankan `php artisan schedule:run` setiap menit dari folder aplikasi; jangan menambahkan cron duplikat. Untuk lokal gunakan `php artisan schedule:work`. Worker `learner-analysis` tetap harus aktif untuk memproses antreannya. Analisis memakai ringkasan pelajaran selesai dan jawaban kuis 14 hari terakhir, bukan pelacakan durasi membaca.
 
+Jeda enam jam berlaku untuk analisis yang sudah selesai. Percobaan gagal bisa dijadwalkan ulang setelah dua menit; antrean/pemrosesan yang tersangkut bisa diganti setelah 30 menit saat profil dibuka atau perintah `learning:analyze` dijalankan. Lock unik sekarang mengikuti waktu permintaan, sehingga percobaan lama tidak menghalangi penggantinya dan tidak menimpa status/hasil baru. Status menunggu antrean tidak menampilkan skeleton pemrosesan.
+
+Setelah memperbarui perbaikan antrean, cache konfigurasi melalui alur deploy bagian 3, lalu Restart hanya program `laravel-worker-tts-artaswaha` melalui Supervisor aaPanel agar kode/config baru dipakai. Jalankan `php artisan learning:analyze` untuk menjadwalkan profil yang sudah memenuhi jeda percobaan ulang, lalu periksa `php artisan queue:failed` dan log terbaru. Pastikan `AI_API_URL` dapat diakses dari server production; `127.0.0.1` menunjuk mesin server itu sendiri. Worker ini juga mengerjakan audio: bila sedang membuat audio panjang, analisis menunggu gilirannya. Log `Learner analysis provider returned an error.` mencatat status HTTP tanpa key atau isi jawaban.
+
 Untuk server production ini, gunakan program Supervisor aaPanel yang sudah ada, `laravel-worker-tts-artaswaha`. Edit program tersebut; tidak perlu memasang service systemd atau menjalankan `install-tts-worker.sh`. Isi:
 
 ```text

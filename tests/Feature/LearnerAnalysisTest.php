@@ -83,7 +83,8 @@ class LearnerAnalysisTest extends TestCase
 
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('profile.show'))
             ->assertOk()
-            ->assertSee('Rekomendasi sedang disiapkan')
+            ->assertSee('Analisis menunggu antrean pemrosesan')
+            ->assertDontSee('data-analysis-skeleton', false)
             ->assertSee('data-learner-analysis-url', false)
             ->assertDontSee('Coba analisis')
             ->assertDontSee('Periksa lagi');
@@ -260,7 +261,7 @@ class LearnerAnalysisTest extends TestCase
         $job->handle($analyzer);
 
         $this->assertNull($profile->fresh()->analysis_result);
-        $this->assertNotSame('completed', $profile->fresh()->analysis_status);
+        $this->assertSame('outdated', $profile->fresh()->analysis_status);
     }
 
     public function test_stale_job_skips_llm_when_input_has_already_changed(): void
@@ -349,6 +350,96 @@ class LearnerAnalysisTest extends TestCase
         $this->assertDatabaseCount('jobs', 0);
         $this->assertSame('completed', $profile->fresh()->analysis_status);
         Http::assertSentCount(1);
+    }
+
+    public function test_failed_analysis_can_retry_after_two_minutes_instead_of_six_hours(): void
+    {
+        Queue::fake([AnalyzeLearnerInterview::class]);
+        $this->travelTo(now()->setTime(12, 0));
+        $profile = $this->profile(LearningPath::factory()->create(['is_published' => true]));
+        $analyzer = app(LearnerInterviewAnalyzer::class);
+        $this->prepare($profile, $analyzer);
+        $profile->forceFill(['analysis_status' => 'failed'])->save();
+        $analyzer->enqueue($profile);
+        Queue::assertNotPushed(AnalyzeLearnerInterview::class);
+
+        $this->travel(3)->minutes();
+        $analyzer->enqueue($profile->fresh());
+        $this->assertSame('queued', $profile->fresh()->analysis_status);
+        Queue::assertPushed(AnalyzeLearnerInterview::class, 1);
+    }
+
+    public function test_stalled_queue_can_recover_without_waiting_for_the_old_unique_lock(): void
+    {
+        $this->travelTo(now()->setTime(12, 0));
+        $path = LearningPath::factory()->create(['is_published' => true]);
+        $profile = $this->profile($path);
+        $analyzer = app(LearnerInterviewAnalyzer::class);
+        $analyzer->enqueue($profile);
+        $oldJob = new AnalyzeLearnerInterview($profile->id, $profile->fresh()->analysis_hash, $profile->fresh()->analysis_requested_at->toDateTimeString());
+        $legacyJob = new AnalyzeLearnerInterview($profile->id, $profile->fresh()->analysis_hash);
+        $this->assertDatabaseCount('jobs', 1);
+        $this->travel(31)->minutes();
+        $analyzer->enqueue($profile->fresh());
+        $this->assertDatabaseCount('jobs', 2);
+
+        Http::fake(['localhost:20128/v1/chat/completions' => Http::response(['choices' => [['message' => ['content' => json_encode($this->analysisResult($path))]]]])]);
+        $oldJob->handle($analyzer);
+        $oldJob->failed(new RuntimeException('Old attempt failed'));
+        $legacyJob->handle($analyzer);
+        $legacyJob->failed(new RuntimeException('Legacy attempt failed'));
+        Http::assertNothingSent();
+        $this->assertSame('queued', $profile->fresh()->analysis_status);
+        $this->artisan('queue:work', ['connection' => 'learner-analysis', '--queue' => 'learner-analysis', '--stop-when-empty' => true, '--sleep' => 0])
+            ->assertExitCode(0);
+        $this->assertSame('completed', $profile->fresh()->analysis_status);
+        Http::assertSentCount(1);
+    }
+
+    public function test_processing_status_has_a_skeleton_and_stale_worker_config_stops_waiting(): void
+    {
+        $profile = $this->profile(LearningPath::factory()->create(['is_published' => true]));
+        $analyzer = app(LearnerInterviewAnalyzer::class);
+        $this->prepare($profile, $analyzer);
+        $profile->forceFill(['analysis_status' => 'processing'])->save();
+        $this->withCookie('artaswaha_device', $profile->visitor_id)->getJson(route('profile.analysis.show'))
+            ->assertOk()->assertJsonPath('analysis.status', 'processing')->assertJsonPath('html', null);
+        $this->get(route('profile.show'))->assertOk()->assertSee('data-analysis-skeleton', false);
+
+        config(['services.ai.model' => 'changed-model']);
+        (new AnalyzeLearnerInterview($profile->id, $profile->analysis_hash))->handle($analyzer);
+        $this->getJson(route('profile.analysis.show'))->assertOk()->assertJsonPath('analysis.status', 'outdated');
+        $this->assertSame('outdated', $profile->fresh()->analysis_status);
+        Http::assertNothingSent();
+    }
+
+    public function test_pending_analysis_is_not_duplicated_when_a_six_hour_period_changes(): void
+    {
+        Queue::fake([AnalyzeLearnerInterview::class]);
+        $this->travelTo(now()->setTime(11, 59));
+        $profile = $this->profile(LearningPath::factory()->create(['is_published' => true]));
+        $analyzer = app(LearnerInterviewAnalyzer::class);
+        $this->prepare($profile, $analyzer);
+        $this->travel(3)->minutes();
+        $analyzer->enqueue($profile->fresh());
+        Queue::assertNotPushed(AnalyzeLearnerInterview::class);
+    }
+
+    public function test_running_old_attempt_does_not_save_over_a_new_request_with_the_same_input(): void
+    {
+        $path = LearningPath::factory()->create(['is_published' => true]);
+        $profile = $this->profile($path);
+        $analyzer = app(LearnerInterviewAnalyzer::class);
+        $this->prepare($profile, $analyzer);
+        $job = new AnalyzeLearnerInterview($profile->id, $profile->analysis_hash, $profile->analysis_requested_at->toDateTimeString());
+        Http::fake(function () use ($profile, $path) {
+            $profile->fresh()->forceFill(['analysis_status' => 'queued', 'analysis_requested_at' => now()->addMinute()])->save();
+
+            return Http::response(['choices' => [['message' => ['content' => json_encode($this->analysisResult($path))]]]]);
+        });
+        $job->handle($analyzer);
+        $this->assertSame('queued', $profile->fresh()->analysis_status);
+        $this->assertNull($profile->fresh()->analysis_result);
     }
 
     public function test_connection_failure_keeps_analysis_retryable_without_losing_answers(): void

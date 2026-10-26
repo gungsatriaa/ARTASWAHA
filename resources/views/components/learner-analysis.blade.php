@@ -10,7 +10,9 @@
         <p class="mt-4 break-words text-sm leading-7 text-foreground/75">{{ $analysis['summary'] }}</p>
     @else
         <p data-analysis-status role="status" class="mt-4 text-sm leading-7 text-foreground/65">
-            @if (in_array($analysis['status'], ['queued', 'processing'], true))
+            @if ($analysis['status'] === 'queued')
+                Analisis menunggu antrean pemrosesan. Kamu bisa melanjutkan belajar sementara menunggu.
+            @elseif ($analysis['status'] === 'processing')
                 Rekomendasi sedang disiapkan. Kamu tetap bisa mulai belajar dari materi pilihanmu.
             @elseif ($analysis['status'] === 'failed')
                 Analisis belum berhasil. Jawabanmu tetap tersimpan dan kamu bisa melanjutkan belajar.
@@ -19,7 +21,7 @@
             @endif
         </p>
     @endif
-    @if (in_array($analysis['status'], ['queued', 'processing'], true))
+    @if ($analysis['status'] === 'processing')
         <x-loading-skeleton data-analysis-skeleton class="mt-4" />
     @endif
     @if (! empty($analysis['updated_at']))
