@@ -151,7 +151,7 @@ Name: laravel-worker-tts-artaswaha
 Run User: www
 Processes: 1
 Process directory: /www/wwwroot/artaswaha.kerthajaya.com/
-Start command: php artisan queue:work learner-analysis --queue=learner-analysis --sleep=2 --tries=3 --timeout=270 --max-time=3600
+Start command: php artisan queue:work learner-analysis --queue=learner-analysis --sleep=2 --tries=3 --timeout=1830 --max-time=3600
 ```
 
 Pastikan autostart/autorestart aktif. Gunakan menu Log/Restart untuk program tersebut di Supervisor aaPanel. Jika PHP tidak ditemukan oleh Supervisor, gunakan path absolut PHP 8.4 hasil `command -v php` pada Start command. Tiga worker Redis default tetap terpisah. Jika service systemd dari langkah sebelumnya pernah dipasang, nonaktifkan agar tidak menjalankan worker ganda:
@@ -166,7 +166,9 @@ Untuk tuning CPU, set `TTS_CPU_THREADS=4` dan `TTS_PERSISTENT=true` dalam `.env`
 
 Dengan `TTS_PERSISTENT=true`, worker Laravel mempertahankan satu proses Python lokal melalui stdin/stdout. Nilai bawaan tetap `false` sampai administrator mengaktifkannya setelah memastikan Processes=1 pada program TTS. Model dimuat saat tugas pertama, kemudian dipakai ulang untuk tugas berikutnya. Referensi suara yang path/ukuran/waktu modifikasinya sama tidak diproses ulang; referensi yang berubah dimuat ulang. Mengosongkan referensi mengembalikan suara bawaan. Tidak ada HTTP API, port baru, paket tambahan, atau service Supervisor tambahan.
 
-Model menggunakan RAM selama proses Python hidup. Proses dilepas setelah 15 menit tanpa permintaan atau setelah 50 tugas; tugas berikutnya memuat model kembali. Restart/keluarnya worker Laravel juga menghentikan proses Python; di Linux child meminta sinyal ketika induk mati agar tidak tertinggal. Setiap tugas tetap dibatasi 240 detik, dan crash/timeout mereset proses sebelum tugas berikutnya. Jika perlu kembali ke perilaku satu proses per tugas, set `TTS_PERSISTENT=false`, cache konfigurasi, lalu restart program TTS.
+Model menggunakan RAM selama proses Python hidup. Proses dilepas setelah 15 menit tanpa permintaan atau setelah 50 tugas; tugas berikutnya memuat model kembali. Restart/keluarnya worker Laravel juga menghentikan proses Python; di Linux child meminta sinyal ketika induk mati agar tidak tertinggal. Setiap tugas dibatasi 1800 detik (30 menit), dan crash/timeout mereset proses sebelum tugas berikutnya. Jika perlu kembali ke perilaku satu proses per tugas, set `TTS_PERSISTENT=false`, cache konfigurasi, lalu restart program TTS.
+
+Narasi mendukung hingga 16.000 karakter dan audio hasil generate hingga 64 MB; unggahan rekaman tetap maksimal 10 MB. Potongan Chatterbox tetap dibatasi 220 karakter, tetapi kalimat pendek digabung selama muat dalam satu potongan untuk mengurangi pemanggilan decoder berulang. Ukuran kamus token decoder tidak diubah. Batas ini bukan jaminan seluruh narasi panjang selesai dalam 30 menit pada CPU; bagi materi jika melebihi kapasitas mesin.
 
 Untuk menguji pemakaian ulang, buat audio pendek melalui admin, lalu pilih **Simpan narasi** dan **Buat audio offline** lagi pada materi percobaan. Gunakan narasi/referensi sama agar perbandingan masuk akal. Log `Chatterbox TTS selesai` di `storage/logs/laravel.log` mencatat `model_reused`, `model_load_seconds`, `reference_seconds`, `generation_seconds`, `seconds`, dan `threads` tanpa isi narasi. Tugas kedua diharapkan memiliki `model_reused=true` saat ditangani proses yang sama. Waktu sintesis dan pemakaian RAM sebenarnya perlu diukur di server; biaya pemuatan yang berkurang tidak menjamin seluruh proses menjadi instan.
 
@@ -178,14 +180,14 @@ Contoh konfigurasi Supervisor mentah jika diperlukan (sesuaikan nama/path dengan
 [program:artaswaha-learner]
 process_name=%(program_name)s_%(process_num)02d
 directory=/www/wwwroot/artaswaha
-command=/www/server/php/84/bin/php /www/wwwroot/artaswaha/artisan queue:work learner-analysis --queue=learner-analysis --sleep=2 --tries=3 --timeout=270 --max-time=3600
+command=/www/server/php/84/bin/php /www/wwwroot/artaswaha/artisan queue:work learner-analysis --queue=learner-analysis --sleep=2 --tries=3 --timeout=1830 --max-time=3600
 user=www
 numprocs=1
 autostart=true
 autorestart=true
 stopasgroup=true
 killasgroup=true
-stopwaitsecs=360
+stopwaitsecs=1860
 redirect_stderr=true
 stdout_logfile=/www/wwwroot/artaswaha/storage/logs/learner-worker.log
 stdout_logfile_maxbytes=10MB
@@ -198,7 +200,7 @@ supervisorctl update
 supervisorctl status
 ```
 
-Jika program sudah ada, periksa dan sesuaikan; jangan membuat duplikat. `retry_after` koneksi learner sudah 300 detik di kode; timeout inferensi 240, job 270, dan stopwaitsecs 360. Pertahankan cache lock bersama yang sudah digunakan aplikasi. Pastikan PHP CLI mengizinkan `proc_open`, `proc_get_status`, `proc_terminate`, dan `proc_close` yang digunakan untuk proses anak. Pengaturan CLI aaPanel dapat berbeda dari PHP-FPM.
+Jika program sudah ada, periksa dan sesuaikan; jangan membuat duplikat. `retry_after` koneksi learner adalah 1860 detik; timeout inferensi 1800, job 1830, lock 1845, dan stopwaitsecs 1860. Setelah perubahan ini, cache konfigurasi dan restart worker TTS agar reservasi antrean dan batas proses memakai nilai baru. Pertahankan cache lock bersama yang sudah digunakan aplikasi. Pastikan PHP CLI mengizinkan `proc_open`, `proc_get_status`, `proc_terminate`, dan `proc_close` yang digunakan untuk proses anak. Pengaturan CLI aaPanel dapat berbeda dari PHP-FPM.
 
 ## 7. Aktifkan setelah smoke test sukses
 

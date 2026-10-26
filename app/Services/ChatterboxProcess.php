@@ -22,7 +22,7 @@ class ChatterboxProcess
      * @param  array{text: string, speed: int, destination: string, reference: ?string}  $request
      * @return array<string, mixed>
      */
-    public function generate(array $command, array $environment, array $request, float $timeout = 240): array
+    public function generate(array $command, array $environment, array $request, float $timeout = 1800): array
     {
         $signature = hash('sha256', json_encode([$command, $environment], JSON_THROW_ON_ERROR));
         try {

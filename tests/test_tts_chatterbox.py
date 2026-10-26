@@ -143,10 +143,18 @@ class ChatterboxRunnerTest(unittest.TestCase):
 
     def test_invalid_text_and_speed_fail_before_loading_model(self):
         with patch.object(runner, 'load_model') as loader:
-            for text, speed in [(' ', 150), ('a' * 8001, 150), ('Narasi', 50), ('Narasi', 221)]:
+            for text, speed in [(' ', 150), ('a' * 16001, 150), ('Narasi', 50), ('Narasi', 221)]:
                 with self.subTest(speed=speed, length=len(text)), self.assertRaises(ValueError):
                     runner.synthesize(self.root, 'cpu', text, speed, self.root / 'test.wav')
             loader.assert_not_called()
+
+    def test_short_sentences_are_packed_without_exceeding_chunk_limit(self):
+        self.assertEqual(['Selamat datang. Mari belajar. A. Pilihan satu. B. Pilihan dua.'],
+                         runner.narration_parts('Selamat datang.\nMari belajar.\nA. Pilihan satu.\nB. Pilihan dua.'))
+        text = 'kalimat panjang tanpa titik ' * 590
+        parts = runner.narration_parts(text)
+        self.assertTrue(all(0 < len(part) <= 220 for part in parts))
+        self.assertEqual(text.split(), ' '.join(parts).split())
 
     def test_cpu_threads_are_configurable_capped_and_reject_invalid_values(self):
         with patch.object(os, 'sched_getaffinity', create=True, return_value=set(range(24))):
@@ -197,7 +205,7 @@ class ChatterboxRunnerTest(unittest.TestCase):
         model.generate.return_value.detach.return_value.cpu.return_value.numpy.return_value = np.zeros(40, dtype=np.float32)
         torch, api, modules = self.modules()
         with patch.dict(sys.modules, modules), patch.object(runner, 'check_runtime'), patch.object(runner, 'load_model', return_value=model):
-            timings = runner.synthesize(self.root, 'cpu', 'Kalimat satu.\nKalimat dua.', 150, self.root / 'output.wav', reference)
+            timings = runner.synthesize(self.root, 'cpu', 'A' * 220 + '\n' + 'B' * 220, 150, self.root / 'output.wav', reference)
         model.prepare_conditionals.assert_called_once_with(str(reference))
         self.assertEqual(2, model.generate.call_count)
         self.assertTrue((self.root / 'output.wav').exists())
@@ -336,8 +344,8 @@ class ChatterboxRunnerTest(unittest.TestCase):
             self.assertEqual(8000, audio.getframerate())
             self.assertEqual(1, audio.getnchannels())
             self.assertEqual(2, audio.getsampwidth())
-            self.assertEqual(3280, audio.getnframes())
-        self.assertEqual(2, stretch.call_count)
+            self.assertEqual(1640, audio.getnframes())
+        self.assertEqual(1, stretch.call_count)
         self.assertEqual(1.2, stretch.call_args.kwargs['rate'])
         model.prepare_conditionals.assert_not_called()
 

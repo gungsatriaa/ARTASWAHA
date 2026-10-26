@@ -24,8 +24,8 @@ def main() -> None:
     parser.add_argument('-s', type=int, required=True)
     parser.add_argument('-w', required=True)
     args = parser.parse_args()
-    text = sys.stdin.buffer.read(32001).decode('utf-8').strip()
-    if not text or len(text) > 8000 or not 100 <= args.s <= 220:
+    text = sys.stdin.buffer.read(64001).decode('utf-8').strip()
+    if not text or len(text) > 16000 or not 100 <= args.s <= 220:
         parser.error('Narasi atau kecepatan tidak valid.')
 
     import numpy as np
@@ -54,8 +54,8 @@ def main() -> None:
                 pcm = (np.clip(samples, -1, 1) * 32767).astype('<i2').tobytes()
                 pause = b'\0\0' * (sample_rate // 5)
                 total_bytes += len(pcm) + len(pause)
-                if total_bytes + 44 > 10485760:
-                    raise ValueError('Audio melebihi 10 MB. Ringkas narasi.')
+                if total_bytes + 44 > 67108864:
+                    raise ValueError('Audio melebihi 64 MB. Ringkas narasi.')
                 output.writeframesraw(pcm + pause)
 
 

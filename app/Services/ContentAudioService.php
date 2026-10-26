@@ -19,6 +19,12 @@ use Throwable;
 
 class ContentAudioService
 {
+    public const MAX_TEXT_LENGTH = 16000;
+
+    public const MAX_AUDIO_BYTES = 67108864;
+
+    public const GENERATION_TIMEOUT = 1800;
+
     public function isConfigured(): bool
     {
         if (! config('services.tts.enabled')) {
@@ -72,8 +78,7 @@ class ContentAudioService
             }
         }
 
-        /** ponytail: Narration is limited to 8000 characters; split long modules into audio chapters if needed. */
-        return mb_substr($text, 0, 8000);
+        return mb_substr($text, 0, self::MAX_TEXT_LENGTH);
     }
 
     public function forContent(Lesson|QuizQuestion $content): ?ContentAudio
@@ -181,12 +186,12 @@ class ContentAudioService
         $metrics = null;
         try {
             if (config('services.tts.engine') === 'openai') {
-                $request = Http::connectTimeout(5)->timeout(240)->accept('audio/wav')
+                $request = Http::connectTimeout(5)->timeout(self::GENERATION_TIMEOUT)->accept('audio/wav')
                     ->sink($disk->path($path))->withOptions([
                         'allow_redirects' => false,
                         'progress' => static function (float $downloadTotal, float $downloadedBytes, float $uploadTotal, float $uploadedBytes): void {
-                            if ($downloadTotal > 10485760 || $downloadedBytes > 10485760) {
-                                throw new RuntimeException('Audio TTS melebihi 10 MB.');
+                            if ($downloadTotal > self::MAX_AUDIO_BYTES || $downloadedBytes > self::MAX_AUDIO_BYTES) {
+                                throw new RuntimeException('Audio TTS melebihi 64 MB.');
                             }
                         },
                     ]);
@@ -208,7 +213,7 @@ class ContentAudioService
                 ], ['TTS_CPU_THREADS' => (string) config('services.tts.cpu_threads'), 'PYTHONUTF8' => '1'], [
                     'text' => $audio->spoken_text, 'speed' => $audio->speed, 'destination' => $disk->path($path),
                     'reference' => filled(config('services.tts.reference_audio')) ? (string) config('services.tts.reference_audio') : null,
-                ]);
+                ], self::GENERATION_TIMEOUT);
             } else {
                 $environment = ['OMP_NUM_THREADS' => '2', 'MKL_NUM_THREADS' => '2', 'TOKENIZERS_PARALLELISM' => 'false', 'HF_HUB_OFFLINE' => '1', 'TRANSFORMERS_OFFLINE' => '1', 'PYTHONUTF8' => '1'];
                 if (config('services.tts.engine') === 'chatterbox') {
@@ -225,9 +230,9 @@ class ContentAudioService
                 if (config('services.tts.engine') === 'chatterbox' && filled(config('services.tts.reference_audio'))) {
                     $command = [...$command, '--reference-audio', (string) config('services.tts.reference_audio')];
                 }
-                Process::timeout(config('services.tts.engine') === 'espeak' ? 90 : 240)->env($environment)->input($audio->spoken_text)->run($command)->throw();
+                Process::timeout(config('services.tts.engine') === 'espeak' ? 90 : self::GENERATION_TIMEOUT)->env($environment)->input($audio->spoken_text)->run($command)->throw();
             }
-            if (! $disk->exists($path) || $disk->size($path) < 44 || $disk->size($path) > 10485760) {
+            if (! $disk->exists($path) || $disk->size($path) < 44 || $disk->size($path) > self::MAX_AUDIO_BYTES) {
                 throw new RuntimeException('TTS tidak menghasilkan audio yang valid.');
             }
             $stream = $disk->readStream($path);

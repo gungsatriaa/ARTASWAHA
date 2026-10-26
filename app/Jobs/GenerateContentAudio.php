@@ -16,7 +16,7 @@ class GenerateContentAudio implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
-    public int $timeout = 270;
+    public int $timeout = ContentAudioService::GENERATION_TIMEOUT + 30;
 
     public int $uniqueFor = 86400;
 
@@ -51,7 +51,7 @@ class GenerateContentAudio implements ShouldBeUnique, ShouldQueue
     public function middleware(): array
     {
         /** ponytail: One local inference at a time; separate resource pools after measuring contention. */
-        return [(new WithoutOverlapping('learner-llm'))->shared()->releaseAfter(15)->expireAfter(285)];
+        return [(new WithoutOverlapping('learner-llm'))->shared()->releaseAfter(15)->expireAfter(1845)];
     }
 
     public function handle(ContentAudioService $service): void

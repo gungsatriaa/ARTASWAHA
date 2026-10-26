@@ -19,7 +19,8 @@ BASE_REVISION = '5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18'
 INDONESIAN_REPO = 'grandhigh/Chatterbox-TTS-Indonesian'
 INDONESIAN_REVISION = '15027c10d34ac7bbb2796ec5cd727a17a3bf862b'
 BASE_FILES = ('ve.pt', 's3gen.pt', 'tokenizer.json', 'conds.pt')
-MAX_BYTES = 10485760
+MAX_BYTES = 67108864
+MAX_TEXT_LENGTH = 16000
 PROTOCOL_PREFIX = 'ARTASWAHA_TTS '
 
 
@@ -160,10 +161,21 @@ def generate_part(model, text: str):
             del model.t3.patched_model
 
 
+def narration_parts(text: str) -> list[str]:
+    from tts_mms import chunks
+
+    parts = []
+    for sentence in chunks(text):
+        if parts and len(parts[-1]) + 1 + len(sentence) <= 220:
+            parts[-1] += ' ' + sentence
+        else:
+            parts.append(sentence)
+    return parts
+
+
 def render_audio(model, text: str, speed: int, destination: Path) -> None:
     import numpy as np
     import torch
-    from tts_mms import chunks
 
     total_bytes = 0
     try:
@@ -172,7 +184,7 @@ def render_audio(model, text: str, speed: int, destination: Path) -> None:
             output.setsampwidth(2)
             output.setframerate(model.sr)
             with torch.inference_mode():
-                for part in chunks(text):
+                for part in narration_parts(text):
                     samples = generate_part(model, part).detach().cpu().numpy().reshape(-1)
                     if not np.isfinite(samples).all() or samples.size == 0:
                         raise ValueError('Model menghasilkan audio tidak valid.')
@@ -183,7 +195,7 @@ def render_audio(model, text: str, speed: int, destination: Path) -> None:
                     pause = b'\0\0' * (model.sr // 5)
                     total_bytes += len(pcm) + len(pause)
                     if total_bytes + 44 > MAX_BYTES:
-                        raise ValueError('Audio melebihi 10 MB. Ringkas narasi.')
+                        raise ValueError('Audio melebihi 64 MB. Ringkas narasi.')
                     output.writeframesraw(pcm + pause)
     except BaseException:
         destination.unlink(missing_ok=True)
@@ -200,7 +212,7 @@ class ChatterboxSession:
 
     def synthesize(self, text: str, speed: int, destination: Path,
                    reference: Path | None = None) -> dict:
-        if not isinstance(text, str) or not text.strip() or len(text) > 8000 or type(speed) is not int or not 100 <= speed <= 220:
+        if not isinstance(text, str) or not text.strip() or len(text) > MAX_TEXT_LENGTH or type(speed) is not int or not 100 <= speed <= 220:
             raise ValueError('Narasi atau kecepatan tidak valid.')
         validate_reference(reference)
         started = time.perf_counter()
@@ -248,7 +260,7 @@ def request_lines():
                     yield pending
                 return
             pending += chunk
-            if len(pending) > 131072:
+            if len(pending) > 262144:
                 raise ValueError('Permintaan TTS terlalu besar.')
         newline = pending.index(b'\n') + 1
         line, pending = pending[:newline], pending[newline:]
@@ -273,7 +285,7 @@ def serve(directory: Path, device: str) -> None:
         request_id = None
         started = time.perf_counter()
         try:
-            if len(line) > 131072:
+            if len(line) > 262144:
                 raise ValueError('Permintaan TTS terlalu besar.')
             request = json.loads(line)
             request_id = request['id']
@@ -318,7 +330,7 @@ def main() -> None:
     else:
         if args.w is None:
             parser.error('synthesize memerlukan -w untuk lokasi output.')
-        text = sys.stdin.buffer.read(32001).decode('utf-8').strip()
+        text = sys.stdin.buffer.read(MAX_TEXT_LENGTH * 4 + 1).decode('utf-8').strip()
         timings = synthesize(directory, args.device, text, args.s, args.w, args.reference_audio)
         report = {'status': 'generated', 'seconds': round(time.perf_counter() - started, 2),
                   'device': args.device, 'wav_bytes': args.w.stat().st_size, **timings}

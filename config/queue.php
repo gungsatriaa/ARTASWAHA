@@ -36,7 +36,7 @@ return [
             'connection' => env('DB_QUEUE_CONNECTION'),
             'table' => env('DB_QUEUE_TABLE', 'jobs'),
             'queue' => 'learner-analysis',
-            'retry_after' => 300,
+            'retry_after' => 1860,
             'after_commit' => true,
         ],
 

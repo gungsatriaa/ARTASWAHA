@@ -61,7 +61,7 @@ test('installs and enables one dedicated worker with graceful shutdown and resta
     assert.match(result.unit, /queue:work learner-analysis --queue=learner-analysis/);
     assert.match(result.unit, /Restart=always/);
     assert.match(result.unit, /KillMode=mixed/);
-    assert.match(result.unit, /TimeoutStopSec=300/);
+    assert.match(result.unit, /TimeoutStopSec=1860/);
     assert.match(result.log, /enable artaswaha-learner.service/);
     assert.match(result.log, /restart artaswaha-learner.service/);
     assert.doesNotMatch(result.log, /queue:restart|reverb|redis/);

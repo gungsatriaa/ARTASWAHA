@@ -230,7 +230,7 @@ class ContentAudioTest extends TestCase
             && array_slice($process->command, -2) === ['--reference-audio', $reference]
             && $process->environment['TTS_CPU_THREADS'] === '8'
             && ! in_array($data['spoken_text'], $process->command, true)
-            && $process->timeout === 240 && $process->environment['HF_HUB_OFFLINE'] === '1');
+            && $process->timeout === 1800 && $process->environment['HF_HUB_OFFLINE'] === '1');
         Queue::assertPushed(GenerateContentAudio::class, 1);
         Http::assertNothingSent();
     }
@@ -248,7 +248,8 @@ class ContentAudioTest extends TestCase
             'services.tts.persistent' => true, 'services.tts.reference_audio' => '']);
         $service = app(ContentAudioService::class);
         $audio = $service->save(Lesson::factory()->create(), [...$this->data(), 'action' => 'generate']);
-        $this->mock(ChatterboxProcess::class)->shouldReceive('generate')->once()->andReturnUsing(function (array $command, array $environment, array $request) use ($audio): array {
+        $this->mock(ChatterboxProcess::class)->shouldReceive('generate')->once()->andReturnUsing(function (array $command, array $environment, array $request, float $timeout) use ($audio): array {
+            $this->assertSame(1800.0, $timeout);
             $this->assertSame(PHP_BINARY, $command[0]);
             $this->assertContains('serve', $command);
             $this->assertSame('4', $environment['TTS_CPU_THREADS']);
@@ -268,6 +269,20 @@ class ContentAudioTest extends TestCase
         Process::assertNothingRan();
         Http::assertNothingSent();
         Queue::assertPushed(GenerateContentAudio::class, 1);
+    }
+
+    public function test_long_narrations_are_accepted_up_to_the_new_limit(): void
+    {
+        $lesson = Lesson::factory()->create(['content' => str_repeat('materi ', 2000)]);
+        $this->assertGreaterThan(8000, mb_strlen(app(ContentAudioService::class)->defaultText($lesson)));
+        $this->actingAs(User::factory()->create(['is_admin' => true]));
+        $text = str_repeat('a', 16000);
+        $this->post(route('admin.audio.lessons.store', $lesson), [...$this->data(), 'spoken_text' => $text])->assertRedirect();
+        $audio = ContentAudio::firstOrFail();
+        $this->assertSame($text, $audio->spoken_text);
+        $this->post(route('admin.audio.lessons.store', $lesson), [...$this->data(), 'spoken_text' => $text.'a', 'version' => $audio->version])->assertSessionHasErrors('spoken_text');
+        $this->assertSame($text, $audio->fresh()->spoken_text);
+        Process::assertNothingRan();
     }
 
     public function test_chatterbox_incomplete_assets_or_invalid_device_cannot_queue_and_other_languages_are_rejected(): void

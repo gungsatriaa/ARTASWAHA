@@ -86,7 +86,7 @@ class ContentAudioController extends Controller
     private function save(Request $request, Lesson|QuizQuestion $content, ContentAudioService $service): RedirectResponse
     {
         $data = $request->validate([
-            'spoken_text' => ['required', 'string', 'max:8000'], 'language' => ['required', 'in:id,en,ban'],
+            'spoken_text' => ['required', 'string', 'max:'.ContentAudioService::MAX_TEXT_LENGTH], 'language' => ['required', 'in:id,en,ban'],
             'speed' => ['required', 'integer', 'between:100,220'], 'action' => ['required', 'in:save,generate,upload'], 'version' => ['nullable', 'uuid'],
             'audio_upload' => ['required_if:action,upload', 'nullable', 'file', 'mimes:mp3,wav,ogg', 'max:10240'],
         ]);

@@ -41,12 +41,12 @@ After=network-online.target
 Type=exec
 User=www
 WorkingDirectory=$APP_DIR
-ExecStart=$PHP_BIN $APP_DIR/artisan queue:work learner-analysis --queue=learner-analysis --sleep=2 --tries=3 --timeout=270 --max-time=3600
+ExecStart=$PHP_BIN $APP_DIR/artisan queue:work learner-analysis --queue=learner-analysis --sleep=2 --tries=3 --timeout=1830 --max-time=3600
 Restart=always
 RestartSec=5
 KillSignal=SIGTERM
 KillMode=mixed
-TimeoutStopSec=300
+TimeoutStopSec=1860
 UMask=0027
 Nice=5
 StandardOutput=journal
