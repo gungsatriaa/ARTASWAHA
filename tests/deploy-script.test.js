@@ -8,7 +8,7 @@ import { spawnSync } from 'node:child_process';
 const bash = process.platform === 'win32' ? 'C:/Program Files/Git/bin/bash.exe' : 'bash';
 const available = spawnSync(bash, ['--version']).status === 0;
 
-function runDeploy({ tts = false, analysis = false, missing = false, failAfterRestart = false } = {}) {
+function runDeploy({ tts = false, analysis = false, missing = false, failAfterRestart = false, workerProgram = 'artaswaha-learner:*' } = {}) {
     const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'artaswaha-deploy-test-'));
     try {
         const bin = path.join(folder, 'fake-bin');
@@ -43,6 +43,7 @@ if [[ "$1" == -r ]]; then
         LEARNER_ANALYSIS_PROVIDER) printf ollama;;
         LEARNER_ANALYSIS_URL) printf 'http://model.invalid';;
         LEARNER_ANALYSIS_MODEL) printf test-model;;
+        LEARNER_QUEUE_SUPERVISOR_PROGRAM) printf '%s' "$TEST_WORKER_PROGRAM";;
     esac
 elif [[ "$1" == artisan ]]; then
     printf '%s\\n' "$2" >> "$TEST_LOG"
@@ -52,17 +53,24 @@ elif [[ "$1" == artisan ]]; then
 fi
 `);
         const supervisor = executable('supervisorctl', `
-if [[ "$2" == *learner* ]]; then
+printf 'SUPERVISOR %s\\n' "$*" >> "$TEST_LOG"
+if [[ "$2" == "$TEST_WORKER_PROGRAM" && -n "$TEST_WORKER_PROGRAM" ]]; then
     if [[ "$TEST_MISSING" == 1 ]]; then exit 3; fi
     if [[ "$TEST_LATE_FAILURE" == 1 && -f "$TEST_RESTART" ]]; then exit 3; fi
 fi
 printf '%s RUNNING pid 123, uptime 1:00:00\\n' "$2"
+`);
+        executable('pgrep', `
+printf 'PROCESS %s\\n' "$*" >> "$TEST_LOG"
+[[ "$TEST_MISSING" != 1 ]] || exit 1
+[[ "$TEST_LATE_FAILURE" != 1 || ! -f "$TEST_RESTART" ]] || exit 1
 `);
         const log = path.join(folder, 'actions.log');
         const maintenance = path.join(folder, 'maintenance');
         const unixBin = bin.replaceAll('\\', '/').replace(/^([A-Za-z]):/, (_, drive) => '/' + drive.toLowerCase());
         const result = spawnSync(bash, ['-c', 'export PATH="$TEST_BIN:$PATH"; exec bash "$1"', '_', path.join(folder, 'deploy.sh').replaceAll('\\', '/')], {
             env: { ...process.env, TEST_BIN: unixBin, SUPERVISORCTL_BIN: supervisor,
+                LEARNER_QUEUE_SUPERVISOR_PROGRAM: '', TEST_WORKER_PROGRAM: workerProgram,
                 DEPLOY_SSH_KEY: path.join(folder, 'no-key').replaceAll('\\', '/'),
                 DEPLOY_BRANCH: 'main', TEST_LOG: log.replaceAll('\\', '/'),
                 TEST_MAINTENANCE: maintenance.replaceAll('\\', '/'),
@@ -101,6 +109,25 @@ test('running inference worker permits a complete deployment', { skip: !availabl
     const result = runDeploy({ tts: true });
     assert.equal(result.status, 0, result.stdout + result.stderr);
     assert.equal(result.maintenance, false);
+});
+
+test('deployment accepts the existing aaPanel TTS program name from environment configuration', { skip: !available }, () => {
+    const result = runDeploy({ tts: true, workerProgram: 'laravel-worker-tts-artaswaha:*' });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert(result.actions.includes('SUPERVISOR status laravel-worker-tts-artaswaha:*'));
+    assert.equal(result.maintenance, false);
+});
+
+test('without a configured program name deployment checks the learner worker command', { skip: !available }, () => {
+    const result = runDeploy({ tts: true, workerProgram: '' });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert(result.actions.some(action => action.startsWith('PROCESS -af [a]rtisan queue:work learner-analysis')));
+});
+
+test('missing learner worker with no configured program still fails before maintenance', { skip: !available }, () => {
+    const result = runDeploy({ tts: true, workerProgram: '', missing: true });
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert(!result.actions.includes('down'));
 });
 
 test('worker failure after restart is reported after the site is live again', { skip: !available }, () => {

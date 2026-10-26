@@ -7,7 +7,7 @@ DEPLOY_REMOTE="${DEPLOY_REMOTE:-origin}"
 DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
 DEPLOY_SSH_KEY="${DEPLOY_SSH_KEY:-/root/.ssh/aapanel/artaswaha_78175}"
 QUEUE_PROGRAM="${QUEUE_SUPERVISOR_PROGRAM:-artaswaha-queue:*}"
-LEARNER_QUEUE_PROGRAM="${LEARNER_QUEUE_SUPERVISOR_PROGRAM:-artaswaha-learner:*}"
+LEARNER_QUEUE_PROGRAM="${LEARNER_QUEUE_SUPERVISOR_PROGRAM:-}"
 REVERB_PROGRAM="${REVERB_SUPERVISOR_PROGRAM:-artaswaha-reverb}"
 SUPERVISORCTL_BIN="${SUPERVISORCTL_BIN:-$(command -v supervisorctl || true)}"
 
@@ -50,7 +50,7 @@ check_process() {
 }
 
 check_learner_worker() {
-    if [[ -n "$SUPERVISORCTL_BIN" ]]; then
+    if [[ -n "$SUPERVISORCTL_BIN" && -n "$LEARNER_QUEUE_PROGRAM" ]]; then
         check_supervisor_program "AI/TTS worker" "$LEARNER_QUEUE_PROGRAM"
     else
         check_process "AI/TTS worker" '[a]rtisan queue:work learner-analysis'
@@ -104,6 +104,9 @@ command -v curl >/dev/null || fail "curl tidak ditemukan."
 command -v timeout >/dev/null || fail "timeout tidak ditemukan."
 [[ -f .env ]] || fail ".env tidak ditemukan; deploy dibatalkan."
 [[ -f vendor/autoload.php ]] || fail "vendor belum tersedia; lakukan instalasi awal Composer terlebih dahulu."
+if [[ -z "$LEARNER_QUEUE_PROGRAM" ]]; then
+    LEARNER_QUEUE_PROGRAM="$(dotenv_value LEARNER_QUEUE_SUPERVISOR_PROGRAM)"
+fi
 if [[ -n "$SUPERVISORCTL_BIN" ]]; then
     [[ -x "$SUPERVISORCTL_BIN" ]] || fail "SUPERVISORCTL_BIN tidak dapat dijalankan: $SUPERVISORCTL_BIN"
 else
