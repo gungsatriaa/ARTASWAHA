@@ -113,10 +113,25 @@ def load_model(directory: Path, device: str):
     speech_model = S3Gen()
     speech_model.load_state_dict(torch.load(directory / 'base/s3gen.pt', map_location='cpu', weights_only=True))
     speech_model.to(device).eval()
+    restrict_speech_tokens(text_model, speech_model.flow.input_embedding.num_embeddings)
     tokenizer = EnTokenizer(str(directory / 'base/tokenizer.json'))
     conditionals = Conditionals.load(directory / 'base/conds.pt', map_location='cpu').to(device)
     return ChatterboxTTS(t3=text_model, s3gen=speech_model, ve=voice_encoder,
                         tokenizer=tokenizer, device=device, conds=conditionals)
+
+
+def restrict_speech_tokens(text_model, decoder_vocab_size: int) -> None:
+    import torch
+
+    head = text_model.speech_head
+    ids = torch.arange(head.out_features, device=head.weight.device)
+    invalid = (ids >= decoder_vocab_size) & (ids != text_model.hp.stop_speech_token)
+
+    def restrict(module, inputs, logits):
+        # CFG subtracts conditional/unconditional logits: finite minimum avoids NaN.
+        return logits.masked_fill(invalid, torch.finfo(logits.dtype).min)
+
+    head.register_forward_hook(restrict)
 
 
 def validate_reference(reference: Path | None) -> None:

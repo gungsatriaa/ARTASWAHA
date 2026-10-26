@@ -87,7 +87,7 @@ class ChatterboxRunnerTest(unittest.TestCase):
         safetensors = types.ModuleType('safetensors')
         safe_torch = types.SimpleNamespace(load_file=MagicMock(return_value=state))
         modules.update({'safetensors': safetensors, 'safetensors.torch': safe_torch})
-        with patch.dict(sys.modules, modules):
+        with patch.dict(sys.modules, modules), patch.object(runner, 'restrict_speech_tokens') as restrict:
             runner.load_model(self.root, 'cpu')
         api.T3.return_value.load_state_dict.assert_called_once_with(state)
         safe_torch.load_file.assert_called_once_with(str(self.root / 'indonesian/t3_cfg.safetensors'), device='cpu')
@@ -96,6 +96,39 @@ class ChatterboxRunnerTest(unittest.TestCase):
             self.assertEqual('cpu', call.kwargs['map_location'])
             self.assertTrue(call.kwargs['weights_only'])
         api.Conditionals.load.assert_called_once_with(self.root / 'base/conds.pt', map_location='cpu')
+        restrict.assert_called_once_with(api.T3.return_value, api.S3Gen.return_value.flow.input_embedding.num_embeddings)
+
+    @unittest.skipIf(np is None, 'Optional TTS runtime provides numpy')
+    def test_reserved_speech_tokens_cannot_reach_decoder_and_cfg_stays_finite(self):
+        runner.configure_environment(self.root)
+        import torch
+        from chatterbox.models.s3tokenizer import SPEECH_VOCAB_SIZE
+
+        decoder = torch.nn.Embedding(SPEECH_VOCAB_SIZE, 1)
+        head = torch.nn.Linear(1, 8194, bias=False)
+        eos = SPEECH_VOCAB_SIZE + 1
+        with torch.no_grad():
+            head.weight.zero_()
+            head.weight[7000, 0] = 30
+            head.weight[0, 0] = 10
+            head.weight[eos, 0] = 9
+            bad_token = head(torch.ones(1, 1)).argmax(dim=-1)
+            with self.assertRaises(IndexError):
+                decoder(bad_token)
+        model = types.SimpleNamespace(speech_head=head, hp=types.SimpleNamespace(stop_speech_token=eos))
+        runner.restrict_speech_tokens(model, decoder.num_embeddings)
+        with torch.no_grad():
+            logits = head(torch.ones(2, 1))
+            cfg = logits[0] + 0.5 * (logits[0] - logits[1])
+            probabilities = torch.softmax(cfg, dim=-1)
+            samples = torch.multinomial(probabilities, 4096, replacement=True)
+        self.assertTrue(torch.isfinite(cfg).all().item())
+        self.assertEqual(0, probabilities[SPEECH_VOCAB_SIZE].item())
+        self.assertEqual(0, probabilities[eos + 1:].sum().item())
+        self.assertGreater(probabilities[eos].item(), 0)
+        self.assertGreater(probabilities[0].item(), 0)
+        self.assertTrue(((samples < decoder.num_embeddings) | (samples == eos)).all().item())
+        decoder(samples[samples < decoder.num_embeddings])
 
     def test_requested_cuda_is_not_silently_changed_to_cpu(self):
         torch, api, modules = self.modules()
