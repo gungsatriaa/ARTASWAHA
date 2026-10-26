@@ -105,7 +105,10 @@ class LearningInterviewTest extends TestCase
         $this->assertSame($firstPath->id, $profile->learning_path_id);
         $this->assertSame([$firstPath->id, $secondPath->id], $profile->learning_path_ids);
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('profile.show'))
-            ->assertSee('Materi pilihan: Cecimpedan, Pepengangge');
+            ->assertOk()
+            ->assertSee('Minat belajarmu')
+            ->assertSee($firstPath->title)
+            ->assertSee($secondPath->title);
     }
 
     public function test_topic_selection_rejects_empty_duplicate_and_unpublished_choices(): void
@@ -235,7 +238,7 @@ class LearningInterviewTest extends TestCase
             ->assertSee('Akun anonim')
             ->assertSee('Belajar sebagai Made')
             ->assertSee('1 dari 2 pelajaran selesai')
-            ->assertSee('Gabung kuis')
+            ->assertDontSee('Gabung kuis')
             ->assertSee(route('quizzes.index'), false)
             ->assertSee(route('profile.about'), false)
             ->assertSee(route('profile.avatar.update'), false);

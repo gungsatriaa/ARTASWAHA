@@ -65,7 +65,8 @@ class ProfileController extends Controller
             $analysisProfile->refresh();
         }
         $analysis = $analyzer->presentation($analysisProfile, $learningPaths);
+        $activity = $analysisProfile !== null ? $analyzer->activity($analysisProfile) : null;
 
-        return view('profile.show', compact('completedLessons', 'learningPaths', 'learningPathsByGroup', 'profile', 'totalLessons', 'user', 'analysisProfile', 'analysis'));
+        return view('profile.show', compact('completedLessons', 'learningPaths', 'learningPathsByGroup', 'profile', 'totalLessons', 'user', 'analysisProfile', 'analysis', 'activity'));
     }
 }

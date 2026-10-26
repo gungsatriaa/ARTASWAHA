@@ -5,33 +5,42 @@
 @endphp
 
 <x-layouts.app :learning-paths="$learningPaths" :show-footer="false" :title="$active === 'about' ? 'Tentang ARTASWAHA' : 'Profil — ARTASWAHA'">
-    <div class="mx-auto min-h-[calc(100svh-6rem)] max-w-7xl px-6 py-6 lg:px-10">
+    <div class="mx-auto min-h-[calc(100svh-6rem)] max-w-6xl px-4 py-6 sm:px-6 sm:py-9 lg:px-10">
         @if (session('status'))
             <x-flash-notice class="mb-5">{{ session('status') }}</x-flash-notice>
         @endif
-        <div class="grid gap-5 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-center">
-        <aside class="rounded-card bg-surface p-5 sm:p-6 lg:sticky lg:top-28 lg:self-start" aria-label="Profil dan navigasi akun">
-            <div class="flex items-center gap-4 lg:flex-col lg:items-start">
-                <img src="{{ str_starts_with($person->avatar ?? '', 'avatars/') ? route('profile.avatar.show') : asset($person->avatar ?? array_key_first(\App\Services\ProfileAvatarService::DEFAULT_AVATARS)) }}" alt="Avatar {{ $person->name }}" class="size-16 shrink-0 rounded-full object-cover ring-2 ring-primary/40">
-                <div class="min-w-0">
-                    <h1 class="break-words font-display text-xl font-bold">{{ $person->name }}</h1>
-                    <p class="mt-1 break-all text-sm {{ $isAnonymous ? 'font-semibold text-accent' : 'text-foreground/55' }}">{{ $isAnonymous ? 'Akun anonim' : $person->email }}</p>
-                    <button type="button" data-avatar-open class="mt-3 rounded-full bg-primary/15 px-4 py-2 text-sm font-bold text-accent transition hover:bg-primary/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Ganti avatar</button>
+        <section class="mb-7 overflow-hidden rounded-card bg-surface" aria-label="Profil dan navigasi akun">
+            <div class="flex flex-wrap items-center gap-5 p-5 sm:gap-6 sm:p-7">
+                <div class="relative shrink-0">
+                    <img src="{{ str_starts_with($person->avatar ?? '', 'avatars/') ? route('profile.avatar.show') : asset($person->avatar ?? array_key_first(\App\Services\ProfileAvatarService::DEFAULT_AVATARS)) }}" alt="Avatar {{ $person->name }}" class="size-20 rounded-full object-cover ring-4 ring-primary/25 sm:size-24">
+                    <span class="absolute -bottom-1 -right-1 grid size-8 place-items-center rounded-full bg-accent text-background ring-4 ring-surface" aria-hidden="true"><svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h7a3 3 0 0 1 3 3v14a4 4 0 0 0-4-2H4zM14 7a3 3 0 0 1 3-3h3v15h-2a4 4 0 0 0-4 2" /></svg></span>
                 </div>
+                <div class="min-w-0 flex-1 basis-32">
+                    <p class="mb-1 text-xs font-semibold text-foreground/50">Profil belajar</p>
+                    <h1 class="break-words font-display text-2xl font-bold tracking-tight sm:text-3xl">{{ $person->name }}</h1>
+                    <p class="mt-2 break-words text-sm {{ $isAnonymous ? 'font-semibold text-accent' : 'text-foreground/55' }}">{{ $isAnonymous ? 'Akun anonim' : $person->email }}</p>
+                    <p class="mt-1 text-xs text-foreground/45">Bergabung {{ $person->created_at->locale('id')->translatedFormat('F Y') }}</p>
+                </div>
+                <button type="button" data-avatar-open class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-primary/15 px-5 py-2.5 text-sm font-bold text-accent transition hover:bg-primary/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto">
+                    <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 4 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15z" /></svg>
+                    Ganti avatar
+                </button>
             </div>
 
-            <nav class="mt-6 grid gap-2 border-t border-white/10 pt-5" aria-label="Menu profil">
-                <a href="{{ route('profile.show') }}" @class(['flex min-h-11 items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-accent', 'bg-primary/15 text-accent' => $active === 'progress', 'text-foreground/75 hover:bg-background hover:text-accent' => $active !== 'progress'])>
-                    <span aria-hidden="true">✦</span> Progres belajar
+            <nav class="flex flex-wrap items-center gap-1 border-t border-white/8 px-3 py-3 sm:px-5" aria-label="Menu profil">
+                <a href="{{ route('profile.show') }}" @if ($active === 'progress') aria-current="page" @endif @class(['inline-flex min-h-11 items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition focus-visible:outline-2 focus-visible:outline-accent sm:text-sm', 'bg-primary/15 text-accent' => $active === 'progress', 'text-foreground/65 hover:bg-background hover:text-accent' => $active !== 'progress'])>
+                    <svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5M4 19h16M8 14l4-5 4 3 4-7" /></svg> Progres belajar
                 </a>
-                <a href="{{ route('profile.about') }}" @class(['flex min-h-11 items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-accent', 'bg-primary/15 text-accent' => $active === 'about', 'text-foreground/75 hover:bg-background hover:text-accent' => $active !== 'about'])>
-                    <span aria-hidden="true">ⓘ</span> Tentang aplikasi ini
-                </a>
-                <a href="{{ route('quizzes.index') }}" class="flex min-h-11 items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-foreground/75 transition hover:bg-background hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">
-                    <span aria-hidden="true">♫</span> {{ $isAnonymous ? 'Gabung kuis' : 'Kuis saya' }}
+                <a href="{{ route('profile.about') }}" @if ($active === 'about') aria-current="page" @endif @class(['inline-flex min-h-11 items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold transition focus-visible:outline-2 focus-visible:outline-accent sm:text-sm', 'bg-primary/15 text-accent' => $active === 'about', 'text-foreground/65 hover:bg-background hover:text-accent' => $active !== 'about'])>
+                    <svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7h.01" /></svg> Tentang aplikasi ini
                 </a>
                 @if ($isAnonymous)
-                    <a href="{{ route('login') }}" class="flex min-h-11 items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-foreground/75 transition hover:bg-background hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"><span aria-hidden="true">↗</span> Masuk</a>
+                    <a href="{{ route('login') }}" class="inline-flex min-h-11 items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold text-foreground/65 transition hover:bg-background hover:text-accent focus-visible:outline-2 focus-visible:outline-accent sm:ml-auto sm:text-sm"><svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3h6v18h-6M3 12h12m-4-4 4 4-4 4" /></svg> Masuk</a>
+                @else
+                    <form method="POST" action="{{ route('logout') }}" class="sm:ml-auto">
+                        @csrf
+                        <button type="submit" class="inline-flex min-h-11 items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold text-foreground/55 transition hover:bg-danger/10 hover:text-danger focus-visible:outline-2 focus-visible:outline-danger sm:text-sm">Keluar</button>
+                    </form>
                 @endif
             </nav>
 
@@ -90,11 +99,10 @@
                     <button type="submit" class="mt-6 min-h-12 w-full rounded-full bg-accent px-6 py-3 font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Simpan avatar</button>
                 </form>
             </dialog>
-        </aside>
+        </section>
 
         <div class="min-w-0">
             {{ $slot }}
-        </div>
         </div>
     </div>
 </x-layouts.app>

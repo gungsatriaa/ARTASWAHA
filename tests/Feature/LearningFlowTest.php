@@ -311,7 +311,7 @@ class LearningFlowTest extends TestCase
             ->assertSee('gung@example.com')
             ->assertSee('Tentang aplikasi ini')
             ->assertSee(route('profile.about'))
-            ->assertSee('lg:sticky lg:top-28 lg:self-start', false)
+            ->assertSee('Ringkasan belajar')
             ->assertSee('Paribasa Bali')
             ->assertSee('Aksara Bali')
             ->assertSee('1 dari 1 pelajaran selesai')
