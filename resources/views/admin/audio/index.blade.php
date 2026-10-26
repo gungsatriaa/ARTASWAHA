@@ -12,9 +12,9 @@
         $isLesson = $content instanceof \App\Models\Lesson;
         $link = $content ? route($isLesson ? 'admin.audio.lessons.edit' : 'admin.audio.questions.edit', $content) : null;
     @endphp
-    <article class="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-surface p-5"><div class="min-w-0 flex-1"><p class="text-xs font-bold text-accent">{{ $isLesson ? 'Modul' : 'Soal kuis' }}</p><h2 class="mt-1 break-words font-bold">{{ $content?->title ?? $content?->prompt ?? 'Materi sudah tidak tersedia' }}</h2>@if ($type === 'records')<div class="mt-3"><x-job-status :status="$service->isCurrent($item) ? $item->status : 'stale'" /></div>@endif</div>@if ($link)<a href="{{ $link }}" class="inline-flex min-h-11 items-center rounded-full border border-accent/30 px-4 text-sm font-bold text-accent">Kelola audio</a>@endif</article>
+    <article class="flex flex-wrap items-center justify-between gap-4 rounded-card bg-surface p-5"><div class="min-w-0 flex-1"><p class="text-xs font-bold text-accent">{{ $isLesson ? 'Modul' : 'Soal kuis' }}</p><h2 class="mt-1 break-words font-bold">{{ $content?->title ?? $content?->prompt ?? 'Materi sudah tidak tersedia' }}</h2>@if ($type === 'records')<div class="mt-3"><x-job-status :status="$service->isCurrent($item) ? $item->status : 'stale'" /></div>@endif</div>@if ($link)<a href="{{ $link }}" class="inline-flex min-h-11 items-center rounded-full border border-accent/30 px-4 text-sm font-bold text-accent">Kelola audio</a>@endif</article>
 @empty
-    <div class="rounded-2xl bg-surface p-6"><p class="text-sm text-foreground/60">Belum ada data pada bagian ini.</p><a href="{{ route('admin.audio.index', ['type' => 'modules']) }}" class="mt-3 inline-flex min-h-11 items-center text-sm font-bold text-accent">Pilih modul untuk menyiapkan audio →</a></div>
+    <div class="rounded-card bg-surface p-6"><p class="text-sm text-foreground/60">Belum ada data pada bagian ini.</p><a href="{{ route('admin.audio.index', ['type' => 'modules']) }}" class="mt-3 inline-flex min-h-11 items-center text-sm font-bold text-accent">Pilih modul untuk menyiapkan audio →</a></div>
 @endforelse
 </div><div class="mt-5">{{ $items->links() }}</div>
 @endsection

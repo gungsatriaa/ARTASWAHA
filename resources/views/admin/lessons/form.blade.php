@@ -15,7 +15,7 @@
         @endif
         <ol class="mt-5 flex flex-wrap gap-3 text-xs font-bold text-foreground/55" aria-label="Alur modul"><li>1. Pilih jalur</li><li class="text-accent" aria-current="step">2. Isi modul</li><li>3. Preview & tinjau</li><li>4. Terbitkan</li></ol>
         @if ($learningPaths->isEmpty())
-            <div class="mt-6 rounded-card border border-accent/25 bg-surface p-6"><p class="font-bold">Buat jalur belajar terlebih dahulu.</p><p class="mt-2 text-sm text-foreground/60">Setiap modul perlu berada dalam satu jalur agar urutan belajarnya jelas.</p><a href="{{ route('admin.learning-paths.create') }}" class="mt-4 inline-flex min-h-11 items-center rounded-full bg-accent px-5 font-bold text-background">Buat jalur belajar</a></div>
+            <div class="mt-6 rounded-card bg-surface p-6"><p class="font-bold">Buat jalur belajar terlebih dahulu.</p><p class="mt-2 text-sm text-foreground/60">Setiap modul perlu berada dalam satu jalur agar urutan belajarnya jelas.</p><a href="{{ route('admin.learning-paths.create') }}" class="mt-4 inline-flex min-h-11 items-center rounded-full bg-accent px-5 font-bold text-background">Buat jalur belajar</a></div>
         @else
         <form method="POST" action="{{ $lesson->exists ? route('admin.lessons.update', $lesson) : route('admin.lessons.store') }}" class="mt-7 space-y-5 rounded-card bg-surface p-5 sm:p-8" data-aksara-scope>
             @csrf

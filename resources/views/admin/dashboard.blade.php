@@ -16,9 +16,9 @@
     </div>
 
     <section class="mt-6 grid gap-3 sm:grid-cols-3" aria-label="Tindak lanjut AI dan audio">
-        <a href="{{ route('admin.ai.index', ['tab' => 'interviews', 'status' => 'failed']) }}" class="rounded-2xl border border-white/10 bg-surface p-4"><span class="text-xs text-foreground/55">Analisis interview gagal</span><span class="mt-2 block font-display text-2xl font-bold">{{ $aiTasks['failed_interviews'] }}</span></a>
-        <a href="{{ route('admin.audio.index', ['status' => 'review']) }}" class="rounded-2xl border border-accent/20 bg-surface p-4"><span class="text-xs text-foreground/55">Audio menunggu tinjauan</span><span class="mt-2 block font-display text-2xl font-bold text-accent">{{ $aiTasks['audio_review'] }}</span></a>
-        <a href="{{ route('admin.audio.index') }}" class="rounded-2xl border border-white/10 bg-surface p-4"><span class="text-xs text-foreground/55">Audio gagal/kedaluwarsa</span><span class="mt-2 block font-display text-2xl font-bold">{{ $aiTasks['audio_failed'] }}</span></a>
+        <a href="{{ route('admin.ai.index', ['tab' => 'interviews', 'status' => 'failed']) }}" class="rounded-card bg-surface p-4"><span class="text-xs text-foreground/55">Analisis interview gagal</span><span class="mt-2 block font-display text-2xl font-bold">{{ $aiTasks['failed_interviews'] }}</span></a>
+        <a href="{{ route('admin.audio.index', ['status' => 'review']) }}" class="rounded-card bg-surface p-4"><span class="text-xs text-foreground/55">Audio menunggu tinjauan</span><span class="mt-2 block font-display text-2xl font-bold text-accent">{{ $aiTasks['audio_review'] }}</span></a>
+        <a href="{{ route('admin.audio.index') }}" class="rounded-card bg-surface p-4"><span class="text-xs text-foreground/55">Audio gagal/kedaluwarsa</span><span class="mt-2 block font-display text-2xl font-bold">{{ $aiTasks['audio_failed'] }}</span></a>
     </section>
     <section class="mt-7 grid gap-3 sm:grid-cols-2 2xl:grid-cols-4" aria-label="Statistik modul">
         @foreach ([
@@ -27,7 +27,7 @@
             ['label' => 'Perlu ditinjau', 'value' => $lessonCounts->drafts ?? 0, 'note' => 'Draf menunggu pemeriksaan', 'tone' => 'text-accent'],
             ['label' => 'Diarsipkan', 'value' => $lessonCounts->archived ?? 0, 'note' => 'Tidak tampil di situs', 'tone' => 'text-foreground/70'],
         ] as $stat)
-            <article class="rounded-2xl border border-white/10 bg-surface p-5 sm:p-6">
+            <article class="rounded-card bg-surface p-5 sm:p-6">
                 <p class="text-sm font-semibold text-foreground/65">{{ $stat['label'] }}</p>
                 <p class="mt-5 font-display text-4xl font-bold tabular-nums {{ $stat['tone'] }}">{{ number_format($stat['value']) }}</p>
                 <p class="mt-2 text-xs text-foreground/45">{{ $stat['note'] }}</p>
@@ -37,7 +37,7 @@
 
     <div class="mt-6 grid items-start gap-5 2xl:grid-cols-[minmax(0,1.65fr)_minmax(20rem,1fr)]">
         <div class="min-w-0 space-y-5">
-            <section class="overflow-hidden rounded-2xl border border-white/10 bg-surface" aria-labelledby="recent-lessons-heading">
+            <section class="overflow-hidden rounded-card bg-surface" aria-labelledby="recent-lessons-heading">
                 <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-5 sm:px-6">
                     <div><h2 id="recent-lessons-heading" class="font-display text-xl font-bold">Modul terakhir diubah</h2><p class="mt-1 text-sm text-foreground/50">Lanjutkan pekerjaan dari perubahan terbaru.</p></div>
                     <a href="{{ route('admin.lessons.index') }}" class="text-sm font-bold text-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-accent">Lihat semua</a>
@@ -63,13 +63,13 @@
         </div>
 
         <div class="min-w-0 space-y-5">
-            <section class="rounded-2xl border border-accent/25 bg-accent/10 p-5 sm:p-6" aria-labelledby="review-heading">
+            <section class="rounded-card bg-accent/10 p-5 sm:p-6" aria-labelledby="review-heading">
                 <div class="flex items-start justify-between gap-4"><h2 id="review-heading" class="font-display text-xl font-bold">Antrean peninjauan</h2><span class="grid size-10 shrink-0 place-items-center rounded-xl bg-accent/15 font-display text-lg font-bold text-accent">{{ $lessonCounts->drafts ?? 0 }}</span></div>
                 <p class="mt-3 text-sm leading-6 text-foreground/65">{{ ($lessonCounts->drafts ?? 0) > 0 ? 'Periksa draf sebelum menerbitkannya ke pengunjung.' : 'Tidak ada draf yang menunggu. Semua perubahan sudah tertangani.' }}</p>
                 <a href="{{ route('admin.lessons.index') }}" class="mt-5 inline-flex min-h-10 items-center rounded-xl border border-accent/30 px-4 text-sm font-bold text-accent transition hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-accent">Buka modul</a>
             </section>
 
-            <section class="overflow-hidden rounded-2xl border border-white/10 bg-surface" aria-labelledby="paths-heading">
+            <section class="overflow-hidden rounded-card bg-surface" aria-labelledby="paths-heading">
                 <div class="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-5 sm:px-6"><div><h2 id="paths-heading" class="font-display text-xl font-bold">Jalur belajar</h2><p class="mt-1 text-sm text-foreground/50">{{ $learningPaths->count() }} jalur tersusun</p></div><a href="{{ route('admin.learning-paths.index') }}" class="text-sm font-bold text-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-accent">Kelola</a></div>
                 @forelse ($learningPaths as $learningPath)
                     <a href="{{ route('admin.learning-paths.edit', $learningPath) }}" class="flex min-h-16 items-center justify-between gap-3 border-b border-white/10 px-5 py-3 transition last:border-b-0 hover:bg-background/70 focus-visible:outline-2 focus-visible:outline-accent sm:px-6">

@@ -8,7 +8,7 @@
             <x-flash-notice class="mb-5">{{ session('status') }}</x-flash-notice>
         @endif
 
-        <header class="rounded-card border border-white/10 bg-surface p-5 sm:p-7 lg:p-9">
+        <header class="rounded-card bg-surface p-5 sm:p-7 lg:p-9">
             <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                 <div class="min-w-0 max-w-3xl">
                     <span class="inline-flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1.5 text-sm font-bold text-accent">
@@ -66,7 +66,7 @@
                     @endforeach
                 </ol>
             @else
-                <div class="flex flex-col gap-4 rounded-card border border-white/10 bg-surface p-5 sm:flex-row sm:items-center sm:gap-5 sm:p-6">
+                <div class="flex flex-col gap-4 rounded-card bg-surface p-5 sm:flex-row sm:items-center sm:gap-5 sm:p-6">
                     <span class="grid size-11 shrink-0 place-items-center rounded-2xl bg-accent/10 text-xl text-accent" aria-hidden="true">✦</span>
                     <div class="min-w-0 flex-1">
                         <h3 class="font-display text-xl font-bold">Pelajaran sedang disiapkan</h3>

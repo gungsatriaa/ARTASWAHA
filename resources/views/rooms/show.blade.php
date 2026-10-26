@@ -30,7 +30,7 @@
             <h1 class="sr-only">{{ $room->quiz->title }}</h1>
             <p data-live-status role="status" class="sr-only">Memeriksa koneksi room…</p>
         @elseif ($room->status === 'waiting')
-            <section class="overflow-hidden rounded-[2rem] border border-white/10 bg-surface lg:grid lg:grid-cols-[minmax(0,1fr)_20rem]" aria-labelledby="room-title">
+            <section class="overflow-hidden rounded-card bg-surface lg:grid lg:grid-cols-[minmax(0,1fr)_20rem]" aria-labelledby="room-title">
                 <div class="p-6 sm:p-8 lg:p-10">
                     <span class="inline-flex items-center gap-2 rounded-full bg-primary/20 px-4 py-2 text-sm font-bold text-accent">
                         <span class="size-2 rounded-full bg-accent" aria-hidden="true"></span>
@@ -60,7 +60,7 @@
         <div class="{{ $room->status === 'waiting' ? 'mt-6' : 'mx-auto max-w-3xl' }}">
             <div>
                 @if ($room->status === 'waiting')
-                    <section class="rounded-[1.75rem] border border-white/10 bg-surface p-6 sm:p-8" aria-labelledby="participants-title">
+                    <section class="rounded-card bg-surface p-6 sm:p-8" aria-labelledby="participants-title">
                         <div class="flex flex-wrap items-center justify-between gap-3">
                             <h2 id="participants-title" class="font-display text-2xl font-bold">Pemain bergabung</h2>
                             <span class="rounded-full bg-accent/10 px-3 py-1 text-xs font-bold text-accent">{{ $room->participants->count() }} pemain</span>
@@ -68,7 +68,7 @@
                         <ul class="mt-6 grid gap-3 sm:grid-cols-2">
                             @foreach ($room->participants as $roomParticipant)
                                 @php $member = $roomParticipant->user ?? $roomParticipant->learnerProfile; @endphp
-                                <li data-room-presence-user="{{ $roomParticipant->user_id ?? 'anon-'.$roomParticipant->learner_profile_id }}" class="flex items-center gap-3 rounded-2xl border border-white/10 bg-background p-3">
+                                <li data-room-presence-user="{{ $roomParticipant->user_id ?? 'anon-'.$roomParticipant->learner_profile_id }}" class="flex items-center gap-3 rounded-2xl bg-background p-3">
                                     <img src="{{ str_starts_with($member?->avatar ?? '', 'avatars/') ? ($roomParticipant->user_id ? route('rooms.participant-avatar', [$room->code, $roomParticipant->user_id]) : route('rooms.anonymous-avatar', [$room->code, $roomParticipant->learner_profile_id])) : asset($member?->avatar ?? array_key_first(\App\Services\ProfileAvatarService::DEFAULT_AVATARS)) }}" alt="" class="size-10 shrink-0 rounded-full object-cover ring-2 ring-primary/40">
                                     <span class="min-w-0 truncate text-sm font-bold">{{ $member?->name ?? $roomParticipant->display_name }}</span>
                                     @if ($roomParticipant->user_id === $room->host_id)<span class="ml-auto rounded-full bg-accent/10 px-2.5 py-1 text-xs font-bold text-accent">Host</span>@endif
@@ -85,14 +85,14 @@
                         @endif
                     </section>
                 @elseif ($room->status === 'inactive')
-                    <section class="rounded-[1.75rem] border border-accent/25 bg-surface p-7 sm:p-10" aria-labelledby="inactive-title">
+                    <section class="rounded-card bg-surface p-7 sm:p-10" aria-labelledby="inactive-title">
                         <span class="inline-flex rounded-full bg-accent/10 px-4 py-2 text-sm font-bold text-accent">Room nonaktif</span>
                         <h1 id="inactive-title" class="mt-5 font-display text-3xl font-bold">Host sudah keluar dari room</h1>
                         <p class="mt-3 max-w-xl text-foreground/65">Permainan dihentikan. Jawaban yang sudah tercatat tetap tersimpan, tetapi room ini tidak menerima pemain atau jawaban baru.</p>
                         <a href="{{ route('quizzes.index') }}" class="mt-7 inline-flex min-h-12 items-center justify-center rounded-full bg-accent px-6 font-bold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-accent">Lihat kuis lain</a>
                     </section>
                 @elseif ($activeQuestion)
-                    <section class="rounded-[1.75rem] border border-white/10 bg-surface p-5 sm:p-6" aria-labelledby="question-title">
+                    <section class="rounded-card bg-surface p-5 sm:p-6" aria-labelledby="question-title">
                         <div class="flex items-center justify-between gap-4">
                             <span class="font-display text-lg font-bold">Soal {{ $questionPosition }} <span class="text-foreground/50">dari {{ $questionCount }}</span></span>
                             <span class="grid size-10 shrink-0 place-items-center rounded-full border-[3px] border-accent/70 bg-accent/10 font-display text-xs font-bold text-accent" aria-hidden="true">{{ $questionPosition }}/{{ $questionCount }}</span>
@@ -101,7 +101,7 @@
                             <div class="h-full rounded-full bg-accent" style="width: {{ $questionCount ? round($questionPosition / $questionCount * 100) : 0 }}%"></div>
                         </div>
 
-                        <div class="mt-4 flex min-h-28 flex-col items-center justify-center rounded-[1.5rem] border border-primary/35 bg-primary/15 px-5 py-6 text-center sm:min-h-32 sm:px-8">
+                        <div class="mt-4 flex min-h-28 flex-col items-center justify-center rounded-card bg-primary/15 px-5 py-6 text-center sm:min-h-32 sm:px-8">
                             <h2 id="question-title" class="max-w-2xl break-words font-display text-xl font-bold leading-snug sm:text-2xl">{{ $activeQuestion->prompt }}</h2>
                             @if ($audio)
                                 <div class="mt-4 w-full text-left"><x-content-audio-player :src="route('content-audio.show', ['contentAudio' => $audio, 'room' => $room->code, 'feedback' => $isFeedback ? $currentAnswer?->id : null])" label="Dengarkan soal dan pilihan jawaban" /></div>
@@ -166,7 +166,7 @@
                         @endif
                     </section>
                 @else
-                    <section class="rounded-[1.75rem] border border-white/10 bg-surface p-6 sm:p-10" aria-labelledby="finished-title">
+                    <section class="rounded-card bg-surface p-6 sm:p-10" aria-labelledby="finished-title">
                         <span class="inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-2 text-sm font-bold text-accent"><span aria-hidden="true">✦</span> {{ $room->status === 'finished' ? 'Selesai bermain' : 'Jawaban terkirim' }}</span>
                         <p class="mt-7 text-sm font-semibold text-foreground/55">{{ $room->quiz->title }}</p>
                         @if ($room->status === 'finished')
@@ -183,7 +183,7 @@
                                 <ol class="mt-5 space-y-3">
                                     @foreach ($room->quiz->questions as $question)
                                         @php $answer = $answersByQuestion->get($question->id); @endphp
-                                        <li class="rounded-2xl border border-white/10 bg-background p-4">
+                                        <li class="rounded-2xl bg-background p-4">
                                             <p class="font-semibold">{{ $loop->iteration }}. {{ $question->prompt }}</p>
                                             <p class="mt-2 text-sm {{ $answer?->is_correct ? 'text-success' : 'text-danger' }}">{{ $answer ? ($answer->is_correct ? 'Benar' : 'Salah') : 'Tidak dijawab' }} — Jawabanmu: {{ $answer ? $question->options[$answer->answer_index] : '—' }}</p>
                                             @if (! $answer?->is_correct)<p class="mt-1 text-sm text-success">Jawaban benar: {{ $question->options[$question->correct_option] }}</p>@endif
@@ -199,7 +199,7 @@
     </div>
 
     @if ($isHost)
-        <dialog data-room-delete-confirm aria-labelledby="room-delete-title" class="fixed inset-0 m-auto w-[min(28rem,calc(100vw-2rem))] rounded-[1.75rem] border border-white/15 bg-surface p-6 text-foreground shadow-2xl backdrop:bg-black/80 sm:p-8">
+        <dialog data-room-delete-confirm aria-labelledby="room-delete-title" class="fixed inset-0 m-auto w-[min(28rem,calc(100vw-2rem))] rounded-card bg-surface p-6 text-foreground shadow-2xl backdrop:bg-black/80 sm:p-8">
             <h2 id="room-delete-title" class="font-display text-2xl font-bold">Hapus room {{ $room->code }}?</h2>
             <p class="mt-3 text-sm leading-6 text-foreground/65">Semua pemain akan dikeluarkan dan jawaban di room ini dihapus. Kuis aslinya tetap tersimpan.</p>
             <div class="mt-7 flex flex-wrap justify-end gap-3">
@@ -213,13 +213,13 @@
         </dialog>
     @endif
 
-    <dialog data-room-deleted-dialog aria-labelledby="room-deleted-title" class="fixed inset-0 m-auto w-[min(28rem,calc(100vw-2rem))] rounded-[1.75rem] border border-accent/30 bg-surface p-6 text-foreground shadow-2xl backdrop:bg-black/85 sm:p-8">
+    <dialog data-room-deleted-dialog aria-labelledby="room-deleted-title" class="fixed inset-0 m-auto w-[min(28rem,calc(100vw-2rem))] rounded-card bg-surface p-6 text-foreground shadow-2xl backdrop:bg-black/85 sm:p-8">
         <span class="grid size-12 place-items-center rounded-2xl bg-accent/10 text-2xl text-accent" aria-hidden="true">!</span>
         <h2 id="room-deleted-title" class="mt-5 font-display text-2xl font-bold">Room dihapus oleh host</h2>
         <p class="mt-3 text-sm leading-6 text-foreground/65">Kamu sudah terputus dari room. Kuis lainnya masih bisa dimainkan.</p>
         <a href="{{ route('quizzes.index') }}" class="mt-7 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-accent px-5 font-extrabold text-background">Kembali ke kuis</a>
     </dialog>
-    <dialog data-room-inactive-dialog aria-labelledby="room-inactive-dialog-title" class="fixed inset-0 m-auto w-[min(28rem,calc(100vw-2rem))] rounded-[1.75rem] border border-accent/30 bg-surface p-6 text-foreground shadow-2xl backdrop:bg-black/85 sm:p-8">
+    <dialog data-room-inactive-dialog aria-labelledby="room-inactive-dialog-title" class="fixed inset-0 m-auto w-[min(28rem,calc(100vw-2rem))] rounded-card bg-surface p-6 text-foreground shadow-2xl backdrop:bg-black/85 sm:p-8">
         <span class="grid size-12 place-items-center rounded-2xl bg-accent/10 text-2xl text-accent" aria-hidden="true">!</span>
         <h2 id="room-inactive-dialog-title" class="mt-5 font-display text-2xl font-bold">Room dinonaktifkan</h2>
         <p class="mt-3 text-sm leading-6 text-foreground/65">Host telah keluar. Kuis di room ini tidak dapat dilanjutkan, tetapi jawaban yang sudah tersimpan tidak dihapus.</p>

@@ -11,7 +11,7 @@
             @endfor
         </div>
 
-        <div class="rounded-card border border-white/10 bg-surface">
+        <div class="rounded-card bg-surface">
             <div class="p-4 sm:p-6">
                 @if ($errors->any())
                     <p role="alert" class="mb-4 rounded-2xl border border-danger/30 bg-danger/10 p-4 text-sm text-danger">{{ $errors->first() }}</p>
@@ -40,7 +40,7 @@
                             @endif
                         @endforeach
                         @if ($learningPaths->isEmpty())
-                            <p class="rounded-2xl border border-white/10 bg-background p-4 text-sm text-foreground/60">Materi belajar belum tersedia. Silakan kembali nanti.</p>
+                            <p class="rounded-card bg-background p-4 text-sm text-foreground/60">Materi belajar belum tersedia. Silakan kembali nanti.</p>
                         @else
                             <div class="flex justify-end border-t border-white/10 pt-4"><button type="submit" class="min-h-12 w-full rounded-full bg-accent px-6 font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto">Lanjutkan <span aria-hidden="true">→</span></button></div>
                         @endif
@@ -66,7 +66,7 @@
                     <p class="mt-2 text-sm text-foreground/60">{{ auth()->check() ? 'Kamu siap memulai dengan akunmu.' : 'Kamu bebas belajar tanpa akun. Akun memudahkan progres di perangkat lain.' }}</p>
                     <div @class(['mt-6 grid gap-3', 'sm:grid-cols-2' => auth()->guest()])>
                         @guest
-                        <form method="POST" action="{{ route('learning.interview.store') }}" class="flex flex-col rounded-2xl border border-white/10 bg-background p-4 sm:p-6">
+                        <form method="POST" action="{{ route('learning.interview.store') }}" class="flex flex-col rounded-card bg-background p-4 sm:p-6">
                             @csrf
                             <input type="hidden" name="step" value="3"><input type="hidden" name="mode" value="anonymous">
                             <h2 class="font-display text-xl font-bold">Lanjut anonim</h2>
@@ -74,7 +74,7 @@
                             <button type="submit" class="mt-5 min-h-12 rounded-full bg-accent px-5 font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Pilih anonim</button>
                         </form>
                         @endguest
-                        <form method="POST" action="{{ route('learning.interview.store') }}" class="flex flex-col rounded-2xl border border-white/10 bg-background p-4 sm:p-6">
+                        <form method="POST" action="{{ route('learning.interview.store') }}" class="flex flex-col rounded-card bg-background p-4 sm:p-6">
                             @csrf
                             <input type="hidden" name="step" value="3"><input type="hidden" name="mode" value="account">
                             <h2 class="font-display text-xl font-bold">{{ auth()->check() ? 'Lanjut dengan akun' : 'Masuk atau daftar' }}</h2>
@@ -88,12 +88,12 @@
                     <form method="POST" action="{{ route('learning.interview.store') }}" enctype="multipart/form-data" class="mt-5 grid gap-4 lg:grid-cols-2">
                         @csrf
                         <input type="hidden" name="step" value="4">
-                        <div class="min-w-0 rounded-2xl border border-white/10 bg-background p-4 sm:p-5">
+                        <div class="min-w-0 rounded-card bg-background p-4 sm:p-5">
                             <label class="block text-sm font-bold" for="learner-name">Nama panggilan</label>
                             <p class="mt-1 text-xs leading-5 text-foreground/55">Nama ini akan muncul di profil belajarmu.</p>
                             <input id="learner-name" name="name" value="{{ old('name') }}" required minlength="2" maxlength="80" autocomplete="nickname" placeholder="Misalnya, Komang" class="mt-4 min-h-12 w-full rounded-2xl border border-white/15 bg-surface px-4 text-foreground outline-none focus:border-accent">
                         </div>
-                        <div class="min-w-0 rounded-2xl border border-white/10 bg-background p-4 sm:p-5">
+                        <div class="min-w-0 rounded-card bg-background p-4 sm:p-5">
                             <div class="flex items-center gap-3">
                                 <img src="{{ asset(array_key_first(\App\Services\ProfileAvatarService::DEFAULT_AVATARS)) }}" alt="Contoh avatar acak" class="size-12 shrink-0 rounded-full object-cover ring-2 ring-accent/50">
                                 <div class="min-w-0"><p class="font-bold">Avatar acak</p><p class="text-xs leading-5 text-foreground/55">Pakai karakter acak, atau unggah fotomu.</p></div>

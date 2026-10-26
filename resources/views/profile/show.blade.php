@@ -2,17 +2,17 @@
     <section class="mb-6" aria-labelledby="overview-title">
         <h2 id="overview-title" class="mb-3 font-display text-xl font-bold">Ringkasan belajar</h2>
         <dl class="grid grid-cols-3 gap-2 sm:gap-4">
-            <div class="rounded-3xl bg-surface p-4 sm:p-5">
+            <div class="rounded-card bg-surface p-4 sm:p-5">
                 <svg class="mb-3 size-5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6" /><circle cx="12" cy="12" r="9" /></svg>
                 <dt class="text-xs leading-5 text-foreground/55 sm:text-sm">Pelajaran selesai</dt>
                 <dd class="mt-1 font-display text-3xl font-bold sm:text-4xl">{{ $completedLessons }}</dd>
             </div>
-            <div class="rounded-3xl bg-surface p-4 sm:p-5">
+            <div class="rounded-card bg-surface p-4 sm:p-5">
                 <svg class="mb-3 size-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6a3 3 0 0 1 3 3v14a4 4 0 0 0-4-2H4zM13 7a3 3 0 0 1 3-3h4v15h-3a4 4 0 0 0-4 2" /></svg>
                 <dt class="text-xs leading-5 text-foreground/55 sm:text-sm">Materi dipelajari</dt>
                 <dd class="mt-1 font-display text-3xl font-bold sm:text-4xl">{{ $learningPathsByGroup->flatten()->count() }}</dd>
             </div>
-            <div class="rounded-3xl bg-surface p-4 sm:p-5">
+            <div class="rounded-card bg-surface p-4 sm:p-5">
                 <svg class="mb-3 size-5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M16 3v4M8 3v4M3 11h18m-12 5 2 2 4-4" /></svg>
                 <dt class="text-xs leading-5 text-foreground/55 sm:text-sm">Hari aktif minggu ini</dt>
                 <dd class="mt-1 font-display text-3xl font-bold sm:text-4xl">{{ $activity['active_days_7'] ?? '—' }}<span class="text-base font-medium text-foreground/40">/7</span></dd>

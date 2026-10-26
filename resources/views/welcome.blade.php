@@ -27,7 +27,7 @@
                 </div>
 
                 <div class="mx-auto w-full max-w-lg py-4 lg:pl-8">
-                    <div class="relative rounded-card border border-white/10 bg-surface p-7 sm:p-9">
+                    <div class="relative rounded-card bg-surface p-7 sm:p-9">
                         <div class="flex items-center gap-3 text-sm font-semibold text-accent">
                             <span class="font-balinese text-xl" lang="ban" aria-hidden="true">ᬅ</span>
                             <span>Belajar Aksara Bali</span>
@@ -48,7 +48,7 @@
                 </div>
             </section>
 
-            <dialog id="learning-picker" data-learning-picker aria-labelledby="learning-picker-title" class="m-auto h-[min(85dvh,48rem)] max-h-[calc(100dvh-2.5rem)] w-[min(44rem,calc(100%-2rem))] flex-col overflow-hidden rounded-card border border-white/10 bg-surface p-0 text-foreground shadow-2xl backdrop:bg-black/70 backdrop:backdrop-blur-sm">
+            <dialog id="learning-picker" data-learning-picker aria-labelledby="learning-picker-title" class="m-auto h-[min(85dvh,48rem)] max-h-[calc(100dvh-2.5rem)] w-[min(44rem,calc(100%-2rem))] flex-col overflow-hidden rounded-card bg-surface p-0 text-foreground shadow-2xl backdrop:bg-black/70 backdrop:backdrop-blur-sm">
                 <header class="flex shrink-0 items-center justify-between gap-4 border-b border-white/10 bg-surface px-4 pb-4 pt-4 sm:px-5 sm:pt-5">
                         <div>
                             <p class="mb-1 text-xs font-bold text-accent">Petualangan belajar</p>
@@ -75,7 +75,7 @@
                                 </header>
                                 <nav class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3" aria-label="Materi {{ $label }}">
                                     @foreach ($groupPaths as $learningPath)
-                                        <a href="{{ route('learning.paths.show', $learningPath->slug) }}" class="group flex min-h-36 flex-col rounded-2xl border border-white/8 bg-background p-3 transition duration-150 hover:-translate-y-0.5 hover:border-accent/35 hover:bg-background/70 hover:shadow-lg hover:shadow-black/20 focus-visible:border-accent/50 focus-visible:outline-2 focus-visible:outline-accent">
+                                        <a href="{{ route('learning.paths.show', $learningPath->slug) }}" class="group flex min-h-36 flex-col rounded-card bg-background p-3 transition duration-150 hover:-translate-y-0.5 hover:bg-background/70 hover:shadow-lg hover:shadow-black/20 focus-visible:outline-2 focus-visible:outline-accent">
                                             <span class="grid size-9 place-items-center rounded-xl {{ $group === 'paribasa' ? 'bg-accent/10 text-accent' : 'bg-primary/20 text-accent' }} transition-colors group-hover:bg-accent group-hover:text-background" aria-hidden="true">
                                                 @switch($learningPath->slug)
                                                     @case('cecimpedan')

@@ -1,5 +1,5 @@
 @props(['index' => '__INDEX__', 'question' => [], 'saved' => null, 'audio' => null, 'playable' => false, 'currentAudio' => true])
-<details data-question open class="rounded-card border border-white/10 bg-surface p-4 sm:p-6" data-audio-url="{{ $playable ? route('content-audio.show', $audio) : '' }}" data-source-prompt="{{ $saved?->prompt }}" data-source-options="{{ json_encode($saved?->options ?? []) }}">
+<details data-question open class="rounded-card bg-surface p-4 sm:p-6" data-audio-url="{{ $playable ? route('content-audio.show', $audio) : '' }}" data-source-prompt="{{ $saved?->prompt }}" data-source-options="{{ json_encode($saved?->options ?? []) }}">
     <summary class="flex min-h-11 cursor-pointer items-center gap-3 font-bold focus-visible:outline-2 focus-visible:outline-accent">
         <span class="shrink-0 text-accent">Soal <span data-question-number>{{ is_numeric($index) ? $index + 1 : '' }}</span></span>
         <span data-question-summary class="min-w-0 flex-1 truncate text-sm text-foreground/65">{{ $question['prompt'] ?? 'Pertanyaan baru' }}</span><span data-question-chevron aria-hidden="true">⌄</span>

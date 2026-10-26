@@ -44,7 +44,7 @@
                 @endif
             </nav>
 
-            <dialog data-avatar-dialog @if ($errors->any()) data-open-on-load @endif class="m-auto max-h-[calc(100dvh-2rem)] w-[min(38rem,calc(100%-2rem))] overflow-hidden rounded-card border border-white/10 bg-surface p-0 text-foreground shadow-2xl backdrop:bg-black/75">
+            <dialog data-avatar-dialog @if ($errors->any()) data-open-on-load @endif class="m-auto max-h-[calc(100dvh-2rem)] w-[min(38rem,calc(100%-2rem))] overflow-hidden rounded-card bg-surface p-0 text-foreground shadow-2xl backdrop:bg-black/75">
                 <form method="POST" action="{{ route('profile.avatar.update') }}" enctype="multipart/form-data" class="avatar-modal-content max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain p-5 sm:p-7">
                     @csrf
                     @method('PUT')

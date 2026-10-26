@@ -4,7 +4,7 @@
             <span aria-hidden="true">←</span> Daftar pelajaran
         </a>
 
-        <header class="rounded-card border border-white/10 bg-surface p-5 sm:p-7 lg:p-9">
+        <header class="rounded-card bg-surface p-5 sm:p-7 lg:p-9">
             <p class="text-sm font-bold text-accent">{{ $lesson->learningPath->title }}</p>
             <h1 class="mt-2 break-words font-display text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">{{ $lesson->title }}</h1>
             @if ($lesson->summary)
@@ -19,13 +19,13 @@
             <x-flash-notice :tone="session('status_tone', 'success')" class="mt-5">{{ session('status') }}</x-flash-notice>
         @endif
 
-        <article class="mt-5 rounded-card border border-white/10 bg-surface p-5 sm:p-7 lg:p-9" aria-labelledby="lesson-content-title">
+        <article class="mt-5 rounded-card bg-surface p-5 sm:p-7 lg:p-9" aria-labelledby="lesson-content-title">
             <h2 id="lesson-content-title" class="mb-4 font-display text-xl font-bold">Materi pelajaran</h2>
             <div class="whitespace-pre-line break-words font-readable text-base leading-8 text-foreground/85 sm:text-lg">{{ $lesson->content }}</div>
         </article>
 
         @if ((! $lesson->exercise_prompt || $progress?->completed_at) && ($lesson->learningPath->group === 'aksara' || $lesson->keyboard_auto_open))
-            <x-aksara-keyboard :auto-open="$lesson->keyboard_auto_open" class="mt-5 rounded-card border border-white/10 bg-surface p-4 sm:p-6" />
+            <x-aksara-keyboard :auto-open="$lesson->keyboard_auto_open" class="mt-5 rounded-card bg-surface p-4 sm:p-6" />
         @endif
         @if ($progress?->completed_at)
             <section class="mt-5 rounded-card border border-accent/25 bg-accent/10 p-5 sm:p-6" aria-label="Hasil pelajaran">
@@ -35,7 +35,7 @@
                 @endif
             </section>
         @elseif ($lesson->exercise_prompt)
-            <section class="mt-5 rounded-card border border-white/10 bg-surface p-5 sm:p-7 lg:p-9" aria-labelledby="exercise-title">
+            <section class="mt-5 rounded-card bg-surface p-5 sm:p-7 lg:p-9" aria-labelledby="exercise-title">
                 <p class="text-sm font-bold text-accent">Latihan singkat</p>
                 <h2 id="exercise-title" class="mt-2 break-words font-display text-xl font-bold leading-snug sm:text-2xl">{{ $lesson->exercise_prompt }}</h2>
                 <p class="mt-2 text-sm text-foreground/60">Pilih satu jawaban yang paling tepat.</p>

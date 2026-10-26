@@ -9,7 +9,7 @@
         @endif
 
         <div class="grid items-start gap-8 lg:grid-cols-[minmax(0,21rem)_minmax(0,1fr)] lg:gap-10">
-            <section class="rounded-[1.75rem] border border-white/10 bg-surface p-6 sm:p-8 lg:sticky lg:top-28" aria-labelledby="quiz-title">
+            <section class="rounded-card bg-surface p-6 sm:p-8 lg:sticky lg:top-28" aria-labelledby="quiz-title">
                 <span class="inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-2 text-sm font-bold text-accent">Kuis buatanmu</span>
                 <h1 id="quiz-title" class="mt-5 break-words font-display text-3xl font-bold leading-tight">{{ $quiz->title }}</h1>
                 <p class="mt-4 font-readable leading-7 text-foreground/65">{{ $quiz->description ?: 'Ajak teman menguji pengetahuan bahasa Bali lewat pertanyaan yang kamu buat.' }}</p>
@@ -46,7 +46,7 @@
                 </div>
                 <ol class="space-y-3">
                     @foreach ($quiz->questions as $index => $question)
-                        <li class="flex gap-4 rounded-[1.5rem] border border-white/10 bg-surface p-5 sm:p-6">
+                        <li class="flex gap-4 rounded-card bg-surface p-5 sm:p-6">
                             <span class="grid size-11 shrink-0 place-items-center rounded-2xl bg-accent/10 font-display text-lg font-bold text-accent">{{ $index + 1 }}</span>
                             <div class="min-w-0">
                                 <h3 class="break-words font-display text-lg font-semibold leading-snug">{{ $question->prompt }}</h3>

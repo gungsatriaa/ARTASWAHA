@@ -1,6 +1,6 @@
 @php($pending = $current && in_array($audio->status, ['queued', 'processing'], true))
 @php($progress = $progress ?? app(\App\Services\ContentAudioService::class)->generationProgress($audio))
-<section class="mt-5 rounded-card border border-white/10 bg-surface p-5" data-audio-status-panel data-audio-status-url="{{ route('admin.audio.status', $audio) }}" data-audio-version="{{ $audio->version }}" data-audio-pending="{{ $pending ? '1' : '0' }}" data-audio-started-at="{{ $progress['started_at'] ?? '' }}" data-audio-timezone="{{ config('app.timezone') }}" data-server-now="{{ now()->toISOString() }}" aria-busy="{{ $pending ? 'true' : 'false' }}">
+<section class="mt-5 rounded-card bg-surface p-5" data-audio-status-panel data-audio-status-url="{{ route('admin.audio.status', $audio) }}" data-audio-version="{{ $audio->version }}" data-audio-pending="{{ $pending ? '1' : '0' }}" data-audio-started-at="{{ $progress['started_at'] ?? '' }}" data-audio-timezone="{{ config('app.timezone') }}" data-server-now="{{ now()->toISOString() }}" aria-busy="{{ $pending ? 'true' : 'false' }}">
     <div data-audio-status-badge><x-job-status :status="$current ? $audio->status : 'stale'" /></div>
     @if ($pending)
         <p class="mt-3 text-sm font-bold" role="status" aria-live="polite" data-audio-progress-label>{{ $audio->status === 'queued' ? 'Menunggu giliran pembuatan audio' : 'Sedang membuat audio' }}</p>

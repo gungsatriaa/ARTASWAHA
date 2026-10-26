@@ -25,7 +25,7 @@
     <section class="relative mt-7 overflow-hidden rounded-card bg-accent p-6 text-background" aria-labelledby="mobile-featured-title">
         <span class="pointer-events-none absolute -right-10 -top-16 size-44 rounded-full border-[24px] border-background/8" aria-hidden="true"></span>
         <div class="relative">
-            <p class="text-sm font-semibold text-background/70">Riwayat belajar terakhir</p>
+                <p class="text-sm font-semibold text-background/70">Riwayat belajar terakhir</p>
             <h2 id="mobile-featured-title" class="mt-2 break-words font-display text-2xl font-bold leading-tight">{{ $lastLearningProgress?->lesson->title ?? 'Belum ada riwayat belajar' }}</h2>
             @if ($lastLearningProgress)
                 <p class="mt-3 text-sm font-semibold text-background/75">{{ $lastLearningProgress->lesson->learningPath->title }}</p>
@@ -72,7 +72,7 @@
                     <span class="text-lg text-foreground/45" aria-hidden="true">›</span>
                 </a>
             @empty
-                <p class="rounded-2xl border border-white/10 bg-surface p-5 text-sm leading-6 text-foreground/65">Materi pilihanmu belum tersedia. Buka menu untuk menjelajahi materi lain.</p>
+                <p class="rounded-card bg-surface p-5 text-sm leading-6 text-foreground/65">Materi pilihanmu belum tersedia. Buka menu untuk menjelajahi materi lain.</p>
             @endforelse
         </div>
     </section>

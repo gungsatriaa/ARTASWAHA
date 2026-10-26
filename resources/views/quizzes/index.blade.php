@@ -23,7 +23,7 @@
         </header>
 
         @if ($profile)
-            <dialog id="quiz-login-dialog" data-quiz-login-dialog aria-labelledby="quiz-login-title" aria-describedby="quiz-login-description" class="fixed inset-0 m-auto w-[min(28rem,calc(100vw-2rem))] rounded-[1.75rem] border border-accent/30 bg-surface p-6 text-foreground shadow-2xl backdrop:bg-black/85 sm:p-8">
+            <dialog id="quiz-login-dialog" data-quiz-login-dialog aria-labelledby="quiz-login-title" aria-describedby="quiz-login-description" class="fixed inset-0 m-auto w-[min(28rem,calc(100vw-2rem))] rounded-card bg-surface p-6 text-foreground shadow-2xl backdrop:bg-black/85 sm:p-8">
                 <span class="grid size-12 place-items-center rounded-2xl bg-accent/10 text-accent" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-6"><path d="M12 16v-4m0-4h.01M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z"/></svg></span>
                 <h2 id="quiz-login-title" class="mt-5 font-display text-2xl font-bold">Masuk untuk membuat kuis</h2>
                 <p id="quiz-login-description" class="mt-3 text-sm leading-6 text-foreground/65">Anda harus login untuk membuat kuis. Profil anonim tetap bisa bergabung dan menjawab kuis.</p>
@@ -42,7 +42,7 @@
         @endif
 
         @if ($errors->has('room_started') || $errors->has('room_finished') || $errors->has('room_inactive'))
-            <dialog data-room-join-closed-dialog aria-labelledby="room-join-closed-title" aria-describedby="room-join-closed-description" class="fixed inset-0 m-auto w-[min(28rem,calc(100vw-2rem))] rounded-[1.75rem] border border-accent/30 bg-surface p-6 text-foreground shadow-2xl backdrop:bg-black/85 sm:p-8">
+            <dialog data-room-join-closed-dialog aria-labelledby="room-join-closed-title" aria-describedby="room-join-closed-description" class="fixed inset-0 m-auto w-[min(28rem,calc(100vw-2rem))] rounded-card bg-surface p-6 text-foreground shadow-2xl backdrop:bg-black/85 sm:p-8">
                 <span class="grid size-12 place-items-center rounded-2xl bg-accent/10 text-2xl text-accent" aria-hidden="true">!</span>
                 <h2 id="room-join-closed-title" class="mt-5 font-display text-2xl font-bold">{{ $errors->has('room_started') ? 'Kuis sudah dimulai' : ($errors->has('room_inactive') ? 'Room tidak aktif' : 'Kuis sudah selesai') }}</h2>
                 <p id="room-join-closed-description" class="mt-3 text-sm leading-6 text-foreground/65">{{ $errors->first('room_started') ?: ($errors->first('room_inactive') ?: $errors->first('room_finished')) }} Pilih room lain yang masih menunggu peserta.</p>
@@ -50,7 +50,7 @@
             </dialog>
         @endif
 
-        <section aria-labelledby="join-room-title" class="rounded-[2rem] border border-white/10 bg-surface p-6 sm:p-8 lg:p-10">
+        <section aria-labelledby="join-room-title" class="rounded-card bg-surface p-6 sm:p-8 lg:p-10">
             <div class="max-w-3xl">
                 <p class="text-sm font-bold text-accent">Sudah ada yang mengajak?</p>
                 <h2 id="join-room-title" class="mt-1 font-display text-2xl font-bold sm:text-3xl">Masukkan kode room</h2>
@@ -89,7 +89,7 @@
             </form>
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 @forelse ($quizzes as $quiz)
-                    <article class="group flex min-h-64 flex-col rounded-[1.75rem] border border-white/8 bg-surface p-5 transition duration-150 hover:-translate-y-1 hover:border-accent/35 hover:bg-surface/80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:p-6">
+                    <article class="group flex min-h-64 flex-col rounded-card bg-surface p-5 transition duration-150 hover:-translate-y-1 hover:bg-surface/80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:p-6">
                         <div class="flex items-center justify-between gap-3">
                             <span class="grid size-12 place-items-center rounded-2xl bg-primary/20 text-accent transition-colors group-hover:bg-accent group-hover:text-background" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-6"><path d="M5 4.5A2.5 2.5 0 0 1 7.5 2H20v17H7.5A2.5 2.5 0 0 0 5 21.5z"/><path d="M5 4.5v17M9 7h7M9 11h7"/></svg>
@@ -113,7 +113,7 @@
                         </div>
                     </article>
                 @empty
-                    <div class="flex min-h-64 flex-col items-start justify-center rounded-[1.75rem] border border-dashed border-white/15 bg-surface p-6 sm:p-8">
+                    <div class="flex min-h-64 flex-col items-start justify-center rounded-card bg-surface p-6 sm:p-8">
                         <span class="grid size-12 place-items-center rounded-2xl bg-accent/10 text-accent" aria-hidden="true">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-6"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>
                         </span>

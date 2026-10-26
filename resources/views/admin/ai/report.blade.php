@@ -6,7 +6,7 @@
 <p class="my-3 text-sm text-foreground/60">{{ $aiReport->period_start->format('d M Y') }} – {{ $aiReport->period_end->format('d M Y') }} · snapshot {{ $aiReport->created_at->format('d M Y H:i') }}</p>
 <div class="mb-5"><x-job-status :status="$aiReport->status" /></div>
 <h2 class="mb-3 font-display text-lg font-bold">Data faktual yang digunakan</h2><x-ai-statistics :snapshot="$aiReport->snapshot" />
-<section class="mt-6 rounded-card border border-accent/20 bg-surface p-6">
+<section class="mt-6 rounded-card bg-surface p-6">
 <h2 class="font-display text-xl font-bold">Interpretasi AI · perlu ditinjau</h2>
 @if ($aiReport->status === 'completed' && $aiReport->result)
     <p class="mt-3 break-words text-sm leading-7">{{ $aiReport->result['summary'] }}</p>

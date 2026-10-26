@@ -89,7 +89,7 @@
                 </template>
                 <x-aksara-keyboard :scratch="false" />
                 </section>
-                <section data-quiz-step="2" hidden class="rounded-card border border-white/10 bg-surface p-4 sm:p-7">
+                <section data-quiz-step="2" hidden class="rounded-card bg-surface p-4 sm:p-7">
                     <h2 tabindex="-1" class="font-display text-2xl font-bold">Preview sebagai peserta</h2>
                     <p class="mt-2 text-sm leading-6 text-foreground/60">Coba pilihan jawaban, keyboard, dan audio yang masih sesuai. Preview tidak mengirim jawaban atau menjalankan timer.</p>
                     <p data-preview-position class="mt-5 font-bold text-accent"></p>
