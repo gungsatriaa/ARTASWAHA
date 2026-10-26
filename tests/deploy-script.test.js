@@ -8,7 +8,7 @@ import { spawnSync } from 'node:child_process';
 const bash = process.platform === 'win32' ? 'C:/Program Files/Git/bin/bash.exe' : 'bash';
 const available = spawnSync(bash, ['--version']).status === 0;
 
-function runDeploy({ tts = false, analysis = false, missing = false, failAfterRestart = false, workerProgram = 'artaswaha-learner:*' } = {}) {
+function runDeploy({ tts = false, analysis = false, missing = false, failAfterRestart = false, workerProgram = 'artaswaha-learner:*', wrongDirectory = false, mixedDirectories = false } = {}) {
     const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'artaswaha-deploy-test-'));
     try {
         const bin = path.join(folder, 'fake-bin');
@@ -64,13 +64,17 @@ printf '%s RUNNING pid 123, uptime 1:00:00\\n' "$2"
 printf 'PROCESS %s\\n' "$*" >> "$TEST_LOG"
 [[ "$TEST_MISSING" != 1 ]] || exit 1
 [[ "$TEST_LATE_FAILURE" != 1 || ! -f "$TEST_RESTART" ]] || exit 1
+printf '1234\\n'
+if [[ "$TEST_MIXED_DIRECTORIES" == 1 ]]; then printf '5678\\n'; fi
 `);
+        executable('readlink', 'if [[ "$TEST_WRONG_DIRECTORY" == 1 || ( "$TEST_MIXED_DIRECTORIES" == 1 && "$2" == /proc/1234/cwd ) ]]; then printf "/other-app\\n"; else pwd; fi\n');
         const log = path.join(folder, 'actions.log');
         const maintenance = path.join(folder, 'maintenance');
         const unixBin = bin.replaceAll('\\', '/').replace(/^([A-Za-z]):/, (_, drive) => '/' + drive.toLowerCase());
         const result = spawnSync(bash, ['-c', 'export PATH="$TEST_BIN:$PATH"; exec bash "$1"', '_', path.join(folder, 'deploy.sh').replaceAll('\\', '/')], {
             env: { ...process.env, TEST_BIN: unixBin, SUPERVISORCTL_BIN: supervisor,
                 LEARNER_QUEUE_SUPERVISOR_PROGRAM: '', TEST_WORKER_PROGRAM: workerProgram,
+                TEST_WRONG_DIRECTORY: wrongDirectory ? '1' : '0', TEST_MIXED_DIRECTORIES: mixedDirectories ? '1' : '0',
                 DEPLOY_SSH_KEY: path.join(folder, 'no-key').replaceAll('\\', '/'),
                 DEPLOY_BRANCH: 'main', TEST_LOG: log.replaceAll('\\', '/'),
                 TEST_MAINTENANCE: maintenance.replaceAll('\\', '/'),
@@ -121,7 +125,20 @@ test('deployment accepts the existing aaPanel TTS program name from environment 
 test('without a configured program name deployment checks the learner worker command', { skip: !available }, () => {
     const result = runDeploy({ tts: true, workerProgram: '' });
     assert.equal(result.status, 0, result.stdout + result.stderr);
-    assert(result.actions.some(action => action.startsWith('PROCESS -af [a]rtisan queue:work learner-analysis')));
+    assert(result.actions.some(action => action.startsWith('PROCESS -f [a]rtisan queue:work[[:space:]]+learner-analysis')));
+});
+
+test('a learner worker from a different app does not permit deployment', { skip: !available }, () => {
+    const result = runDeploy({ tts: true, workerProgram: '', wrongDirectory: true });
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert(!result.actions.includes('down'));
+    assert.equal(result.maintenance, false);
+});
+
+test('deployment finds this app worker among processes from multiple apps', { skip: !available }, () => {
+    const result = runDeploy({ tts: true, workerProgram: '', mixedDirectories: true });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(result.maintenance, false);
 });
 
 test('missing learner worker with no configured program still fails before maintenance', { skip: !available }, () => {

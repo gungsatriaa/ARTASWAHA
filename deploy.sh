@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 # ARTASWAHA production deploy script for aaPanel.
-APP_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+APP_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 DEPLOY_REMOTE="${DEPLOY_REMOTE:-origin}"
 DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
 DEPLOY_SSH_KEY="${DEPLOY_SSH_KEY:-/root/.ssh/aapanel/artaswaha_78175}"
@@ -44,16 +44,25 @@ check_supervisor_program() {
 check_process() {
     local label="$1"
     local pattern="$2"
+    local process_pid
+    local process_directory
 
-    pgrep -af "$pattern" >/dev/null || fail "$label tidak ditemukan. Periksa proses di Supervisor/aaPanel."
-    printf 'OK  %-18s proses aktif\n' "$label"
+    while IFS= read -r process_pid; do
+        [[ "$process_pid" =~ ^[0-9]+$ ]] || continue
+        process_directory="$(readlink -f "/proc/$process_pid/cwd" 2>/dev/null || true)"
+        if [[ "$process_directory" == "$APP_DIR" ]]; then
+            printf 'OK  %-18s proses aktif di folder aplikasi\n' "$label"
+            return
+        fi
+    done < <(pgrep -f "$pattern" || true)
+    fail "$label tidak ditemukan di $APP_DIR. Periksa proses di Supervisor/aaPanel."
 }
 
 check_learner_worker() {
     if [[ -n "$SUPERVISORCTL_BIN" && -n "$LEARNER_QUEUE_PROGRAM" ]]; then
         check_supervisor_program "AI/TTS worker" "$LEARNER_QUEUE_PROGRAM"
     else
-        check_process "AI/TTS worker" '[a]rtisan queue:work learner-analysis'
+        check_process "AI/TTS worker" '[a]rtisan queue:work[[:space:]]+learner-analysis([[:space:]]|$)'
     fi
 }
 
@@ -109,8 +118,10 @@ if [[ -z "$LEARNER_QUEUE_PROGRAM" ]]; then
 fi
 if [[ -n "$SUPERVISORCTL_BIN" ]]; then
     [[ -x "$SUPERVISORCTL_BIN" ]] || fail "SUPERVISORCTL_BIN tidak dapat dijalankan: $SUPERVISORCTL_BIN"
-else
-    command -v pgrep >/dev/null || fail "supervisorctl dan pgrep tidak ditemukan; tidak dapat memeriksa proses worker."
+fi
+if [[ -z "$SUPERVISORCTL_BIN" || -z "$LEARNER_QUEUE_PROGRAM" ]]; then
+    command -v pgrep >/dev/null || fail "pgrep tidak ditemukan; tidak dapat memeriksa proses worker."
+    command -v readlink >/dev/null || fail "readlink tidak ditemukan; tidak dapat memverifikasi folder worker."
 fi
 [[ "$(git branch --show-current)" == "$DEPLOY_BRANCH" ]] || fail "Branch aktif bukan '$DEPLOY_BRANCH'. Atur DEPLOY_BRANCH sesuai branch yang akan di-deploy."
 git diff --quiet && git diff --cached --quiet || fail "Ada perubahan file tracked. Commit/stash perubahan di server sebelum deploy."
