@@ -280,6 +280,30 @@ Model/revision dan API library diverifikasi dari paket resmi, tetapi inferensi C
 
 Referensi: [model Indonesia](https://huggingface.co/grandhigh/Chatterbox-TTS-Indonesian), [metadata paket 0.1.1](https://pypi.org/pypi/chatterbox-tts/0.1.1/json), [uv installer](https://docs.astral.sh/uv/reference/installer/), [PyTorch versions](https://pytorch.org/get-started/previous-versions/).
 
+## Keyboard aksara Bali: pembaruan aplikasi
+
+Implementasi keyboard tersedia pada commit `741b445`. Fitur menggunakan JavaScript browser dan font Vimala lokal yang sudah ada; tidak memerlukan paket baru, `.env` baru, model, API, port, atau service tambahan.
+
+Sesudah menarik source, jalankan migrasi `2026_10_26_214845_add_keyboard_auto_open_to_lessons_and_quiz_questions`, build frontend, lalu perbarui cache Laravel melalui alur deploy bagian 3. `bash deploy.sh` sudah mencakup langkah tersebut. Jika deploy dikerjakan manual, jalankan dari folder aplikasi setelah dependensi pada bagian 3 tersedia:
+
+```bash
+cd /www/wwwroot/artaswaha.kerthajaya.com
+php artisan migrate --force
+npm run build
+php artisan optimize
+```
+
+Gunakan PHP 8.4 seperti pada bagian 1. Migrasi menambahkan boolean `keyboard_auto_open` pada `lessons` dan `quiz_questions`, dengan nilai awal `false` untuk data lama. Tidak perlu menjalankan seeder. Perubahan keyboard ini tidak memerlukan restart worker TTS, worker antrean lain, atau Reverb.
+
+Pengaturan dan pemeriksaan setelah deploy:
+
+1. **Admin → Modul → Buat/Ubah modul:** pilih kolom materi, pertanyaan latihan, pilihan, atau penjelasan, lalu buka **Keyboard aksara Bali**. Pastikan karakter masuk ke kolom yang dipilih dan tetap sama setelah disimpan/muat ulang. Opsi **Buka keyboard aksara otomatis untuk pelajar** berlaku pada modul tersebut. Perubahan modul tetap mengikuti alur simpan draf → preview → terbitkan.
+2. **Buat/Edit kuis:** atur **Buka keyboard aksara otomatis saat soal ini tampil** secara terpisah pada setiap soal. Uji juga soal dan pilihan yang ditambah/dihapus melalui editor. Kuis yang sudah memiliki room tetap membuat versi baru ketika diedit; room lama mempertahankan pengaturannya.
+3. **Pengguna:** uji satu soal dengan opsi otomatis aktif dan satu nonaktif. Yang aktif langsung membuka panel; yang nonaktif menyediakan tombol buka/tutup. Untuk modul aksara tanpa latihan, panel tersedia setelah materi. Tulisan pengguna adalah coretan latihan di browser, tidak dikirim/disimpan ke server atau dinilai sebagai jawaban; kuis tetap memakai pilihan ganda.
+4. **Input dan HP:** uji aksara dasar, pangangge, gantungan, adeg-adeg manual tanpa duplikasi, sisip/ganti seleksi, hapus, spasi, enter, serta pindah kolom. Periksa lebar 320–390 px, orientasi, ketukan berulang, scroll panjang dan berhenti, serta pergantian keyboard perangkat. Memakai keyboard tidak menambahkan request per karakter.
+
+Tes PHP modul/kuis, tes JavaScript keyboard, dan build frontend telah lolos secara lokal. Rendering gabungan aksara, gestur, dan perilaku keyboard perangkat pada browser/HP sebenarnya masih perlu diperiksa; pengujian otomatis tersebut bukan verifikasi visual atau jaminan kelancaran semua perangkat.
+
 ## Instalasi manual langkah demi langkah
 
 Bagian ini menjalankan langkah installer satu per satu agar prosesnya dapat dipahami. Pilih cara manual ini atau installer pada bagian 4. Contoh memakai CPU; jalankan setelah source baru dipull dan backup tersedia.

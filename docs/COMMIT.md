@@ -38,6 +38,7 @@ fix(progress): pertahankan progres belajar anonim
 - Jangan menumpuk beberapa perubahan yang tidak berkaitan dalam satu commit.
 - Jangan membuat commit untuk pekerjaan yang masih setengah jadi atau gagal diverifikasi.
 - Sebelum commit, tinjau `git diff` dan `git status`; stage hanya file yang termasuk perubahan tersebut.
+- Sebelum setiap commit, baca `docs/DEPLOYMENT.md`. Jika perubahan memengaruhi instalasi, migrasi, build, konfigurasi, service, atau pemeriksaan setelah deploy, perbarui panduan tersebut dalam perubahan yang sama. Jangan menambahkan langkah operasional yang tidak diperlukan.
 - Pastikan `.env`, kredensial, token, data pribadi, build output, dan file sementara tidak ikut ter-stage.
 - Jalankan pemeriksaan atau test terarah yang relevan sebelum commit; sebutkan jika pemeriksaan tidak dapat dijalankan.
 - Jangan mengubah atau menulis ulang commit yang sudah dipublikasikan tanpa permintaan eksplisit.
