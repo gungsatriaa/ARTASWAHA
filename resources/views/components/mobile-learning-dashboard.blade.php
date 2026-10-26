@@ -25,7 +25,10 @@
     <section class="relative mt-7 overflow-hidden rounded-card bg-accent p-6 text-background" aria-labelledby="mobile-featured-title">
         <span class="pointer-events-none absolute -right-10 -top-16 size-44 rounded-full border-[24px] border-background/8" aria-hidden="true"></span>
         <div class="relative">
+            <div class="flex items-center justify-between gap-3">
                 <p class="text-sm font-semibold text-background/70">Riwayat belajar terakhir</p>
+                <x-mascot-greeting class="relative size-12 shrink-0 bg-background/10 p-1" />
+            </div>
             <h2 id="mobile-featured-title" class="mt-2 break-words font-display text-2xl font-bold leading-tight">{{ $lastLearningProgress?->lesson->title ?? 'Belum ada riwayat belajar' }}</h2>
             @if ($lastLearningProgress)
                 <p class="mt-3 text-sm font-semibold text-background/75">{{ $lastLearningProgress->lesson->learningPath->title }}</p>
@@ -49,9 +52,10 @@
             <a href="{{ route('profile.show') }}#progres" class="min-h-11 shrink-0 content-center rounded-full px-2 text-xs font-bold text-accent focus-visible:outline-2 focus-visible:outline-accent">Progresmu</a>
         </div>
 
-        <div class="mt-4 space-y-3">
+        <x-content-preview class="mt-4">
+        <div class="space-y-3">
             @forelse ($dashboardPaths as $path)
-                <a href="{{ route('learning.paths.show', $path->slug) }}" class="flex min-h-20 items-center gap-4 rounded-2xl border border-white/10 bg-surface p-4 transition hover:border-accent/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+                <a href="{{ route('learning.paths.show', $path->slug) }}" class="flex min-h-20 items-center gap-4 rounded-card bg-surface p-4 transition hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                     <span class="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary/20 text-accent" aria-hidden="true">
                         @if ($path->group === 'aksara')
                             <span class="font-balinese text-xl leading-none" lang="ban">ᬅ</span>
@@ -75,12 +79,13 @@
                 <p class="rounded-card bg-surface p-5 text-sm leading-6 text-foreground/65">Materi pilihanmu belum tersedia. Buka menu untuk menjelajahi materi lain.</p>
             @endforelse
         </div>
+        </x-content-preview>
     </section>
 
     @if ($profile)
         <div class="mt-7"><x-learner-analysis :analysis="$analysis" :compact="true" /></div>
     @endif
-    <a href="{{ route('quizzes.index') }}" class="mt-7 flex items-center justify-between gap-4 rounded-card border border-primary/35 bg-primary/15 p-5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+    <a href="{{ route('quizzes.index') }}" class="mt-7 flex items-center justify-between gap-4 rounded-card bg-surface p-5 transition hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
         <span><span class="block font-display text-lg font-bold">Main kuis bareng</span><span class="mt-1 block text-sm text-foreground/60">{{ $user ? 'Buat kuis atau gabung dengan teman.' : 'Masukkan kode untuk gabung kuis.' }}</span></span>
         <span class="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-xl font-bold text-white" aria-hidden="true">→</span>
     </a>

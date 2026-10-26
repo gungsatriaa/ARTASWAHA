@@ -375,3 +375,9 @@ exit
 ```
 
 Jika salah satu perintah gagal, perbaiki terlebih dahulu dan biarkan TTS_ENABLED=false. Setelah WAV berhasil dibuat dan diperiksa, lanjutkan konfigurasi Supervisor pada bagian 6, environment pada bagian 7, dan pengujian admin pada bagian 8. Ollama/Qwen tetap nonaktif.
+
+## Animasi antarmuka dan overlay pembuka
+
+Gunakan build frontend dan pembaruan cache Laravel pada alur deploy bagian 3. Perubahan ini tidak menambah dependency, migration, environment, atau service.
+
+Setelah deploy, buka beranda dalam sesi tab baru: overlay mengikuti kesiapan aset, tampil minimal 1,2 detik, mencapai 100%, lalu menghilang. Overlay tidak berulang saat reload/navigasi dalam sesi tab yang sama dan tidak dirender pada halaman lain. Uji tombol lewati, sapaan maskot, serta desktop dan mobile. Pengaturan reduced motion melewati jeda pembuka dan animasi. Skeleton dekoratif pada beberapa daftar/ringkasan tampil 400 ms saat masuk layar dan langsung selesai saat isinya disentuh atau difokuskan; data dan timer kuis tidak ditunda.

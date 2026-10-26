@@ -9,7 +9,7 @@
             @endif
             <div @class(['hidden md:block' => $showMobileDashboard])>
             <section class="mx-auto grid min-h-[calc(100svh-6rem)] max-w-7xl items-center gap-10 overflow-x-clip px-5 pb-12 pt-8 md:gap-12 md:px-6 md:pb-16 md:pt-16 lg:grid-cols-[1.05fr_.95fr] lg:px-10">
-                <div class="max-w-2xl">
+                <div data-motion-reveal class="max-w-2xl">
                     <h1 class="font-display text-5xl font-bold leading-[1.08] tracking-tight sm:text-6xl lg:text-7xl">Bahasa Bali jadi <span class="text-accent">seru</span> dipelajari.</h1>
                     <p class="mt-6 max-w-xl font-readable text-lg leading-8 text-foreground/75 sm:text-xl">Kenali paribasa dan aksara Bali lewat cerita, latihan singkat, dan permainan yang bisa langsung dicoba. Mulai tanpa akun; progres tersimpan di perangkatmu.</p>
                     <div id="mulai" class="mt-9 flex flex-wrap gap-3">
@@ -27,6 +27,7 @@
                 </div>
 
                 <div class="mx-auto w-full max-w-lg py-4 lg:pl-8">
+                    <x-content-preview>
                     <div class="relative rounded-card bg-surface p-7 sm:p-9">
                         <div class="flex items-center gap-3 text-sm font-semibold text-accent">
                             <span class="font-balinese text-xl" lang="ban" aria-hidden="true">ᬅ</span>
@@ -38,13 +39,14 @@
                                 <p class="mt-3 font-display text-xl font-bold sm:text-2xl">Om Swastyastu</p>
                                 <p class="mt-2 font-readable leading-7 text-foreground/65">Salam pembuka dalam bahasa Bali. Kenali bentuk aksaranya lewat contoh.</p>
                             </div>
-                            <img src="{{ asset('image/asset1.webp') }}" alt="Maskot ARTASWAHA sedang belajar menulis" class="absolute right-0 top-12 z-0 h-40 w-40 scale-[1.4] max-[380px]:scale-[1.0] max-[380px]:translate-x-8 translate-x-4 -translate-y-15 object-contain sm:absolute sm:right-0 sm:top-0 sm:z-0 sm:mx-0 sm:h-80 sm:w-44 sm:scale-[1.5] sm:translate-x-6 sm:-translate-y-25 md:h-[20rem] md:scale-[1.8] md:translate-x-8 md:-translate-y-35">
+                            <x-mascot-greeting :illustration="true" class="absolute right-0 top-12 z-0 h-40 w-40 scale-[1.4] max-[380px]:scale-[1.0] max-[380px]:translate-x-8 translate-x-4 -translate-y-15 object-contain sm:absolute sm:right-0 sm:top-0 sm:z-0 sm:mx-0 sm:h-80 sm:w-44 sm:scale-[1.5] sm:translate-x-6 sm:-translate-y-25 md:h-[20rem] md:scale-[1.8] md:translate-x-8 md:-translate-y-35" />
                         </div>
                         <div class="mt-4 flex items-center justify-between gap-3 border-t border-white/10 pt-4 text-sm">
                             <span class="font-balinese text-lg text-accent" lang="ban" aria-hidden="true">ᬒᬁ</span>
                             <span class="text-right font-semibold text-foreground/50">Belajar aksara lewat contoh visual</span>
                         </div>
                     </div>
+                    </x-content-preview>
                 </div>
             </section>
 
@@ -116,7 +118,7 @@
                 </div>
             </dialog>
 
-            <section id="tentang" class="mx-auto max-w-7xl px-6 pb-20 lg:px-10">
+            <section id="tentang" data-motion-reveal class="mx-auto max-w-7xl px-6 pb-20 lg:px-10">
                 <div class="grid gap-8 rounded-card bg-surface p-7 sm:p-10 lg:grid-cols-[.9fr_1.1fr] lg:items-center lg:p-12">
                     <div>
                         <p class="font-semibold text-accent">Tentang ARTASWAHA</p>
@@ -143,12 +145,13 @@
                 </div>
             </section>
 
-            <section id="keunggulan" class="mx-auto max-w-7xl px-6 pb-20 lg:px-10">
+            <section id="keunggulan" data-motion-reveal class="mx-auto max-w-7xl px-6 pb-20 lg:px-10">
                 <div class="mb-8 max-w-2xl">
                     <p class="font-semibold text-accent">Keunggulan ARTASWAHA</p>
                     <h2 class="mt-2 font-display text-3xl font-bold sm:text-4xl">Belajar Bali lewat tantangan kecil yang seru</h2>
                     <p class="mt-4 font-readable leading-7 text-foreground/65">Pilih materi, tuntaskan misi belajarmu, lalu ajak teman ke arena kuis.</p>
                 </div>
+                <x-content-preview>
                 <div class="grid gap-4 md:grid-cols-3">
                     <article class="rounded-card bg-surface p-6 sm:p-7">
                         <span class="grid size-12 place-items-center rounded-full bg-accent/10 text-accent" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-6"><circle cx="12" cy="12" r="9"/><path d="m16.2 7.8-2.4 6-6 2.4 2.4-6 6-2.4Z"/></svg></span>
@@ -166,6 +169,7 @@
                         <p class="mt-3 font-readable leading-7 text-foreground/65">Buat kuis atau masuk ke room, jawab bersama, dan lihat peringkat berubah secara langsung.</p>
                     </article>
                 </div>
+                </x-content-preview>
             </section>
 
             <section id="testimoni" class="mx-auto max-w-7xl px-6 pb-20 lg:px-10">
@@ -181,7 +185,7 @@
                     <figure data-testimonial-slide class="flex h-[22rem] w-[88%] shrink-0 snap-start flex-col rounded-card bg-surface p-6 sm:w-[72%] sm:p-7 md:w-auto">
                         <blockquote class="line-clamp-5 flex-1 font-readable text-lg leading-7">Tebak-teki Bali bikin aku ingin tahu jawaban yang lain juga.</blockquote>
                         <figcaption class="mt-6 flex items-center gap-3 border-t border-white/10 pt-5">
-                            <img src="{{ asset('avatar/kupu_kupu.webp') }}" alt="" class="size-12 rounded-full object-cover ring-2 ring-primary/40">
+                            <img src="{{ asset('avatar/kupu_kupu.webp') }}" alt="" loading="lazy" decoding="async" width="48" height="48" class="size-12 rounded-full object-cover ring-2 ring-primary/40">
                             <span>
                                 <span class="block text-sm font-bold">Murid</span>
                                 <span class="mt-0.5 block text-xs text-foreground/50">Ilustrasi · contoh suara</span>
@@ -191,7 +195,7 @@
                     <figure data-testimonial-slide class="flex h-[22rem] w-[88%] shrink-0 snap-start flex-col rounded-card bg-surface p-6 sm:w-[72%] sm:p-7 md:w-auto">
                         <blockquote class="line-clamp-5 flex-1 font-readable text-lg leading-7">Materinya singkat, jadi bisa kami pelajari bersama di rumah.</blockquote>
                         <figcaption class="mt-6 flex items-center gap-3 border-t border-white/10 pt-5">
-                            <img src="{{ asset('avatar/gajah.webp') }}" alt="" class="size-12 rounded-full object-cover ring-2 ring-primary/40">
+                            <img src="{{ asset('avatar/gajah.webp') }}" alt="" loading="lazy" decoding="async" width="48" height="48" class="size-12 rounded-full object-cover ring-2 ring-primary/40">
                             <span>
                                 <span class="block text-sm font-bold">Keluarga</span>
                                 <span class="mt-0.5 block text-xs text-foreground/50">Ilustrasi · contoh suara</span>
@@ -201,7 +205,7 @@
                     <figure data-testimonial-slide class="flex h-[22rem] w-[88%] shrink-0 snap-start flex-col rounded-card bg-surface p-6 sm:w-[72%] sm:p-7 md:w-auto">
                         <blockquote class="line-clamp-5 flex-1 font-readable text-lg leading-7">Kuis bersama memberi cara baru untuk mengenalkan paribasa.</blockquote>
                         <figcaption class="mt-6 flex items-center gap-3 border-t border-white/10 pt-5">
-                            <img src="{{ asset('avatar/jalak_bali.webp') }}" alt="" class="size-12 rounded-full object-cover ring-2 ring-primary/40">
+                            <img src="{{ asset('avatar/jalak_bali.webp') }}" alt="" loading="lazy" decoding="async" width="48" height="48" class="size-12 rounded-full object-cover ring-2 ring-primary/40">
                             <span>
                                 <span class="block text-sm font-bold">Pendidik</span>
                                 <span class="mt-0.5 block text-xs text-foreground/50">Ilustrasi · contoh suara</span>

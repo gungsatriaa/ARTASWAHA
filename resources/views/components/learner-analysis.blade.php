@@ -19,6 +19,9 @@
             @endif
         </p>
     @endif
+    @if (in_array($analysis['status'], ['queued', 'processing'], true))
+        <x-loading-skeleton data-analysis-skeleton class="mt-4" />
+    @endif
     @if (! empty($analysis['updated_at']))
         <p class="mt-3 text-xs text-foreground/45">Terakhir diperbarui <time datetime="{{ $analysis['updated_at'] }}">{{ \Illuminate\Support\Carbon::parse($analysis['updated_at'])->timezone(config('app.timezone'))->format('d M Y, H:i') }}</time></p>
     @endif

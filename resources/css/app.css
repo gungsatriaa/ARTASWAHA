@@ -287,25 +287,138 @@ body.dialog-open {
 
 dialog[data-learning-picker][open] {
     display: flex;
-    animation: learning-picker-enter 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-@keyframes learning-picker-enter {
-    from {
+dialog {
+    opacity: 0;
+    scale: 0.985;
+    transition: opacity 180ms, scale 180ms, display 180ms allow-discrete, overlay 180ms allow-discrete;
+}
+
+dialog[open] {
+    opacity: 1;
+    scale: 1;
+}
+
+@starting-style {
+    dialog[open] {
         opacity: 0;
-        transform: translateY(0.5rem) scale(0.985);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
+        scale: 0.985;
     }
 }
 
+.page-loader { display: none; transition: opacity 240ms ease-out; }
+.page-loading { overflow: hidden; }
+.page-loading .page-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: grid;
+    place-items: center;
+    padding: 1.5rem;
+    background: var(--color-background);
+}
+.page-loading .page-loader.is-leaving { opacity: 0; pointer-events: none; }
+.page-loader-content { width: min(18rem, 100%); text-align: center; }
+.page-loader-mascot {
+    margin-inline: auto;
+    object-fit: contain;
+    animation: mascot-wave 900ms ease-in-out 2;
+}
+.page-loader-track {
+    height: 0.375rem;
+    margin-top: 1.5rem;
+    overflow: hidden;
+    border-radius: 9999px;
+    background: rgb(255 255 255 / 0.08);
+}
+.page-loader-track > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--color-accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 400ms ease-in-out;
+}
+.mascot-trigger { touch-action: manipulation; }
+.mascot-trigger.is-greeting { animation: mascot-wave 650ms ease-in-out; }
+.mascot-message:not([hidden]) {
+    position: fixed;
+    z-index: 80;
+    left: 50%;
+    bottom: calc(6.5rem + env(safe-area-inset-bottom));
+    translate: -50% 0;
+    width: min(22rem, calc(100% - 2rem));
+    border-radius: var(--radius-card);
+    padding: 1rem 1.25rem;
+    background: var(--color-primary);
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-align: center;
+    box-shadow: 0 8px 28px rgb(0 0 0 / 0.2);
+    animation: mascot-message-enter 180ms ease-out;
+}
+@keyframes mascot-wave {
+    0%, 100% { rotate: 0deg; }
+    25% { rotate: -5deg; }
+    55% { rotate: 4deg; }
+    80% { rotate: -2deg; }
+}
+@keyframes mascot-message-enter {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.skeleton-line,
+img.is-image-pending {
+    background: linear-gradient(100deg, rgb(255 255 255 / 0.04) 20%, rgb(255 255 255 / 0.09) 45%, rgb(255 255 255 / 0.04) 70%);
+    background-size: 220% 100%;
+    animation: skeleton-sweep 1.6s ease-in-out infinite;
+}
+[data-preview-placeholder] { display: none; pointer-events: none; }
+[data-preview-content] { transition: opacity 180ms ease-out; }
+.is-previewing > [data-preview-content] { opacity: 0; }
+.is-previewing > [data-preview-placeholder] { display: grid; align-content: center; }
+@keyframes skeleton-sweep {
+    from { background-position: 100% 0; }
+    to { background-position: -100% 0; }
+}
+button:not([data-mascot]):active:not(:disabled),
+a.rounded-full:active { scale: 0.98; }
+[data-mobile-app-nav] a > span {
+    transition: background-color 180ms, color 180ms, transform 180ms;
+}
+[data-mobile-app-nav] a:active > span { transform: scale(0.92); }
+[data-mobile-app-nav] a[aria-current="page"] > span { view-transition-name: mobile-active-marker; }
+@view-transition { navigation: auto; }
+::view-transition-old(root),
+::view-transition-new(root) { animation-duration: 150ms; }
+::view-transition-group(mobile-active-marker) { animation-duration: 240ms; }
+@media (min-width: 768px) {
+    .mascot-message:not([hidden]) { bottom: 2rem; }
+}
+@media (hover: hover) and (pointer: fine) {
+    .mascot-trigger:hover:not(.is-greeting) { rotate: -3deg; }
+}
 @media (prefers-reduced-motion: reduce) {
-    dialog[data-learning-picker][open] {
-        animation: none;
-    }
+    @view-transition { navigation: none; }
+    dialog,
+    .page-loader,
+    [data-preview-content],
+    .page-loader-track > span,
+    [data-mobile-app-nav] a > span { transition: none; }
+    .page-loader-mascot,
+    .mascot-trigger.is-greeting,
+    .mascot-message,
+    .skeleton-line,
+    img.is-image-pending { animation: none !important; }
+    .is-previewing > [data-preview-content] { opacity: 1; }
+    .is-previewing > [data-preview-placeholder] { display: none; }
+    .mascot-trigger:hover:not(.is-greeting) { rotate: none; }
+    button:not([data-mascot]):active:not(:disabled),
+    a.rounded-full:active { scale: none; }
+    [data-mobile-app-nav] a:active > span { transform: none; }
 }
 
 .avatar-modal-content {

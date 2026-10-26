@@ -1,5 +1,6 @@
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
+import './page-motion.js';
 
 if (document.querySelector('[data-aksara-keyboard]')) {
     import('./aksara-keyboard.js');

@@ -14,7 +14,7 @@ function setup({ visible = true, response, fetcher } = {}) {
     const replacement = { id: 'analisis', querySelector: () => heading };
     const panel = {
         dataset: { learnerAnalysisUrl: '/profil/analisis' },
-        querySelector: () => status,
+        querySelector: (selector) => selector === '[data-analysis-status]' ? status : null,
         contains: () => true,
         replaceWith: (value) => { state.replacement = value; },
     };

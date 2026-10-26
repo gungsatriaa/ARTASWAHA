@@ -17,6 +17,13 @@ class LearningFlowTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_welcome_overlay_is_only_rendered_on_the_homepage(): void
+    {
+        $this->get(route('home'))->assertOk()->assertSee('data-page-loader', false);
+        $this->get(route('learning.paths.index'))->assertOk()->assertDontSee('data-page-loader', false);
+        $this->get(route('login'))->assertOk()->assertDontSee('data-page-loader', false);
+    }
+
     public function test_homepage_lists_learning_features_and_footer_links(): void
     {
         $this->seed(LearningPathSeeder::class);

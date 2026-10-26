@@ -36,7 +36,7 @@
         </header>
 
         @if ($analysis['recommendations'] !== [])
-            <aside class="mt-5 rounded-2xl border border-accent/25 bg-accent/5 p-5" aria-label="Alasan rekomendasi">
+            <aside class="mt-5 rounded-card bg-surface p-5" aria-label="Alasan rekomendasi">
                 <p class="text-sm font-bold text-accent">Direkomendasikan untuk pilihan belajarmu</p>
                 <p class="mt-2 text-sm leading-6 text-foreground/70">{{ $analysis['recommendations'][0]['reason'] }}</p>
                 <a href="{{ route('profile.show') }}#analisis" class="mt-3 inline-flex min-h-11 items-center text-sm font-bold text-accent underline underline-offset-4">Lihat peta belajarmu</a>
@@ -49,10 +49,11 @@
             </div>
 
             @if ($learningPath->lessons->isNotEmpty())
+                <x-content-preview>
                 <ol class="grid gap-3 md:grid-cols-2">
                     @foreach ($learningPath->lessons as $lesson)
                         <li>
-                            <a href="{{ route('learning.lessons.show', $lesson->slug) }}" class="group flex h-full min-h-24 items-start gap-3 rounded-2xl border border-white/10 bg-surface p-4 transition-colors hover:border-accent/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:gap-4 sm:p-5">
+                            <a href="{{ route('learning.lessons.show', $lesson->slug) }}" class="group flex h-full min-h-24 items-start gap-3 rounded-card bg-surface p-4 transition-colors hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:gap-4 sm:p-5">
                                 <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-accent/10 font-display text-sm font-bold text-accent" aria-hidden="true">{{ str_pad((string) $loop->iteration, 2, '0', STR_PAD_LEFT) }}</span>
                                 <span class="min-w-0 flex-1">
                                     <span class="block break-words font-display text-lg font-bold leading-snug text-foreground group-hover:text-accent">{{ $lesson->title }}</span>
@@ -65,6 +66,7 @@
                         </li>
                     @endforeach
                 </ol>
+                </x-content-preview>
             @else
                 <div class="flex flex-col gap-4 rounded-card bg-surface p-5 sm:flex-row sm:items-center sm:gap-5 sm:p-6">
                     <span class="grid size-11 shrink-0 place-items-center rounded-2xl bg-accent/10 text-xl text-accent" aria-hidden="true">✦</span>

@@ -8,6 +8,7 @@ if (analysisPanel) {
 
     const stop = () => {
         stopped = true;
+        analysisPanel.querySelector('[data-analysis-skeleton]')?.remove();
         window.clearTimeout(timer);
         controller?.abort();
         document.removeEventListener('visibilitychange', onVisibilityChange);

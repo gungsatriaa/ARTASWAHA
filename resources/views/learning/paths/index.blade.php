@@ -11,10 +11,11 @@
                     <h2 id="materials-{{ $group }}" class="font-display text-xl font-bold">{{ $group === 'aksara' ? 'Aksara Bali' : 'Paribasa Bali' }}</h2>
                     <span class="text-xs text-foreground/55">{{ $paths->count() }} materi</span>
                 </div>
+                <x-content-preview>
                 <ul class="grid gap-3 sm:grid-cols-2">
                     @foreach ($paths as $path)
                         <li>
-                            <a href="{{ route('learning.paths.show', $path->slug) }}" class="flex h-full items-center gap-4 rounded-card border border-white/10 bg-surface p-5 transition-colors hover:border-accent/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+                            <a href="{{ route('learning.paths.show', $path->slug) }}" class="flex h-full items-center gap-4 rounded-card bg-surface p-5 transition-colors hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                                 <span class="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary/20 text-accent" aria-hidden="true">
                                     @if ($group === 'aksara')
                                         <span class="font-balinese text-xl leading-none" lang="ban">ᬅ</span>
@@ -34,6 +35,7 @@
                         </li>
                     @endforeach
                 </ul>
+                </x-content-preview>
             </section>
         @empty
             <p class="rounded-card bg-surface p-6 text-sm leading-6 text-foreground/65">Materi belajar sedang disiapkan. Silakan kembali lagi nanti.</p>
