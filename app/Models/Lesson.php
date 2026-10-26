@@ -16,11 +16,11 @@ class Lesson extends Model
     /** @use HasFactory<LessonFactory> */
     use HasFactory;
 
-    protected $fillable = ['learning_path_id', 'title', 'slug', 'summary', 'content', 'sort_order', 'is_published', 'reviewed_at', 'exercise_prompt', 'exercise_options', 'correct_option', 'exercise_explanation'];
+    protected $fillable = ['learning_path_id', 'title', 'slug', 'summary', 'content', 'sort_order', 'is_published', 'reviewed_at', 'exercise_prompt', 'exercise_options', 'correct_option', 'exercise_explanation', 'keyboard_auto_open'];
 
     protected function casts(): array
     {
-        return ['is_published' => 'boolean', 'reviewed_at' => 'datetime', 'exercise_options' => 'array', 'correct_option' => 'integer'];
+        return ['is_published' => 'boolean', 'reviewed_at' => 'datetime', 'exercise_options' => 'array', 'correct_option' => 'integer', 'keyboard_auto_open' => 'boolean'];
     }
 
     public function learningPath(): BelongsTo

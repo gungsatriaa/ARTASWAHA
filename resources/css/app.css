@@ -20,9 +20,9 @@
     --color-success: #4ade80;
     --color-danger: #fb7185;
 
-    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
-    --font-readable: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
-    --font-display: 'Outfit', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Plus Jakarta Sans', Vimala, ui-sans-serif, system-ui, sans-serif;
+    --font-readable: 'Plus Jakarta Sans', Vimala, ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Outfit', 'Plus Jakarta Sans', Vimala, ui-sans-serif, system-ui, sans-serif;
     --font-balinese: Vimala, sans-serif;
 
     --radius-card: 1.75rem;
@@ -50,6 +50,140 @@ body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
+}
+
+.aksara-workspace {
+    min-width: 0;
+}
+
+.aksara-keyboard {
+    max-width: 42rem;
+    background: var(--color-surface);
+    border-radius: var(--radius-control);
+}
+
+.aksara-keyboard summary {
+    list-style: none;
+}
+
+.aksara-keyboard summary::-webkit-details-marker {
+    display: none;
+}
+
+.aksara-keyboard[open] .aksara-disclosure {
+    transform: rotate(180deg);
+}
+
+.aksara-keyboard-body {
+    padding: 0.75rem 0.5rem max(0.75rem, env(safe-area-inset-bottom));
+}
+
+.aksara-modes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.aksara-modes button {
+    min-height: 2.75rem;
+    padding: 0.25rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--color-muted);
+}
+
+.aksara-modes button[aria-pressed='true'] {
+    background: rgb(0 124 128 / 0.2);
+    color: var(--color-accent);
+}
+
+.aksara-keys,
+.aksara-actions {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0.3rem;
+}
+
+.aksara-actions {
+    margin-top: 0.5rem;
+}
+
+.aksara-keys button,
+.aksara-actions button {
+    min-width: 0;
+    min-height: 3rem;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    border-bottom-width: 3px;
+    border-radius: 0.5rem;
+    background: #25282d;
+    color: var(--color-foreground);
+    touch-action: manipulation;
+    user-select: none;
+}
+
+.aksara-keys button:active,
+.aksara-actions button:active {
+    background: var(--color-primary);
+    border-bottom-color: transparent;
+}
+
+.aksara-keyboard button:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+.aksara-glyph {
+    display: block;
+    font-family: var(--font-balinese);
+    font-size: 1.65rem;
+    line-height: 1.8;
+}
+
+.aksara-key-name {
+    display: block;
+    padding: 0 0.1rem 0.25rem;
+    font-size: 0.625rem;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.aksara-actions button {
+    font-size: 1rem;
+}
+
+.aksara-actions .aksara-space {
+    grid-column: span 2;
+    font-size: 0.8rem;
+}
+
+.aksara-writing,
+[data-aksara-input] {
+    font-family: var(--font-sans), var(--font-balinese);
+}
+
+.aksara-writing {
+    font-size: 1.5rem;
+    line-height: 2;
+}
+
+.aksara-editor-keyboard {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    padding-block: 0.25rem;
+    background: var(--color-surface);
+}
+
+@media (min-width: 640px) {
+    .aksara-keyboard-body {
+        padding-inline: 0.75rem;
+    }
+
+    .aksara-keys,
+    .aksara-actions {
+        gap: 0.5rem;
+    }
 }
 
 @media (max-width: 767px) {

@@ -39,6 +39,7 @@ class UpdateAdminLessonRequest extends FormRequest
             'content' => ['required', 'string', 'max:50000'],
             'sort_order' => ['required', 'integer', 'between:0,65535'],
             'has_exercise' => ['sometimes', 'boolean'],
+            'keyboard_auto_open' => ['sometimes', 'boolean'],
             'exercise_prompt' => ['exclude_unless:has_exercise,1', 'required', 'string', 'max:500'],
             'exercise_options' => ['exclude_unless:has_exercise,1', 'required', 'array', 'size:4'],
             'exercise_options.*' => ['required', 'string', 'max:140', 'distinct'],

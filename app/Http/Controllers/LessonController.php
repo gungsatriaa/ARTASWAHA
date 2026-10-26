@@ -13,7 +13,7 @@ class LessonController extends Controller
 {
     public function show(Request $request, Lesson $lesson, LearningProgressService $progressService, ContentAudioService $audioService): Response
     {
-        $lesson->loadMissing('learningPath:id,slug,title,is_published');
+        $lesson->loadMissing('learningPath:id,slug,title,group,is_published');
         abort_unless($lesson->is_published && $lesson->reviewed_at !== null && $lesson->learningPath->is_published, 404);
 
         $deviceId = $progressService->deviceId($request);

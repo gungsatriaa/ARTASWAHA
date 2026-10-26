@@ -24,6 +24,9 @@
             <div class="whitespace-pre-line break-words font-readable text-base leading-8 text-foreground/85 sm:text-lg">{{ $lesson->content }}</div>
         </article>
 
+        @if ((! $lesson->exercise_prompt || $progress?->completed_at) && ($lesson->learningPath->group === 'aksara' || $lesson->keyboard_auto_open))
+            <x-aksara-keyboard :auto-open="$lesson->keyboard_auto_open" class="mt-5 rounded-card border border-white/10 bg-surface p-4 sm:p-6" />
+        @endif
         @if ($progress?->completed_at)
             <section class="mt-5 rounded-card border border-accent/25 bg-accent/10 p-5 sm:p-6" aria-label="Hasil pelajaran">
                 <p class="font-bold text-accent">Pelajaran selesai · {{ $progress->points }} poin</p>
@@ -36,6 +39,7 @@
                 <p class="text-sm font-bold text-accent">Latihan singkat</p>
                 <h2 id="exercise-title" class="mt-2 break-words font-display text-xl font-bold leading-snug sm:text-2xl">{{ $lesson->exercise_prompt }}</h2>
                 <p class="mt-2 text-sm text-foreground/60">Pilih satu jawaban yang paling tepat.</p>
+                <x-aksara-keyboard :auto-open="$lesson->keyboard_auto_open" class="mt-5" />
                 <form method="POST" action="{{ route('learning.exercises.answer', $lesson->slug) }}" class="mt-5">
                     @csrf
                     <div class="grid gap-3 sm:grid-cols-2">

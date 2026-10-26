@@ -11,7 +11,7 @@ use Illuminate\Validation\ValidationException;
 
 class QuizService
 {
-    /** @param array{title: string, description?: string|null, leaderboard_enabled?: bool, show_answers_immediately?: bool, seconds_per_question?: int|null, questions: array<int, array{prompt: string, options: array<int, string>, correct_option: int, explanation?: string|null}>} $data */
+    /** @param array{title: string, description?: string|null, leaderboard_enabled?: bool, show_answers_immediately?: bool, seconds_per_question?: int|null, questions: array<int, array{prompt: string, options: array<int, string>, correct_option: int, explanation?: string|null, keyboard_auto_open?: bool}>} $data */
     public function create(User $user, array $data): Quiz
     {
         $this->validateQuestions($data['questions']);
@@ -31,7 +31,7 @@ class QuizService
         });
     }
 
-    /** @param array{title: string, description?: string|null, show_answers_immediately?: bool, seconds_per_question?: int|null, questions: array<int, array{prompt: string, options: array<int, string>, correct_option: int, explanation?: string|null}>} $data */
+    /** @param array{title: string, description?: string|null, show_answers_immediately?: bool, seconds_per_question?: int|null, questions: array<int, array{prompt: string, options: array<int, string>, correct_option: int, explanation?: string|null, keyboard_auto_open?: bool}>} $data */
     public function update(Quiz $quiz, User $user, array $data): Quiz
     {
         $this->validateQuestions($data['questions']);
@@ -79,7 +79,7 @@ class QuizService
         }
     }
 
-    /** @param array<int, array{prompt: string, options: array<int, string>, correct_option: int, explanation?: string|null}> $questions */
+    /** @param array<int, array{prompt: string, options: array<int, string>, correct_option: int, explanation?: string|null, keyboard_auto_open?: bool}> $questions */
     private function saveQuestions(Quiz $quiz, array $questions): void
     {
         $sortOrder = 1;

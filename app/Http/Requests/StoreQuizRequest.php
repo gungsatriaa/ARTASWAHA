@@ -28,6 +28,7 @@ class StoreQuizRequest extends FormRequest
             'questions.*.options.*' => ['required', 'string', 'max:140'],
             'questions.*.correct_option' => ['required', 'integer', 'min:0', 'max:4'],
             'questions.*.explanation' => ['nullable', 'string', 'max:500'],
+            'questions.*.keyboard_auto_open' => ['sometimes', 'boolean'],
         ];
     }
 }

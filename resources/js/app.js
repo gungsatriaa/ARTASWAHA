@@ -1,6 +1,10 @@
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 
+if (document.querySelector('[data-aksara-keyboard]')) {
+    import('./aksara-keyboard.js');
+}
+
 if (document.querySelector('[data-content-audio], [data-audio-status-panel]')) {
     import('./content-audio.js');
 }

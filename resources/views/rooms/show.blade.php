@@ -145,6 +145,7 @@
                             @endif
                         @else
                             <form method="POST" action="{{ route('rooms.answer', $room->code) }}" class="mt-5">
+                                <x-aksara-keyboard :auto-open="$activeQuestion->keyboard_auto_open" class="mb-5" />
                                 @csrf
                                 <input type="hidden" name="question_id" value="{{ $activeQuestion->id }}">
                                 <fieldset>
