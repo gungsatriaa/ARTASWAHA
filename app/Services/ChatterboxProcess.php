@@ -22,7 +22,7 @@ class ChatterboxProcess
      * @param  array{text: string, speed: int, destination: string, reference: ?string}  $request
      * @return array<string, mixed>
      */
-    public function generate(array $command, array $environment, array $request, float $timeout = 1800): array
+    public function generate(array $command, array $environment, array $request, float $timeout = 1800, ?callable $progress = null): array
     {
         $signature = hash('sha256', json_encode([$command, $environment], JSON_THROW_ON_ERROR));
         try {
@@ -54,6 +54,13 @@ class ChatterboxProcess
                     $result = json_decode(substr($line, strlen('ARTASWAHA_TTS ')), true, flags: JSON_THROW_ON_ERROR);
                     if (! is_array($result) || ($result['id'] ?? null) !== $id) {
                         throw new RuntimeException('Respons worker TTS tidak cocok dengan tugas aktif.');
+                    }
+                    if (($result['status'] ?? null) === 'progress') {
+                        if ($progress !== null) {
+                            $progress($result);
+                        }
+
+                        continue;
                     }
                     if (($result['status'] ?? null) !== 'generated') {
                         $details = (string) ($result['error'] ?? 'Respons tidak valid.');

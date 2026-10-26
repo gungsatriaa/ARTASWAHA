@@ -16,6 +16,7 @@ use App\Services\QuizService;
 use App\Services\RoomService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Queue;
@@ -51,13 +52,18 @@ class ContentAudioTest extends TestCase
 
     public function test_audio_status_is_private_and_only_available_to_admins(): void
     {
+        $this->freezeTime();
         $audio = ContentAudio::factory()->create(['status' => 'queued']);
         $url = route('admin.audio.status', $audio);
         $this->getJson($url)->assertUnauthorized();
         $this->actingAs(User::factory()->create())->getJson($url)->assertForbidden();
         $this->actingAs(User::factory()->create(['is_admin' => true]))->getJson($url)
             ->assertOk()->assertHeader('Cache-Control', 'no-store, private')
-            ->assertExactJson(['version' => $audio->version, 'status' => 'queued', 'html' => null]);
+            ->assertExactJson(['version' => $audio->version, 'status' => 'queued', 'html' => null,
+                'server_now' => now()->toISOString(),
+                'progress' => ['stage' => null, 'completed_parts' => 0, 'total_parts' => 0, 'percent' => null,
+                    'started_at' => null, 'finished_at' => null, 'elapsed_seconds' => null, 'estimated_remaining_seconds' => null],
+            ]);
         $this->assertSame('queued', $audio->fresh()->status);
         Process::assertNothingRan();
     }
@@ -248,7 +254,7 @@ class ContentAudioTest extends TestCase
             'services.tts.persistent' => true, 'services.tts.reference_audio' => '']);
         $service = app(ContentAudioService::class);
         $audio = $service->save(Lesson::factory()->create(), [...$this->data(), 'action' => 'generate']);
-        $this->mock(ChatterboxProcess::class)->shouldReceive('generate')->once()->andReturnUsing(function (array $command, array $environment, array $request, float $timeout) use ($audio): array {
+        $this->mock(ChatterboxProcess::class)->shouldReceive('generate')->once()->andReturnUsing(function (array $command, array $environment, array $request, float $timeout, callable $progress) use ($audio): array {
             $this->assertSame(1800.0, $timeout);
             $this->assertSame(PHP_BINARY, $command[0]);
             $this->assertContains('serve', $command);
@@ -256,6 +262,8 @@ class ContentAudioTest extends TestCase
             $this->assertSame($audio->spoken_text, $request['text']);
             $this->assertNull($request['reference']);
             $this->assertNotContains($audio->spoken_text, $command);
+            $progress(['stage' => 'generating', 'completed_parts' => 1, 'total_parts' => 2, 'completed_chars' => 20, 'total_chars' => 40, 'generation_elapsed_seconds' => 10]);
+            $this->assertSame(50, app(ContentAudioService::class)->generationProgress($audio->fresh())['percent']);
             file_put_contents($request['destination'], $this->wav());
 
             return ['model_reused' => true, 'model_load_seconds' => 0];
@@ -265,10 +273,40 @@ class ContentAudioTest extends TestCase
 
         $this->assertSame('review', $audio->fresh()->status);
         $this->assertNull($audio->fresh()->reviewed_at);
+        $this->assertNotNull($audio->fresh()->generation_started_at);
+        $this->assertNotNull($audio->fresh()->generation_finished_at);
         Storage::disk('local')->assertExists($audio->fresh()->path);
         Process::assertNothingRan();
         Http::assertNothingSent();
         Queue::assertPushed(GenerateContentAudio::class, 1);
+    }
+
+    public function test_generation_eta_uses_measured_work_and_final_duration_stops_at_completion(): void
+    {
+        $this->freezeTime();
+        $audio = ContentAudio::factory()->create(['status' => 'processing', 'generation_started_at' => now()->subSeconds(100)]);
+        Cache::put('content-audio-progress:'.$audio->id.':'.$audio->version, [
+            'stage' => 'generating', 'completed_parts' => 1, 'total_parts' => 4,
+            'completed_chars' => 400, 'total_chars' => 1000, 'generation_elapsed_seconds' => 60,
+            'reported_at' => now()->getTimestamp(),
+        ], 3600);
+        $this->actingAs(User::factory()->create(['is_admin' => true]));
+        $url = route('admin.audio.status', $audio);
+        $this->getJson($url)->assertOk()->assertJsonPath('progress.elapsed_seconds', 100)
+            ->assertJsonPath('progress.percent', 25)->assertJsonPath('progress.estimated_remaining_seconds', 90);
+        $this->travel(20)->seconds();
+        $this->getJson($url)->assertOk()->assertJsonPath('progress.elapsed_seconds', 120)
+            ->assertJsonPath('progress.estimated_remaining_seconds', 70);
+        $audio->update(['version' => (string) Str::uuid()]);
+        $this->getJson($url)->assertOk()->assertJsonPath('progress.stage', null)->assertJsonPath('progress.estimated_remaining_seconds', null);
+        $audio->update(['status' => 'review', 'generation_finished_at' => now()]);
+        $this->travel(30)->seconds();
+        $response = $this->getJson($url)->assertOk()->assertJsonPath('progress.elapsed_seconds', 120);
+        $this->assertStringContainsString('00:02:00', $response->json('html'));
+        app(ContentAudioService::class)->save($audio->lesson, [...$this->data(), 'version' => $audio->version]);
+        $this->assertNull($audio->fresh()->generation_started_at);
+        $this->assertNull($audio->fresh()->generation_finished_at);
+        Process::assertNothingRan();
     }
 
     public function test_long_narrations_are_accepted_up_to_the_new_limit(): void

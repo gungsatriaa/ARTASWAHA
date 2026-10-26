@@ -11,9 +11,72 @@ if (panel) {
     const note = panel.querySelector('[data-audio-progress-note]');
     const bar = panel.querySelector('[data-audio-progress-bar]');
     const badge = panel.querySelector('[data-audio-status-badge] span');
+    const fill = panel.querySelector('[data-audio-progress-fill]');
+    const parts = panel.querySelector('[data-audio-parts]');
+    const elapsed = panel.querySelector('[data-audio-elapsed]');
+    const startedLabel = panel.querySelector('[data-audio-start]');
+    const eta = panel.querySelector('[data-audio-eta]');
+    let startedAt = Date.parse(panel.dataset.audioStartedAt);
+    let serverOffset = Date.parse(panel.dataset.serverNow) - Date.now();
+    let etaAt;
+    let clock;
+    const duration = seconds => {
+        const value = Math.max(0, Math.floor(seconds));
+        return [Math.floor(value / 3600), Math.floor(value / 60) % 60, value % 60].map(part => String(part).padStart(2, '0')).join(':');
+    };
+    const time = value => new Date(value).toLocaleTimeString('id-ID', { timeZone: panel.dataset.audioTimezone || 'Asia/Makassar', hour12: false });
+    const updateClock = () => {
+        const now = Date.now() + serverOffset;
+        if (elapsed && Number.isFinite(startedAt)) elapsed.textContent = duration((now - startedAt) / 1000);
+        if (eta && Number.isFinite(etaAt)) {
+            eta.textContent = etaAt > now
+                ? `Sekitar ${time(etaAt)} · ${duration((etaAt - now) / 1000)} lagi`
+                : 'Lebih lama dari perkiraan; masih diproses.';
+        }
+    };
+    const startClock = () => {
+        if (clock || finished || suspended || document.visibilityState !== 'visible' || !Number.isFinite(startedAt)) return;
+        updateClock();
+        clock = window.setInterval(updateClock, 1000);
+    };
+    const pauseClock = () => { window.clearInterval(clock); clock = undefined; };
+    const showProgress = (progress, serverNow) => {
+        if (!progress) return;
+        startedAt = Date.parse(progress.started_at);
+        serverOffset = Date.parse(serverNow) - Date.now();
+        if (startedLabel) startedLabel.textContent = Number.isFinite(startedAt) ? time(startedAt) : 'Menunggu worker';
+        if (!Number.isFinite(startedAt)) {
+            pauseClock();
+            if (elapsed) elapsed.textContent = '—';
+        }
+        const stages = { loading_model: 'Memuat model suara', preparing_voice: 'Menyiapkan referensi suara', generating: 'Sedang membuat audio', finalizing: 'Memeriksa file audio' };
+        if (stages[progress.stage]) label.textContent = stages[progress.stage];
+        if (parts) parts.textContent = progress.total_parts > 0 ? `Bagian ${progress.completed_parts} dari ${progress.total_parts} selesai` : 'Menunggu informasi bagian narasi.';
+        if (Number.isFinite(progress.percent) && ['generating', 'finalizing'].includes(progress.stage)) {
+            const percent = Math.min(100, Math.max(0, progress.percent));
+            bar.setAttribute('aria-valuenow', String(percent));
+            bar.setAttribute('aria-valuemin', '0');
+            bar.setAttribute('aria-valuemax', '100');
+            if (fill) {
+                fill.classList.remove('motion-safe:animate-pulse');
+                fill.style.transform = `scaleX(${percent / 100})`;
+            }
+        } else {
+            bar.removeAttribute('aria-valuenow');
+            if (fill) {
+                fill.classList.add('motion-safe:animate-pulse');
+                fill.style.transform = 'scaleX(.33)';
+            }
+        }
+        etaAt = Number.isFinite(progress.estimated_remaining_seconds) ? Date.now() + serverOffset + progress.estimated_remaining_seconds * 1000 : undefined;
+        if (eta && !Number.isFinite(etaAt)) eta.textContent = progress.stage === 'finalizing' ? 'Memeriksa file audio.' : 'Estimasi menunggu hasil bagian berikutnya.';
+        updateClock();
+        startClock();
+    };
     const stop = (message) => {
         finished = true;
         window.clearTimeout(timer);
+        pauseClock();
         panel.setAttribute('aria-busy', 'false');
         bar.hidden = true;
         if (message) {
@@ -28,7 +91,7 @@ if (panel) {
     };
     const poll = async () => {
         if (finished || suspended || controller || document.visibilityState !== 'visible') return;
-        if (attempts >= 200) {
+        if (attempts >= 720) {
             stop('Pembaruan otomatis dijeda. Muat ulang status untuk memeriksa kembali; proses di server tetap berjalan.');
             return;
         }
@@ -58,6 +121,7 @@ if (panel) {
                 label.textContent = queued ? 'Menunggu giliran pembuatan audio' : 'Sedang membuat audio';
                 badge.textContent = queued ? 'Mengantre' : 'Diproses';
                 bar.setAttribute('aria-valuetext', queued ? 'Mengantre' : 'Diproses');
+                showProgress(result.progress, result.server_now);
                 note.textContent = 'Status diperbarui otomatis. Durasi bergantung pada panjang narasi dan kemampuan server.';
             } else {
                 if (typeof result.html !== 'string') throw new Error('Missing result');
@@ -85,17 +149,20 @@ if (panel) {
     };
     document.addEventListener('visibilitychange', () => {
         window.clearTimeout(timer);
-        if (document.visibilityState !== 'visible') controller?.abort();
-        else schedule();
+        if (document.visibilityState !== 'visible') { pauseClock(); controller?.abort(); }
+        else { startClock(); schedule(); }
     });
     window.addEventListener('pagehide', () => {
         suspended = true;
+        pauseClock();
         window.clearTimeout(timer);
         controller?.abort();
     });
     window.addEventListener('pageshow', () => {
         suspended = false;
+        startClock();
         schedule();
     });
+    startClock();
     schedule();
 }

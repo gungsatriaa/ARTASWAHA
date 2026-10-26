@@ -7,12 +7,18 @@ const source = readFileSync(new URL('../resources/js/admin-audio-progress.js', i
 
 function setup({ visible = true, response, fetcher, focused = false } = {}) {
     const timers = new Map();
+    const intervals = new Map();
     const documentEvents = new Map();
     const windowEvents = new Map();
     const label = { textContent: '' };
     const note = { textContent: '' };
     const badge = { textContent: '' };
-    const bar = { hidden: false, setAttribute() {} };
+    const bar = { hidden: false, attributes: {}, setAttribute(key, value) { this.attributes[key] = value; }, removeAttribute(key) { delete this.attributes[key]; } };
+    const fill = { style: {}, classList: { add() {}, remove() {} } };
+    const parts = { textContent: '' };
+    const elapsed = { textContent: '' };
+    const eta = { textContent: '' };
+    const started = { textContent: '' };
     const state = { calls: 0, replacement: null, focusMoved: false, events: [], delay: 0, attributes: {} };
     const replacement = { matches: () => true, querySelector: () => ({ focus: () => { state.focusMoved = true; } }) };
     const panel = {
@@ -22,6 +28,11 @@ function setup({ visible = true, response, fetcher, focused = false } = {}) {
             '[data-audio-progress-note]': note,
             '[data-audio-progress-bar]': bar,
             '[data-audio-status-badge] span': badge,
+            '[data-audio-progress-fill]': fill,
+            '[data-audio-parts]': parts,
+            '[data-audio-elapsed]': elapsed,
+            '[data-audio-eta]': eta,
+            '[data-audio-start]': started,
         })[selector],
         setAttribute: (key, value) => { state.attributes[key] = value; },
         contains: () => focused,
@@ -42,6 +53,8 @@ function setup({ visible = true, response, fetcher, focused = false } = {}) {
             return timerId;
         },
         clearTimeout: id => timers.delete(id),
+        setInterval: callback => { intervals.set(++timerId, callback); return timerId; },
+        clearInterval: id => intervals.delete(id),
         addEventListener: (event, callback) => windowEvents.set(event, callback),
         dispatchEvent: event => state.events.push(event.type),
     };
@@ -55,7 +68,7 @@ function setup({ visible = true, response, fetcher, focused = false } = {}) {
         },
     });
     return {
-        state, timers, label, note, bar, badge,
+        state, timers, intervals, label, note, bar, badge, fill, parts, elapsed, eta,
         visibility(value) { document.visibilityState = value; documentEvents.get('visibilitychange')(); },
         leave() { windowEvents.get('pagehide')(); },
         returnToPage() { windowEvents.get('pageshow')(); },
@@ -157,8 +170,37 @@ test('page navigation ignores late responses and resumes checks after returning'
 
 test('long queues stop automatic checking after a bounded number of requests', async () => {
     const harness = setup();
-    for (let attempt = 0; attempt < 201; attempt += 1) await harness.tick();
-    assert.equal(harness.state.calls, 200);
+    for (let attempt = 0; attempt < 721; attempt += 1) await harness.tick();
+    assert.equal(harness.state.calls, 720);
     assert.equal(harness.timers.size, 0);
     assert.match(harness.note.textContent, /Pembaruan otomatis dijeda/);
+});
+
+test('real chunk progress updates the bar, worker timer, and measured ETA', async () => {
+    const now = Date.now();
+    const harness = setup({ response: { version: 'v1', status: 'processing', server_now: new Date(now).toISOString(),
+        progress: { stage: 'generating', started_at: new Date(now - 60000).toISOString(), completed_parts: 2, total_parts: 4, percent: 50, estimated_remaining_seconds: 75 } } });
+    await harness.tick();
+    assert.equal(harness.fill.style.transform, 'scaleX(0.5)');
+    assert.equal(harness.bar.attributes['aria-valuenow'], '50');
+    assert.equal(harness.parts.textContent, 'Bagian 2 dari 4 selesai');
+    assert.equal(harness.elapsed.textContent, '00:01:00');
+    assert.match(harness.eta.textContent, /Sekitar/);
+    assert.equal(harness.intervals.size, 1);
+    harness.visibility('hidden');
+    assert.equal(harness.intervals.size, 0);
+    harness.visibility('visible');
+    assert.equal(harness.intervals.size, 1);
+    harness.leave();
+    assert.equal(harness.intervals.size, 0);
+});
+
+test('an exceeded estimate keeps polling and does not claim generation is complete', async () => {
+    const now = Date.now();
+    const harness = setup({ response: { version: 'v1', status: 'processing', server_now: new Date(now).toISOString(),
+        progress: { stage: 'generating', started_at: new Date(now - 60000).toISOString(), completed_parts: 1, total_parts: 4, percent: 25, estimated_remaining_seconds: 0 } } });
+    await harness.tick();
+    assert.match(harness.eta.textContent, /Lebih lama dari perkiraan/);
+    assert.equal(harness.timers.size, 1);
+    assert.equal(harness.state.replacement, null);
 });

@@ -61,12 +61,14 @@ class ContentAudioController extends Controller
     {
         $current = $service->isCurrent($contentAudio);
         $status = $current ? $contentAudio->status : 'stale';
+        $progress = $service->generationProgress($contentAudio);
 
         return response()->json([
             'version' => $contentAudio->version,
             'status' => $status,
+            'progress' => $progress, 'server_now' => now()->toISOString(),
             'html' => in_array($status, ['queued', 'processing'], true) ? null
-                : view('admin.audio.result', ['audio' => $contentAudio, 'current' => $current])->render(),
+                : view('admin.audio.result', ['audio' => $contentAudio, 'current' => $current, 'progress' => $progress])->render(),
         ])->header('Cache-Control', 'private, no-store');
     }
 

@@ -65,13 +65,14 @@ class GenerateContentAudio implements ShouldBeUnique, ShouldQueue
 
             return;
         }
-        $audio->update(['status' => 'processing']);
+        $service->resetGenerationProgress($audio);
+        $audio->update(['status' => 'processing', 'generation_started_at' => now(), 'generation_finished_at' => null]);
         $path = null;
         try {
             $path = $service->synthesize($audio);
             $current = $audio->fresh(['lesson', 'question']);
             if ($current !== null && $current->version === $this->version && $service->isCurrent($current)) {
-                $saved = ContentAudio::whereKey($audio->id)->where('version', $this->version)->update(['path' => $path, 'status' => 'review']);
+                $saved = ContentAudio::whereKey($audio->id)->where('version', $this->version)->update(['path' => $path, 'status' => 'review', 'generation_finished_at' => now()]);
                 if ($saved) {
                     return;
                 }
@@ -81,13 +82,13 @@ class GenerateContentAudio implements ShouldBeUnique, ShouldQueue
             if ($path !== null) {
                 Storage::disk('local')->delete($path);
             }
-            ContentAudio::whereKey($audio->id)->where('version', $this->version)->update(['status' => 'queued']);
+            ContentAudio::whereKey($audio->id)->where('version', $this->version)->update(['status' => 'queued', 'generation_finished_at' => now()]);
             throw $exception;
         }
     }
 
     public function failed(?Throwable $exception): void
     {
-        ContentAudio::whereKey($this->audioId)->where('version', $this->version)->whereNotIn('status', ['ready', 'review'])->update(['status' => 'failed']);
+        ContentAudio::whereKey($this->audioId)->where('version', $this->version)->whereNotIn('status', ['ready', 'review'])->update(['status' => 'failed', 'generation_finished_at' => now()]);
     }
 }

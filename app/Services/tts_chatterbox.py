@@ -173,18 +173,22 @@ def narration_parts(text: str) -> list[str]:
     return parts
 
 
-def render_audio(model, text: str, speed: int, destination: Path) -> None:
+def render_audio(model, parts: list[str], speed: int, destination: Path, progress=None) -> None:
     import numpy as np
     import torch
 
     total_bytes = 0
+    completed_chars = 0
+    started = time.perf_counter()
+    if progress is not None:
+        progress('generating')
     try:
         with wave.open(str(destination), 'wb') as output:
             output.setnchannels(1)
             output.setsampwidth(2)
             output.setframerate(model.sr)
             with torch.inference_mode():
-                for part in narration_parts(text):
+                for index, part in enumerate(parts, start=1):
                     samples = generate_part(model, part).detach().cpu().numpy().reshape(-1)
                     if not np.isfinite(samples).all() or samples.size == 0:
                         raise ValueError('Model menghasilkan audio tidak valid.')
@@ -197,6 +201,10 @@ def render_audio(model, text: str, speed: int, destination: Path) -> None:
                     if total_bytes + 44 > MAX_BYTES:
                         raise ValueError('Audio melebihi 64 MB. Ringkas narasi.')
                     output.writeframesraw(pcm + pause)
+                    completed_chars += len(part)
+                    if progress is not None:
+                        progress('finalizing' if index == len(parts) else 'generating', index,
+                                 completed_chars, time.perf_counter() - started)
     except BaseException:
         destination.unlink(missing_ok=True)
         raise
@@ -211,19 +219,28 @@ class ChatterboxSession:
         self.reference_key = None
 
     def synthesize(self, text: str, speed: int, destination: Path,
-                   reference: Path | None = None) -> dict:
+                   reference: Path | None = None, progress=None) -> dict:
         if not isinstance(text, str) or not text.strip() or len(text) > MAX_TEXT_LENGTH or type(speed) is not int or not 100 <= speed <= 220:
             raise ValueError('Narasi atau kecepatan tidak valid.')
         validate_reference(reference)
+        parts = narration_parts(text)
+        total_chars = sum(map(len, parts))
+        def report(stage, completed_parts=0, completed_chars=0, generation_elapsed_seconds=0):
+            if progress is not None:
+                progress({'stage': stage, 'completed_parts': completed_parts, 'total_parts': len(parts),
+                          'completed_chars': completed_chars, 'total_chars': total_chars,
+                          'generation_elapsed_seconds': round(generation_elapsed_seconds, 3)})
         started = time.perf_counter()
         reused = self.model is not None
         if not reused:
+            report('loading_model')
             check_runtime(self.directory, self.device)
             self.model = load_model(self.directory, self.device)
             self.base_conditionals = self.model.conds
         loaded = time.perf_counter()
         import torch
         torch.manual_seed(42)
+        report('preparing_voice')
         reference_key = None
         if reference is not None:
             attributes = reference.stat()
@@ -236,11 +253,11 @@ class ChatterboxSession:
                     self.model.prepare_conditionals(str(reference))
             self.reference_key = reference_key
         prepared = time.perf_counter()
-        render_audio(self.model, text, speed, destination)
+        render_audio(self.model, parts, speed, destination, report)
         return {'model_load_seconds': round(loaded - started, 2),
                 'reference_seconds': round(prepared - loaded, 2),
                 'generation_seconds': round(time.perf_counter() - prepared, 2),
-                'model_reused': reused, 'threads': cpu_threads()}
+                'model_reused': reused, 'threads': cpu_threads(), 'parts': len(parts)}
 
 
 def synthesize(directory: Path, device: str, text: str, speed: int, destination: Path,
@@ -293,8 +310,12 @@ def serve(directory: Path, device: str) -> None:
                 raise ValueError('ID permintaan tidak valid.')
             destination = Path(request['destination'])
             reference = Path(request['reference']) if request.get('reference') else None
+            protocol_output = sys.stdout
+            def progress(event):
+                print(PROTOCOL_PREFIX + json.dumps({'id': request_id, 'status': 'progress', **event}),
+                      file=protocol_output, flush=True)
             with contextlib.redirect_stdout(sys.stderr):
-                timings = session.synthesize(request['text'], request['speed'], destination, reference)
+                timings = session.synthesize(request['text'], request['speed'], destination, reference, progress=progress)
             result = {'id': request_id, 'status': 'generated', 'seconds': round(time.perf_counter() - started, 2),
                       'wav_bytes': destination.stat().st_size, 'recycle': number == 49, **timings}
         except Exception as error:

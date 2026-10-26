@@ -7,6 +7,7 @@ use App\Models\ContentAudio;
 use App\Models\Lesson;
 use App\Models\QuizQuestion;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -140,7 +141,7 @@ class ContentAudioService
                     'spoken_text' => $data['spoken_text'], 'language' => $data['language'], 'speed' => (int) $data['speed'],
                     'engine' => $newPath !== null ? 'upload' : config('services.tts.engine', 'espeak'), 'path' => $newPath,
                     'status' => $newPath !== null ? 'review' : ($data['action'] === 'generate' ? ($this->isConfigured() ? 'queued' : 'unavailable') : 'draft'),
-                    'reviewed_at' => null,
+                    'reviewed_at' => null, 'generation_started_at' => null, 'generation_finished_at' => null,
                 ])->save();
                 DB::afterCommit(function () use ($oldPath, $newPath, $audio): void {
                     if ($oldPath !== null && $oldPath !== $newPath) {
@@ -213,7 +214,12 @@ class ContentAudioService
                 ], ['TTS_CPU_THREADS' => (string) config('services.tts.cpu_threads'), 'PYTHONUTF8' => '1'], [
                     'text' => $audio->spoken_text, 'speed' => $audio->speed, 'destination' => $disk->path($path),
                     'reference' => filled(config('services.tts.reference_audio')) ? (string) config('services.tts.reference_audio') : null,
-                ], self::GENERATION_TIMEOUT);
+                ], self::GENERATION_TIMEOUT, function (array $progress) use ($audio): void {
+                    Cache::put($this->progressKey($audio), [
+                        ...array_intersect_key($progress, array_flip(['stage', 'completed_parts', 'total_parts', 'completed_chars', 'total_chars', 'generation_elapsed_seconds'])),
+                        'reported_at' => now()->getTimestamp(),
+                    ], now()->addHour());
+                });
             } else {
                 $environment = ['OMP_NUM_THREADS' => '2', 'MKL_NUM_THREADS' => '2', 'TOKENIZERS_PARALLELISM' => 'false', 'HF_HUB_OFFLINE' => '1', 'TRANSFORMERS_OFFLINE' => '1', 'PYTHONUTF8' => '1'];
                 if (config('services.tts.engine') === 'chatterbox') {
@@ -245,7 +251,7 @@ class ContentAudioService
             }
             if ($metrics !== null) {
                 Log::info('Chatterbox TTS selesai', ['audio_id' => $audio->id, ...array_intersect_key($metrics, array_flip([
-                    'seconds', 'model_load_seconds', 'reference_seconds', 'generation_seconds', 'model_reused', 'threads',
+                    'seconds', 'model_load_seconds', 'reference_seconds', 'generation_seconds', 'model_reused', 'threads', 'parts',
                 ]))]);
             }
 
@@ -254,5 +260,43 @@ class ContentAudioService
             $disk->delete($path);
             throw $exception;
         }
+    }
+
+    private function progressKey(ContentAudio $audio): string
+    {
+        return 'content-audio-progress:'.$audio->id.':'.$audio->version;
+    }
+
+    public function resetGenerationProgress(ContentAudio $audio): void
+    {
+        Cache::forget($this->progressKey($audio));
+    }
+
+    /** @return array{stage: ?string, completed_parts: int, total_parts: int, percent: ?int, started_at: ?string, finished_at: ?string, elapsed_seconds: ?int, estimated_remaining_seconds: ?int} */
+    public function generationProgress(ContentAudio $audio): array
+    {
+        $active = $audio->status === 'processing';
+        $state = $active ? Cache::get($this->progressKey($audio), []) : [];
+        $started = $audio->status === 'queued' ? null : $audio->generation_started_at;
+        $finished = $audio->status === 'queued' ? null : $audio->generation_finished_at;
+        $done = max(0, (int) ($state['completed_parts'] ?? 0));
+        $total = max($done, (int) ($state['total_parts'] ?? 0));
+        $eta = null;
+        $chars = (int) ($state['completed_chars'] ?? 0);
+        $remaining = (int) ($state['total_chars'] ?? 0) - $chars;
+        if ($active && ($state['stage'] ?? null) === 'generating' && $chars > 0 && $remaining > 0) {
+            $estimated = ((float) ($state['generation_elapsed_seconds'] ?? 0) / $chars) * $remaining;
+            $estimated -= max(0, now()->getTimestamp() - (int) ($state['reported_at'] ?? now()->getTimestamp()));
+            $eta = max(0, (int) ceil($estimated));
+        }
+
+        return [
+            'stage' => $active ? ($state['stage'] ?? null) : null,
+            'completed_parts' => $done, 'total_parts' => $total,
+            'percent' => $total > 0 ? min(100, (int) floor(100 * $done / $total)) : null,
+            'started_at' => $started?->toISOString(), 'finished_at' => $finished?->toISOString(),
+            'elapsed_seconds' => $started ? max(0, ($finished ?? now())->getTimestamp() - $started->getTimestamp()) : null,
+            'estimated_remaining_seconds' => $eta,
+        ];
     }
 }

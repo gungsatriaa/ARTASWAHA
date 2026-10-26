@@ -73,6 +73,21 @@ class ChatterboxProcessTest extends TestCase
         $this->assertSame(1, $second['request_number']);
     }
 
+    public function test_progress_messages_are_delivered_before_the_completed_response(): void
+    {
+        [$client, $command] = $this->fixture();
+        $events = [];
+        $result = $client->generate($command, ['TEST_TTS_MODE' => 'progress'], $this->request(), 3, function (array $event) use (&$events): void {
+            $events[] = $event;
+        });
+
+        $this->assertCount(1, $events);
+        $this->assertSame($result['id'], $events[0]['id']);
+        $this->assertSame('progress', $events[0]['status']);
+        $this->assertSame(1, $events[0]['completed_parts']);
+        $this->assertSame('generated', $result['status']);
+    }
+
     private function request(): array
     {
         return ['text' => 'Narasi Indonesia.\nBaris kedua; $(bukan perintah)', 'speed' => 150, 'destination' => 'example.wav', 'reference' => null];
@@ -89,6 +104,7 @@ echo "library startup noise\n";
 while (($line = fgets(STDIN)) !== false) {
     $request = json_decode($line, true);
     $mode = getenv('TEST_TTS_MODE');
+    if ($mode === 'progress') { echo 'ARTASWAHA_TTS '.json_encode(['id' => $request['id'], 'status' => 'progress', 'stage' => 'generating', 'completed_parts' => 1])."\n"; fflush(STDOUT); }
     if ($mode === 'timeout') { usleep(900000); }
     if ($mode === 'exit') { fwrite(STDERR, 'ImportError: module missing'); exit(7); }
     if ($mode === 'large') { echo str_repeat('x', 70000); fflush(STDOUT); continue; }

@@ -350,6 +350,21 @@ class ChatterboxRunnerTest(unittest.TestCase):
         model.prepare_conditionals.assert_not_called()
 
     @unittest.skipIf(np is None, 'Optional TTS runtime provides numpy')
+    def test_progress_reports_only_completed_parts_and_real_work_counts(self):
+        model = MagicMock(sr=8000)
+        model.generate.return_value.detach.return_value.cpu.return_value.numpy.return_value = np.zeros(40, dtype=np.float32)
+        torch, api, modules = self.modules()
+        events = []
+        with patch.dict(sys.modules, modules), patch.object(runner, 'check_runtime'), patch.object(runner, 'load_model', return_value=model):
+            session = runner.ChatterboxSession(self.root, 'cpu')
+            session.synthesize('A' * 220 + '\n' + 'B' * 220, 150, self.root / 'progress.wav', progress=events.append)
+        self.assertEqual(['loading_model', 'preparing_voice', 'generating', 'generating', 'finalizing'], [event['stage'] for event in events])
+        self.assertEqual([0, 0, 0, 1, 2], [event['completed_parts'] for event in events])
+        self.assertTrue(all(event['total_parts'] == 2 and event['total_chars'] == 440 for event in events))
+        self.assertEqual(440, events[-1]['completed_chars'])
+        self.assertGreaterEqual(events[-1]['generation_elapsed_seconds'], 0)
+
+    @unittest.skipIf(np is None, 'Optional TTS runtime provides numpy')
     def test_invalid_audio_exception_cancellation_and_size_limit_remove_output(self):
         torch, api, modules = self.modules()
         for failure in ['nan', 'exception', 'cancel', 'size']:
