@@ -214,10 +214,7 @@ class ContentAudioService
                 if (config('services.tts.engine') === 'chatterbox' && filled(config('services.tts.reference_audio'))) {
                     $command = [...$command, '--reference-audio', (string) config('services.tts.reference_audio')];
                 }
-                $result = Process::timeout(config('services.tts.engine') === 'espeak' ? 90 : 240)->env($environment)->input($audio->spoken_text)->run($command);
-                if (! $result->successful()) {
-                    throw new RuntimeException('TTS gagal menghasilkan audio.');
-                }
+                Process::timeout(config('services.tts.engine') === 'espeak' ? 90 : 240)->env($environment)->input($audio->spoken_text)->run($command)->throw();
             }
             if (! $disk->exists($path) || $disk->size($path) < 44 || $disk->size($path) > 10485760) {
                 throw new RuntimeException('TTS tidak menghasilkan audio yang valid.');

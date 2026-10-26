@@ -378,13 +378,16 @@ class ContentAudioTest extends TestCase
         Process::fake(function ($process) {
             file_put_contents($process->command[array_search('-w', $process->command, true) + 1], 'invalid output');
 
-            return Process::result(exitCode: 1);
+            return Process::result(errorOutput: 'PermissionError: referensi suara tidak dapat dibaca', exitCode: 1);
         });
         $job = new GenerateContentAudio($audio->id, $audio->version);
         try {
             $job->handle($service);
             $this->fail('A failed synthesizer must not produce usable audio.');
         } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('PermissionError: referensi suara tidak dapat dibaca', $exception->getMessage());
+            $this->assertStringContainsString('Exit Code: 1', $exception->getMessage());
+            $this->assertStringNotContainsString($audio->spoken_text, $exception->getMessage());
             $job->failed($exception);
         }
         $this->assertSame('failed', $audio->fresh()->status);
