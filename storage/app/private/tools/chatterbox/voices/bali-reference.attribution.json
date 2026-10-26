@@ -1,0 +1,13 @@
+{
+  "purpose": "Experimental reference from Balinese speech for testing Indonesian TTS; accent transfer unverified",
+  "source": "https://huggingface.co/datasets/Sparkplugx1904/Balinese-Common-Voice",
+  "revision": "62fa031",
+  "original_file": "clips/A-20260130164602-Aasan.wav",
+  "attribution": "Sparkplugx1904 / Balinese-Common-Voice; dataset credits BASAbali dictionary, https://dictionary.basabali.org/",
+  "license": "CC-BY-3.0 (declared by dataset publisher)",
+  "license_url": "https://creativecommons.org/licenses/by/3.0/",
+  "changes": "Stereo downmixed to mono, PCM16. No synthetic speech generated.",
+  "duration_seconds": 6.966,
+  "balinese_text": "Aasan bungan poh... makacakan di natah... ulian ujan... bales gati dibi sanja.",
+  "sha256": "f1639f21ad4674009a27c2c2009d1a3b5920281dcc3472a97df9601a44e23d2b"
+}
