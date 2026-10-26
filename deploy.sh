@@ -104,7 +104,7 @@ printf '=================================================\n'
 printf '  Memulai deployment ARTASWAHA...\n'
 printf '=================================================\n'
 
-printf '\n[0/15] Memvalidasi prasyarat dan environment production...\n'
+printf '\n[0/13] Memvalidasi prasyarat dan environment production...\n'
 command -v git >/dev/null || fail "git tidak ditemukan."
 command -v php >/dev/null || fail "PHP CLI tidak ditemukan."
 command -v composer >/dev/null || fail "Composer tidak ditemukan."
@@ -136,10 +136,10 @@ else
     printf 'SKIP AI/TTS worker: kedua fitur belum diaktifkan.\n'
 fi
 
-printf '\n[1/15] Menyalakan mode maintenance...\n'
+printf '\n[1/13] Menyalakan mode maintenance...\n'
 php artisan down --render="errors::503" --retry=60
 
-printf '\n[2/15] Menarik pembaruan dari GitHub...\n'
+printf '\n[2/13] Menarik pembaruan dari GitHub...\n'
 if [[ -f "$DEPLOY_SSH_KEY" ]]; then
     printf -v DEPLOY_GIT_SSH_COMMAND 'ssh -i %q -o IdentitiesOnly=yes' "$DEPLOY_SSH_KEY"
     GIT_SSH_COMMAND="$DEPLOY_GIT_SSH_COMMAND" git fetch --prune "$DEPLOY_REMOTE" "$DEPLOY_BRANCH"
@@ -149,36 +149,29 @@ else
     git pull --ff-only "$DEPLOY_REMOTE" "$DEPLOY_BRANCH"
 fi
 
-printf '\n[3/15] Memperbarui dependensi Composer production...\n'
+printf '\n[3/13] Memperbarui dependensi Composer production...\n'
 COMPOSER_IPRESOLVE=4 COMPOSER_PROCESS_TIMEOUT=2000 composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
-printf '\n[4/15] Menginstal dependensi NPM...\n'
+printf '\n[4/13] Menginstal dependensi NPM...\n'
 npm ci --no-audit --no-fund
 
-printf '\n[5/15] Mem-build frontend...\n'
+printf '\n[5/13] Mem-build frontend...\n'
 npm run build
 
-printf '\n[6/15] Menjalankan migrasi database...\n'
+printf '\n[6/13] Menjalankan migrasi database...\n'
 php artisan config:clear
 php artisan migrate --force
 
-printf '\n[7/15] Membuat symbolic link storage...\n'
+printf '\n[7/13] Membuat symbolic link storage...\n'
 php artisan storage:link
 
-printf '\n[8/15] Membersihkan cache konfigurasi lama...\n'
+printf '\n[8/13] Membersihkan cache konfigurasi lama...\n'
 php artisan config:clear
 
-printf '\n[9/15] Mengoptimalkan cache Laravel...\n'
+printf '\n[9/13] Mengoptimalkan cache Laravel...\n'
 php artisan optimize
 
-printf '\n[10/15] Meminta restart queue worker dan Reverb...\n'
-php artisan queue:restart
-php artisan reverb:restart
-
-printf '\n[11/15] Menunggu service mulai kembali...\n'
-sleep 2
-
-printf '\n[12/15] Memeriksa status queue worker dan Reverb...\n'
+printf '\n[10/13] Memeriksa status queue worker dan Reverb...\n'
 if [[ -n "$SUPERVISORCTL_BIN" ]]; then
     check_supervisor_program "Queue worker" "$QUEUE_PROGRAM"
     check_supervisor_program "Reverb process" "$REVERB_PROGRAM"
@@ -188,14 +181,14 @@ else
     check_process "Reverb process" '[a]rtisan reverb:start'
 fi
 
-printf '\n[13/15] Mematikan mode maintenance...\n'
+printf '\n[11/13] Mematikan mode maintenance...\n'
 php artisan up
 
 if [[ "$LEARNER_WORKER_REQUIRED" == "true" ]]; then
     check_learner_worker
 fi
 
-printf '\n[14/15] Menjalankan health check Laravel, OCR, AI, dan WebSocket...\n'
+printf '\n[12/13] Menjalankan health check Laravel, OCR, AI, dan WebSocket...\n'
 APP_URL="$(dotenv_value APP_URL)"
 OCR_API_URL="$(dotenv_value OCR_API_URL)"
 OCR_API_KEY="$(dotenv_value OCR_API_KEY)"
@@ -255,10 +248,13 @@ fi
 
 wait_for_reverb "$REVERB_SERVER_HOST" "$REVERB_SERVER_PORT"
 
-printf '\n[15/15] Deployment ARTASWAHA berhasil.\n'
+printf '\n[13/13] Deployment ARTASWAHA berhasil.\n'
 printf '=================================================\n'
-printf '  Aplikasi siap digunakan.\n'
+printf '  Aplikasi web sudah aktif.\n'
 printf '=================================================\n'
 printf '\nVerifikasi cepat:\n'
 printf '  php artisan about\n'
 printf '  php artisan queue:failed\n'
+printf '\nWorker dan Reverb tidak direstart otomatis.\n'
+printf 'Jika kode/konfigurasinya berubah, restart hanya program ARTASWAHA terkait melalui Supervisor aaPanel.\n'
+printf 'Untuk perubahan TTS: restart program laravel-worker-tts-artaswaha agar model/konfigurasi baru dimuat.\n'

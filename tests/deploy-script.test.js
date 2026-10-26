@@ -8,7 +8,7 @@ import { spawnSync } from 'node:child_process';
 const bash = process.platform === 'win32' ? 'C:/Program Files/Git/bin/bash.exe' : 'bash';
 const available = spawnSync(bash, ['--version']).status === 0;
 
-function runDeploy({ tts = false, analysis = false, missing = false, failAfterRestart = false, workerProgram = 'artaswaha-learner:*', wrongDirectory = false, mixedDirectories = false } = {}) {
+function runDeploy({ tts = false, analysis = false, missing = false, failAfterDeploy = false, workerProgram = 'artaswaha-learner:*', wrongDirectory = false, mixedDirectories = false } = {}) {
     const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'artaswaha-deploy-test-'));
     try {
         const bin = path.join(folder, 'fake-bin');
@@ -49,21 +49,21 @@ elif [[ "$1" == artisan ]]; then
     printf '%s\\n' "$2" >> "$TEST_LOG"
     if [[ "$2" == down ]]; then touch "$TEST_MAINTENANCE"; fi
     if [[ "$2" == up ]]; then rm -f "$TEST_MAINTENANCE"; fi
-    if [[ "$2" == queue:restart ]]; then touch "$TEST_RESTART"; fi
+    if [[ "$2" == optimize ]]; then touch "$TEST_UPDATED"; fi
 fi
 `);
         const supervisor = executable('supervisorctl', `
 printf 'SUPERVISOR %s\\n' "$*" >> "$TEST_LOG"
 if [[ "$2" == "$TEST_WORKER_PROGRAM" && -n "$TEST_WORKER_PROGRAM" ]]; then
     if [[ "$TEST_MISSING" == 1 ]]; then exit 3; fi
-    if [[ "$TEST_LATE_FAILURE" == 1 && -f "$TEST_RESTART" ]]; then exit 3; fi
+    if [[ "$TEST_LATE_FAILURE" == 1 && -f "$TEST_UPDATED" ]]; then exit 3; fi
 fi
 printf '%s RUNNING pid 123, uptime 1:00:00\\n' "$2"
 `);
         executable('pgrep', `
 printf 'PROCESS %s\\n' "$*" >> "$TEST_LOG"
 [[ "$TEST_MISSING" != 1 ]] || exit 1
-[[ "$TEST_LATE_FAILURE" != 1 || ! -f "$TEST_RESTART" ]] || exit 1
+[[ "$TEST_LATE_FAILURE" != 1 || ! -f "$TEST_UPDATED" ]] || exit 1
 printf '1234\\n'
 if [[ "$TEST_MIXED_DIRECTORIES" == 1 ]]; then printf '5678\\n'; fi
 `);
@@ -78,9 +78,9 @@ if [[ "$TEST_MIXED_DIRECTORIES" == 1 ]]; then printf '5678\\n'; fi
                 DEPLOY_SSH_KEY: path.join(folder, 'no-key').replaceAll('\\', '/'),
                 DEPLOY_BRANCH: 'main', TEST_LOG: log.replaceAll('\\', '/'),
                 TEST_MAINTENANCE: maintenance.replaceAll('\\', '/'),
-                TEST_RESTART: path.join(folder, 'restarted').replaceAll('\\', '/'),
+                TEST_UPDATED: path.join(folder, 'updated').replaceAll('\\', '/'),
                 TEST_TTS: String(tts), TEST_ANALYSIS: String(analysis),
-                TEST_MISSING: missing ? '1' : '0', TEST_LATE_FAILURE: failAfterRestart ? '1' : '0' },
+                TEST_MISSING: missing ? '1' : '0', TEST_LATE_FAILURE: failAfterDeploy ? '1' : '0' },
             encoding: 'utf8', timeout: 15000,
         });
         return { ...result, maintenance: fs.existsSync(maintenance),
@@ -98,6 +98,8 @@ test('disabled AI/TTS does not require an inference worker', { skip: !available 
     assert.equal(result.maintenance, false);
     assert(result.actions.includes('down'));
     assert(result.actions.includes('up'));
+    assert(!result.actions.includes('queue:restart'));
+    assert(!result.actions.includes('reverb:restart'));
 });
 
 for (const feature of ['tts', 'analysis']) {
@@ -113,6 +115,11 @@ test('running inference worker permits a complete deployment', { skip: !availabl
     const result = runDeploy({ tts: true });
     assert.equal(result.status, 0, result.stdout + result.stderr);
     assert.equal(result.maintenance, false);
+    assert(!result.actions.includes('queue:restart'));
+    assert(!result.actions.includes('reverb:restart'));
+    assert(!result.actions.some(action => action.startsWith('SUPERVISOR restart')));
+    assert.match(result.stdout, /Worker dan Reverb tidak direstart otomatis/);
+    assert.match(result.stdout, /laravel-worker-tts-artaswaha/);
 });
 
 test('deployment accepts the existing aaPanel TTS program name from environment configuration', { skip: !available }, () => {
@@ -147,8 +154,8 @@ test('missing learner worker with no configured program still fails before maint
     assert(!result.actions.includes('down'));
 });
 
-test('worker failure after restart is reported after the site is live again', { skip: !available }, () => {
-    const result = runDeploy({ tts: true, failAfterRestart: true });
+test('worker failure during deployment is reported after the site is live again', { skip: !available }, () => {
+    const result = runDeploy({ tts: true, failAfterDeploy: true });
     assert.equal(result.status, 1, result.stdout + result.stderr);
     assert.equal(result.maintenance, false);
     assert(result.actions.includes('up'));

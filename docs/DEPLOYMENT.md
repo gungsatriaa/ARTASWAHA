@@ -58,13 +58,14 @@ composer check-platform-reqs --no-dev
 npm ci --no-audit --no-fund
 npm run build
 "$PHP_BIN" artisan optimize
-"$PHP_BIN" artisan queue:restart
 "$PHP_BIN" artisan up
 ```
 
 Gunakan Node yang memenuhi package/lock proyek; Vite saat persiapan memerlukan Node 20.19+ atau 22.12+. Jangan menjalankan `composer update`, `key:generate`, `migrate:fresh`, atau seeder demo pada database production yang sudah ada.
 
-Aplikasi dapat tetap berjalan dengan TTS nonaktif selama runtime diunduh. Skrip deploy memeriksa worker learner sebelum menyalakan maintenance jika TTS atau analisis diaktifkan. Jika keduanya nonaktif, worker tersebut dilewati. Jika worker hilang sesudah restart, kegagalan dilaporkan setelah aplikasi dibuka kembali; pemeriksaan ini tidak meninggalkan situs dalam maintenance.
+Aplikasi dapat tetap berjalan dengan TTS nonaktif selama runtime diunduh. Skrip deploy memeriksa worker learner sebelum menyalakan maintenance jika TTS atau analisis diaktifkan. Jika keduanya nonaktif, worker tersebut dilewati. Jika worker hilang selama deploy, kegagalan dilaporkan setelah aplikasi dibuka kembali; pemeriksaan ini tidak meninggalkan situs dalam maintenance.
+
+`deploy.sh` tidak menjalankan `queue:restart` atau `reverb:restart`. Setelah deploy, gunakan tombol Restart hanya pada program Supervisor ARTASWAHA yang kode/konfigurasinya berubah. Untuk TTS, restart program `laravel-worker-tts-artaswaha`; perubahan TTS saja tidak memerlukan restart Reverb. Pemeriksaan proses aktif memverifikasi liveness, bukan memastikan proses sudah memuat kode terbaru. Supervisor CLI tetap dipakai untuk pemeriksaan status jika tersedia, tanpa memanggil restart otomatis.
 
 ## 4. Install runtime dan model: satu perintah
 
@@ -218,7 +219,7 @@ Referensi suara Indonesia (opsional): simpan rekaman bersih satu penutur Indones
 TTS_CHATTERBOX_REFERENCE_AUDIO=/www/wwwroot/artaswaha.kerthajaya.com/storage/app/private/tools/chatterbox/voices/indonesia.wav
 ```
 
-Jalankan `php artisan config:cache` lalu `php artisan queue:restart`. Model tidak perlu diunduh ulang. Referensi diproses sekali per tugas dan digunakan untuk semua potongan narasi; sintesis tetap offline. Untuk pengecekan CLI, tambahkan `--reference-audio /path/ke/indonesia.wav` pada perintah `check` maupun `synthesize`. Path salah atau WAV di luar durasi tersebut akan ditolak; konfigurasi yang kosong tetap memakai suara bawaan. Perbaikan aksen harus dinilai dari hasil audio, bukan hanya status tugas.
+Jalankan `php artisan config:cache` lalu Restart hanya program TTS di Supervisor aaPanel. Model tidak perlu diunduh ulang. Referensi digunakan untuk semua potongan narasi dan dapat dipakai ulang antar tugas dalam mode persisten; sintesis tetap offline. Untuk pengecekan CLI, tambahkan `--reference-audio /path/ke/indonesia.wav` pada perintah `check` maupun `synthesize`. Path salah atau WAV di luar durasi tersebut akan ditolak; konfigurasi yang kosong tetap memakai suara bawaan. Perbaikan aksen harus dinilai dari hasil audio, bukan hanya status tugas.
 
 Audio lama tidak berubah otomatis: setelah mengganti referensi, pilih **Simpan narasi**, lalu **Buat audio offline** untuk menghasilkan ulang. Tinjau hasil sebelum menyetujui audio untuk pengguna.
 
@@ -228,11 +229,10 @@ Lalu:
 cd "$APP_DIR"
 "$PHP_BIN" artisan config:clear
 "$PHP_BIN" artisan optimize
-"$PHP_BIN" artisan queue:restart
 supervisorctl status
 ```
 
-Tunggu worker lama benar-benar restart. Default cache/store production harus dapat dipakai oleh user web dan worker yang sama. Tidak perlu mengubah Reverb/domain atau membuka port baru untuk TTS.
+Restart program TTS melalui Supervisor aaPanel dan tunggu status Running. Default cache/store production harus dapat dipakai oleh user web dan worker yang sama. Tidak perlu mengubah Reverb/domain atau membuka port baru untuk TTS.
 
 ## 8. Uji melalui admin
 
