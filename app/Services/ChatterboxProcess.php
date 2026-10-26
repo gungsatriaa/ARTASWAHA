@@ -56,7 +56,11 @@ class ChatterboxProcess
                         throw new RuntimeException('Respons worker TTS tidak cocok dengan tugas aktif.');
                     }
                     if (($result['status'] ?? null) !== 'generated') {
-                        throw new RuntimeException('Worker TTS gagal: '.substr((string) ($result['error'] ?? 'Respons tidak valid.'), 0, 6000));
+                        $details = (string) ($result['error'] ?? 'Respons tidak valid.');
+                        if (is_string($result['traceback'] ?? null)) {
+                            $details .= "\n".$result['traceback'];
+                        }
+                        throw new RuntimeException('Worker TTS gagal: '.Str::limit($details, 6000));
                     }
                     if ($result['recycle'] ?? false) {
                         $this->stop();

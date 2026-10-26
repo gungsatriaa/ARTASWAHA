@@ -9,6 +9,7 @@ import signal
 import select
 import sys
 import time
+import traceback
 import wave
 from importlib.metadata import version
 from pathlib import Path
@@ -270,7 +271,9 @@ def serve(directory: Path, device: str) -> None:
             result = {'id': request_id, 'status': 'generated', 'seconds': round(time.perf_counter() - started, 2),
                       'wav_bytes': destination.stat().st_size, 'recycle': number == 49, **timings}
         except Exception as error:
-            result = {'id': request_id, 'status': 'error', 'error': f'{type(error).__name__}: {error}'}
+            frames = traceback.extract_tb(error.__traceback__)[-20:]
+            result = {'id': request_id, 'status': 'error', 'error': f'{type(error).__name__}: {error}',
+                      'traceback': '\n'.join(f'{frame.filename}:{frame.lineno} in {frame.name}' for frame in frames)}
             print(PROTOCOL_PREFIX + json.dumps(result), flush=True)
             return
         print(PROTOCOL_PREFIX + json.dumps(result), flush=True)

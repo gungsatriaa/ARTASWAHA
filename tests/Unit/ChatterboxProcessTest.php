@@ -51,7 +51,7 @@ class ChatterboxProcessTest extends TestCase
     public function test_crashes_bad_protocol_and_timeouts_fail_then_allow_a_clean_restart(): void
     {
         [$client, $command] = $this->fixture();
-        foreach (['exit' => 'ImportError', 'error' => 'referensi tidak valid', 'mismatch' => 'tidak cocok', 'broken' => 'Syntax error', 'large' => 'melebihi batas', 'timeout' => 'batas waktu'] as $mode => $message) {
+        foreach (['exit' => 'ImportError', 'error' => 'model.py:42 in generate', 'mismatch' => 'tidak cocok', 'broken' => 'Syntax error', 'large' => 'melebihi batas', 'timeout' => 'batas waktu'] as $mode => $message) {
             try {
                 $client->generate($command, ['TEST_TTS_MODE' => $mode], $this->request(), $mode === 'timeout' ? 0.15 : 3);
                 $this->fail('Worker failure must not be reported as generated: '.$mode);
@@ -94,7 +94,7 @@ while (($line = fgets(STDIN)) !== false) {
     if ($mode === 'large') { echo str_repeat('x', 70000); fflush(STDOUT); continue; }
     if ($mode === 'broken') { echo "ARTASWAHA_TTS {broken\n"; fflush(STDOUT); continue; }
     $result = ['id' => $mode === 'mismatch' ? 'other-task' : $request['id'],
-        'status' => $mode === 'error' ? 'error' : 'generated', 'error' => 'referensi tidak valid',
+        'status' => $mode === 'error' ? 'error' : 'generated', 'error' => 'referensi tidak valid', 'traceback' => 'model.py:42 in generate',
         'pid' => getmypid(), 'request_number' => ++$number, 'recycle' => $mode === 'recycle'];
     $message = 'ARTASWAHA_TTS '.json_encode($result)."\n";
     if ($mode === 'split') { echo substr($message, 0, 15); fflush(STDOUT); usleep(20000); $message = substr($message, 15); }

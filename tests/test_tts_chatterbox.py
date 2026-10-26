@@ -271,6 +271,8 @@ class ChatterboxRunnerTest(unittest.TestCase):
         reply = json.loads(output.getvalue().removeprefix(runner.PROTOCOL_PREFIX))
         self.assertEqual('error', reply['status'])
         self.assertIn('invalid reference', reply['error'])
+        self.assertIn(' in ', reply['traceback'])
+        self.assertNotIn(request['text'], reply['traceback'])
 
     def test_linux_child_exits_when_parent_dies_and_rejects_failed_registration(self):
         with patch.object(sys, 'platform', 'linux'), patch.object(os, 'getppid', side_effect=[123, 123]), patch('ctypes.CDLL') as library:
