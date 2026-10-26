@@ -14,5 +14,6 @@
 @unless ($configured)<p class="text-xs leading-6 text-foreground/55">Mesin TTS belum dikonfigurasi. Tombol pembuatan audio menyimpan permintaan dengan status belum tersedia; rekaman dapat langsung diunggah.</p>@endunless
 </form>
 @if ($isLesson)<a href="{{ route('admin.lessons.preview', $content) }}" class="mt-4 inline-flex min-h-11 items-center text-sm font-bold text-accent">Kembali ke preview modul →</a>@endif
+@if (! $isLesson && $content->quiz->user_id === auth()->id())<a href="{{ route('quizzes.show', $content->quiz_id) }}" class="mt-4 inline-flex min-h-11 items-center text-sm font-bold text-accent">Kembali ke kelola kuis →</a>@endif
 </div>
 @endsection

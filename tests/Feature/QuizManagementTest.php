@@ -129,6 +129,62 @@ class QuizManagementTest extends TestCase
         $this->assertSame($question->quiz_id, $question->fresh()->quiz_id);
     }
 
+    public function test_editor_and_detail_expose_preview_keyboard_and_admin_audio_controls_safely(): void
+    {
+        Storage::fake('local');
+        $question = QuizQuestion::factory()->create(['prompt' => '<script>alert(1)</script>', 'keyboard_auto_open' => true]);
+        $admin = $question->quiz->user;
+        $admin->forceFill(['is_admin' => true])->save();
+        $audio = $this->audio($question);
+
+        $this->actingAs($admin)->get(route('quizzes.edit', $question->quiz))
+            ->assertOk()->assertSee('data-quiz-step="0"', false)->assertSee('data-quiz-step="1"', false)->assertSee('data-quiz-step="2"', false)
+            ->assertSee('data-preview-audio', false)->assertSee('data-aksara-keyboard', false)
+            ->assertSee(route('admin.audio.questions.edit', $question), false)
+            ->assertSee(route('content-audio.show', $audio), false)
+            ->assertSee('&lt;script&gt;alert(1)&lt;/script&gt;', false)->assertDontSee('<script>alert(1)</script>', false);
+        $this->get(route('quizzes.show', $question->quiz))->assertOk()
+            ->assertSee('Preview sebagai peserta')->assertSee('terbuka otomatis')
+            ->assertSee(route('quizzes.archive', $question->quiz), false)
+            ->assertSee(route('quizzes.duplicate', $question->quiz), false);
+        $this->get(route('admin.audio.questions.edit', $question))->assertOk()->assertSee('Kembali ke kelola kuis');
+    }
+
+    public function test_search_lists_only_matching_owned_quizzes_and_shows_actions(): void
+    {
+        $owner = User::factory()->create();
+        $matching = Quiz::factory()->for($owner)->create(['title' => 'Belajar aksara']);
+        Quiz::factory()->for($owner)->create(['title' => 'Paribasa lainnya']);
+        Quiz::factory()->create(['title' => 'Belajar rahasia']);
+
+        $this->actingAs($owner)->get(route('quizzes.index', ['q' => 'Belajar']))
+            ->assertOk()->assertSee('Belajar aksara')->assertDontSee('Paribasa lainnya')->assertDontSee('Belajar rahasia')
+            ->assertSee(route('quizzes.edit', $matching), false)->assertSee('Arsipkan')->assertSee('Duplikasikan');
+    }
+
+    public function test_repeated_question_id_is_rejected_without_modifying_quiz(): void
+    {
+        $question = QuizQuestion::factory()->create();
+        $data = $this->questionData($question);
+
+        $this->actingAs($question->quiz->user)->put(route('quizzes.update', $question->quiz), ['title' => 'Gagal', 'questions' => [$data, $data]])
+            ->assertSessionHasErrors('questions.0.id');
+
+        $this->assertDatabaseCount('quiz_questions', 1);
+        $this->assertNotSame('Gagal', $question->quiz->fresh()->title);
+    }
+
+    public function test_sparse_question_indexes_are_saved_in_sequential_order(): void
+    {
+        $question = QuizQuestion::factory()->create();
+
+        $this->actingAs($question->quiz->user)->put(route('quizzes.update', $question->quiz), [
+            'title' => 'Urutan rapi', 'questions' => [5 => $this->questionData($question)],
+        ])->assertSessionHasNoErrors()->assertRedirect();
+
+        $this->assertSame(1, $question->fresh()->sort_order);
+    }
+
     private function questionData(QuizQuestion $question): array
     {
         return [...$question->only(['id', 'prompt', 'options', 'correct_option', 'explanation']), 'keyboard_auto_open' => $question->keyboard_auto_open ?? false];

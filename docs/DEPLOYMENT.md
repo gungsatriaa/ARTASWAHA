@@ -314,6 +314,16 @@ Pembaruan ini tidak menambah migration, dependency, atau environment. Gunakan al
 
 Uji setelah deploy: ubah judul/urutan dan pastikan audio lama tetap dapat diputar; ubah teks/pilihan dan pastikan audio lama tidak diputar peserta; edit kuis yang sudah punya room dan periksa riwayat/audio versi lama; duplikasikan kuis dan cek keyboard/audio salinan; arsipkan kuis dan cari pada filter arsip. Aksi dan ID soal harus ditolak jika berasal dari kuis milik pengguna lain.
 
+Alur editor sekarang **Pengaturan → Kelola soal → Preview & simpan → Detail kuis → Buat room**. Menu **Kelola kuis** pada admin menuju koleksi kuis milik akun tersebut; akses tidak diperluas ke kuis milik akun lain. Daftar menyediakan pencarian judul, filter aktif/arsip, edit, duplikasi, dan arsip dengan konfirmasi. Detail kuis menampilkan pilihan/kunci jawaban khusus pemilik, pengaturan keyboard, status audio, serta akses preview peserta.
+
+Pada **Kelola soal**, soal dapat dilipat, diduplikasikan, dipindah naik/turun, dan dihapus. Penomoran ulang mempertahankan jawaban benar. Duplikasi satu soal menyalin isi/kunci/keyboard sebagai soal baru tanpa ID atau audio lama; simpan dahulu untuk menyiapkan audio sendiri. Duplikasi seluruh kuis mengikuti aturan salinan audio di atas. Batas tetap 20 soal dan 2–5 pilihan per soal.
+
+Keyboard editor mengisi kolom terakhir yang dipilih. Keyboard pada preview mempunyai area coretan terpisah dan mengikuti opsi otomatis tiap soal. Status dan tombol **Kelola audio soal** berada pada soal tersimpan; pengaturan/generate/unggah/persetujuan audio tetap khusus admin. Simpan perubahan sebelum membuka pengaturan audio. Preview hanya memutar audio `ready` yang disetujui dan cocok dengan pertanyaan/pilihan saat ini; teks yang berubah tidak memakai rekaman lama. Preview tidak menjalankan inferensi, timer, penilaian, atau pengiriman jawaban. Audio berhenti saat pindah tahap/soal atau meninggalkan/menyembunyikan halaman.
+
+Editor menampilkan validasi di dekat kolom, membuka soal yang perlu dilengkapi, memperingatkan ketika meninggalkan perubahan belum tersimpan, dan mengunci tombol simpan selama pengiriman. Peringatan keluar memakai mekanisme browser dan memerlukan interaksi pengguna. Tidak ada autosave atau penyimpanan setiap karakter. Modul JavaScript editor dimuat hanya pada halaman editor; tidak ada dependency baru.
+
+Sesudah deploy/build, muat ulang halaman editor lama sebelum mengedit. Uji ketiga tahap, validasi soal yang dilipat, duplikasi/pindah/hapus pilihan tanpa perubahan kunci yang tidak disengaja, preview keyboard manual/otomatis dan audio, batal/konfirmasi arsip, pencarian/filter/pagination, serta tombol kembali setelah menyimpan. Uji pada HP 320–390 px dan orientasi berbeda, termasuk scroll panjang, fokus input, dan posisi panel keyboard. Tes aplikasi dan JavaScript lokal tidak menggantikan pemeriksaan visual/gestur pada browser sebenarnya; browser pengujian tidak tersedia dalam sesi implementasi.
+
 ## Instalasi manual langkah demi langkah
 
 Bagian ini menjalankan langkah installer satu per satu agar prosesnya dapat dipahami. Pilih cara manual ini atau installer pada bagian 4. Contoh memakai CPU; jalankan setelah source baru dipull dan backup tersedia.

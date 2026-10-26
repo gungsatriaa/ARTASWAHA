@@ -22,7 +22,8 @@ function setup(open = true) {
     api.initAksaraKeyboard(keyboard);
     return {
         ...api, keyboard, keys, status, label,
-        focus(field) { scopeEvents.focusin({ target: field }); },
+        focus(field) { field.closest = () => scope; scopeEvents.focusin({ target: field }); },
+        focusNested(field) { field.closest = () => ({}); scopeEvents.focusin({ target: field }); },
         click(dataset) { keyboardEvents.click({ target: { closest: () => ({ dataset }) } }); },
         toggle(value) { keyboard.open = value; keyboardEvents.toggle(); },
     };
@@ -132,6 +133,17 @@ test('targets newly added fields and restores each original device keyboard mode
     assert.equal(second.value, '\u1B26');
     ui.toggle(false);
     assert.equal(second.attributes.inputmode, 'text');
+});
+
+test('editor keyboard ignores fields inside a separate preview keyboard scope', () => {
+    const ui = setup();
+    const editor = field('');
+    const preview = field('');
+    ui.focus(editor);
+    ui.focusNested(preview);
+    ui.click({ aksara: '\u1B13' });
+    assert.equal(editor.value, '\u1B13');
+    assert.equal(preview.value, '');
 });
 
 for (const state of ['removed', 'disabled', 'readonly', 'outside']) {

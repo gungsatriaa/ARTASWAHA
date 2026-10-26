@@ -9,6 +9,7 @@ use App\Models\Quiz;
 use App\Models\QuizQuestion;
 use App\Services\ContentAudioService;
 use App\Services\QuizService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,7 +24,7 @@ class QuizController extends Controller
         $quizzes = Quiz::query()
             ->where('user_id', Auth::id() ?? 0)
             ->where('is_archived', ($filters['status'] ?? 'active') === 'archived')
-            ->when($filters['q'] ?? null, fn ($query, string $text) => $query->where('title', 'like', '%'.$text.'%'))
+            ->when($filters['q'] ?? null, fn (Builder $query, string $text): Builder => $query->where('title', 'like', '%'.$text.'%'))
             ->withCount(['questions', 'rooms'])
             ->latest()
             ->paginate(12)->withQueryString();

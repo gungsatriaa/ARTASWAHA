@@ -15,7 +15,7 @@ use Throwable;
 
 class QuizService
 {
-    /** @param array{title: string, description?: string|null, leaderboard_enabled?: bool, show_answers_immediately?: bool, seconds_per_question?: int|null, questions: array<int, array{prompt: string, options: array<int, string>, correct_option: int, explanation?: string|null, keyboard_auto_open?: bool}>} $data */
+    /** @param array{title: string, description?: string|null, leaderboard_enabled?: bool, show_answers_immediately?: bool, seconds_per_question?: int|null, questions: array<int, array{id?: int|null, prompt: string, options: array<int, string>, correct_option: int, explanation?: string|null, keyboard_auto_open?: bool}>} $data */
     public function create(User $user, array $data): Quiz
     {
         $this->validateQuestions($data['questions']);
@@ -35,7 +35,7 @@ class QuizService
         });
     }
 
-    /** @param array{title: string, description?: string|null, show_answers_immediately?: bool, seconds_per_question?: int|null, questions: array<int, array{prompt: string, options: array<int, string>, correct_option: int, explanation?: string|null, keyboard_auto_open?: bool}>} $data */
+    /** @param array{title: string, description?: string|null, show_answers_immediately?: bool, seconds_per_question?: int|null, questions: array<int, array{id?: int|null, prompt: string, options: array<int, string>, correct_option: int, explanation?: string|null, keyboard_auto_open?: bool}>} $data */
     public function update(Quiz $quiz, User $user, array $data): Quiz
     {
         $this->validateQuestions($data['questions']);
@@ -69,15 +69,20 @@ class QuizService
                     $quiz->update($attributes);
                     $updatedQuiz = $quiz;
                     $quiz->questions()->increment('sort_order', 20);
+                    foreach ($existing as $question) {
+                        $question->sort_order += 20;
+                        $question->syncOriginalAttribute('sort_order');
+                    }
                 }
 
                 $retainedIds = [];
+                $sortOrder = 1;
                 foreach ($data['questions'] as $index => $attributes) {
                     $source = $existing->get($attributes['id'] ?? null);
                     unset($attributes['id']);
                     $attributes['keyboard_auto_open'] = (bool) ($attributes['keyboard_auto_open'] ?? false);
                     $attributes['explanation'] = $attributes['explanation'] ?? null;
-                    $attributes['sort_order'] = $index + 1;
+                    $attributes['sort_order'] = $sortOrder++;
                     if ($updatedQuiz->id === $quiz->id && $source !== null) {
                         $source->fill($attributes)->save();
                         if ($source->wasChanged(['prompt', 'options'])) {
@@ -163,7 +168,7 @@ class QuizService
         }
     }
 
-    /** @param array<int, array{prompt: string, options: array<int, string>, correct_option: int, explanation?: string|null, keyboard_auto_open?: bool}> $questions */
+    /** @param array<int, array{id?: int|null, prompt: string, options: array<int, string>, correct_option: int, explanation?: string|null, keyboard_auto_open?: bool}> $questions */
     private function saveQuestions(Quiz $quiz, array $questions): void
     {
         $sortOrder = 1;

@@ -102,7 +102,7 @@ export function initAksaraKeyboard(keyboard) {
         } else restoreInputMode();
     };
     const trackTarget = event => {
-        if (event.target.matches('[data-aksara-input]') && !event.target.matches(':disabled') && !event.target.readOnly) selectTarget(event.target);
+        if (event.target.matches('[data-aksara-input]') && event.target.closest('[data-aksara-scope]') === scope && !event.target.matches(':disabled') && !event.target.readOnly) selectTarget(event.target);
     };
     scope.addEventListener('pointerdown', trackTarget);
     scope.addEventListener('focusin', trackTarget);
@@ -134,7 +134,7 @@ export function initAksaraKeyboard(keyboard) {
         }
     });
     const scratch = scope.querySelector('textarea[data-aksara-input]:not([name])');
-    if (scratch) selectTarget(scratch);
+    if (scratch && scratch.closest('[data-aksara-scope]') === scope) selectTarget(scratch);
     syncOpen();
 }
 

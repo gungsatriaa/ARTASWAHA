@@ -19,16 +19,21 @@
                     <span class="rounded-full border border-white/10 px-4 py-2 text-foreground/75">{{ $quiz->show_answers_immediately ? 'Jawaban langsung' : 'Hasil di akhir' }}</span>
                 </div>
                 @if ($quiz->is_archived)
-                    <p class="mt-8 border-t border-white/10 pt-6 text-sm leading-6 text-foreground/60">Ini versi lama yang tersimpan untuk riwayat room. Versi terbaru tersedia di daftar kuis.</p>
+                    <p class="mt-8 border-t border-white/10 pt-6 text-sm leading-6 text-foreground/60">Kuis ini ada di arsip. Room dan jawaban lama tetap tersimpan. Duplikasikan untuk membuat kuis aktif tanpa mengubah riwayat.</p>
                 @else
                     <div class="mt-8 space-y-3 border-t border-white/10 pt-6">
                         <a href="{{ route('quizzes.edit', $quiz) }}" class="inline-flex min-h-12 w-full items-center justify-center rounded-full border border-white/15 px-5 py-3 font-bold transition hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Edit kuis</a>
+                        <a href="{{ route('quizzes.edit', ['quiz' => $quiz, 'preview' => 1]) }}" class="inline-flex min-h-12 w-full items-center justify-center rounded-full border border-accent/30 px-5 font-bold text-accent">Preview sebagai peserta</a>
                         <form method="POST" action="{{ route('rooms.store', $quiz) }}">
                             @csrf
                             <button class="inline-flex min-h-12 w-full cursor-pointer items-center justify-center rounded-full bg-accent px-5 py-3 font-extrabold text-background transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Buat room kuis</button>
                         </form>
                     </div>
                 @endif
+                <div class="mt-4 flex flex-wrap gap-3">
+                    <form method="POST" action="{{ route('quizzes.duplicate', $quiz) }}" data-single-submit>@csrf<button class="min-h-11 rounded-full border border-white/15 px-4 text-sm font-bold">Duplikasikan kuis</button></form>
+                    @unless ($quiz->is_archived)<form method="POST" action="{{ route('quizzes.archive', $quiz) }}" data-single-submit data-confirm-archive>@csrf<button class="min-h-11 rounded-full px-4 text-sm text-danger">Arsipkan kuis</button></form>@endunless
+                </div>
             </section>
 
             <section class="min-w-0" aria-labelledby="quiz-questions-title">
@@ -52,6 +57,9 @@
                                     <a href="{{ route('admin.audio.questions.edit', $question) }}" class="mt-2 inline-flex min-h-11 items-center text-xs font-bold text-accent">Siapkan audio soal →</a>
                                 @endif
                                 <p class="mt-2 text-sm text-foreground/50">{{ count($question->options) }} pilihan jawaban</p>
+                                <p class="mt-2 text-xs font-bold text-accent">Keyboard: {{ $question->keyboard_auto_open ? 'terbuka otomatis' : 'dibuka peserta' }}</p>
+                                @if ($question->audio)<div class="mt-3"><span class="mr-2 text-xs text-foreground/60">Audio</span><x-job-status :status="$question->audio->source_hash === app(\App\Services\ContentAudioService::class)->sourceHash($question) ? $question->audio->status : 'stale'" /></div>@else<p class="mt-2 text-xs text-foreground/55">Belum ada audio soal.</p>@endif
+                                <details class="mt-3"><summary class="inline-flex min-h-11 cursor-pointer items-center text-sm font-bold">Lihat pilihan dan kunci jawaban</summary><ol class="mt-2 space-y-2 text-sm">@foreach ($question->options as $optionIndex => $option)<li class="break-words">{{ chr(65 + $optionIndex) }}. {{ $option }} @if ($optionIndex === $question->correct_option)<span class="font-bold text-success">· jawaban benar</span>@endif</li>@endforeach</ol>@if ($question->explanation)<p class="mt-3 whitespace-pre-wrap text-sm text-foreground/60">{{ $question->explanation }}</p>@endif</details>
                             </div>
                         </li>
                     @endforeach
