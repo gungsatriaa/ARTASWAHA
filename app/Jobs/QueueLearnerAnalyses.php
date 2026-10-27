@@ -19,7 +19,8 @@ class QueueLearnerAnalyses implements ShouldBeUnique, ShouldQueue
 
     public function __construct(public int $throughId, public int $afterId = 0)
     {
-        $this->onConnection('learner-analysis')->onQueue('learner-analysis');
+        $connection = config('queue.default');
+        $this->onConnection($connection)->onQueue(config("queue.connections.{$connection}.queue", 'default'));
     }
 
     public function uniqueId(): string

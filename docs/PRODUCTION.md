@@ -43,7 +43,7 @@ QUEUE_CONNECTION=redis
 REDIS_HOST=127.0.0.1
 REDIS_PORT=6379
 REDIS_PASSWORD=null
-REDIS_QUEUE_RETRY_AFTER=300
+REDIS_QUEUE_RETRY_AFTER=1860
 
 OCR_API_URL=http://127.0.0.1:18001
 OCR_API_KEY=GANTI_DENGAN_API_KEY_OCR
@@ -72,7 +72,7 @@ VITE_REVERB_SCHEME="${REVERB_SCHEME}"
 
 `REVERB_HOST/PORT/SCHEME` adalah alamat publik yang dipakai browser dan Laravel untuk mengirim event. `REVERB_BROADCAST_*` adalah alamat internal koneksi Laravel → Reverb. `REVERB_SERVER_*` adalah alamat bind proses Reverb. Untuk `REVERB_ALLOWED_ORIGINS`, gunakan hostname website tanpa skema atau path; pisahkan beberapa hostname dengan koma.
 
-Laravel memakai `GenerateQuizDraft::$timeout = 240` detik. Karena itu contoh Redis menetapkan `retry_after=300`, dan worker Supervisor di bawah memakai `--timeout=240`. `retry_after` harus lebih panjang daripada timeout job agar job yang lama tidak diproses dua kali.
+Laravel memakai `GenerateQuizDraft::$timeout = 240` detik. Karena itu contoh Redis menetapkan `retry_after=1860`, dan worker Supervisor di bawah memakai `--timeout=240`. `retry_after` harus lebih panjang daripada timeout job agar job yang lama tidak diproses dua kali.
 
 > Jangan jalankan `php artisan key:generate` pada aplikasi yang sudah memiliki data/session production; mengganti `APP_KEY` dapat membuat data terenkripsi lama tidak terbaca. Bila instalasi baru, buat key satu kali sebelum menerima traffic.
 
@@ -112,7 +112,7 @@ user=www
 numprocs=1
 redirect_stderr=true
 stdout_logfile=/www/wwwroot/mac.digisite.id/storage/logs/queue-worker.log
-stopwaitsecs=300
+stopwaitsecs=1860
 ```
 
 `/etc/supervisor/conf.d/artaswaha-reverb.conf`:
@@ -216,6 +216,8 @@ Jika proses restart terus-menerus, cek path PHP, direktori kerja, user/permissio
 - [Laravel Reverb production](https://laravel.com/docs/13.x/reverb)
 
 
-## Worker terpusat (pembaruan)
+## Worker terpusat mengikuti environment
 
-Panduan queue Redis/default di atas adalah konfigurasi lama. Seluruh job aplikasi baru kini memakai koneksi database `learner-analysis`. Program Supervisor yang dipertahankan menjalankan `php artisan queue` dengan directory aplikasi dan PHP binary yang benar. Command memasang batas timeout/reservasi yang sesuai untuk audio panjang; gunakan satu proses pada konfigurasi RAM saat ini. Sebelum menonaktifkan worker Redis/default lama, habiskan pekerjaan yang sudah berada di backend itu. Jangan menghapus antrean. Ikuti bagian **Satu command worker aplikasi** di `docs/DEPLOYMENT.md` untuk perpindahan, parameter Supervisor, dan pemeriksaan. Reverb, SSR, dan scheduler tetap terpisah.
+Seluruh job baru mengikuti QUEUE_CONNECTION dan antrean default koneksi tersebut. Gunakan `php artisan queue:work --sleep=3 --tries=3 --timeout=240 --max-time=3600` agar otomatis mengikuti .env. Command `php artisan queue:work redis --sleep=3 --tries=3 --timeout=240 --max-time=3600` memaksa Redis dan hanya sesuai jika job juga dikirim ke Redis. Command tambahan `php artisan queue` telah dihapus.
+
+Timeout audio tetap 1830 detik dan mengesampingkan timeout worker 240 detik. Redis/database memakai retry_after minimum 1860 detik; Supervisor harus menunggu `stopwaitsecs=1860` sebelum mematikan proses. Setelah perubahan .env, perbarui config cache dan restart worker. Habiskan antrean lama `learner-analysis` sebelum menonaktifkan worker lama; jangan menghapus pekerjaan. Ikuti bagian **Satu worker bawaan yang mengikuti environment** pada docs/DEPLOYMENT.md untuk perpindahan. Reverb, SSR, dan scheduler tetap terpisah.

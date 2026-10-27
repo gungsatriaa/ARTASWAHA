@@ -8,7 +8,7 @@ import { spawnSync } from 'node:child_process';
 const bash = process.platform === 'win32' ? 'C:/Program Files/Git/bin/bash.exe' : 'bash';
 const available = spawnSync(bash, ['--version']).status === 0;
 
-function runDeploy({ tts = false, analysis = false, missing = false, failAfterDeploy = false, workerProgram = 'artaswaha-learner:*', wrongDirectory = false, mixedDirectories = false } = {}) {
+function runDeploy({ tts = false, analysis = false, missing = false, failAfterDeploy = false, workerProgram = 'artaswaha-learner:*', wrongDirectory = false, mixedDirectories = false, queueConnection = '' } = {}) {
     const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'artaswaha-deploy-test-'));
     try {
         const bin = path.join(folder, 'fake-bin');
@@ -33,6 +33,7 @@ function runDeploy({ tts = false, analysis = false, missing = false, failAfterDe
 if [[ "$1" == -r ]]; then
     [[ $# -ge 3 ]] || exit 0
     case "$3" in
+        QUEUE_CONNECTION) printf '%s' "$TEST_QUEUE_CONNECTION";;
         APP_ENV) printf production;;
         APP_DEBUG) printf false;;
         TTS_ENABLED) printf '%s' "$TEST_TTS";;
@@ -70,7 +71,7 @@ if [[ "$TEST_MIXED_DIRECTORIES" == 1 ]]; then printf '5678\\n'; fi
         const maintenance = path.join(folder, 'maintenance');
         const unixBin = bin.replaceAll('\\', '/').replace(/^([A-Za-z]):/, (_, drive) => '/' + drive.toLowerCase());
         const result = spawnSync(bash, ['-c', 'export PATH="$TEST_BIN:$PATH"; exec bash "$1"', '_', path.join(folder, 'deploy.sh').replaceAll('\\', '/')], {
-            env: { ...process.env, TEST_BIN: unixBin, SUPERVISORCTL_BIN: supervisor,
+            env: { ...process.env, TEST_BIN: unixBin, SUPERVISORCTL_BIN: supervisor, TEST_QUEUE_CONNECTION: queueConnection,
                 LEARNER_QUEUE_SUPERVISOR_PROGRAM: '', TEST_WORKER_PROGRAM: workerProgram,
                 TEST_WRONG_DIRECTORY: wrongDirectory ? '1' : '0', TEST_MIXED_DIRECTORIES: mixedDirectories ? '1' : '0',
                 DEPLOY_SSH_KEY: path.join(folder, 'no-key').replaceAll('\\', '/'),
@@ -127,10 +128,10 @@ test('deployment accepts the existing aaPanel TTS program name from environment 
     assert.equal(result.maintenance, false);
 });
 
-test('without a configured program name deployment checks the learner worker command', { skip: !available }, () => {
+test('without a configured program name deployment checks the configured shared worker command', { skip: !available }, () => {
     const result = runDeploy({ tts: true, workerProgram: '' });
     assert.equal(result.status, 0, result.stdout + result.stderr);
-    assert(result.actions.some(action => action.startsWith('PROCESS -f [a]rtisan queue:work[[:space:]]+learner-analysis')));
+    assert(result.actions.some(action => action.startsWith('PROCESS -f [a]rtisan queue:work([[:space:]]+database)?')));
 });
 
 test('a learner worker from a different app does not permit deployment', { skip: !available }, () => {
@@ -157,4 +158,11 @@ test('worker failure during deployment is reported after the site is live again'
     assert.equal(result.status, 1, result.stdout + result.stderr);
     assert.equal(result.maintenance, false);
     assert(result.actions.includes('up'));
+});
+
+
+test('worker detection follows Redis configured in environment', { skip: !available }, () => {
+    const result = runDeploy({ analysis: true, workerProgram: '', queueConnection: 'redis' });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert(result.actions.some(action => action.startsWith('PROCESS -f [a]rtisan queue:work([[:space:]]+redis)?')));
 });

@@ -18,8 +18,10 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Queue;
 use Inertia\Response as InertiaResponse;
+use Throwable;
 
 class AiController extends Controller
 {
@@ -51,10 +53,19 @@ class AiController extends Controller
         $lastWorker = Cache::get('learner-analysis-last-worker');
         $aiConfigured = $analyzer->isConfigured();
         $ttsConfigured = $audioService->isConfigured();
-        $pendingJobs = $tab === 'services' ? DB::table('jobs')->where('queue', 'learner-analysis')->count() : 0;
+        $pendingJobs = null;
+        $queueUnavailable = false;
+        if ($tab === 'services') {
+            try {
+                $pendingJobs = Queue::connection()->size();
+            } catch (Throwable $exception) {
+                $queueUnavailable = true;
+                Log::warning('Admin could not read application queue.', ['exception_type' => $exception::class]);
+            }
+        }
         $audioCounts = $tab === 'services' ? ContentAudio::select('status')->selectRaw('COUNT(*) as total')->groupBy('status')->pluck('total', 'status') : collect();
 
-        return app(PagePresenter::class)->render('admin.ai.index', compact('tab', 'start', 'end', 'snapshot', 'statuses', 'profiles', 'drafts', 'reports', 'learningPaths', 'aiConfigured', 'ttsConfigured', 'pendingJobs', 'audioCounts', 'lastCheck', 'lastWorker'));
+        return app(PagePresenter::class)->render('admin.ai.index', compact('tab', 'start', 'end', 'snapshot', 'statuses', 'profiles', 'drafts', 'reports', 'learningPaths', 'aiConfigured', 'ttsConfigured', 'pendingJobs', 'queueUnavailable', 'audioCounts', 'lastCheck', 'lastWorker'));
     }
 
     public function profile(LearnerProfile $learnerProfile, LearnerInterviewAnalyzer $analyzer): InertiaResponse

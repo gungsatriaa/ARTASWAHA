@@ -43,12 +43,22 @@ class AdminAiManagementTest extends TestCase
 
     public function test_admin_tabs_render_without_calling_ai_or_exposing_secrets(): void
     {
+        Queue::fake();
         $this->actingAs(User::factory()->create(['is_admin' => true]));
         foreach (['overview', 'interviews', 'drafts', 'services'] as $tab) {
             $this->get(route('admin.ai.index', ['tab' => $tab]))->assertOk()->assertInertiaContains('Pusat AI')->assertInertiaNotContains('private-secret');
         }
         $this->get(route('admin.index'))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
         Http::assertNothingSent();
+    }
+
+    public function test_unavailable_queue_does_not_break_admin_diagnostics(): void
+    {
+        Queue::shouldReceive('connection')->withNoArgs()->andThrow(new \RuntimeException('private connection details'));
+        $this->actingAs(User::factory()->create(['is_admin' => true]))
+            ->get(route('admin.ai.index', ['tab' => 'services']))->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('pendingJobs', null)->where('queueUnavailable', true))
+            ->assertInertiaNotContains('private connection details');
     }
 
     public function test_snapshot_uses_period_data_and_excludes_identity(): void
