@@ -435,3 +435,15 @@ Interview awal kini wajib bagi pengunjung tanpa akun login/profil anonim. Kunjun
 Login email, Google, dan setelah registrasi kini selalu memakai cookie remember Laravel, tanpa checkbox. Sesi singkat tetap memakai konfigurasi yang ada; tidak perlu memperbesar `SESSION_LIFETIME`. Cookie remember bawaan sekitar 400 hari, tetap dapat berakhir karena logout/reset sandi/penghapusan akun atau pembersihan browser. Pengguna yang masuk sebelum perubahan perlu login ulang sekali untuk menerima cookie remember baru. Uji pemulihan akun setelah sesi hilang dan pastikan middleware interview mengenalinya; tombol Keluar harus tetap membatalkan token.
 
 Urutan perkenalan: pilihan anonim/akun → materi (bisa banyak) → peran → nama/avatar untuk anonim. Mode akun diarahkan ke login/daftar setelah materi dan peran tersimpan. Mengganti mode mengosongkan jawaban langkah berikutnya. Profil yang sudah selesai tetap tidak mengulang interview.
+
+## Materi awal Aksara Bali
+
+Untuk menambahkan lima modul Aksara Bali beserta satu latihan pilihan ganda pada masing-masing modul, jalankan seeder khusus setelah migrasi aplikasi tersedia:
+
+```bash
+php artisan db:seed --class=AksaraBaliLessonSeeder --force --no-interaction
+```
+
+Seeder mencakup Wreastra/gantungan/gempelan, pengangge suara, tengenan, ardasuara, dan angka Bali. Modul baru langsung terbit dan memakai alur materi → latihan → progres yang sudah ada; tidak membuat kuis room, audio, atau panggilan AI. Nol memakai ᭐, pepet memakai ᭂ, dan tanda vokal disimpan setelah aksara dasar menurut urutan Unicode. Peninjauan pengajar tetap diperlukan untuk ragam tutur serta contoh kata.
+
+Perintah ini tidak menjadi bagian dari seeder default agar deploy tidak otomatis menambahkan materi. Aman dijalankan ulang: slug yang sudah ada dipertahankan, termasuk suntingan admin, status arsip, ID pelajaran, dan progres. Karena itu, perubahan berikutnya pada isi seeder tidak memperbarui modul yang sudah terpasang; gunakan editor admin untuk menyuntingnya. Jalur yang sudah diarsipkan juga tidak diterbitkan ulang. Tidak ada migrasi, dependency, build frontend, atau restart worker tambahan untuk seeder ini.
