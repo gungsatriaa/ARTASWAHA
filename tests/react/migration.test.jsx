@@ -9,7 +9,6 @@ import Room, { Countdown } from '../../resources/js/react/Pages/Rooms/Show';
 import Lesson from '../../resources/js/react/Pages/Learning/Lesson';
 import Auth from '../../resources/js/react/Pages/Auth/Form';
 import Privacy from '../../resources/js/react/Pages/Privacy';
-import LearningPicker from '../../resources/js/react/Components/LearningPicker';
 import Home from '../../resources/js/react/Pages/Home';
 import Analysis from '../../resources/js/react/Components/Analysis';
 import Keyboard from '../../resources/js/react/Components/Keyboard';
@@ -131,7 +130,7 @@ afterEach(() => {
 it('retains several interview selections and submits their IDs, not a single radio value', () => {
     render(
         <Interview
-            paths={[path, { ...path, id: 2, title: 'Peparikan' }]}
+            paths={[path, { ...path, id: 2, title: 'Aksara Wreastra', group: 'aksara' }]}
             answers={{}}
             step={1}
             roles={{}}
@@ -139,11 +138,11 @@ it('retains several interview selections and submits their IDs, not a single rad
         />,
     );
     fireEvent.click(screen.getByRole('checkbox', { name: /Cecimpedan/ }));
-    fireEvent.click(screen.getByRole('checkbox', { name: /Peparikan/ }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /Aksara Wreastra/ }));
     fireEvent.submit(screen.getByRole('button', { name: /Lanjutkan/ }).closest('form'));
     expect(send.mock.calls[0][2].learning_path_ids).toEqual([1, 2]);
     fireEvent.click(screen.getByRole('checkbox', { name: /Cecimpedan/ }));
-    expect(screen.getByRole('checkbox', { name: /Peparikan/ }).checked).toBe(true);
+    expect(screen.getByRole('checkbox', { name: /Aksara Wreastra/ }).checked).toBe(true);
 });
 
 it('requires login only when an anonymous learner tries to create a quiz', () => {
@@ -501,19 +500,16 @@ it('keeps account profiles free of anonymous registration prompts', () => {
     expect(screen.queryByText('Akun anonim · hanya di perangkat ini')).toBeNull();
 });
 
-it('walks through category and material selection before opening a lesson path', () => {
-    const close = vi.fn();
-    render(<LearningPicker paths={[path]} onClose={close} />);
-    expect(screen.getByRole('button', { name: 'Lanjutkan →' }).disabled).toBe(true);
-    fireEvent.click(screen.getByRole('radio', { name: /Paribasa Bali/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'Lanjutkan →' }));
-    expect(screen.getByText('Pilih materi Paribasa Bali')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Mulai belajar →' }).disabled).toBe(true);
-    fireEvent.click(screen.getByRole('radio', { name: /Cecimpedan/ }));
-    expect(screen.getByRole('link', { name: 'Mulai belajar →' }).getAttribute('href')).toBe(path.url);
-    fireEvent.click(screen.getByRole('button', { name: '← Kembali' }));
-    expect(screen.getByRole('radio', { name: /Paribasa Bali/ }).checked).toBe(true);
-});
+it.each(['account', 'anonymous'])(
+    'takes an existing %s identity directly to learning without an interview picker',
+    (mode) => {
+        page.props.viewer = { ...page.props.viewer, mode };
+        render(<Home paths={[path]} selectedIds={[1]} hasInterview={false} meta={meta} />);
+        expect(screen.getByRole('link', { name: 'Lanjut belajar', exact: true }).getAttribute('href')).toBe('/belajar');
+        expect(screen.queryByRole('dialog')).toBeNull();
+        expect(screen.queryByText('Mulai belajar gratis')).toBeNull();
+    },
+);
 
 it('opens the route-backed interview as a modal with four named steps', () => {
     render(<Interview paths={[path]} answers={{}} step={1} roles={{}} meta={meta} />);

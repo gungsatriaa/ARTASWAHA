@@ -31,7 +31,7 @@ class LearningInterviewController extends Controller
 
     public function show(Request $request): InertiaResponse|RedirectResponse
     {
-        if (LearnerProfile::completedFor($request->user()?->id, $request->cookie('artaswaha_device')) !== null) {
+        if ($request->user() !== null || LearnerProfile::completedFor(null, $request->cookie('artaswaha_device')) !== null) {
             return to_route('home');
         }
 
@@ -50,7 +50,7 @@ class LearningInterviewController extends Controller
 
     public function store(Request $request, LearningProgressService $progressService): RedirectResponse
     {
-        if (LearnerProfile::completedFor($request->user()?->id, $request->cookie('artaswaha_device')) !== null) {
+        if ($request->user() !== null || LearnerProfile::completedFor(null, $request->cookie('artaswaha_device')) !== null) {
             return to_route('home');
         }
 

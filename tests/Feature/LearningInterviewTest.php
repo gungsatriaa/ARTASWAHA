@@ -83,8 +83,8 @@ class LearningInterviewTest extends TestCase
 
     public function test_multiple_topics_are_selected_and_saved_for_the_profile(): void
     {
-        $firstPath = LearningPath::factory()->create(['is_published' => true, 'title' => 'Cecimpedan']);
-        $secondPath = LearningPath::factory()->create(['is_published' => true, 'title' => 'Pepengangge']);
+        $firstPath = LearningPath::factory()->create(['is_published' => true, 'title' => 'Cecimpedan', 'group' => 'paribasa']);
+        $secondPath = LearningPath::factory()->create(['is_published' => true, 'title' => 'Pepengangge', 'group' => 'aksara']);
 
         $this->get(route('learning.interview.show'))
             ->assertInertia(fn (AssertableInertia $page) => $page->etc());
@@ -161,6 +161,14 @@ class LearningInterviewTest extends TestCase
         ]);
 
         $this->withCookie('artaswaha_device', (string) Str::uuid())->get(route('learning.interview.show'))->assertOk();
+    }
+
+    public function test_a_signed_in_account_without_an_interview_does_not_receive_or_repeat_it(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $this->get(route('learning.interview.show'))->assertRedirect(route('home'));
+        $this->post(route('learning.interview.store'), ['step' => 1])->assertRedirect(route('home'));
+        $this->assertDatabaseCount('learner_profiles', 0);
     }
 
     public function test_completed_account_interview_is_recognized_on_another_device(): void

@@ -2,7 +2,7 @@ import Dialog from '../../Components/Dialog';
 import { useEffect, useState } from 'react';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { Button, CategoryIcon, PageMeta } from '../../Components/ui';
-import { Card, Field, Errors, secondaryClass } from '../../Components/forms';
+import { Card, Field, Errors } from '../../Components/forms';
 export default function Interview({ paths, answers, step, roles, avatar, meta }) {
     const { links, navigation, viewer } = usePage().props;
     const form = useForm({
@@ -84,7 +84,7 @@ export default function Interview({ paths, answers, step, roles, avatar, meta })
                     </h1>
                     <p className="mt-3 text-sm leading-7 text-foreground/55">
                         {step === 1
-                            ? 'Pilih satu atau beberapa materi yang ingin kamu pelajari.'
+                            ? 'Boleh memilih beberapa materi Paribasa dan Aksara sekaligus. Pilihanmu membantu AI memberikan saran belajar.'
                             : step === 2
                               ? 'Kami akan menyesuaikan cara menyapa dan rekomendasi belajar untukmu.'
                               : step === 3
@@ -95,6 +95,9 @@ export default function Interview({ paths, answers, step, roles, avatar, meta })
                     <form onSubmit={submit} className="mt-6">
                         {step === 1 && (
                             <div className="space-y-6">
+                                <p role="status" className="text-sm font-semibold text-accent">
+                                    {form.data.learning_path_ids.length} materi dipilih · boleh lebih dari satu
+                                </p>
                                 {[
                                     ['paribasa', 'Bahasa & paribasa'],
                                     ['aksara', 'Aksara Bali'],
@@ -113,6 +116,8 @@ export default function Interview({ paths, answers, step, roles, avatar, meta })
                                                     >
                                                         <input
                                                             type="checkbox"
+                                                            name="learning_path_ids[]"
+                                                            value={path.id}
                                                             className="mt-1 size-5 shrink-0 accent-[var(--color-accent)]"
                                                             checked={form.data.learning_path_ids.includes(path.id)}
                                                             onChange={() =>

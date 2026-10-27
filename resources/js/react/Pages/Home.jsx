@@ -3,19 +3,17 @@ import { Link, usePage } from '@inertiajs/react';
 import * as m from 'motion/react-m';
 import { PageMeta, CategoryIcon, buttonClass, EmptyState } from '../Components/ui';
 import { Card, secondaryClass } from '../Components/forms';
-import LearningPicker from '../Components/LearningPicker';
 import Analysis from '../Components/Analysis';
 import Testimonials from '../Components/Testimonials';
 
-export default function Home({ paths, selectedIds, hasInterview, recent, analysis, meta }) {
+export default function Home({ paths, selectedIds, recent, analysis, meta }) {
     const { viewer, navigation: nav, brand, links } = usePage().props;
-    const [choose, setChoose] = useState(false),
-        [hello, setHello] = useState(false);
+    const [hello, setHello] = useState(false);
     const selected = selectedIds.length ? paths.filter((path) => selectedIds.includes(path.id)) : paths;
-    const start = hasInterview ? (
-        <button className={buttonClass} onClick={() => setChoose(true)}>
+    const start = viewer ? (
+        <Link className={buttonClass} href={nav.learning}>
             Lanjut belajar
-        </button>
+        </Link>
     ) : (
         <Link className={buttonClass} href={links['learning.interview.show']}>
             Mulai belajar gratis
@@ -131,9 +129,12 @@ export default function Home({ paths, selectedIds, hasInterview, recent, analysi
                             Belajar dan gabung kuis tanpa login dengan profil anonim. Masuk atau daftar jika ingin
                             membuat kuis.
                         </p>
-                        <button onClick={() => setChoose(true)} className="mt-2 min-h-11 text-sm font-bold text-accent">
+                        <Link
+                            href={nav.learning}
+                            className="mt-2 inline-flex min-h-11 items-center text-sm font-bold text-accent"
+                        >
                             Atau lihat semua materi
-                        </button>
+                        </Link>
                     </div>
                     <div className="relative mx-auto w-full max-w-lg pb-3 pt-20">
                         <Card className="relative min-h-80 pr-20 sm:min-h-96 sm:pr-28">
@@ -239,7 +240,6 @@ export default function Home({ paths, selectedIds, hasInterview, recent, analysi
                     ))}
                 </section>
             </div>
-            {choose && <LearningPicker paths={paths} onClose={() => setChoose(false)} />}
         </>
     );
 }
