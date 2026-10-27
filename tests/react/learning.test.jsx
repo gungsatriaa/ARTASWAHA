@@ -35,7 +35,7 @@ it.each([
     ['Aksara Wreastra & Gantungan', 'ᬳ'],
     ['Pengangge Suara', 'ᬶ'],
     ['Pengangge Arda Suara', 'ᬳ᭄ᬬ'],
-    ['Pengangge Tengenan', 'ᬳᬂ'],
+    ['Pengangge Tengenan', 'ᬂ'],
     ['Angka Aksara Bali', '᭑'],
 ])('uses the requested glyph for %s', (title, glyph) => {
     const { container } = render(<CategoryIcon group="aksara" title={title} />);

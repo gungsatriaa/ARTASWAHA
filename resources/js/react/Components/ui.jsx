@@ -46,7 +46,7 @@ export function CategoryIcon({ group, title = '', className = 'size-12' }) {
           : subject.includes('arda')
             ? 'ᬳ᭄ᬬ'
             : subject.includes('tengenan')
-              ? 'ᬳᬂ'
+              ? 'ᬂ'
               : subject.includes('suara')
                 ? 'ᬶ'
                 : 'ᬳ';
