@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-export default function Chart({ labels, series, type = 'line', label }) {
+export default function Chart({ labels, series, type = 'line', label, percentage = false }) {
     const canvas = useRef(null),
         [error, setError] = useState(false);
     useEffect(() => {
@@ -16,24 +16,43 @@ export default function Chart({ labels, series, type = 'line', label }) {
                             label: item.label,
                             data: item.data,
                             borderColor: index ? '#ffc700' : '#20aaa8',
-                            backgroundColor: index ? '#ffc70020' : '#007c8020',
+                            backgroundColor:
+                                type === 'bar' ? (index ? '#ffc700' : '#20aaa8') : index ? '#ffc70012' : '#007c8020',
+                            borderRadius: type === 'bar' ? 5 : undefined,
+                            maxBarThickness: 28,
                             borderWidth: 2,
-                            pointRadius: 2,
+                            pointRadius: 0,
+                            pointHoverRadius: 5,
+                            pointHitRadius: 12,
                             tension: 0.35,
                             fill: type === 'line',
                         })),
                     },
                     options: {
                         responsive: true,
+                        interaction: { mode: 'index', intersect: false },
                         maintainAspectRatio: false,
                         animation: window.matchMedia('(prefers-reduced-motion: reduce)').matches
                             ? false
                             : { duration: 350 },
-                        plugins: { legend: { labels: { color: '#f5f3eeaa', usePointStyle: true } } },
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#f5f3eeaa', usePointStyle: true, boxWidth: 6, padding: 20 },
+                            },
+                            tooltip: {
+                                backgroundColor: '#1c2022',
+                                titleColor: '#f5f3ee',
+                                bodyColor: '#f5f3eebb',
+                                padding: 12,
+                                cornerRadius: 12,
+                            },
+                        },
                         scales: {
                             x: { grid: { display: false }, ticks: { color: '#f5f3ee66', maxTicksLimit: 7 } },
                             y: {
                                 beginAtZero: true,
+                                ...(percentage ? { max: 100 } : {}),
                                 grid: { color: '#ffffff08' },
                                 ticks: { color: '#f5f3ee66', precision: 0 },
                             },
@@ -46,7 +65,7 @@ export default function Chart({ labels, series, type = 'line', label }) {
             disposed = true;
             chart?.destroy();
         };
-    }, [labels, series, type]);
+    }, [labels, series, type, percentage]);
     return (
         <>
             {error ? (

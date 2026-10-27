@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { PageMeta, Pagination, buttonClass, EmptyState } from '../../Components/ui';
+import { CategoryIcon, PageMeta, Pagination, buttonClass, EmptyState } from '../../Components/ui';
 import { Card, Heading, secondaryClass } from '../../Components/forms';
 export default function Paths({ paths, meta }) {
     const { links } = usePage().props;
@@ -20,6 +20,12 @@ export default function Paths({ paths, meta }) {
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {entries.map((path) => (
                     <Card key={path.id}>
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                            <CategoryIcon group={path.group} title={path.title} />
+                            <span className="rounded-full bg-background px-3 py-2 text-xs text-foreground/55">
+                                {path.is_published ? 'Ditampilkan' : 'Draf'}
+                            </span>
+                        </div>
                         <p className="text-xs font-semibold text-accent">
                             {path.group === 'aksara' ? 'Aksara Bali' : 'Paribasa Bali'}
                         </p>

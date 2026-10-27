@@ -9,7 +9,12 @@ export const secondaryClass =
     'inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-white/5 px-5 py-3 text-sm font-bold text-foreground/75 transition hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-50';
 export function Card({ as: Tag = 'section', className = '', children, ...props }) {
     return (
-        <Tag data-reveal className={`min-w-0 rounded-card bg-surface p-5 sm:p-7 ${className}`} {...props}>
+        <Tag
+            data-reveal
+            data-ui="card"
+            className={`min-w-0 rounded-card bg-surface p-5 sm:p-7 ${className}`}
+            {...props}
+        >
             {children}
         </Tag>
     );
@@ -111,7 +116,7 @@ export function Action({ url, method = 'post', data = {}, confirm, children, cla
 }
 export function Heading({ title, children, action }) {
     return (
-        <header className="mb-7 flex flex-wrap items-start justify-between gap-4">
+        <header data-ui="page-heading" className="mb-7 flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 max-w-2xl">
                 <h1 className="break-words font-display text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
                     {title}
@@ -134,7 +139,7 @@ export function Back({ href, children = 'Kembali' }) {
 }
 export function Stat({ label, value, note }) {
     return (
-        <div className="min-w-0 rounded-card bg-surface p-4 sm:p-6">
+        <div data-ui="stat" className="min-w-0 rounded-card bg-surface p-4 sm:p-6">
             <p className="text-xs leading-5 text-foreground/55 sm:text-sm">{label}</p>
             <p className="mt-3 font-display text-3xl font-bold tabular-nums sm:text-4xl">{value ?? '—'}</p>
             {note && <p className="mt-2 text-xs leading-5 text-foreground/45">{note}</p>}

@@ -3,6 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, renderHook, screen, waitFor, within } from '@testing-library/react';
 import Interview from '../../resources/js/react/Pages/Learning/Interview';
 import Profile from '../../resources/js/react/Pages/Profile/Show';
+import AdminLayout from '../../resources/js/react/Layouts/AdminLayout';
+import AdminWeekly from '../../resources/js/react/Components/AdminWeekly';
+import OnlineVisitors from '../../resources/js/react/Components/OnlineVisitors';
 import Quizzes from '../../resources/js/react/Pages/Quizzes/Index';
 import Editor, { blankQuestion, payloadQuestions, withoutOption } from '../../resources/js/react/Pages/Quizzes/Editor';
 import Room, { Countdown } from '../../resources/js/react/Pages/Rooms/Show';
@@ -527,6 +530,66 @@ it('does not carry the anonymous-mode transform into the name submission', () =>
     fireEvent.change(screen.getByRole('textbox', { name: 'Nama panggilan' }), { target: { value: 'Made' } });
     fireEvent.submit(screen.getByRole('button', { name: /Mulai belajar/ }).closest('form'));
     expect(send.mock.calls.at(-1)[2]).toEqual(expect.objectContaining({ step: 4, name: 'Made' }));
+});
+
+it('groups admin navigation and keeps module preview selected with a usable mobile menu', () => {
+    page.component = 'Admin/Preview';
+    page.props.viewer = { ...page.props.viewer, mode: 'account', isAdmin: true };
+    page.props.links = {
+        ...page.props.links,
+        'admin.index': '/admin',
+        'admin.analytics.index': '/admin/analitik',
+        'admin.lessons.index': '/admin/pelajaran',
+        'admin.learning-paths.index': '/admin/jalur',
+        'admin.ai.index': '/admin/ai',
+        'admin.audio.index': '/admin/audio',
+    };
+    page.props.navigation.logout = '/keluar';
+    const { unmount } = render(
+        <AdminLayout>
+            <h1>Preview materi</h1>
+        </AdminLayout>,
+    );
+    expect(screen.getByRole('link', { name: 'Modul pembelajaran' }).getAttribute('aria-current')).toBe('page');
+    expect(screen.getByRole('main').classList.contains('admin-workspace')).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Buka menu admin' }));
+    const drawer = within(screen.getByRole('dialog', { name: 'Menu admin' }));
+    expect(drawer.getByRole('navigation', { name: 'Menu pengelolaan' })).toBeTruthy();
+    const statisticsLink = drawer.getByRole('link', { name: 'Statistik & aktivitas' });
+    statisticsLink.addEventListener('click', (event) => event.preventDefault());
+    fireEvent.click(statisticsLink);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    unmount();
+    delete page.component;
+});
+
+it('shows absolute weekly changes without inventing percentages from zero baselines', () => {
+    render(
+        <AdminWeekly
+            weekly={{
+                completions: { current: 5, previous: 0 },
+                answers: { current: 2, previous: 4 },
+                users: { current: 0, previous: 0 },
+            }}
+        />,
+    );
+    expect(screen.getByText('+5')).toBeTruthy();
+    expect(screen.getByText('-2')).toBeTruthy();
+    expect(screen.queryByText(/Infinity|NaN/)).toBeNull();
+    expect(screen.getAllByText(/dibanding 7 hari sebelumnya/)).toHaveLength(3);
+});
+
+it('updates online visitor counts from the live endpoint without exposing identities', async () => {
+    page.props.links['admin.analytics.online'] = '/admin/analitik/online';
+    vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({ ok: true, json: async () => ({ total: 7, accounts: 4, anonymous: 3 }) }),
+    );
+    render(<OnlineVisitors />);
+    await waitFor(() => expect(screen.getByText('7')).toBeTruthy());
+    expect(screen.getByText('4')).toBeTruthy();
+    expect(screen.getByText('3')).toBeTruthy();
+    expect(screen.getByText('Sinyal aktivitas dalam 2 menit terakhir')).toBeTruthy();
 });
 
 const adminPages = import.meta.glob('../../resources/js/react/Pages/Admin/*.jsx');

@@ -3,16 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\ContentAudio;
-use App\Models\LearnerProfile;
 use App\Models\LearningPath;
 use App\Models\Lesson;
+use App\Services\AdminAnalyticsService;
 use App\Services\PagePresenter;
 use Inertia\Response as InertiaResponse;
 
 class DashboardController extends Controller
 {
-    public function __invoke(): InertiaResponse
+    public function __invoke(AdminAnalyticsService $analytics): InertiaResponse
     {
         $lessonCounts = Lesson::query()
             ->selectRaw('count(*) as total')
@@ -33,12 +32,13 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        $overview = $analytics->snapshot();
         $aiTasks = [
-            'failed_interviews' => LearnerProfile::where('analysis_status', 'failed')->count(),
-            'audio_review' => ContentAudio::where('status', 'review')->count(),
-            'audio_failed' => ContentAudio::whereIn('status', ['failed', 'stale'])->count(),
+            'failed_interviews' => $overview['metrics']['failedAnalysis'],
+            'audio_review' => $overview['metrics']['audioReview'],
+            'audio_failed' => $overview['metrics']['audioFailed'],
         ];
 
-        return app(PagePresenter::class)->render('admin.dashboard', compact('lessonCounts', 'learningPaths', 'recentLessons', 'aiTasks'));
+        return app(PagePresenter::class)->render('admin.dashboard', compact('lessonCounts', 'learningPaths', 'recentLessons', 'aiTasks', 'overview'));
     }
 }

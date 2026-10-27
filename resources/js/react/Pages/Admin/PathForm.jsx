@@ -12,7 +12,7 @@ export default function PathForm({ path, meta }) {
         is_published: path.is_published ?? false,
     });
     return (
-        <div className="max-w-3xl">
+        <div className="mx-auto max-w-4xl">
             <PageMeta {...meta} />
             <Back href={links['admin.learning-paths.index']}>Kembali ke jalur belajar</Back>
             <Heading title={path.id ? 'Ubah jalur' : 'Jalur belajar baru'}>

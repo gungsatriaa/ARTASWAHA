@@ -3,9 +3,20 @@ import { lazy, Suspense, useMemo } from 'react';
 import { PageMeta } from '../../Components/ui';
 import { Card, Heading, Stat } from '../../Components/forms';
 import { usePage } from '@inertiajs/react';
-import usePolling from '../../Hooks/usePolling';
+import OnlineVisitors from '../../Components/OnlineVisitors';
+import AdminWeekly from '../../Components/AdminWeekly';
+import { Link } from '@inertiajs/react';
 const Chart = lazy(() => import('../../Components/Chart'));
-export default function Analytics({ chart, metrics, topPaths, meta }) {
+export default function Analytics({
+    chart,
+    metrics,
+    topPaths,
+    weekly = {},
+    roomStatuses = {},
+    analysisStatuses = {},
+    roles = [],
+    meta,
+}) {
     const { links } = usePage().props;
     const activitySeries = useMemo(
         () => [
@@ -15,40 +26,28 @@ export default function Analytics({ chart, metrics, topPaths, meta }) {
         [chart],
     );
     const userSeries = useMemo(() => [{ label: 'Akun baru', data: chart.users }], [chart]);
-    const { data: online, error } = usePolling(links['admin.analytics.online'], { interval: 15000, limit: 10000 });
+    const accuracySeries = useMemo(
+        () => [{ label: 'Jawaban benar (%)', data: chart.accuracy ?? chart.labels.map(() => null) }],
+        [chart],
+    );
     return (
         <>
             <PageMeta {...meta} />
             <Heading title="Analitik ARTASWAHA">
                 Aktivitas belajar dan kuis dari data tersimpan. Grafik harian memakai waktu Bali (WITA).
             </Heading>
-            <Card>
-                <div className="flex flex-wrap items-start justify-between gap-5">
-                    <div>
-                        <p className="text-xs font-bold text-success">● Aktivitas langsung</p>
-                        <h2 className="mt-3 font-display text-2xl font-bold">Pengunjung aktif</h2>
-                        <p className="mt-2 max-w-xl text-sm leading-7 text-foreground/55">
-                            Browser yang mengirim aktivitas dalam 2 menit terakhir; diperbarui tiap 15 detik.
-                        </p>
-                    </div>
-                    <p className="font-display text-6xl font-bold tabular-nums text-accent" aria-live="polite">
-                        {online?.total ?? '—'}
-                    </p>
-                </div>
-                <div className="mt-5 flex flex-wrap gap-4 text-sm text-foreground/60">
-                    <p>
-                        Akun <strong className="ml-2 text-foreground">{online?.accounts ?? '—'}</strong>
-                    </p>
-                    <p>
-                        Tanpa akun <strong className="ml-2 text-foreground">{online?.anonymous ?? '—'}</strong>
-                    </p>
-                </div>
-                {error && <p className="mt-3 text-xs text-danger">{error}</p>}
-            </Card>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <OnlineVisitors />
+            <section className="mt-6" aria-labelledby="weekly-title">
+                <h2 id="weekly-title" className="mb-4 font-display text-xl font-bold">
+                    Tujuh hari terakhir
+                </h2>
+                <AdminWeekly weekly={weekly} />
+            </section>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                 {[
                     ['Akun terdaftar', 'users'],
                     ['Profil anonim', 'anonymousProfiles'],
+                    ['Pelajar menyelesaikan modul', 'learners'],
                     ['Modul selesai', 'completedLessons'],
                     ['Kuis dibuat', 'quizzes'],
                 ].map(([label, key]) => (
@@ -108,9 +107,107 @@ export default function Analytics({ chart, metrics, topPaths, meta }) {
                     </ol>
                 </Card>
             </div>
+            <div className="mt-5 grid items-start gap-5 xl:grid-cols-2">
+                <Card>
+                    <h2 className="font-display text-xl font-bold">Ketepatan jawaban per hari</h2>
+                    <p className="mt-2 text-xs leading-6 text-foreground/50">
+                        Persentase jawaban benar. Hari tanpa jawaban tidak diberi nilai 0%.
+                    </p>
+                    <Suspense fallback={<Skeleton label="Menyiapkan grafik ketepatan…" />}>
+                        <Chart
+                            percentage
+                            label="Ketepatan jawaban kuis 14 hari"
+                            labels={chart.labels}
+                            series={accuracySeries}
+                        />
+                    </Suspense>
+                </Card>
+                <Card>
+                    <h2 className="font-display text-xl font-bold">Peran pelajar</h2>
+                    <p className="mt-2 text-xs leading-6 text-foreground/50">
+                        Pilihan peran dari profil perkenalan yang tersimpan.
+                    </p>
+                    <ul className="mt-5 space-y-4">
+                        {roles.map((item) => {
+                            const total = roles.reduce((sum, entry) => sum + Number(entry.total), 0);
+                            return (
+                                <li key={item.role}>
+                                    <div className="mb-2 flex justify-between gap-3 text-sm">
+                                        <span>
+                                            {{
+                                                murid: 'Murid',
+                                                guru: 'Guru',
+                                                pendatang: 'Pendatang',
+                                                masyarakat: 'Masyarakat umum',
+                                            }[item.role] ?? 'Lainnya'}
+                                        </span>
+                                        <strong className="text-accent">{item.total}</strong>
+                                    </div>
+                                    <progress
+                                        aria-label={`Proporsi peran ${item.role}`}
+                                        value={Number(item.total)}
+                                        max={Math.max(1, total)}
+                                        className="block h-2 w-full overflow-hidden rounded-full accent-[var(--color-primary)]"
+                                    />
+                                </li>
+                            );
+                        })}
+                        {!roles.length && (
+                            <li className="rounded-2xl bg-background p-5 text-sm text-foreground/50">
+                                Belum ada profil perkenalan.
+                            </li>
+                        )}
+                    </ul>
+                </Card>
+                <Card>
+                    <h2 className="font-display text-xl font-bold">Status room</h2>
+                    <div className="mt-5 grid grid-cols-2 gap-3">
+                        {Object.entries({
+                            waiting: 'Menunggu',
+                            active: 'Berlangsung',
+                            finished: 'Selesai',
+                            inactive: 'Nonaktif',
+                        }).map(([key, label]) => (
+                            <div key={key} className="rounded-2xl bg-background p-4">
+                                <p className="text-xs text-foreground/50">{label}</p>
+                                <p className="mt-2 font-display text-2xl font-bold">{roomStatuses[key] ?? 0}</p>
+                            </div>
+                        ))}
+                    </div>
+                </Card>
+                <Card>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <h2 className="font-display text-xl font-bold">Kesehatan analisis AI</h2>
+                        <Link className="text-sm font-bold text-accent" href={links['admin.ai.index']}>
+                            Pusat AI
+                        </Link>
+                    </div>
+                    <div className="mt-5 grid grid-cols-2 gap-3">
+                        {[
+                            ['Selesai', analysisStatuses.completed ?? 0],
+                            ['Mengantre / diproses', metrics.pendingAnalysis ?? 0],
+                            ['Gagal', metrics.failedAnalysis ?? 0],
+                            ['Tertunda > 10 menit', metrics.delayedAnalysis ?? 0],
+                            ['Audio perlu tinjauan', metrics.audioReview ?? 0],
+                            ['Audio gagal / kedaluwarsa', metrics.audioFailed ?? 0],
+                        ].map(([label, value]) => (
+                            <div key={label} className="rounded-2xl bg-background p-4">
+                                <p className="text-xs text-foreground/50">{label}</p>
+                                <p className="mt-2 font-display text-2xl font-bold">{value}</p>
+                            </div>
+                        ))}
+                    </div>
+                    <p className="mt-4 text-xs leading-6 text-foreground/50">
+                        Antrean tertunda termasuk dalam total mengantre / diproses; tidak selalu berarti gagal.
+                    </p>
+                </Card>
+            </div>
             <p className="mt-6 text-xs leading-6 text-foreground/40">
-                Online adalah browser aktif, bukan jumlah koneksi WebSocket. Browser yang menutup halaman masih bisa
-                dihitung hingga dua menit. Room dan jawaban yang dihapus tidak masuk statistik.
+                Online menghitung akun aktif satu kali serta sesi tanpa akun. Statistik total bersifat kumulatif,
+                sementara grafik dan perbandingan mingguan memakai 14 hari terakhir. Pelajar tercatat menghitung akun
+                unik atau profil perangkat tanpa akun yang menyelesaikan modul. Aktivitas membaca dan durasi belajar
+                belum tercatat. Online bukan jumlah koneksi WebSocket. Browser yang menutup halaman masih bisa dihitung
+                hingga dua menit. Room dan jawaban yang dihapus tidak masuk statistik.
             </p>
         </>
     );

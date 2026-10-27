@@ -18,6 +18,7 @@ export default function Lessons({ lessons, paths, filters, meta }) {
                 Tulis, tinjau, dan terbitkan materi yang siap dipelajari.
             </Heading>
             <form
+                aria-label="Filter modul pembelajaran"
                 onSubmit={(e) => {
                     e.preventDefault();
                     router.get(links['admin.lessons.index'], form.data, { preserveState: true, replace: true });
@@ -50,6 +51,9 @@ export default function Lessons({ lessons, paths, filters, meta }) {
                 </Field>
                 <button className={secondaryClass}>Terapkan</button>
             </form>
+            <p className="mb-4 text-xs text-foreground/45">
+                {lessons.total ?? lessons.data.length} modul sesuai filter
+            </p>
             <div className="space-y-4">
                 {lessons.data.map((lesson) => (
                     <Card key={lesson.id}>

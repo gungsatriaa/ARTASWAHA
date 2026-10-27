@@ -16,7 +16,7 @@ export default function AudioEdit({ title, text, action, configured, audio, back
         form.setData('version', audio?.version ?? '');
     }, [audio?.version]);
     return (
-        <div className="max-w-4xl">
+        <div className="mx-auto max-w-5xl">
             <PageMeta {...meta} />
             <Back href={backUrl}>Kembali ke materi</Back>
             <Heading title="Siapkan audio">{title}</Heading>

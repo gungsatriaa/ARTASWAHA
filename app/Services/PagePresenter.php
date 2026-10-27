@@ -34,7 +34,7 @@ class PagePresenter
             'quizzes.create' => ['Quizzes/Editor', ['quiz' => isset($data['quiz']) ? $this->quiz($data['quiz'], true) : null, 'hasRooms' => $data['hasRooms'] ?? false, 'preview' => request()->boolean('preview')], isset($data['quiz']) ? 'Edit kuis' : 'Buat kuis'],
             'quizzes.show' => ['Quizzes/Show', ['quiz' => $this->quiz($data['quiz'], true)], $data['quiz']->title],
             'rooms.show' => ['Rooms/Show', $this->room($data), 'Room '.$data['room']->code],
-            'admin.dashboard' => ['Admin/Dashboard', ['counts' => $data['lessonCounts']->only(['total', 'published', 'drafts', 'archived']), 'tasks' => $data['aiTasks'], 'paths' => $data['learningPaths']->map(fn ($path) => $this->adminPath($path)), 'lessons' => $data['recentLessons']->map(fn ($lesson) => $this->lesson($lesson, true, false))], 'Ringkasan konten'],
+            'admin.dashboard' => ['Admin/Dashboard', ['overview' => $data['overview'], 'counts' => $data['lessonCounts']->only(['total', 'published', 'drafts', 'archived']), 'tasks' => $data['aiTasks'], 'paths' => $data['learningPaths']->map(fn ($path) => $this->adminPath($path)), 'lessons' => $data['recentLessons']->map(fn ($lesson) => $this->lesson($lesson, true, false))], 'Dashboard pengelola'],
             'admin.analytics' => ['Admin/Analytics', $data, 'Analitik ARTASWAHA'],
             'admin.learning-paths.index' => ['Admin/Paths', ['paths' => $this->listing($data['learningPaths'], fn ($path) => $this->adminPath($path))], 'Jalur belajar'],
             'admin.learning-paths.form' => ['Admin/PathForm', ['path' => $this->adminPath($data['learningPath'])], $data['learningPath']->exists ? 'Ubah jalur belajar' : 'Buat jalur belajar'],

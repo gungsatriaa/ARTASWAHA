@@ -25,6 +25,7 @@ export default function AudioIndex({ items, type, configured, filters, meta }) {
                     <Link
                         href={`${links['admin.audio.index']}?type=${value}`}
                         key={value}
+                        aria-current={type === value ? 'page' : undefined}
                         className={`${secondaryClass} ${type === value ? '!bg-primary/20 !text-accent' : ''}`}
                     >
                         {label}
@@ -32,6 +33,7 @@ export default function AudioIndex({ items, type, configured, filters, meta }) {
                 ))}
             </nav>
             <form
+                aria-label="Filter audio pembelajaran"
                 onSubmit={(e) => {
                     e.preventDefault();
                     router.get(links['admin.audio.index'], form.data, { preserveState: true, replace: true });
@@ -65,6 +67,9 @@ export default function AudioIndex({ items, type, configured, filters, meta }) {
                 )}
                 <Button type="submit">Terapkan</Button>
             </form>
+            <p className="mb-4 text-xs text-foreground/45">
+                {items.total ?? items.data.length} item audio sesuai filter
+            </p>
             <div className="space-y-3">
                 {items.data.map((item) => (
                     <Card key={item.id}>

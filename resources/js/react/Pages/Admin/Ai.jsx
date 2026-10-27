@@ -53,6 +53,7 @@ export default function Ai({
                 ].map(([value, label]) => (
                     <Link
                         key={value}
+                        aria-current={tab === value ? 'page' : undefined}
                         href={`${links['admin.ai.index']}?tab=${value}&start=${start}&end=${end}`}
                         className={`${secondaryClass} ${tab === value ? '!bg-primary/20 !text-accent' : ''}`}
                     >
@@ -62,6 +63,7 @@ export default function Ai({
             </nav>
             {['overview', 'interviews'].includes(tab) && (
                 <form
+                    aria-label="Filter analisis AI"
                     onSubmit={(e) => {
                         e.preventDefault();
                         router.get(links['admin.ai.index'], form.data, { preserveState: true, replace: true });
