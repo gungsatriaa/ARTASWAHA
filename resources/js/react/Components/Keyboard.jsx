@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { editAksara } from '../../aksara-edit';
 import { secondaryClass } from './forms';
+import Icon from './Icon';
 
 const bases = [
     ['Ha', 0x1b33],
@@ -53,37 +54,58 @@ export default function Keyboard({ autoOpen = false, targetRef }) {
         <details
             open={open}
             onToggle={(event) => setOpen(event.currentTarget.open)}
-            className="my-5 rounded-2xl bg-primary/10 p-4"
+            className="my-5 min-w-0 overflow-hidden rounded-card bg-surface p-4 sm:p-6"
         >
-            <summary className="min-h-11 cursor-pointer content-center text-sm font-bold text-accent">
-                Keyboard aksara Bali
+            <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent [&::-webkit-details-marker]:hidden">
+                <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary/15 text-accent">
+                    <Icon name="aksara" className="size-6" />
+                </span>
+                <span className="min-w-0 flex-1">
+                    <span className="block font-display text-lg font-bold sm:text-xl">Keyboard aksara Bali</span>
+                    <span className="mt-1 block text-xs font-normal leading-5 text-foreground/50">
+                        Ketuk aksara untuk menyusun tulisan.
+                    </span>
+                </span>
+                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-white/5 text-foreground/60">
+                    <Icon name="chevron" className={`size-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+                </span>
             </summary>
             {open && (
-                <div className="mt-3">
-                    <div className="flex flex-wrap gap-2">
+                <div className="mt-5">
+                    <div
+                        role="group"
+                        aria-label="Kategori aksara"
+                        className="grid grid-cols-3 gap-1 rounded-full bg-background p-1"
+                    >
                         {['dasar', 'pangangge', 'pasangan'].map((value) => (
                             <button
                                 type="button"
                                 key={value}
                                 onClick={() => setMode(value)}
                                 aria-pressed={mode === value}
-                                className={`${secondaryClass} ${mode === value ? '!bg-accent !text-background' : ''}`}
+                                aria-label={value}
+                                className={`min-h-11 min-w-0 rounded-full px-2 py-3 text-xs font-semibold capitalize transition-colors focus-visible:outline-2 focus-visible:outline-accent sm:text-sm ${mode === value ? 'bg-accent text-background' : 'text-foreground/60 hover:bg-white/5 hover:text-foreground'}`}
                             >
                                 {value}
                             </button>
                         ))}
                     </div>
                     {!targetRef && (
-                        <textarea
-                            ref={scratch}
-                            aria-label="Coretan latihan aksara"
-                            value={text}
-                            onChange={(event) => setText(event.target.value)}
-                            rows={2}
-                            className="my-3 w-full rounded-xl bg-background p-4 font-balinese text-2xl"
-                        />
+                        <label className="mt-5 block">
+                            <span className="text-xs font-semibold text-foreground/60">Area latihan</span>
+                            <textarea
+                                ref={scratch}
+                                aria-label="Coretan latihan aksara"
+                                value={text}
+                                onChange={(event) => setText(event.target.value)}
+                                rows={2}
+                                placeholder="Tulis aksara di sini…"
+                                spellCheck={false}
+                                className="mt-2 min-h-28 w-full resize-y rounded-2xl bg-background px-4 py-5 font-balinese text-3xl leading-relaxed text-foreground outline-none placeholder:font-sans placeholder:text-sm placeholder:text-foreground/30 focus-visible:ring-2 focus-visible:ring-primary"
+                            />
+                        </label>
                     )}
-                    <div className="mt-3 grid grid-cols-5 gap-2 sm:grid-cols-9">
+                    <div className="mt-5 grid grid-cols-5 gap-1.5 sm:grid-cols-9 sm:gap-2">
                         {(mode === 'pangangge' ? marks : bases).map(([name, code]) => (
                             <button
                                 type="button"
@@ -93,17 +115,22 @@ export default function Keyboard({ autoOpen = false, targetRef }) {
                                 onClick={() =>
                                     edit({ text: String.fromCodePoint(code), pasangan: mode === 'pasangan' })
                                 }
-                                className="flex min-h-16 min-w-0 flex-col items-center justify-center rounded-xl bg-background p-1 hover:bg-primary/20"
+                                className="flex min-h-20 min-w-0 select-none flex-col items-center justify-center gap-1 rounded-2xl bg-background px-1 py-2 text-foreground transition-colors hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:bg-primary/30 sm:min-h-24"
                             >
-                                <span lang="ban" className="font-balinese text-2xl leading-relaxed">
+                                <span
+                                    lang="ban"
+                                    className="grid min-h-10 place-items-center font-balinese text-3xl leading-relaxed"
+                                >
                                     {mode === 'pasangan' ? '◌᭄' : mode === 'pangangge' ? '◌' : ''}
                                     {String.fromCodePoint(code)}
                                 </span>
-                                <span className="mt-1 text-[10px] text-foreground/55">{name}</span>
+                                <span className="text-center font-sans text-[10px] font-medium leading-4 text-foreground/55 sm:text-xs">
+                                    {name}
+                                </span>
                             </button>
                         ))}
                     </div>
-                    <div className="mt-3 flex flex-wrap gap-2">
+                    <div className="mt-4 flex flex-wrap gap-2 rounded-2xl bg-background/60 p-2">
                         {[
                             ['left', '←'],
                             ['right', '→'],
@@ -114,7 +141,7 @@ export default function Keyboard({ autoOpen = false, targetRef }) {
                             <button
                                 key={action}
                                 type="button"
-                                className={secondaryClass}
+                                className={`${secondaryClass} grow !px-3 !py-2 sm:grow-0 sm:!px-5`}
                                 onPointerDown={(event) => event.preventDefault()}
                                 onClick={() => edit({ action })}
                             >
@@ -125,7 +152,11 @@ export default function Keyboard({ autoOpen = false, targetRef }) {
                     <p role="status" className="mt-2 text-xs text-accent">
                         {message}
                     </p>
-                    <p className="mt-2 text-xs leading-5 text-foreground/45">Coretan tidak disimpan atau dinilai.</p>
+                    {!targetRef && (
+                        <p className="mt-3 text-xs leading-5 text-foreground/45">
+                            Coretan tidak disimpan atau dinilai.
+                        </p>
+                    )}
                 </div>
             )}
         </details>
