@@ -1,3 +1,4 @@
+import Footer from '../Components/Footer';
 import { ProfileDropdown, SubjectDropdown, SubjectLinks } from '../Components/NavigationMenus';
 import PageEffects from '../Components/PageEffects';
 import { useEffect, useState } from 'react';
@@ -207,30 +208,13 @@ export default function SiteLayout({ children }) {
                     ))}
                 </nav>
             )}
-            {(!viewer || component === 'Privacy') &&
-                !component.startsWith('Auth/') &&
-                !['Learning/Interview', 'Learning/Lesson'].includes(component) && (
-                    <footer className="mx-auto mt-8 grid max-w-7xl gap-8 px-5 py-10 text-sm text-foreground/55 sm:grid-cols-3 lg:px-10">
-                        <div>
-                            <p className="font-display text-xl font-bold text-foreground">ARTASWAHA</p>
-                            <p className="mt-3 max-w-xs leading-7">
-                                Belajar bahasa, sastra, dan aksara Bali lewat cerita, latihan, dan permainan.
-                            </p>
-                        </div>
-                        <div className="grid content-start gap-3">
-                            <Link href={nav.learning}>Jelajahi materi</Link>
-                            <Link href={nav.quizzes}>Arena kuis</Link>
-                            <Link href={nav.privacy}>Kebijakan privasi</Link>
-                        </div>
-                        <div>
-                            <p className="font-bold text-foreground">Hubungi kami</p>
-                            <a href="mailto:kerthajayasoftware@gmail.com" className="mt-3 block break-all text-accent">
-                                kerthajayasoftware@gmail.com
-                            </a>
-                            <p className="mt-4 text-xs">© {new Date().getFullYear()} ARTASWAHA</p>
-                        </div>
-                    </footer>
-                )}
+            {(component === 'Home' ||
+                component === 'Privacy' ||
+                (!viewer &&
+                    !component.startsWith('Auth/') &&
+                    !['Learning/Interview', 'Learning/Lesson'].includes(component))) && (
+                <Footer className={viewer && component === 'Home' ? 'hidden md:block' : ''} />
+            )}
             <Dialog
                 open={menu}
                 onClose={() => setMenu(false)}

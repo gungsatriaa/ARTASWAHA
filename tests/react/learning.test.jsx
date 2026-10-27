@@ -8,7 +8,7 @@ import Dialog from '../../resources/js/react/Components/Dialog';
 
 const { page, get } = vi.hoisted(() => ({ page: { props: {} }, get: vi.fn() }));
 vi.mock('@inertiajs/react', () => ({
-    usePage: () => ({ ...page, component: 'Learning/Catalog' }),
+    usePage: () => ({ ...page, component: page.component ?? 'Learning/Catalog' }),
     Link: ({ children, preserveScroll, ...props }) => <a {...props}>{children}</a>,
     Head: () => null,
     router: { get, on: () => () => {} },
@@ -31,6 +31,7 @@ vi.mock('motion/react-m', async () => {
 });
 
 beforeEach(() => {
+    page.component = 'Learning/Catalog';
     page.props = {
         viewer: { name: 'Komang', avatar: '/avatar/penyu.webp', mode: 'anonymous', isAdmin: false },
         navigation: {
@@ -41,6 +42,7 @@ beforeEach(() => {
             login: '/masuk',
             register: '/daftar',
             presence: null,
+            privacy: '/kebijakan-privasi',
         },
         brand: { logo: '/image/maskot.webp', mascot: '/image/asset1.webp' },
         flash: { message: null },
@@ -233,4 +235,20 @@ it('opens separate subject dropdowns and supports keyboard dismissal with restor
     expect(screen.getByRole('link', { name: 'Wreastra' }).getAttribute('href')).toBe('/belajar/wreastra');
     fireEvent.pointerDown(document.body);
     expect(screen.queryByRole('link', { name: 'Wreastra' })).toBeNull();
+});
+
+it('shows the shared homepage footer for an existing identity with published subject links and contact', () => {
+    page.component = 'Home';
+    page.props.materials = { paribasa: [{ id: 1, title: 'Cecimpedan', url: '/belajar/cecimpedan' }], aksara: [] };
+    render(
+        <SiteLayout>
+            <h1>Beranda</h1>
+        </SiteLayout>,
+    );
+    expect(screen.getByRole('contentinfo', { name: 'Footer ARTASWAHA' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Cecimpedan' }).getAttribute('href')).toBe('/belajar/cecimpedan');
+    expect(screen.getByRole('link', { name: 'Kebijakan privasi' }).getAttribute('href')).toBe('/kebijakan-privasi');
+    expect(screen.getByRole('link', { name: 'kerthajayasoftware@gmail.com' }).getAttribute('href')).toBe(
+        'mailto:kerthajayasoftware@gmail.com',
+    );
 });

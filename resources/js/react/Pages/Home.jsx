@@ -5,6 +5,7 @@ import { PageMeta, CategoryIcon, buttonClass, EmptyState } from '../Components/u
 import { Card, secondaryClass } from '../Components/forms';
 import Analysis from '../Components/Analysis';
 import Testimonials from '../Components/Testimonials';
+import Icon from '../Components/Icon';
 
 export default function Home({ paths, selectedIds, recent, analysis, meta }) {
     const { viewer, navigation: nav, brand, links } = usePage().props;
@@ -110,14 +111,18 @@ export default function Home({ paths, selectedIds, recent, analysis, meta }) {
                 </div>
             )}
             <div className={viewer ? 'hidden md:block' : ''}>
-                <section className="grid min-h-[calc(100svh-7rem)] items-center gap-10 py-10 lg:grid-cols-[1.1fr_.9fr] lg:py-16">
+                <section className="grid items-center gap-10 pb-12 pt-5 sm:gap-14 sm:py-12 lg:grid-cols-[1.08fr_.92fr] lg:gap-12 lg:py-16">
                     <div className="max-w-2xl">
-                        <h1 className="font-display text-4xl font-extrabold leading-tight tracking-tight sm:text-6xl lg:text-7xl">
+                        <p className="mb-5 inline-flex items-center gap-2 text-xs font-semibold text-accent sm:text-sm">
+                            <span className="size-2 rounded-full bg-primary" />
+                            Bahasa, aksara, dan cerita Bali
+                        </p>
+                        <h1 className="font-display text-[2.65rem] font-extrabold leading-[1.08] tracking-tight sm:text-6xl lg:text-[4.5rem]">
                             Bahasa Bali jadi <span className="text-accent">seru</span> dipelajari.
                         </h1>
                         <p className="mt-6 max-w-xl text-base leading-8 text-foreground/60 sm:text-lg">
-                            Kenali paribasa dan aksara Bali lewat cerita, latihan singkat, dan permainan yang bisa
-                            langsung dicoba. Mulai tanpa akun; progres tersimpan di perangkatmu.
+                            Dari teka-teki sehari-hari sampai aksara pertama. Kenali budaya Bali lewat cerita, latihan
+                            singkat, dan permainan yang bisa langsung kamu coba.
                         </p>
                         <div className="mt-8 flex flex-wrap gap-3">
                             {start}
@@ -126,8 +131,7 @@ export default function Home({ paths, selectedIds, recent, analysis, meta }) {
                             </Link>
                         </div>
                         <p className="mt-4 text-xs leading-6 text-foreground/45">
-                            Belajar dan gabung kuis tanpa login dengan profil anonim. Masuk atau daftar jika ingin
-                            membuat kuis.
+                            Mulai tanpa akun. Progres belajar tersimpan di perangkatmu.
                         </p>
                         <Link
                             href={nav.learning}
@@ -136,42 +140,54 @@ export default function Home({ paths, selectedIds, recent, analysis, meta }) {
                             Atau lihat semua materi
                         </Link>
                     </div>
-                    <div className="relative mx-auto w-full max-w-lg pb-3 pt-20">
-                        <Card className="relative min-h-80 pr-20 sm:min-h-96 sm:pr-28">
-                            <p className="text-sm font-bold text-accent">Belajar Aksara Bali</p>
-                            <p lang="ban" className="mt-12 font-balinese text-4xl leading-loose sm:text-5xl">
+                    <Card className="mx-auto w-full max-w-lg !p-5 sm:!p-7">
+                        <div className="flex items-center gap-3">
+                            <CategoryIcon group="aksara" className="size-10" />
+                            <p className="text-sm font-bold text-accent">Kenalan dengan Aksara Bali</p>
+                        </div>
+                        <div className="mt-5 grid grid-cols-[minmax(0,1fr)_7rem] items-center gap-3 sm:grid-cols-[minmax(0,1fr)_10rem]">
+                            <div className="min-w-0">
+                                <p className="mb-2 text-xs text-foreground/40">Sapaan yang mengawali cerita</p>
+                                <h2 className="font-display text-2xl font-bold leading-tight sm:text-3xl">
+                                    Om Swastyastu
+                                </h2>
+                                <p className="mt-3 text-sm leading-7 text-foreground/55">
+                                    Salam pembuka dalam bahasa Bali. Mari mulai dari yang dekat dengan keseharian.
+                                </p>
+                            </div>
+                            <m.button
+                                type="button"
+                                aria-label="Sapa maskot ARTASWAHA"
+                                onClick={() => setHello(!hello)}
+                                whileTap={{ rotate: -5, scale: 0.96 }}
+                                className="relative rounded-full focus-visible:outline-2 focus-visible:outline-accent"
+                            >
+                                <img
+                                    src={brand.mascot}
+                                    width="320"
+                                    height="400"
+                                    alt="Maskot ARTASWAHA membaca lontar"
+                                    className="h-auto w-full object-contain"
+                                />
+                                {hello && (
+                                    <span
+                                        role="status"
+                                        className="absolute right-0 top-0 rounded-2xl bg-accent px-3 py-2 text-xs font-bold text-background"
+                                    >
+                                        Rahajeng! Yuk, belajar.
+                                    </span>
+                                )}
+                            </m.button>
+                        </div>
+                        <div className="mt-5 rounded-2xl bg-background p-4 sm:p-5">
+                            <p lang="ban" className="break-words font-balinese text-3xl leading-loose sm:text-4xl">
                                 ᬒᬁ ᬲ᭄ᬯᬲ᭄ᬢ᭄ᬬᬲ᭄ᬢᬸ᭟
                             </p>
-                            <h2 className="mt-3 font-display text-2xl font-bold">Om Swastyastu</h2>
-                            <p className="mt-3 max-w-xs text-sm leading-7 text-foreground/55">
-                                Salam pembuka dalam bahasa Bali. Kenali bentuk aksaranya lewat contoh.
+                            <p className="mt-3 text-xs leading-6 text-foreground/40">
+                                Kenali bentuk aksaranya, lalu coba latihan singkatnya.
                             </p>
-                            <p className="mt-6 text-xs text-foreground/40">Belajar aksara lewat contoh visual</p>
-                        </Card>
-                        <m.button
-                            type="button"
-                            aria-label="Sapa maskot ARTASWAHA"
-                            onClick={() => setHello(!hello)}
-                            whileTap={{ rotate: -5, scale: 0.96 }}
-                            className="absolute -right-3 top-0 w-48 max-w-[54%] rounded-full focus-visible:outline-2 focus-visible:outline-accent sm:-right-5 sm:w-64"
-                        >
-                            <img
-                                src={brand.mascot}
-                                width="320"
-                                height="400"
-                                alt="Maskot ARTASWAHA membaca lontar"
-                                className="h-auto w-full object-contain"
-                            />
-                            {hello && (
-                                <span
-                                    role="status"
-                                    className="absolute -left-8 top-2 rounded-full bg-accent px-4 py-2 text-sm font-bold text-background"
-                                >
-                                    Rahajeng! Yuk, belajar.
-                                </span>
-                            )}
-                        </m.button>
-                    </div>
+                        </div>
+                    </Card>
                 </section>
                 <section id="tentang" className="py-12 sm:py-20">
                     <h2 className="max-w-2xl font-display text-3xl font-bold sm:text-4xl">
@@ -181,21 +197,41 @@ export default function Home({ paths, selectedIds, recent, analysis, meta }) {
                         ARTASWAHA mengajakmu belajar lewat contoh, cerita, dan latihan singkat. Pilih materi yang kamu
                         sukai, lalu lanjutkan sesuai waktumu.
                     </p>
-                    <div className="mt-8 grid gap-4 sm:grid-cols-3">
+                    <div className="mt-8 grid gap-4 md:grid-cols-2">
                         {[
-                            ['Paribasa Bali', 'Cecimpedan, peparikan, dan sesonggakan.', 'paribasa'],
-                            ['Aksara Bali', 'Kenali bentuk, tanda, gantungan, dan angka.', 'aksara'],
-                            ['Belajar bareng', 'Buat kuis dan ajak teman masuk room.', 'quiz'],
+                            ['Paribasa Bali', 'Temukan makna di balik teka-teki, bunyi, dan ungkapan.', 'paribasa'],
+                            ['Aksara Bali', 'Kenali bentuk huruf, tanda, gantungan, dan angka.', 'aksara'],
                         ].map(([title, text, group]) => (
-                            <Card key={title}>
-                                <CategoryIcon group={group} />
-                                <h3 className="mt-5 font-display text-xl font-bold">{title}</h3>
-                                <p className="mt-2 text-sm leading-7 text-foreground/55">{text}</p>
+                            <Card key={group} className="flex flex-col">
+                                <div className="flex items-start gap-4">
+                                    <CategoryIcon group={group} />
+                                    <div className="min-w-0">
+                                        <h3 className="font-display text-2xl font-bold">{title}</h3>
+                                        <p className="mt-2 text-sm leading-7 text-foreground/55">{text}</p>
+                                    </div>
+                                </div>
+                                <ul className="my-5 flex-1 space-y-2">
+                                    {paths
+                                        .filter((path) => path.group === group)
+                                        .slice(0, 3)
+                                        .map((path) => (
+                                            <li key={path.id}>
+                                                <Link
+                                                    href={path.url}
+                                                    className="flex min-h-12 items-center justify-between gap-3 rounded-2xl bg-background px-4 py-3 text-sm font-semibold hover:text-accent"
+                                                >
+                                                    <span className="min-w-0 break-words">{path.title}</span>
+                                                    <Icon name="arrow" className="size-4 shrink-0 text-foreground/35" />
+                                                </Link>
+                                            </li>
+                                        ))}
+                                </ul>
                                 <Link
-                                    className="mt-4 inline-flex min-h-11 items-center text-sm font-bold text-accent"
-                                    href={group === 'quiz' ? nav.quizzes : `${nav.learning}?group=${group}`}
+                                    href={`${nav.learning}?group=${group}`}
+                                    className="inline-flex min-h-11 items-center gap-2 self-start text-sm font-bold text-accent"
                                 >
-                                    Jelajahi →
+                                    Jelajahi {title}
+                                    <Icon name="arrow" className="size-4" />
                                 </Link>
                             </Card>
                         ))}
@@ -238,6 +274,23 @@ export default function Home({ paths, selectedIds, recent, analysis, meta }) {
                             <p className="mt-3 text-sm leading-7 text-foreground/60">{answer}</p>
                         </details>
                     ))}
+                </section>
+                <section className="mt-6 flex flex-col items-start justify-between gap-6 rounded-card bg-primary/15 p-6 sm:p-9 lg:flex-row lg:items-center">
+                    <div>
+                        <h2 className="max-w-xl font-display text-2xl font-bold sm:text-3xl">
+                            Satu pelajaran kecil, satu cerita baru.
+                        </h2>
+                        <p className="mt-3 max-w-xl text-sm leading-7 text-foreground/55">
+                            Pilih hal yang membuatmu penasaran. Belajar sesuai waktumu, lanjutkan kapan pun kamu siap.
+                        </p>
+                    </div>
+                    <Link
+                        href={viewer ? nav.learning : links['learning.interview.show']}
+                        className={`${buttonClass} shrink-0`}
+                    >
+                        {viewer ? 'Jelajahi materi' : 'Mulai perjalananmu'}
+                        <Icon name="arrow" className="size-4" />
+                    </Link>
                 </section>
             </div>
         </>

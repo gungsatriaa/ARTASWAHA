@@ -61,6 +61,7 @@ it.each(Object.entries(fixtures))(
             ),
         });
         expect(response.body).toContain('<h1');
+        if (component === 'Home') expect(response.body).toContain('aria-label="Footer ARTASWAHA"');
         expect(response.body).not.toContain('document is not defined');
         expect(response.head.join('')).toContain('name="description"');
         expect(response.head.join('')).toContain('rel="canonical"');
