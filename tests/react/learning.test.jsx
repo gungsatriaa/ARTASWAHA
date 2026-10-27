@@ -33,7 +33,7 @@ vi.mock('motion/react-m', async () => {
 
 it.each([
     ['Aksara Wreastra & Gantungan', 'ᬳ'],
-    ['Pengangge Suara', 'ᬳᬶ'],
+    ['Pengangge Suara', 'ᬶ'],
     ['Pengangge Arda Suara', 'ᬳ᭄ᬬ'],
     ['Pengangge Tengenan', 'ᬳᬂ'],
     ['Angka Aksara Bali', '᭑'],
