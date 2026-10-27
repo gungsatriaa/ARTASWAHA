@@ -2,9 +2,10 @@ import Skeleton from '../../Components/Skeleton';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { PageMeta, Button, buttonClass } from '../../Components/ui';
-import { Card, Action, Field, Errors, Stat, secondaryClass } from '../../Components/forms';
+import { Card, Action, Field, Errors, secondaryClass } from '../../Components/forms';
 import Dialog from '../../Components/Dialog';
 import Analysis from '../../Components/Analysis';
+import Icon from '../../Components/Icon';
 
 const AvatarCrop = lazy(() => import('../../Components/AvatarCrop'));
 
@@ -25,7 +26,11 @@ export default function Profile({
     const [avatarOpen, setAvatarOpen] = useState(false),
         [preview, setPreview] = useState(null),
         [candidate, setCandidate] = useState(null);
-    const form = useForm({ avatar: avatars[0]?.value ?? '', avatar_upload: null, _method: 'put' });
+    const form = useForm({
+        avatar: avatars.find((item) => item.url === viewer.avatar)?.value ?? '',
+        avatar_upload: null,
+        _method: 'put',
+    });
     useEffect(() => {
         if (!form.data.avatar_upload) {
             setPreview(null);
@@ -38,57 +43,84 @@ export default function Profile({
     return (
         <>
             <PageMeta {...meta} />
-            <div className="grid items-start gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
-                <aside className="rounded-card bg-surface p-5 lg:sticky lg:top-28 lg:p-7">
-                    <div className="flex items-center gap-4 lg:block">
+            <div className="mx-auto max-w-6xl space-y-7 sm:space-y-8">
+                <header className="overflow-hidden rounded-card bg-surface">
+                    <div className="flex flex-wrap items-center gap-5 p-5 sm:gap-7 sm:p-8">
                         <button
+                            type="button"
                             onClick={() => setAvatarOpen(true)}
                             aria-label="Ganti avatar profil"
-                            className="rounded-full focus-visible:outline-2 focus-visible:outline-accent"
+                            className="relative shrink-0 rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
                         >
                             <img
                                 src={viewer.avatar}
                                 alt=""
-                                width="88"
-                                height="88"
-                                className="size-20 rounded-full object-cover ring-4 ring-primary/20"
+                                width="112"
+                                height="112"
+                                className="size-20 rounded-full object-cover ring-4 ring-primary/25 sm:size-28"
                             />
+                            <span className="absolute -bottom-1 -right-1 grid size-8 place-items-center rounded-full bg-accent text-background ring-4 ring-surface sm:size-10">
+                                <Icon name="book" className="size-4 sm:size-5" />
+                            </span>
                         </button>
-                        <div className="min-w-0">
-                            <h1 className="break-words font-display text-2xl font-bold lg:mt-5">{viewer.name}</h1>
-                            <p className="mt-2 text-xs font-semibold text-accent">
+                        <div className="min-w-0 flex-1">
+                            <p className="text-xs text-foreground/45 sm:text-sm">Profil belajar</p>
+                            <h1 className="mt-2 break-words font-display text-2xl font-bold sm:text-3xl">
+                                {viewer.name}
+                            </h1>
+                            <p className="mt-2 text-xs font-semibold text-accent sm:text-sm">
                                 {viewer.mode === 'anonymous' ? 'Akun anonim' : 'Akun terdaftar'}
                             </p>
-                            {email && <p className="mt-2 break-all text-xs text-foreground/50">{email}</p>}
+                            <p className="mt-2 break-words text-xs leading-6 text-foreground/45">
+                                {email || 'Progres tersimpan di perangkat ini'}
+                            </p>
                         </div>
+                        <button
+                            type="button"
+                            onClick={() => setAvatarOpen(true)}
+                            className={`${secondaryClass} w-full !bg-primary/15 !text-accent sm:ml-auto sm:w-auto`}
+                        >
+                            <Icon name="edit" />
+                            Ganti avatar
+                        </button>
                     </div>
-                    <button onClick={() => setAvatarOpen(true)} className={`${secondaryClass} mt-4`}>
-                        Ganti avatar
-                    </button>
-                    <nav aria-label="Menu profil" className="mt-6 grid gap-2">
+                    <nav
+                        aria-label="Menu profil"
+                        className="flex flex-wrap items-center gap-2 bg-background/20 p-3 sm:px-5 sm:py-4"
+                    >
                         <Link
                             href={nav.profile}
-                            className={`${secondaryClass} !justify-start ${!about ? '!bg-primary/20 !text-accent' : ''}`}
+                            aria-current={!about ? 'page' : undefined}
+                            className={`${secondaryClass} !px-3 !text-xs sm:!px-5 sm:!text-sm ${!about ? '!bg-primary/20 !text-accent' : '!bg-transparent'}`}
                         >
+                            <Icon name="chart" />
                             Progres belajar
                         </Link>
                         <Link
                             href={links['profile.about']}
-                            className={`${secondaryClass} !justify-start ${about ? '!bg-primary/20 !text-accent' : ''}`}
+                            aria-label="Tentang aplikasi ini"
+                            aria-current={about ? 'page' : undefined}
+                            className={`${secondaryClass} !px-3 !text-xs sm:!px-5 sm:!text-sm ${about ? '!bg-primary/20 !text-accent' : '!bg-transparent'}`}
                         >
-                            Tentang aplikasi ini
+                            <Icon name="info" />
+                            <span className="sm:hidden">Tentang</span>
+                            <span className="hidden sm:inline">Tentang aplikasi ini</span>
                         </Link>
-                        {viewer.mode === 'anonymous' ? (
-                            <Link href={nav.login} className={`${secondaryClass} !justify-start`}>
-                                Masuk
-                            </Link>
-                        ) : (
-                            <Action url={nav.logout} className={`${secondaryClass} !justify-start`}>
-                                Keluar
-                            </Action>
-                        )}
+                        <div className="ml-auto">
+                            {viewer.mode === 'anonymous' ? (
+                                <Link href={nav.login} className={`${secondaryClass} !bg-transparent !px-3 sm:!px-4`}>
+                                    <Icon name="login" />
+                                    <span className="sr-only sm:not-sr-only">Masuk</span>
+                                </Link>
+                            ) : (
+                                <Action url={nav.logout} className={`${secondaryClass} !bg-transparent !px-3 sm:!px-4`}>
+                                    <Icon name="login" />
+                                    <span className="sr-only sm:not-sr-only">Keluar</span>
+                                </Action>
+                            )}
+                        </div>
                     </nav>
-                </aside>
+                </header>
                 <div className="min-w-0 space-y-6">
                     {about ? (
                         <>
@@ -143,21 +175,41 @@ export default function Profile({
                                     Ringkasan belajar
                                 </h2>
                                 <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                                    <Stat label="Pelajaran selesai" value={completedLessons} />
-                                    <Stat label="Materi dipelajari" value={paths.length} />
-                                    <Stat label="Hari aktif minggu ini" value={`${activity?.active_days_7 ?? 0}/7`} />
+                                    {[
+                                        ['Pelajaran selesai', completedLessons, 'check'],
+                                        ['Materi dipelajari', paths.length, 'book'],
+                                        ['Hari aktif minggu ini', `${activity?.active_days_7 ?? 0}/7`, 'calendar'],
+                                    ].map(([label, value, icon]) => (
+                                        <Card key={label} className="flex flex-col !p-3 sm:!p-6">
+                                            <Icon
+                                                name={icon}
+                                                className={`mb-4 size-5 sm:size-6 ${icon === 'book' ? 'text-primary' : 'text-accent'}`}
+                                            />
+                                            <p className="mb-3 flex-1 text-[11px] leading-5 text-foreground/50 sm:text-sm">
+                                                {label}
+                                            </p>
+                                            <p className="font-display text-3xl font-bold tabular-nums sm:text-4xl">
+                                                {value}
+                                            </p>
+                                        </Card>
+                                    ))}
                                 </div>
                             </section>
-                            <div className="grid items-start gap-6 xl:grid-cols-2">
+                            <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] sm:gap-6">
                                 <div className="space-y-6">
                                     {activity && (
                                         <Card>
-                                            <h2 className="font-display text-xl font-bold">Sedikit setiap hari</h2>
+                                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                                <h2 className="font-display text-xl font-bold">Sedikit setiap hari</h2>
+                                                <span className="rounded-full bg-primary/15 px-3 py-2 text-xs font-bold text-accent">
+                                                    {activity.active_days_7 ?? 0} hari aktif
+                                                </span>
+                                            </div>
                                             <p className="mt-2 text-xs leading-6 text-foreground/50">
                                                 Aktivitas belajar dalam tujuh hari terakhir.
                                             </p>
                                             <ol
-                                                className="mt-5 grid grid-cols-7 gap-2"
+                                                className="mt-7 grid grid-cols-7 gap-1 sm:gap-3"
                                                 aria-label="Aktivitas belajar tujuh hari terakhir"
                                             >
                                                 {activity.daily.slice(-7).map((day) => {
@@ -176,7 +228,7 @@ export default function Profile({
                                                                 })}
                                                             </span>
                                                             <span
-                                                                className={`mx-auto mt-2 grid aspect-square max-w-10 place-items-center rounded-full text-sm font-bold ${active ? 'bg-accent text-background' : 'bg-background text-foreground/25'}`}
+                                                                className={`mx-auto mt-2 grid aspect-square max-w-12 place-items-center rounded-full text-sm font-bold ${active ? 'bg-accent text-background' : 'bg-background text-foreground/25'}`}
                                                             >
                                                                 {active ? '✓' : '·'}
                                                             </span>
