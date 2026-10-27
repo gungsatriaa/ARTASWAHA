@@ -92,12 +92,12 @@ export function ProfileDropdown() {
             </nav>
             {viewer.mode === 'anonymous' ? (
                 <div className="mt-2 grid grid-cols-2 gap-2">
-                    <Link href={navigation.login} className={`${itemClass} justify-center !bg-primary/15 !text-accent`}>
-                        Masuk dengan akun
+                    <Link href={navigation.login} className={`${itemClass} justify-center whitespace-nowrap !bg-primary/15 !text-accent`}>
+                        Masuk
                     </Link>
                     <Link
                         href={navigation.register}
-                        className={`${itemClass} justify-center !bg-accent !text-background`}
+                        className={`${itemClass} justify-center whitespace-nowrap !bg-accent !text-background`}
                     >
                         Daftar akun
                     </Link>

@@ -157,7 +157,7 @@ describe('shared shell', () => {
         expect(screen.queryByRole('button', { name: 'Buka menu' })).toBeNull();
         fireEvent.click(screen.getByRole('button', { name: 'Menu profil Komang' }));
         expect(screen.getByText('Akun anonim · di perangkat ini')).toBeTruthy();
-        expect(screen.getByRole('link', { name: 'Masuk dengan akun' }).getAttribute('href')).toBe('/masuk');
+        expect(screen.getByRole('link', { name: 'Masuk', exact: true }).getAttribute('href')).toBe('/masuk');
     });
 
     it('restores focus and body scrolling after cancelling a native dialog', () => {
