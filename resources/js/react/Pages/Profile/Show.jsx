@@ -216,7 +216,7 @@ export default function Profile({
                                             <p className="min-w-0 flex-1 text-sm leading-5 text-foreground/60 sm:mb-3">
                                                 {label}
                                             </p>
-                                            <p className="shrink-0 font-display text-2xl font-bold tabular-nums sm:text-4xl">
+                                            <p className="shrink-0 font-sans text-2xl font-bold tabular-nums sm:text-4xl">
                                                 {value}
                                             </p>
                                         </Card>

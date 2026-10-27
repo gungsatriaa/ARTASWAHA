@@ -52,7 +52,7 @@ export function Countdown({ deadline, serverNow, seconds, onExpire, label }) {
             <span
                 role="timer"
                 aria-live="off"
-                className={`ml-auto font-display text-lg font-bold tabular-nums ${remaining <= 5 ? 'text-danger' : 'text-accent'}`}
+                className={`ml-auto font-sans text-lg font-bold tabular-nums ${remaining <= 5 ? 'text-danger' : 'text-accent'}`}
             >
                 {Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, '0')}
             </span>

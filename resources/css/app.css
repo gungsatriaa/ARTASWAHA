@@ -91,7 +91,7 @@ dialog[open] {
 .page-loading .page-loader.is-leaving { opacity: 0; pointer-events: none; }
 .page-loader-content { width: min(21rem, 100%); text-align: center; }
 [data-loader-percent] {
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: var(--font-sans);
     font-weight: 400;
     font-variant-numeric: lining-nums tabular-nums;
 }
@@ -175,7 +175,6 @@ a.rounded-full:active { scale: 0.98; }
 }
 
 /* Admin density is scoped so public learning pages retain their own proportions. */
-.admin-shell { --font-sans: Arial, Helvetica, Vimala, sans-serif; }
 .admin-workspace [data-ui='page-heading'] { margin-bottom: 1.5rem; align-items: center; }
 .admin-workspace [data-ui='page-heading'] h1 { font-size: clamp(1.6rem, 2.3vw, 2.1rem); }
 .admin-workspace [data-ui='page-heading'] p { margin-top: .5rem; max-width: 46rem; }

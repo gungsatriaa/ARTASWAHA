@@ -8,6 +8,7 @@ export default function Chart({ labels, series, type = 'line', label, percentage
         import('chart.js/auto')
             .then(({ default: Chart }) => {
                 if (disposed) return;
+                const font = { family: getComputedStyle(canvas.current).fontFamily };
                 chart = new Chart(canvas.current, {
                     type,
                     data: {
@@ -38,9 +39,11 @@ export default function Chart({ labels, series, type = 'line', label, percentage
                         plugins: {
                             legend: {
                                 position: 'bottom',
-                                labels: { color: '#f5f3eeaa', usePointStyle: true, boxWidth: 6, padding: 20 },
+                                labels: { font, color: '#f5f3eeaa', usePointStyle: true, boxWidth: 6, padding: 20 },
                             },
                             tooltip: {
+                                titleFont: font,
+                                bodyFont: font,
                                 backgroundColor: '#1c2022',
                                 titleColor: '#f5f3ee',
                                 bodyColor: '#f5f3eebb',
@@ -49,12 +52,12 @@ export default function Chart({ labels, series, type = 'line', label, percentage
                             },
                         },
                         scales: {
-                            x: { grid: { display: false }, ticks: { color: '#f5f3ee66', maxTicksLimit: 7 } },
+                            x: { grid: { display: false }, ticks: { font, color: '#f5f3ee66', maxTicksLimit: 7 } },
                             y: {
                                 beginAtZero: true,
                                 ...(percentage ? { max: 100 } : {}),
                                 grid: { color: '#ffffff08' },
-                                ticks: { color: '#f5f3ee66', precision: 0 },
+                                ticks: { font, color: '#f5f3ee66', precision: 0 },
                             },
                         },
                     },

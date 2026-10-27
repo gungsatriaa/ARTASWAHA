@@ -41,7 +41,7 @@ export default function RoomCodeInput({ value, onChange, error }) {
                             aria-label={`Digit ${index + 1} kode room`}
                             aria-invalid={Boolean(error)}
                             aria-describedby={describedBy}
-                            className={`aspect-square min-h-11 w-full min-w-0 rounded-2xl bg-background p-0 text-center font-display text-xl font-bold text-foreground outline-none ring-1 transition focus:ring-2 focus:ring-accent sm:text-2xl ${error ? 'ring-danger/60' : 'ring-white/10'}`}
+                            className={`aspect-square min-h-11 w-full min-w-0 rounded-2xl bg-background p-0 text-center font-sans text-xl font-bold text-foreground outline-none ring-1 transition focus:ring-2 focus:ring-accent sm:text-2xl ${error ? 'ring-danger/60' : 'ring-white/10'}`}
                             inputMode="numeric"
                             autoComplete={index === 0 ? 'one-time-code' : 'off'}
                             required
