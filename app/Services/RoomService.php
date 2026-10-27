@@ -32,7 +32,7 @@ class RoomService
                     $room = Room::query()->create([
                         'quiz_id' => $quiz->id,
                         'host_id' => $host->id,
-                        'code' => Str::upper(Str::random(4)),
+                        'code' => sprintf('%06d', random_int(0, 999999)),
                         'leaderboard_enabled' => $quiz->leaderboard_enabled,
                         'seconds_per_question' => $quiz->seconds_per_question,
                         'time_limit_seconds' => $quiz->time_limit_seconds,

@@ -14,7 +14,6 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
@@ -277,25 +276,25 @@ class QuizRoomFlowTest extends TestCase
 
         $this->post(route('rooms.store', $quiz))->assertRedirect();
         $room = Room::query()->firstOrFail();
-        $this->assertMatchesRegularExpression('/\A[A-Z0-9]{4}\z/', $room->code);
+        $this->assertMatchesRegularExpression('/\A[0-9]{6}\z/', $room->code);
         $this->get(route('rooms.show', $room->code))->assertOk()->assertInertiaContains($room->code)->assertInertia(fn (AssertableInertia $page) => $page->etc())->assertInertiaNotContains('Peringkat');
     }
 
-    public function test_room_creation_retries_a_duplicate_four_character_code(): void
+    public function test_room_creation_retries_a_duplicate_six_digit_code(): void
     {
         $host = User::factory()->create();
         $quiz = $this->createQuiz($host);
-        Room::factory()->create(['code' => 'AB12']);
+        Room::factory()->create(['code' => '123456']);
 
-        Str::createRandomStringsUsingSequence(['AB12', 'CD34']);
+        $attempts = 0;
+        Room::creating(function (Room $room) use (&$attempts): void {
+            $room->code = ++$attempts === 1 ? '123456' : '654321';
+        });
 
-        try {
-            $room = app(RoomService::class)->create($quiz, $host);
-        } finally {
-            Str::createRandomStringsUsing();
-        }
+        $room = app(RoomService::class)->create($quiz, $host);
 
-        $this->assertSame('CD34', $room->code);
+        $this->assertSame('654321', $room->code);
+        $this->assertSame(2, $attempts);
         $this->assertDatabaseCount('rooms', 2);
     }
 
@@ -305,6 +304,27 @@ class QuizRoomFlowTest extends TestCase
 
         $this->actingAs($player)->post(route('rooms.join'), ['code' => 'ABCDE'])
             ->assertSessionHasErrors('code');
+    }
+
+    public function test_six_digit_codes_preserve_leading_zeroes_and_reject_six_letters(): void
+    {
+        $host = User::factory()->create();
+        $player = User::factory()->create();
+        $room = Room::factory()->create(['host_id' => $host->id, 'code' => '012345']);
+
+        $this->actingAs($player)->post(route('rooms.join'), ['code' => '012345'])
+            ->assertRedirect(route('rooms.show', $room->code));
+        $this->post(route('rooms.join'), ['code' => 'ABCDEF'])->assertSessionHasErrors('code');
+    }
+
+    public function test_existing_four_character_room_code_still_allows_joining(): void
+    {
+        $host = User::factory()->create();
+        $player = User::factory()->create();
+        $room = Room::factory()->create(['host_id' => $host->id, 'code' => 'AB12']);
+
+        $this->actingAs($player)->post(route('rooms.join'), ['code' => 'ab12'])
+            ->assertRedirect(route('rooms.show', $room->code));
     }
 
     public function test_existing_ten_character_room_code_still_allows_joining(): void

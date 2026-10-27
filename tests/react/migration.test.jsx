@@ -160,13 +160,17 @@ it('requires login only when an anonymous learner tries to create a quiz', () =>
 it('keeps room code validation and legacy invitations available in the redesigned join form', () => {
     render(<Quizzes quizzes={null} filters={{}} meta={meta} />);
     const input = screen.getByRole('textbox', { name: 'Kode room' });
-    for (const code of ['AB12', 'AB12345678']) {
+    for (const code of ['012345', 'AB12', 'AB12345678']) {
         fireEvent.change(input, { target: { value: code.toLowerCase() } });
         expect(input.value).toBe(code);
         expect(input.checkValidity()).toBe(true);
     }
-    fireEvent.change(input, { target: { value: 'AB!2' } });
-    expect(input.checkValidity()).toBe(false);
+    for (const code of ['AB!2', 'ABCDEF', '12345', '1234567']) {
+        fireEvent.change(input, { target: { value: code } });
+        expect(input.checkValidity()).toBe(false);
+    }
+    expect(input.getAttribute('inputmode')).toBe('numeric');
+    expect(input.placeholder).toBe('Contoh: 123456');
     expect(screen.getByRole('form', { name: 'Gabung room kuis' }).getAttribute('aria-busy')).toBe('false');
 });
 

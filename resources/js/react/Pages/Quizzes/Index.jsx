@@ -66,15 +66,16 @@ export default function Quizzes({ quizzes, filters, code, meta }) {
                         </label>
                         <input
                             id="room-code"
-                            className={`${inputClass} !min-h-16 !rounded-3xl text-center !text-2xl !font-bold tracking-[0.2em] placeholder:text-foreground/25 sm:!text-3xl`}
+                            className={`${inputClass} !min-h-16 !rounded-3xl text-center !text-xl !font-bold tracking-[0.16em] placeholder:!text-sm placeholder:font-normal placeholder:tracking-normal placeholder:text-foreground/40 sm:!text-2xl`}
                             name="code"
-                            placeholder="AB12"
+                            placeholder="Contoh: 123456"
+                            inputMode="numeric"
                             value={form.data.code}
                             onChange={(e) => form.setData('code', e.target.value.toUpperCase())}
                             required
                             minLength={4}
                             maxLength={10}
-                            pattern="[A-Za-z0-9]{4}([A-Za-z0-9]{6})?"
+                            pattern="([0-9]{6}|[A-Za-z0-9]{4}|[A-Za-z0-9]{10})"
                             autoComplete="off"
                             autoCapitalize="characters"
                             spellCheck={false}
@@ -82,7 +83,7 @@ export default function Quizzes({ quizzes, filters, code, meta }) {
                             aria-describedby={form.errors.code ? 'room-code-error room-code-hint' : 'room-code-hint'}
                         />
                         <p id="room-code-hint" className="mt-3 text-xs leading-6 text-foreground/45">
-                            Kode baru berisi 4 huruf atau angka. Kode undangan lama tetap bisa digunakan.
+                            Masukkan 6 digit angka dari host. Kode undangan lama tetap bisa digunakan.
                         </p>
                         {form.errors.code && (
                             <p id="room-code-error" role="alert" className="mt-2 text-sm text-danger">
