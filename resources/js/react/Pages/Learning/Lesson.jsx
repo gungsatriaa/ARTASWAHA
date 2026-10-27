@@ -1,9 +1,10 @@
 import { useForm } from '@inertiajs/react';
 import { PageMeta, Button } from '../../Components/ui';
 import { Back, Card, Errors, Heading, Action } from '../../Components/forms';
+import AnswerInput, { hasAnswer } from '../../Components/AnswerInput';
 import AudioPlayer from '../../Components/AudioPlayer';
 export default function Lesson({ lesson, progress, audio, meta }) {
-    const form = useForm({ answer_index: '' });
+    const form = useForm({ answer_index: '', answer_indexes: [], answer_text: '' });
     return (
         <div className="mx-auto max-w-4xl">
             <PageMeta {...meta} />
@@ -38,27 +39,13 @@ export default function Lesson({ lesson, progress, audio, meta }) {
                         }}
                     >
                         <Errors errors={form.errors} />
-                        <fieldset className="mt-4 grid gap-3 sm:grid-cols-2">
-                            <legend className="sr-only">Pilih satu jawaban</legend>
-                            {lesson.exercise_options.map((option, index) => (
-                                <label
-                                    key={index}
-                                    className={`flex min-h-16 cursor-pointer items-center gap-3 rounded-2xl bg-background p-4 ring-1 ${form.data.answer_index === index ? 'ring-accent bg-accent/10' : 'ring-white/10'}`}
-                                >
-                                    <input
-                                        type="radio"
-                                        required
-                                        name="answer"
-                                        checked={form.data.answer_index === index}
-                                        onChange={() => form.setData('answer_index', index)}
-                                        className="size-5 shrink-0 accent-[var(--color-accent)]"
-                                    />
-                                    <span className="break-words text-sm font-semibold">{option}</span>
-                                </label>
-                            ))}
-                        </fieldset>
+                        <AnswerInput
+                            question={{ ...lesson, options: lesson.exercise_options }}
+                            answer={form.data}
+                            onChange={(key, value) => form.setData(key, value)}
+                        />
                         <div className="mt-5 flex justify-end">
-                            <Button type="submit" disabled={form.processing}>
+                            <Button type="submit" disabled={form.processing || !hasAnswer(lesson, form.data)}>
                                 Periksa jawaban
                             </Button>
                         </div>

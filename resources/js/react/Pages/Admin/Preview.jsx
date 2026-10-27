@@ -30,6 +30,11 @@ export default function Preview({ lesson, audio, meta }) {
                 {lesson.exercise_prompt && (
                     <section className="mt-7 rounded-2xl bg-background p-5">
                         <h3 className="font-display text-xl font-bold">{lesson.exercise_prompt}</h3>
+                        {lesson.question_type === 'essay' && (
+                            <p className="mt-4 whitespace-pre-wrap break-words text-sm text-success">
+                                Jawaban acuan: {(lesson.accepted_answers ?? []).join(' / ')}
+                            </p>
+                        )}
                         <ol className="mt-4 space-y-2">
                             {lesson.exercise_options.map((option, index) => (
                                 <li
@@ -37,7 +42,13 @@ export default function Preview({ lesson, audio, meta }) {
                                     className={`rounded-xl p-3 text-sm ${index === lesson.correct_option ? 'bg-success/10 text-success' : 'text-foreground/60'}`}
                                 >
                                     {String.fromCharCode(65 + index)}. {option}
-                                    {index === lesson.correct_option ? ' ✓ Jawaban benar' : ''}
+                                    {(
+                                        lesson.question_type === 'multiple'
+                                            ? (lesson.correct_options ?? []).includes(index)
+                                            : index === lesson.correct_option
+                                    )
+                                        ? ' ✓ Jawaban benar'
+                                        : ''}
                                 </li>
                             ))}
                         </ol>

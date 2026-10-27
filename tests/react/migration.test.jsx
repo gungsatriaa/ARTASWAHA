@@ -248,6 +248,9 @@ it('preserves saved question IDs while removing UI-only keys and correcting a de
     );
     expect(payloadQuestions([changed])[0]).not.toHaveProperty('_key');
     expect(payloadQuestions([changed])[0]).not.toHaveProperty('audio');
+    expect(payloadQuestions([{ prompt: 'Draf AI', options: ['A', 'B'], correct_option: 0 }])[0].question_type).toBe(
+        'single',
+    );
 });
 
 it('submits quiz settings through Inertia and keeps preview free of write requests', () => {
@@ -258,6 +261,21 @@ it('submits quiz settings through Inertia and keeps preview free of write reques
     fireEvent.submit(screen.getByRole('button', { name: 'Simpan kuis' }).closest('form'));
     expect(send.mock.calls[0][2].title).toBe('Belajar Bali');
     expect(send.mock.calls[0][2].questions[0]).not.toHaveProperty('_key');
+});
+
+it('keeps essay keys in the editor and never requires an answer to save its preview', () => {
+    render(<Editor quiz={null} meta={meta} />);
+    fireEvent.click(screen.getByRole('button', { name: /Kelola soal/ }));
+    fireEvent.change(screen.getByRole('combobox', { name: 'Tipe soal' }), { target: { value: 'essay' } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Jawaban acuan' }), { target: { value: 'Krana\nKarena' } });
+    expect(screen.queryByRole('textbox', { name: 'Pilihan A' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Preview & simpan/ }));
+    expect(screen.getByRole('textbox', { name: 'Jawaban esai' }).required).toBe(false);
+    expect(send).not.toHaveBeenCalled();
+    fireEvent.submit(screen.getByRole('button', { name: 'Simpan kuis' }).closest('form'));
+    expect(send.mock.calls[0][2].questions[0]).toEqual(
+        expect.objectContaining({ question_type: 'essay', accepted_answers: ['Krana', 'Karena'] }),
+    );
 });
 
 it('shows only studied paths in the profile and keeps the quiz join action out of its menu', () => {
@@ -378,6 +396,57 @@ it('does not show an answer keyboard for multiple-choice lessons or rooms, inclu
     expect(screen.queryByText('Keyboard aksara Bali')).toBeNull();
 });
 
+it('submits all selected checkbox answers without a Balinese answer keyboard', () => {
+    const lesson = {
+        title: 'Uji',
+        content: 'Materi',
+        path,
+        question_type: 'multiple',
+        exercise_prompt: 'Pilih yang benar',
+        exercise_options: ['Ha', 'Na', 'Ka'],
+        keyboard_auto_open: true,
+    };
+    render(<Lesson lesson={lesson} meta={meta} />);
+    expect(screen.getByRole('button', { name: 'Periksa jawaban' }).disabled).toBe(true);
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Ha' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Ka' }));
+    fireEvent.submit(screen.getByRole('button', { name: 'Periksa jawaban' }).closest('form'));
+    expect(send.mock.calls[0][2].answer_indexes).toEqual([0, 2]);
+    expect(screen.queryByText('Keyboard aksara Bali')).toBeNull();
+});
+
+it('uses the Balinese keyboard to edit the submitted essay answer instead of a scratch field', async () => {
+    const lesson = {
+        title: 'Uji',
+        content: 'Materi',
+        path,
+        question_type: 'essay',
+        exercise_prompt: 'Tulis Ka',
+        exercise_options: [],
+        keyboard_auto_open: true,
+    };
+    render(<Lesson lesson={lesson} meta={meta} />);
+    const answer = screen.getByRole('textbox', { name: 'Jawaban esai' });
+    expect(screen.queryByRole('radio')).toBeNull();
+    const key = await screen.findByRole('button', { name: 'Ka', exact: true });
+    fireEvent.click(key);
+    expect(answer.value).toBe('ᬓ');
+    expect(screen.queryByRole('textbox', { name: 'Coretan latihan aksara' })).toBeNull();
+    fireEvent.submit(screen.getByRole('button', { name: 'Periksa jawaban' }).closest('form'));
+    expect(send.mock.calls[0][2].answer_text).toBe('ᬓ');
+});
+
+it('reindexes every checkbox key when an option is removed', () => {
+    const question = {
+        ...blankQuestion(1),
+        question_type: 'multiple',
+        options: ['A', 'B', 'C', 'D'],
+        correct_options: [0, 2, 3],
+    };
+    expect(withoutOption(question, 1).correct_options).toEqual([0, 1, 2]);
+    expect(withoutOption(question, 2).correct_options).toEqual([0, 2]);
+});
+
 it('edits Balinese scratch text without losing it when keyboard modes change', () => {
     render(<Keyboard autoOpen />);
     fireEvent.click(screen.getByRole('button', { name: 'Ka', exact: true }));
@@ -449,7 +518,7 @@ it('never marks a correct choice before the server permits feedback', () => {
     expect(screen.queryByText('Jawaban benar')).toBeNull();
     fireEvent.click(screen.getByRole('radio', { name: /Benar/ }));
     fireEvent.submit(screen.getByRole('button', { name: 'Kirim jawaban' }).closest('form'));
-    expect(send.mock.calls[0][2]).toEqual({ question_id: 1, answer_index: 1 });
+    expect(send.mock.calls[0][2]).toEqual({ question_id: 1, answer_index: 1, answer_indexes: [], answer_text: '' });
 });
 
 it('does not show a skeleton for an analysis that is only queued', async () => {

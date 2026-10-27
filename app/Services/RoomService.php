@@ -242,13 +242,7 @@ class RoomService
                 throw ValidationException::withMessages(['question_id' => 'Waktu soal ini sudah habis.']);
             }
 
-            $answerIndex = (int) $data['answer_index'];
-
-            if (! array_key_exists($answerIndex, $question->options)) {
-                throw ValidationException::withMessages(['answer_index' => 'Opsi jawaban tidak tersedia.']);
-            }
-
-            $isCorrect = $answerIndex === $question->correct_option;
+            $isCorrect = app(QuestionAnswerService::class)->isCorrect($question, $data);
             $previousCorrectAnswers = RoomAnswer::query()
                 ->where('quiz_question_id', $question->id)
                 ->whereHas('participant', fn ($query) => $query->where('room_id', $room->id))
@@ -256,7 +250,9 @@ class RoomService
                 ->count();
             $answer = RoomAnswer::query()->firstOrCreate(
                 ['room_participant_id' => $participant->id, 'quiz_question_id' => $question->id],
-                ['answer_index' => $answerIndex, 'is_correct' => $isCorrect, 'points_awarded' => $isCorrect ? max(5, 10 - $previousCorrectAnswers) : 0],
+                ['answer_index' => $question->question_type === 'single' ? ($data['answer_index'] ?? null) : null,
+                    'answer_indexes' => $question->question_type === 'multiple' ? array_map('intval', $data['answer_indexes']) : null,
+                    'answer_text' => $question->question_type === 'essay' ? $data['answer_text'] : null, 'is_correct' => $isCorrect, 'points_awarded' => $isCorrect ? max(5, 10 - $previousCorrectAnswers) : 0],
             );
 
             if ($answer->wasRecentlyCreated && $answer->is_correct) {
@@ -423,6 +419,7 @@ class RoomService
                 'id' => $question->id,
                 'prompt' => $question->prompt,
                 'options' => $question->options,
+                'question_type' => $question->question_type,
                 'sort_order' => $question->sort_order,
             ] : null,
         ]));

@@ -44,9 +44,9 @@ class LearnerAnalysisTest extends TestCase
     {
         Queue::fake([AnalyzeLearnerInterview::class]);
         $path = LearningPath::factory()->create(['is_published' => true]);
-        $this->post(route('learning.interview.store'), ['step' => 1, 'learning_path_ids' => [$path->id]]);
-        $this->post(route('learning.interview.store'), ['step' => 2, 'role' => 'murid']);
-        $this->post(route('learning.interview.store'), ['step' => 3, 'mode' => 'anonymous']);
+        $this->post(route('learning.interview.store'), ['step' => 1, 'mode' => 'anonymous']);
+        $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$path->id]]);
+        $this->post(route('learning.interview.store'), ['step' => 3, 'role' => 'murid']);
 
         $this->post(route('learning.interview.store'), ['step' => 4, 'name' => 'Private name'])
             ->assertRedirect(route('learning.paths.show', $path->slug));

@@ -13,7 +13,7 @@ class RoomUpdated implements ShouldBroadcastNow, ShouldRescue
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    /** @param array{status: string, question: array{id: int, prompt: string, options: array<int, string>, sort_order: int}|null} $payload */
+    /** @param array{status: string, question: array{id: int, prompt: string, options: array<int, string>, question_type: string, sort_order: int}|null} $payload */
     public function __construct(public string $roomCode, public array $payload) {}
 
     public function broadcastOn(): PresenceChannel

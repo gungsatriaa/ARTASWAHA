@@ -10,17 +10,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-#[Hidden(['correct_option'])]
+#[Hidden(['correct_option', 'correct_options', 'accepted_answers'])]
 class Lesson extends Model
 {
     /** @use HasFactory<LessonFactory> */
     use HasFactory;
 
-    protected $fillable = ['learning_path_id', 'title', 'slug', 'summary', 'content', 'sort_order', 'is_published', 'reviewed_at', 'exercise_prompt', 'exercise_options', 'correct_option', 'exercise_explanation', 'keyboard_auto_open'];
+    protected $attributes = ['question_type' => 'single'];
+
+    protected $fillable = ['question_type', 'correct_options', 'accepted_answers', 'learning_path_id', 'title', 'slug', 'summary', 'content', 'sort_order', 'is_published', 'reviewed_at', 'exercise_prompt', 'exercise_options', 'correct_option', 'exercise_explanation', 'keyboard_auto_open'];
 
     protected function casts(): array
     {
-        return ['is_published' => 'boolean', 'reviewed_at' => 'datetime', 'exercise_options' => 'array', 'correct_option' => 'integer', 'keyboard_auto_open' => 'boolean'];
+        return ['correct_options' => 'array', 'accepted_answers' => 'array', 'is_published' => 'boolean', 'reviewed_at' => 'datetime', 'exercise_options' => 'array', 'correct_option' => 'integer', 'keyboard_auto_open' => 'boolean'];
     }
 
     public function learningPath(): BelongsTo

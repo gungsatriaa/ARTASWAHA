@@ -37,7 +37,7 @@ const dataUses = [
         'quiz',
         'Kuis & room',
         'Partisipasi, jawaban, waktu, dan poin',
-        'Kami menyimpan kuis dan pertanyaan buatanmu, opsi serta kunci jawaban, pengaturan timer/feedback, room, peserta, jawaban terpilih, ketepatan, poin, dan waktu menjawab. Nama dan avatar terlihat oleh peserta dalam room yang sama; hasil ditampilkan sesuai pengaturan sesi. Anonim dapat bergabung dan menjawab, sedangkan membuat kuis memerlukan akun.',
+        'Kami menyimpan kuis dan pertanyaan buatanmu, opsi serta kunci jawaban, pengaturan timer/feedback, room, peserta, jawaban terpilih (satu atau beberapa pilihan), teks jawaban esai, ketepatan, poin, dan waktu menjawab. Esai dinilai dengan jawaban acuan pembuat soal, bukan AI; hindari memasukkan data pribadi ke jawaban. Nama dan avatar terlihat oleh peserta dalam room yang sama; hasil ditampilkan sesuai pengaturan sesi. Anonim dapat bergabung dan menjawab, sedangkan membuat kuis memerlukan akun.',
     ],
     [
         'spark',

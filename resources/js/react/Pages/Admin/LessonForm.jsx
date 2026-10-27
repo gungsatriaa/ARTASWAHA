@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { Button, PageMeta, buttonClass } from '../../Components/ui';
 import { Card, Back, Heading, Field, Check, Errors, secondaryClass } from '../../Components/forms';
+import QuestionFields from '../../Components/QuestionFields';
 import Keyboard from '../../Components/LazyKeyboard';
 export default function LessonForm({ lesson, paths, meta }) {
     const { links } = usePage().props;
@@ -16,7 +17,10 @@ export default function LessonForm({ lesson, paths, meta }) {
         keyboard_auto_open: lesson.keyboard_auto_open ?? false,
         has_exercise: Boolean(lesson.exercise_prompt),
         exercise_prompt: lesson.exercise_prompt ?? '',
-        exercise_options: lesson.exercise_options ?? ['', '', '', ''],
+        exercise_options: lesson.exercise_options?.length ? lesson.exercise_options : ['', '', '', ''],
+        question_type: lesson.question_type ?? 'single',
+        correct_options: lesson.correct_options ?? [],
+        accepted_answers: lesson.accepted_answers ?? [],
         correct_option: lesson.correct_option ?? '',
         exercise_explanation: lesson.exercise_explanation ?? '',
     });
@@ -107,7 +111,7 @@ export default function LessonForm({ lesson, paths, meta }) {
                             checked={form.data.has_exercise}
                             onChange={(e) => form.setData('has_exercise', e.target.checked)}
                         >
-                            Tambahkan latihan pilihan ganda
+                            Tambahkan latihan setelah materi
                         </Check>
                         {form.data.has_exercise && (
                             <fieldset className="space-y-4">
@@ -122,37 +126,65 @@ export default function LessonForm({ lesson, paths, meta }) {
                                     onChange={(e) => form.setData('exercise_prompt', e.target.value)}
                                     error={form.errors.exercise_prompt}
                                 />
-                                {form.data.exercise_options.map((option, index) => (
-                                    <div key={index} className="flex items-end gap-3">
-                                        <label className="mb-4">
-                                            <span className="sr-only">Jawaban benar pilihan {index + 1}</span>
-                                            <input
-                                                type="radio"
-                                                name="correct_option"
+                                <QuestionFields
+                                    question={form.data}
+                                    onChange={(key, value) => form.setData(key, value)}
+                                    errors={form.errors}
+                                />
+                                {form.data.question_type !== 'essay' && (
+                                    <p className="text-sm text-foreground/60">
+                                        {form.data.question_type === 'multiple'
+                                            ? 'Tandai semua pilihan yang benar.'
+                                            : 'Tandai satu pilihan yang benar.'}
+                                    </p>
+                                )}
+                                {form.data.question_type !== 'essay' &&
+                                    form.data.exercise_options.map((option, index) => (
+                                        <div key={index} className="flex items-end gap-3">
+                                            <label className="mb-4">
+                                                <span className="sr-only">Jawaban benar pilihan {index + 1}</span>
+                                                <input
+                                                    type={form.data.question_type === 'multiple' ? 'checkbox' : 'radio'}
+                                                    name="correct_option"
+                                                    required={form.data.question_type !== 'multiple'}
+                                                    checked={
+                                                        form.data.question_type === 'multiple'
+                                                            ? form.data.correct_options.includes(index)
+                                                            : form.data.correct_option === index
+                                                    }
+                                                    onChange={() =>
+                                                        form.data.question_type === 'multiple'
+                                                            ? form.setData(
+                                                                  'correct_options',
+                                                                  form.data.correct_options.includes(index)
+                                                                      ? form.data.correct_options.filter(
+                                                                            (value) => value !== index,
+                                                                        )
+                                                                      : [...form.data.correct_options, index],
+                                                              )
+                                                            : form.setData('correct_option', index)
+                                                    }
+                                                    className="size-5 accent-[var(--color-accent)]"
+                                                />
+                                            </label>
+                                            <Field
+                                                className="flex-1"
+                                                label={`Pilihan ${index + 1}`}
                                                 required
-                                                checked={form.data.correct_option === index}
-                                                onChange={() => form.setData('correct_option', index)}
-                                                className="size-5 accent-[var(--color-accent)]"
+                                                maxLength={140}
+                                                value={option}
+                                                onChange={(e) =>
+                                                    form.setData(
+                                                        'exercise_options',
+                                                        form.data.exercise_options.map((value, position) =>
+                                                            position === index ? e.target.value : value,
+                                                        ),
+                                                    )
+                                                }
+                                                error={form.errors[`exercise_options.${index}`]}
                                             />
-                                        </label>
-                                        <Field
-                                            className="flex-1"
-                                            label={`Pilihan ${index + 1}`}
-                                            required
-                                            maxLength={140}
-                                            value={option}
-                                            onChange={(e) =>
-                                                form.setData(
-                                                    'exercise_options',
-                                                    form.data.exercise_options.map((value, position) =>
-                                                        position === index ? e.target.value : value,
-                                                    ),
-                                                )
-                                            }
-                                            error={form.errors[`exercise_options.${index}`]}
-                                        />
-                                    </div>
-                                ))}
+                                        </div>
+                                    ))}
                                 <Field
                                     label="Penjelasan jawaban (opsional)"
                                     as="textarea"

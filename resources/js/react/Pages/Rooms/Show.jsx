@@ -4,6 +4,7 @@ import { Button, PageMeta, buttonClass } from '../../Components/ui';
 import { Action, Card, Errors, secondaryClass } from '../../Components/forms';
 import Dialog from '../../Components/Dialog';
 import AudioPlayer from '../../Components/AudioPlayer';
+import AnswerInput, { hasAnswer } from '../../Components/AnswerInput';
 import useRoom from '../../Hooks/useRoom';
 
 export function Countdown({ deadline, serverNow, seconds, onExpire, label }) {
@@ -59,7 +60,7 @@ export function Countdown({ deadline, serverNow, seconds, onExpire, label }) {
     );
 }
 function Question({ room, onExpire }) {
-    const form = useForm({ question_id: room.question.id, answer_index: '' });
+    const form = useForm({ question_id: room.question.id, answer_index: '', answer_indexes: [], answer_text: '' });
     return (
         <Card className="!p-4 sm:!p-6">
             <div className="flex items-center justify-between gap-4">
@@ -114,17 +115,36 @@ function Question({ room, onExpire }) {
                             ? 'Jawaban benar!'
                             : 'Jawaban belum tepat. Lihat jawaban yang benar di bawah.'}
                     </p>
+                    {room.question.question_type === 'essay' && (
+                        <div className="space-y-3 rounded-2xl bg-background p-4 text-sm leading-7">
+                            <p className="whitespace-pre-wrap break-words">
+                                <span className="text-foreground/50">Jawabanmu: </span>
+                                {room.answer?.answer_text}
+                            </p>
+                            <p className="whitespace-pre-wrap break-words text-success">
+                                Jawaban acuan: {room.correctText}
+                            </p>
+                        </div>
+                    )}
                     <ol className="mt-4 space-y-2">
                         {room.question.options.map((option, index) => (
                             <li
                                 key={index}
-                                className={`flex min-h-14 items-center gap-3 rounded-2xl p-4 ring-1 ${index === room.correctOption ? 'bg-success/10 text-success ring-success/50' : index === room.answer?.answer_index ? 'bg-danger/10 text-danger ring-danger/50' : 'bg-background ring-white/5'}`}
+                                className={`flex min-h-14 items-center gap-3 rounded-2xl p-4 ring-1 ${(room.question.question_type === 'multiple' ? (room.correctOptions ?? []).includes(index) : index === room.correctOption) ? 'bg-success/10 text-success ring-success/50' : (room.question.question_type === 'multiple' ? (room.answer?.answer_indexes ?? []).includes(index) : index === room.answer?.answer_index) ? 'bg-danger/10 text-danger ring-danger/50' : 'bg-background ring-white/5'}`}
                             >
                                 <span className="font-bold">{String.fromCharCode(65 + index)}</span>
                                 <span className="min-w-0 flex-1 break-words text-sm font-semibold">{option}</span>
-                                {index === room.correctOption ? (
+                                {(
+                                    room.question.question_type === 'multiple'
+                                        ? (room.correctOptions ?? []).includes(index)
+                                        : index === room.correctOption
+                                ) ? (
                                     <span className="text-xs font-bold">Jawaban benar</span>
-                                ) : index === room.answer?.answer_index ? (
+                                ) : (
+                                      room.question.question_type === 'multiple'
+                                          ? (room.answer?.answer_indexes ?? []).includes(index)
+                                          : index === room.answer?.answer_index
+                                  ) ? (
                                     <span className="text-xs font-bold">Jawabanmu</span>
                                 ) : null}
                             </li>
@@ -143,35 +163,14 @@ function Question({ room, onExpire }) {
                     }}
                 >
                     <Errors errors={form.errors} />
-                    <fieldset className="mt-4 grid gap-2">
-                        <legend className="mb-2 text-xs font-semibold text-foreground/55">Pilih satu jawaban</legend>
-                        {room.question.options.map((option, index) => (
-                            <label
-                                key={index}
-                                className={`flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl bg-background px-4 py-3 ring-2 ${form.data.answer_index === index ? 'ring-accent bg-accent/10' : 'ring-white/10 hover:ring-accent/40'}`}
-                            >
-                                <input
-                                    type="radio"
-                                    required
-                                    name="answer"
-                                    className="sr-only"
-                                    checked={form.data.answer_index === index}
-                                    onChange={() => form.setData('answer_index', index)}
-                                />
-                                <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-surface text-sm font-bold text-accent">
-                                    {String.fromCharCode(65 + index)}
-                                </span>
-                                <span className="min-w-0 flex-1 break-words text-sm font-semibold">{option}</span>
-                                <span
-                                    aria-hidden="true"
-                                    className={`size-4 shrink-0 rounded-full ring-2 ${form.data.answer_index === index ? 'bg-accent ring-accent' : 'ring-foreground/30'}`}
-                                />
-                            </label>
-                        ))}
-                    </fieldset>
+                    <AnswerInput
+                        question={room.question}
+                        answer={form.data}
+                        onChange={(key, value) => form.setData(key, value)}
+                    />
                     <Button
                         type="submit"
-                        disabled={form.processing || form.data.answer_index === ''}
+                        disabled={form.processing || !hasAnswer(room.question, form.data)}
                         className="mt-4 w-full"
                     >
                         {form.processing ? 'Mengirim…' : 'Kirim jawaban'}

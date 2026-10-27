@@ -8,6 +8,7 @@ use App\Models\QuizQuestion;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
@@ -15,7 +16,7 @@ use Throwable;
 
 class QuizService
 {
-    /** @param array{title: string, description?: string|null, leaderboard_enabled?: bool, show_answers_immediately?: bool, seconds_per_question?: int|null, time_limit_minutes?: int|null, questions: array<int, array{id?: int|null, prompt: string, options: array<int, string>, correct_option: int, explanation?: string|null, keyboard_auto_open?: bool, time_limit_seconds?: int|null}>} $data */
+    /** @param array{title: string, description?: string|null, leaderboard_enabled?: bool, show_answers_immediately?: bool, seconds_per_question?: int|null, time_limit_minutes?: int|null, questions: array<int, array{id?: int|null, prompt: string, options?: array<int, string>, correct_option?: int|null, question_type?: string, correct_options?: array<int, int>, accepted_answers?: array<int, string>, explanation?: string|null, keyboard_auto_open?: bool, time_limit_seconds?: int|null}>} $data */
     public function create(User $user, array $data): Quiz
     {
         $this->validateQuestions($data['questions']);
@@ -36,7 +37,7 @@ class QuizService
         });
     }
 
-    /** @param array{title: string, description?: string|null, show_answers_immediately?: bool, seconds_per_question?: int|null, time_limit_minutes?: int|null, questions: array<int, array{id?: int|null, prompt: string, options: array<int, string>, correct_option: int, explanation?: string|null, keyboard_auto_open?: bool, time_limit_seconds?: int|null}>} $data */
+    /** @param array{title: string, description?: string|null, show_answers_immediately?: bool, seconds_per_question?: int|null, time_limit_minutes?: int|null, questions: array<int, array{id?: int|null, prompt: string, options?: array<int, string>, correct_option?: int|null, question_type?: string, correct_options?: array<int, int>, accepted_answers?: array<int, string>, explanation?: string|null, keyboard_auto_open?: bool, time_limit_seconds?: int|null}>} $data */
     public function update(Quiz $quiz, User $user, array $data): Quiz
     {
         $this->validateQuestions($data['questions']);
@@ -82,6 +83,7 @@ class QuizService
                 foreach ($data['questions'] as $index => $attributes) {
                     $source = $existing->get($attributes['id'] ?? null);
                     unset($attributes['id']);
+                    $attributes = app(QuestionAnswerService::class)->attributes($attributes);
                     $attributes['keyboard_auto_open'] = (bool) ($attributes['keyboard_auto_open'] ?? false);
                     $attributes['explanation'] = $attributes['explanation'] ?? null;
                     $attributes['time_limit_seconds'] = $attributes['time_limit_seconds'] ?? null;
@@ -129,7 +131,7 @@ class QuizService
                     'time_limit_seconds' => $quiz->time_limit_seconds,
                 ]);
                 foreach ($quiz->questions()->with('audio')->get() as $source) {
-                    $question = $copy->questions()->create($source->only(['prompt', 'options', 'correct_option', 'explanation', 'sort_order', 'keyboard_auto_open', 'time_limit_seconds']));
+                    $question = $copy->questions()->create($source->only(['question_type', 'correct_options', 'accepted_answers', 'prompt', 'options', 'correct_option', 'explanation', 'sort_order', 'keyboard_auto_open', 'time_limit_seconds']));
                     $this->copyAudio($source, $question, $copiedPaths);
                 }
 
@@ -160,25 +162,21 @@ class QuizService
         $copy->fill(['quiz_question_id' => $destination->id, 'version' => (string) Str::uuid(), 'path' => $path])->save();
     }
 
-    /** @param array<int, array{options: array<int, string>, correct_option: int}> $questions */
+    /** @param array<int, array{options?: array<int, string>, correct_option?: int|null, question_type?: string, correct_options?: array<int, int>, accepted_answers?: array<int, string>}> $questions */
     private function validateQuestions(array $questions): void
     {
         foreach ($questions as $index => $question) {
-            if ($question['correct_option'] >= count($question['options'])) {
-                throw ValidationException::withMessages([
-                    "questions.{$index}.correct_option" => 'Pilih salah satu opsi jawaban yang tersedia.',
-                ]);
-            }
+            Validator::make($question, app(QuestionAnswerService::class)->definitionRules($question))->validate();
         }
     }
 
-    /** @param array<int, array{id?: int|null, prompt: string, options: array<int, string>, correct_option: int, explanation?: string|null, keyboard_auto_open?: bool, time_limit_seconds?: int|null}> $questions */
+    /** @param array<int, array{id?: int|null, prompt: string, options?: array<int, string>, correct_option?: int|null, question_type?: string, correct_options?: array<int, int>, accepted_answers?: array<int, string>, explanation?: string|null, keyboard_auto_open?: bool, time_limit_seconds?: int|null}> $questions */
     private function saveQuestions(Quiz $quiz, array $questions): void
     {
         $sortOrder = 1;
 
         foreach ($questions as $question) {
-            $quiz->questions()->create([...$question, 'sort_order' => $sortOrder++]);
+            $quiz->questions()->create([...app(QuestionAnswerService::class)->attributes($question), 'sort_order' => $sortOrder++]);
         }
     }
 }

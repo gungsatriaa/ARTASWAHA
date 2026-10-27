@@ -75,18 +75,25 @@ export default function Quiz({ quiz, meta }) {
                                         {question.options.map((option, choice) => (
                                             <li
                                                 key={choice}
-                                                className={`rounded-2xl bg-background p-4 text-sm ${choice === question.correct_option ? 'ring-1 ring-success/40 text-success' : 'text-foreground/60'}`}
+                                                className={`rounded-2xl bg-background p-4 text-sm ${(question.question_type === 'multiple' ? (question.correct_options ?? []).includes(choice) : choice === question.correct_option) ? 'ring-1 ring-success/40 text-success' : 'text-foreground/60'}`}
                                             >
                                                 <span className="mr-2 font-bold">
                                                     {String.fromCharCode(65 + choice)}.
                                                 </span>
                                                 {option}
-                                                {choice === question.correct_option && (
+                                                {(question.question_type === 'multiple'
+                                                    ? (question.correct_options ?? []).includes(choice)
+                                                    : choice === question.correct_option) && (
                                                     <span className="ml-2 text-xs font-bold">✓ Jawaban benar</span>
                                                 )}
                                             </li>
                                         ))}
                                     </ol>
+                                    {question.question_type === 'essay' && (
+                                        <p className="mt-4 whitespace-pre-wrap break-words text-sm text-success">
+                                            Jawaban acuan: {(question.accepted_answers ?? []).join(' / ')}
+                                        </p>
+                                    )}
                                     {question.explanation && (
                                         <p className="mt-4 text-sm leading-7 text-foreground/55">
                                             {question.explanation}

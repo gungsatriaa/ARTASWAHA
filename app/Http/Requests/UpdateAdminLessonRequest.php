@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Services\QuestionAnswerService;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
@@ -31,7 +32,7 @@ class UpdateAdminLessonRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'learning_path_id' => ['required', 'integer', 'exists:learning_paths,id'],
             'title' => ['required', 'string', 'max:120'],
             'slug' => ['required', 'alpha_dash', 'max:150', Rule::unique('lessons', 'slug')->ignore($this->route('lesson'))],
@@ -40,11 +41,13 @@ class UpdateAdminLessonRequest extends FormRequest
             'sort_order' => ['required', 'integer', 'between:0,65535'],
             'has_exercise' => ['sometimes', 'boolean'],
             'keyboard_auto_open' => ['sometimes', 'boolean'],
-            'exercise_prompt' => ['exclude_unless:has_exercise,1', 'required', 'string', 'max:500'],
-            'exercise_options' => ['exclude_unless:has_exercise,1', 'required', 'array', 'size:4'],
-            'exercise_options.*' => ['required', 'string', 'max:140', 'distinct'],
-            'correct_option' => ['exclude_unless:has_exercise,1', 'required', 'integer', 'between:0,3'],
-            'exercise_explanation' => ['exclude_unless:has_exercise,1', 'nullable', 'string', 'max:500'],
+            'exercise_prompt' => $this->boolean('has_exercise') ? ['required', 'string', 'max:500'] : ['exclude'],
+            'exercise_explanation' => $this->boolean('has_exercise') ? ['nullable', 'string', 'max:500'] : ['exclude'],
         ];
+        foreach (app(QuestionAnswerService::class)->definitionRules($this->all(), 'exercise_options', 4, 4) as $field => $ruleset) {
+            $rules[$field] = $this->boolean('has_exercise') ? $ruleset : ['exclude'];
+        }
+
+        return $rules;
     }
 }

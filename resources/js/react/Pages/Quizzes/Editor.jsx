@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { PageMeta, Button } from '../../Components/ui';
 import { Card, Heading, Back, Field, Check, Errors, secondaryClass } from '../../Components/forms';
+import QuestionFields from '../../Components/QuestionFields';
+import AnswerInput from '../../Components/AnswerInput';
 import Keyboard from '../../Components/LazyKeyboard';
 import AudioPlayer from '../../Components/AudioPlayer';
 import usePolling from '../../Hooks/usePolling';
@@ -10,6 +12,9 @@ export const blankQuestion = (key) => ({
     _key: key,
     prompt: '',
     options: ['', '', '', ''],
+    question_type: 'single',
+    correct_options: [],
+    accepted_answers: [],
     correct_option: '',
     explanation: '',
     keyboard_auto_open: false,
@@ -19,6 +24,9 @@ export function withoutOption(question, index) {
     return {
         ...question,
         options: question.options.filter((_, position) => position !== index),
+        correct_options: (question.correct_options ?? [])
+            .filter((value) => value !== index)
+            .map((value) => (value > index ? value - 1 : value)),
         correct_option:
             question.correct_option === index
                 ? ''
@@ -30,10 +38,19 @@ export function withoutOption(question, index) {
 export function payloadQuestions(questions) {
     return questions.map((question) => ({
         ...Object.fromEntries(
-            ['prompt', 'options', 'correct_option', 'explanation', 'keyboard_auto_open', 'time_limit_seconds'].map(
-                (key) => [key, question[key] ?? null],
-            ),
+            [
+                'prompt',
+                'options',
+                'correct_option',
+                'question_type',
+                'correct_options',
+                'accepted_answers',
+                'explanation',
+                'keyboard_auto_open',
+                'time_limit_seconds',
+            ].map((key) => [key, question[key] ?? null]),
         ),
+        question_type: question.question_type ?? 'single',
         ...(question.id ? { id: question.id } : {}),
     }));
 }
@@ -59,6 +76,10 @@ export default function Editor({ quiz, hasRooms, preview, meta }) {
         show_answers_immediately: quiz?.show_answers_immediately ?? true,
         questions: quiz?.questions.map((q, index) => ({
             ...q,
+            options: q.options?.length ? q.options : ['', '', '', ''],
+            question_type: q.question_type ?? 'single',
+            correct_options: q.correct_options ?? [],
+            accepted_answers: q.accepted_answers ?? [],
             _key: index,
             time_limit_seconds: q.time_limit_seconds ?? '',
         })) ?? [blankQuestion(0)],
@@ -352,78 +373,116 @@ export default function Editor({ quiz, hasRooms, preview, meta }) {
                                             onChange={(e) => change(index, 'prompt', e.target.value)}
                                             error={form.errors[`questions.${index}.prompt`]}
                                         />
-                                        <fieldset className="space-y-3">
-                                            <legend className="mb-2 text-sm font-semibold">
-                                                Pilihan jawaban · tandai satu yang benar
-                                            </legend>
-                                            {q.options.map((option, choice) => (
-                                                <div
-                                                    key={choice}
-                                                    className="flex items-start gap-3 rounded-2xl bg-background p-3"
-                                                >
-                                                    <label className="mt-4 flex min-h-10 items-center">
-                                                        <span className="sr-only">
-                                                            Jawaban benar pilihan {choice + 1} untuk soal {index + 1}
-                                                        </span>
-                                                        <input
-                                                            type="radio"
-                                                            name={`correct-${q._key}`}
-                                                            checked={
-                                                                Number(q.correct_option) === choice &&
-                                                                q.correct_option !== '' &&
-                                                                q.correct_option !== null
+                                        <QuestionFields
+                                            question={q}
+                                            onChange={(key, value) => change(index, key, value)}
+                                            errors={Object.fromEntries(
+                                                Object.entries(form.errors)
+                                                    .filter(([key]) => key.startsWith(`questions.${index}.`))
+                                                    .map(([key, value]) => [
+                                                        key.slice(`questions.${index}.`.length),
+                                                        value,
+                                                    ]),
+                                            )}
+                                        />
+                                        {q.question_type !== 'essay' && (
+                                            <fieldset className="space-y-3">
+                                                <legend className="mb-2 text-sm font-semibold">
+                                                    {q.question_type === 'multiple'
+                                                        ? 'Pilihan jawaban · tandai semua yang benar'
+                                                        : 'Pilihan jawaban · tandai satu yang benar'}
+                                                </legend>
+                                                {q.options.map((option, choice) => (
+                                                    <div
+                                                        key={choice}
+                                                        className="flex items-start gap-3 rounded-2xl bg-background p-3"
+                                                    >
+                                                        <label className="mt-4 flex min-h-10 items-center">
+                                                            <span className="sr-only">
+                                                                Jawaban benar pilihan {choice + 1} untuk soal{' '}
+                                                                {index + 1}
+                                                            </span>
+                                                            <input
+                                                                type={
+                                                                    q.question_type === 'multiple'
+                                                                        ? 'checkbox'
+                                                                        : 'radio'
+                                                                }
+                                                                name={`correct-${q._key}`}
+                                                                checked={
+                                                                    q.question_type === 'multiple'
+                                                                        ? (q.correct_options ?? []).includes(choice)
+                                                                        : Number(q.correct_option) === choice &&
+                                                                          q.correct_option !== '' &&
+                                                                          q.correct_option !== null
+                                                                }
+                                                                onChange={() =>
+                                                                    q.question_type === 'multiple'
+                                                                        ? change(
+                                                                              index,
+                                                                              'correct_options',
+                                                                              (q.correct_options ?? []).includes(choice)
+                                                                                  ? q.correct_options.filter(
+                                                                                        (value) => value !== choice,
+                                                                                    )
+                                                                                  : [
+                                                                                        ...(q.correct_options ?? []),
+                                                                                        choice,
+                                                                                    ],
+                                                                          )
+                                                                        : change(index, 'correct_option', choice)
+                                                                }
+                                                                className="size-5 accent-[var(--color-accent)]"
+                                                            />
+                                                        </label>
+                                                        <Field
+                                                            className="flex-1"
+                                                            label={`Pilihan ${String.fromCharCode(65 + choice)}`}
+                                                            value={option}
+                                                            required
+                                                            maxLength={140}
+                                                            onChange={(e) =>
+                                                                change(
+                                                                    index,
+                                                                    'options',
+                                                                    q.options.map((text, position) =>
+                                                                        position === choice ? e.target.value : text,
+                                                                    ),
+                                                                )
                                                             }
-                                                            onChange={() => change(index, 'correct_option', choice)}
-                                                            className="size-5 accent-[var(--color-accent)]"
+                                                            error={form.errors[`questions.${index}.options.${choice}`]}
                                                         />
-                                                    </label>
-                                                    <Field
-                                                        className="flex-1"
-                                                        label={`Pilihan ${String.fromCharCode(65 + choice)}`}
-                                                        value={option}
-                                                        required
-                                                        maxLength={140}
-                                                        onChange={(e) =>
-                                                            change(
-                                                                index,
-                                                                'options',
-                                                                q.options.map((text, position) =>
-                                                                    position === choice ? e.target.value : text,
-                                                                ),
-                                                            )
-                                                        }
-                                                        error={form.errors[`questions.${index}.options.${choice}`]}
-                                                    />
+                                                        <button
+                                                            type="button"
+                                                            aria-label={`Hapus pilihan ${choice + 1}`}
+                                                            disabled={q.options.length <= 2}
+                                                            className={`${secondaryClass} mt-7 !px-3`}
+                                                            onClick={() =>
+                                                                form.setData(
+                                                                    'questions',
+                                                                    form.data.questions.map((item, position) =>
+                                                                        position === index
+                                                                            ? withoutOption(item, choice)
+                                                                            : item,
+                                                                    ),
+                                                                )
+                                                            }
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                                {q.options.length < 5 && (
                                                     <button
                                                         type="button"
-                                                        aria-label={`Hapus pilihan ${choice + 1}`}
-                                                        disabled={q.options.length <= 2}
-                                                        className={`${secondaryClass} mt-7 !px-3`}
-                                                        onClick={() =>
-                                                            form.setData(
-                                                                'questions',
-                                                                form.data.questions.map((item, position) =>
-                                                                    position === index
-                                                                        ? withoutOption(item, choice)
-                                                                        : item,
-                                                                ),
-                                                            )
-                                                        }
+                                                        className={secondaryClass}
+                                                        onClick={() => change(index, 'options', [...q.options, ''])}
                                                     >
-                                                        ×
+                                                        Tambah pilihan
                                                     </button>
-                                                </div>
-                                            ))}
-                                            {q.options.length < 5 && (
-                                                <button
-                                                    type="button"
-                                                    className={secondaryClass}
-                                                    onClick={() => change(index, 'options', [...q.options, ''])}
-                                                >
-                                                    Tambah pilihan
-                                                </button>
-                                            )}
-                                        </fieldset>
+                                                )}
+                                            </fieldset>
+                                        )}
                                         <Field
                                             as="textarea"
                                             label="Penjelasan jawaban (opsional)"
@@ -530,18 +589,17 @@ export default function Editor({ quiz, hasRooms, preview, meta }) {
                                 Audio lama tidak diputar karena teks soal atau pilihan berubah.
                             </p>
                         )}
-                        <div className="mt-5 grid gap-3">
-                            {question?.options.map((option, index) => (
-                                <button
-                                    type="button"
-                                    className={`min-h-14 rounded-2xl bg-background p-4 text-left ring-1 ${chosen === index ? 'ring-accent' : 'ring-white/10'}`}
-                                    key={index}
-                                    onClick={() => setChosen(index)}
-                                >
-                                    {String.fromCharCode(65 + index)}. {option || 'Pilihan belum diisi'}
-                                </button>
-                            ))}
-                        </div>
+                        {question && (
+                            <AnswerInput
+                                key={question._key}
+                                question={question}
+                                required={false}
+                                answer={chosen ?? {}}
+                                onChange={(key, value) =>
+                                    setChosen((current) => ({ ...(current ?? {}), [key]: value }))
+                                }
+                            />
+                        )}
                         <div className="mt-6 flex flex-wrap justify-between gap-3">
                             <button
                                 type="button"
