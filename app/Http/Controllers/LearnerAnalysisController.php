@@ -14,9 +14,7 @@ class LearnerAnalysisController extends Controller
     public function show(Request $request, LearnerInterviewAnalyzer $analyzer): JsonResponse
     {
         $profile = $this->profile($request);
-        $paths = $profile->analysis_status === 'completed'
-            ? LearningPath::query()->whereKey($profile->learning_path_ids ?: [$profile->learning_path_id])->where('is_published', true)->get()
-            : collect();
+        $paths = LearningPath::query()->whereKey($profile->learning_path_ids ?: [$profile->learning_path_id])->where('is_published', true)->get();
         $analysis = $analyzer->presentation($profile, $paths);
 
         return response()->json([

@@ -927,3 +927,23 @@ it('renders an accessible FAQ accordion with the first answer available immediat
         'mailto:kerthajayasoftware@gmail.com',
     );
 });
+
+it('keeps the saved AI summary visible while updating and labels the first factual summary honestly', () => {
+    const { rerender } = render(
+        <Analysis
+            poll={false}
+            analysis={{ status: 'processing', source: 'ai', summary: 'Hasil AI terakhir.', recommendations: [] }}
+        />,
+    );
+    expect(screen.getByText('Hasil AI terakhir.')).toBeTruthy();
+    expect(screen.getByText(/Hasil AI terakhir tetap ditampilkan/)).toBeTruthy();
+    expect(screen.queryByRole('status', { name: 'Menyiapkan analisis belajar…' })).toBeNull();
+    rerender(
+        <Analysis
+            poll={false}
+            analysis={{ status: 'queued', source: 'initial', summary: 'Tercatat 0 hari aktif.', recommendations: [] }}
+        />,
+    );
+    expect(screen.getByText('Tercatat 0 hari aktif.')).toBeTruthy();
+    expect(screen.getByText(/belum merupakan hasil AI/)).toBeTruthy();
+});

@@ -78,10 +78,63 @@ export default function AiDetail({ kind, record, meta }) {
                             </div>
                         </dl>
                         <div className="mt-5">
-                            <Action url={record.retryUrl}>Periksa permintaan analisis</Action>
+                            <Action url={record.retryUrl}>Tes ulang analisis</Action>
                         </div>
                     </Card>
                     <Analysis analysis={record.analysis} poll={false} />
+                    <Card className="mt-5">
+                        <h2 className="font-display text-xl font-bold">Riwayat proses & hasil AI</h2>
+                        <p className="mt-3 text-xs leading-6 text-foreground/50">
+                            20 kejadian terakhir. Respons mentah dan API key tidak dicatat; identitas tidak disertakan
+                            dalam input AI. Waktu WITA. Permintaan terakhir:{' '}
+                            {record.requestedAt
+                                ? new Date(record.requestedAt).toLocaleString('id-ID', { timeZone: 'Asia/Makassar' })
+                                : 'Belum diminta'}
+                            .
+                        </p>
+                        <ol className="mt-5 space-y-3">
+                            {(record.events ?? []).map((event, index) => (
+                                <li key={`${event.at}-${index}`} className="rounded-2xl bg-background p-4">
+                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                        <Status value={event.status} />
+                                        <time className="text-xs text-foreground/50" dateTime={event.at}>
+                                            {new Date(event.at).toLocaleString('id-ID', { timeZone: 'Asia/Makassar' })}
+                                        </time>
+                                    </div>
+                                    <p className="mt-3 text-sm leading-7">{event.message}</p>
+                                    {(event.exception_type || event.http_status || event.duration_ms != null) && (
+                                        <p className="mt-2 break-all text-xs leading-6 text-foreground/50">
+                                            {event.exception_type}{' '}
+                                            {event.http_status ? `HTTP ${event.http_status}` : ''}{' '}
+                                            {event.duration_ms != null ? `${event.duration_ms} ms` : ''}
+                                        </p>
+                                    )}
+                                    {event.result && (
+                                        <details className="mt-3">
+                                            <summary className="min-h-11 cursor-pointer content-center text-sm font-bold text-accent">
+                                                Lihat hasil yang disimpan
+                                            </summary>
+                                            <p className="mt-2 whitespace-pre-line text-sm leading-7 text-foreground/65">
+                                                {event.result.summary}
+                                            </p>
+                                            <ul className="mt-3 space-y-2 text-sm leading-7 text-foreground/55">
+                                                {event.result.recommendations.map((item) => (
+                                                    <li key={item.learning_path_id}>
+                                                        Materi #{item.learning_path_id}: {item.reason}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </details>
+                                    )}
+                                </li>
+                            ))}
+                        </ol>
+                        {!record.events?.length && (
+                            <p className="mt-4 text-sm text-foreground/55">
+                                Belum ada riwayat. Tes ulang untuk merekam proses pertama.
+                            </p>
+                        )}
+                    </Card>
                 </>
             ) : kind === 'draft' ? (
                 <div className="space-y-4">

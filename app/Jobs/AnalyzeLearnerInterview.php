@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 use UnexpectedValueException;
@@ -65,18 +66,23 @@ class AnalyzeLearnerInterview implements ShouldBeUnique, ShouldQueue
 
     public function handle(LearnerInterviewAnalyzer $analyzer): void
     {
+        Cache::forever('learner-analysis-last-worker', now()->toIso8601String());
         $profile = $this->profileQuery()->first();
         if ($profile === null || $profile->analysis_status === 'completed') {
+            Log::info('Learner analysis skipped.', ['profile_id' => $this->profileId, 'reason' => $profile === null ? 'request_replaced_or_profile_deleted' : 'already_completed']);
+
             return;
         }
         if (! $analyzer->isCurrentInput($profile)) {
             $this->profileQuery()->update(['analysis_status' => 'outdated']);
+            $profile->recordAnalysisEvent('outdated', 'Jawaban interview atau konfigurasi berubah. Permintaan lama dilewati.');
 
             return;
         }
         if (! $analyzer->isConfigured()) {
             Log::warning('Learner analysis worker has no AI configuration.', ['profile_id' => $this->profileId]);
             $this->profileQuery()->update(['analysis_status' => 'unavailable']);
+            $profile->recordAnalysisEvent('unavailable', 'Worker belum membaca AI_API_URL atau AI_MODEL. Perbarui cache konfigurasi dan restart worker.');
 
             return;
         }
@@ -84,6 +90,7 @@ class AnalyzeLearnerInterview implements ShouldBeUnique, ShouldQueue
             return;
         }
         Log::info('Learner analysis started.', ['profile_id' => $this->profileId, 'connection' => 'learner-analysis', 'queue' => 'learner-analysis']);
+        $profile->recordAnalysisEvent('processing', 'Worker mulai meminta analisis ke penyedia AI.');
         $started = hrtime(true);
         try {
             $result = $analyzer->generate($profile->analysis_input);
@@ -94,23 +101,42 @@ class AnalyzeLearnerInterview implements ShouldBeUnique, ShouldQueue
                 $saved = $this->profileQuery()
                     ->update(['analysis_status' => 'completed', 'analysis_result' => json_encode($result, JSON_THROW_ON_ERROR), 'analysis_completed_at' => now()]);
                 if ($saved > 0) {
+                    $profile->recordAnalysisEvent('completed', 'Hasil AI berhasil divalidasi dan disimpan.', ['duration_ms' => (int) ((hrtime(true) - $started) / 1e6), 'result' => $result]);
                     Log::info('Learner analysis processed.', ['profile_id' => $this->profileId, 'duration_ms' => (int) ((hrtime(true) - $started) / 1e6)]);
                 }
             }
         } catch (UnexpectedValueException $exception) {
-            $this->failed($exception);
+            if ($this->job !== null) {
+                $this->fail($exception);
+            } else {
+                $this->failed($exception);
+            }
         } catch (Throwable $exception) {
             Log::warning('Learner analysis attempt will be retried.', ['profile_id' => $this->profileId, 'exception_type' => $exception::class, 'duration_ms' => (int) ((hrtime(true) - $started) / 1e6)]);
-            $this->profileQuery()->where('analysis_status', '!=', 'completed')
+            $changed = $this->profileQuery()->where('analysis_status', '!=', 'completed')
                 ->update(['analysis_status' => 'queued']);
+            if ($changed > 0) {
+                $profile->recordAnalysisEvent('queued', 'Permintaan AI gagal sementara; worker akan mencoba lagi.', ['exception_type' => $exception::class, 'http_status' => $exception->getCode() >= 400 && $exception->getCode() <= 599 ? $exception->getCode() : null]);
+            }
             throw $exception;
         }
     }
 
     public function failed(?Throwable $exception): void
     {
-        $this->profileQuery()->where('analysis_status', '!=', 'completed')
-            ->update(['analysis_status' => 'failed']);
+        $profile = $this->profileQuery()->first();
+        $changed = $this->profileQuery()->where('analysis_status', '!=', 'completed')->update(['analysis_status' => 'failed']);
+        if ($changed > 0 && $profile !== null) {
+            $message = match ($exception?->getMessage()) {
+                'No published learning material is available.' => 'Tidak ada materi pilihan yang sudah diterbitkan.',
+                'Learner analysis provider rejected the request.' => 'Penyedia AI menolak permintaan. Periksa HTTP status, model, dan autentikasi.',
+                'AI provider returned an invalid result.' => 'Respons AI bukan JSON yang valid atau melebihi batas ukuran.',
+                'Learner analysis provider returned an invalid result.' => 'JSON AI tidak sesuai skema ringkasan/rekomendasi atau ID materi tidak diizinkan.',
+                'Learner analysis is unavailable for this input.', 'AI service is not configured.' => 'Konfigurasi AI atau data interview belum valid.',
+                default => $exception instanceof UnexpectedValueException ? 'Respons AI tidak sesuai format yang diwajibkan.' : 'Analisis gagal setelah percobaan worker atau melewati batas waktu.',
+            };
+            $profile->recordAnalysisEvent('failed', $message, ['exception_type' => $exception === null ? null : $exception::class, 'http_status' => $exception?->getCode() >= 400 && $exception?->getCode() <= 599 ? $exception->getCode() : null]);
+        }
         Log::warning('Learner analysis failed.', ['profile_id' => $this->profileId, 'exception_type' => $exception === null ? null : $exception::class]);
     }
 

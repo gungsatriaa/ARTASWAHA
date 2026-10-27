@@ -16,6 +16,10 @@ export default function Ai({
     ttsConfigured,
     pendingJobs,
     audioCounts,
+    lastCheck,
+    lastWorker,
+    dateFiltered,
+    testAllUrl,
     filters,
     meta,
 }) {
@@ -54,13 +58,57 @@ export default function Ai({
                     <Link
                         key={value}
                         aria-current={tab === value ? 'page' : undefined}
-                        href={`${links['admin.ai.index']}?tab=${value}&start=${start}&end=${end}`}
+                        href={`${links['admin.ai.index']}?tab=${value}${value === 'interviews' ? '' : `&start=${start}&end=${end}`}`}
                         className={`${secondaryClass} ${tab === value ? '!bg-primary/20 !text-accent' : ''}`}
                     >
                         {label}
                     </Link>
                 ))}
             </nav>
+            {['interviews', 'services'].includes(tab) && (
+                <Card className="mb-6">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div className="max-w-2xl">
+                            <h2 className="font-display text-xl font-bold">Tes analisis seluruh pelajar</h2>
+                            <p className="mt-3 text-sm leading-7 text-foreground/60">
+                                Termasuk profil anonim dan profil terbaru setiap akun, tanpa mengikuti filter tanggal.
+                                Diproses bergiliran di background; hasil lama tetap tampil. Permintaan aktif tidak
+                                diduplikasi.
+                            </p>
+                            <p className="mt-3 text-xs leading-6 text-foreground/50">
+                                Pemeriksaan berkala terakhir:{' '}
+                                {lastCheck
+                                    ? new Date(lastCheck).toLocaleString('id-ID', { timeZone: 'Asia/Makassar' }) +
+                                      ' WITA'
+                                    : 'Belum tercatat — periksa cron schedule:run.'}{' '}
+                                Pemeriksaan tiap jam, analisis diperbarui setelah 6 jam.
+                            </p>
+                            <p className="mt-2 text-xs leading-6 text-foreground/50">
+                                Worker terakhir mulai memproses:{' '}
+                                {lastWorker
+                                    ? new Date(lastWorker).toLocaleString('id-ID', { timeZone: 'Asia/Makassar' }) +
+                                      ' WITA'
+                                    : 'Belum tercatat.'}{' '}
+                                Ini riwayat eksekusi, bukan bukti worker sedang online.
+                            </p>
+                            <p className="mt-2 text-xs leading-6 text-foreground/50">
+                                Tes ulang diberi jeda minimal 2 menit per profil. Buka detail untuk melihat sukses,
+                                error, dan hasil yang disimpan.
+                            </p>
+                            {!aiConfigured && (
+                                <p role="alert" className="mt-2 text-sm text-danger">
+                                    AI belum dikonfigurasi. Periksa AI_API_URL dan AI_MODEL.
+                                </p>
+                            )}
+                        </div>
+                        {aiConfigured && (
+                            <Action url={testAllUrl} confirm="Jalankan tes AI untuk seluruh profil?">
+                                Tes semua pelajar
+                            </Action>
+                        )}
+                    </div>
+                </Card>
+            )}
             {['overview', 'interviews'].includes(tab) && (
                 <form
                     aria-label="Filter analisis AI"
@@ -111,13 +159,19 @@ export default function Ai({
                                 onChange={(e) => form.setData('status', e.target.value)}
                             >
                                 <option value="">Semua</option>
-                                {['queued', 'processing', 'completed', 'failed', 'unavailable', 'not_requested'].map(
-                                    (value) => (
-                                        <option key={value} value={value}>
-                                            {value}
-                                        </option>
-                                    ),
-                                )}
+                                {[
+                                    'queued',
+                                    'processing',
+                                    'completed',
+                                    'failed',
+                                    'unavailable',
+                                    'outdated',
+                                    'not_requested',
+                                ].map((value) => (
+                                    <option key={value} value={value}>
+                                        {value}
+                                    </option>
+                                ))}
                             </Field>
                             <Field
                                 as="select"
@@ -236,11 +290,18 @@ export default function Ai({
                     <section className="mt-6">
                         <h2 className="mb-4 font-display text-xl font-bold">
                             {tab === 'interviews'
-                                ? 'Interview tersimpan'
+                                ? 'Analisis seluruh pelajar'
                                 : tab === 'drafts'
                                   ? 'Draf kuis AI'
                                   : 'Laporan AI'}
                         </h2>
+                        {tab === 'interviews' && (
+                            <p className="mb-4 text-xs leading-6 text-foreground/50">
+                                {dateFiltered
+                                    ? 'Tanggal menyaring waktu permintaan analisis terakhir.'
+                                    : 'Semua tanggal ditampilkan. Terapkan filter untuk membatasi waktu permintaan analisis.'}
+                            </p>
+                        )}
                         <div className="space-y-3">
                             {entries.data.map((record) => (
                                 <Link
@@ -263,6 +324,14 @@ export default function Ai({
                                                   ? `${record.period_start.slice(0, 10)} – ${record.period_end.slice(0, 10)}`
                                                   : record.created_at?.slice(0, 10)}
                                         </span>
+                                        {tab === 'interviews' && record.lastEvent && (
+                                            <span className="mt-2 block text-xs leading-6 text-foreground/60">
+                                                {record.lastEvent.message}
+                                                {record.lastEvent.http_status
+                                                    ? ` · HTTP ${record.lastEvent.http_status}`
+                                                    : ''}
+                                            </span>
+                                        )}
                                     </span>
                                     <Status value={record.analysis_status ?? record.status} />
                                 </Link>

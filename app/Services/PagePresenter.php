@@ -44,7 +44,7 @@ class PagePresenter
             'admin.audio.index' => ['Admin/AudioIndex', $this->audioIndex($data), 'Audio pembelajaran'],
             'admin.audio.edit' => ['Admin/AudioEdit', ['title' => $data['title'], 'text' => $data['text'], 'action' => $data['action'], 'configured' => $data['configured'], 'audio' => $this->audio($data['audio']), 'backUrl' => $data['isLesson'] ? route('admin.lessons.preview', $data['content']) : route('quizzes.index')], 'Siapkan audio'],
             'admin.ai.index' => ['Admin/Ai', $this->aiIndex($data), 'Pusat AI'],
-            'admin.ai.profile' => ['Admin/AiDetail', ['kind' => 'profile', 'record' => ['id' => $data['learnerProfile']->id, 'mode' => $data['learnerProfile']->mode, 'status' => $data['analysis']['status'], 'analysis' => $data['analysis'], 'paths' => $data['paths']->map(fn ($path) => $this->path($path)), 'retryUrl' => route('admin.ai.profiles.retry', $data['learnerProfile'])]], 'Detail analisis interview'],
+            'admin.ai.profile' => ['Admin/AiDetail', ['kind' => 'profile', 'record' => ['id' => $data['learnerProfile']->id, 'mode' => $data['learnerProfile']->mode, 'status' => $data['analysis']['status'], 'events' => array_reverse($data['learnerProfile']->analysis_events ?? []), 'requestedAt' => $data['learnerProfile']->analysis_requested_at?->toIso8601String(), 'analysis' => $data['analysis'], 'paths' => $data['paths']->map(fn ($path) => $this->path($path)), 'retryUrl' => route('admin.ai.profiles.retry', $data['learnerProfile'])]], 'Detail analisis interview'],
             'admin.ai.draft' => ['Admin/AiDetail', ['kind' => 'draft', 'record' => $data['quizDraft']->only(['id', 'status', 'questions'])], 'Detail draf kuis AI'],
             'admin.ai.report' => ['Admin/AiDetail', ['kind' => 'report', 'record' => $data['aiReport']->only(['id', 'status', 'period_start', 'period_end', 'snapshot', 'result', 'completed_at'])], 'Interpretasi statistik AI'],
         };
@@ -166,11 +166,11 @@ class PagePresenter
 
     private function aiIndex(array $data): array
     {
-        $summary = fn ($item) => [...$item->only(['id', 'status', 'analysis_status', 'mode', 'role', 'created_at', 'period_start', 'period_end']), 'url' => route(match (get_class($item)) {
+        $summary = fn ($item) => [...$item->only(['id', 'status', 'analysis_status', 'mode', 'role', 'analysis_requested_at', 'analysis_completed_at', 'created_at', 'period_start', 'period_end']), 'lastEvent' => $item instanceof LearnerProfile ? collect(collect($item->analysis_events ?? [])->last())->only(['at', 'status', 'message', 'http_status'])->all() : null, 'url' => route(match (get_class($item)) {
             LearnerProfile::class => 'admin.ai.profiles.show', QuizDraft::class => 'admin.ai.drafts.show', default => 'admin.ai.reports.show'
         }, $item)];
 
-        return ['tab' => $data['tab'], 'start' => $data['start']->toDateString(), 'end' => $data['end']->toDateString(), 'snapshot' => $data['snapshot'], 'statuses' => $data['statuses']->map(fn ($item) => $item->only(['analysis_status', 'total'])), 'profiles' => $this->listing($data['profiles'], $summary), 'drafts' => $this->listing($data['drafts'], $summary), 'reports' => $this->listing($data['reports'], $summary), 'paths' => $data['learningPaths']->map(fn ($path) => $this->path($path)), 'aiConfigured' => $data['aiConfigured'], 'ttsConfigured' => $data['ttsConfigured'], 'pendingJobs' => $data['pendingJobs'], 'audioCounts' => $data['audioCounts'], 'filters' => request()->only(['role', 'status', 'mode', 'learning_path_id'])];
+        return ['tab' => $data['tab'], 'start' => $data['start']->toDateString(), 'end' => $data['end']->toDateString(), 'snapshot' => $data['snapshot'], 'statuses' => $data['statuses']->map(fn ($item) => $item->only(['analysis_status', 'total'])), 'profiles' => $this->listing($data['profiles'], $summary), 'drafts' => $this->listing($data['drafts'], $summary), 'reports' => $this->listing($data['reports'], $summary), 'paths' => $data['learningPaths']->map(fn ($path) => $this->path($path)), 'aiConfigured' => $data['aiConfigured'], 'ttsConfigured' => $data['ttsConfigured'], 'pendingJobs' => $data['pendingJobs'], 'audioCounts' => $data['audioCounts'], 'lastCheck' => $data['lastCheck'], 'lastWorker' => $data['lastWorker'], 'dateFiltered' => request()->filled('start') || request()->filled('end'), 'testAllUrl' => route('admin.ai.profiles.test-all'), 'filters' => request()->only(['role', 'status', 'mode', 'learning_path_id'])];
     }
 
     private function listing(mixed $items, Closure $map): mixed

@@ -31,7 +31,7 @@ const dataUses = [
         'book',
         'Pelajaran & progres',
         'Pelajaran selesai, latihan, dan riwayat',
-        'Kami menyimpan hubungan akun atau ID browser dengan pelajaran, status penyelesaian, jawaban latihan, ketepatan jawaban, dan waktu aktivitas yang tercatat. Data ini menampilkan progres, riwayat terakhir, serta ringkasan hari aktif. Sistem belum mengukur durasi membaca atau seluruh waktu belajar.',
+        'Kami menyimpan hubungan akun atau ID browser dengan pelajaran, status penyelesaian, jawaban latihan, ketepatan jawaban, dan waktu aktivitas yang tercatat. Data ini menampilkan progres, riwayat terakhir, serta ringkasan hari aktif. Sistem belum mengukur durasi membaca atau seluruh waktu belajar. Untuk diagnosis layanan, pengelola dapat melihat 20 kejadian analisis terakhir per profil, termasuk waktu, status, jenis error/HTTP, dan hasil AI yang berhasil divalidasi. Riwayat ini ikut terhapus bersama profil; respons mentah dan API key tidak disalin ke riwayat.',
     ],
     [
         'quiz',
