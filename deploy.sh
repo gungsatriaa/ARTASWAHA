@@ -6,7 +6,7 @@ APP_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 DEPLOY_REMOTE="${DEPLOY_REMOTE:-origin}"
 DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
 DEPLOY_SSH_KEY="${DEPLOY_SSH_KEY:-/root/.ssh/aapanel/artaswaha_78175}"
-QUEUE_PROGRAM="${QUEUE_SUPERVISOR_PROGRAM:-artaswaha-queue:*}"
+QUEUE_PROGRAM="${QUEUE_SUPERVISOR_PROGRAM:-}"
 LEARNER_QUEUE_PROGRAM="${LEARNER_QUEUE_SUPERVISOR_PROGRAM:-}"
 REVERB_PROGRAM="${REVERB_SUPERVISOR_PROGRAM:-artaswaha-reverb}"
 SUPERVISORCTL_BIN="${SUPERVISORCTL_BIN:-$(command -v supervisorctl || true)}"
@@ -58,11 +58,70 @@ check_process() {
     fail "$label tidak ditemukan di $APP_DIR. Periksa proses di Supervisor/aaPanel."
 }
 
+check_queue_process() {
+    local label="$1"
+    local process_pid process_directory argument artisan_path worker_connection
+    local index command_index skip_value candidate_count=0 app_count=0 unreadable_count=0
+    local -a arguments
+
+    while IFS= read -r process_pid; do
+        [[ "$process_pid" =~ ^[0-9]+$ ]] || continue
+        candidate_count=$((candidate_count + 1))
+        process_directory="$(readlink -f "/proc/$process_pid/cwd" 2>/dev/null || true)"
+        arguments=()
+        while IFS= read -r -d '' argument; do
+            arguments+=("$argument")
+        done < <(cat "/proc/$process_pid/cmdline" 2>/dev/null || true)
+        if [[ ${#arguments[@]} -eq 0 ]]; then
+            unreadable_count=$((unreadable_count + 1))
+            continue
+        fi
+        command_index=-1
+        for ((index = 0; index + 1 < ${#arguments[@]}; index++)); do
+            if [[ "${arguments[$index]##*/}" == artisan && "${arguments[$((index + 1))]}" == queue:work ]]; then
+                artisan_path="${arguments[$index]}"
+                [[ "$artisan_path" == /* ]] || artisan_path="$process_directory/$artisan_path"
+                artisan_path="$(readlink -f "$artisan_path" 2>/dev/null || true)"
+                if [[ "$artisan_path" == "$APP_DIR/artisan" ]]; then
+                    command_index=$((index + 1))
+                    app_count=$((app_count + 1))
+                fi
+                break
+            fi
+        done
+        [[ "$command_index" -ge 0 ]] || continue
+        worker_connection="$WORKER_CONNECTION"
+        skip_value=false
+        for ((index = command_index + 1; index < ${#arguments[@]}; index++)); do
+            argument="${arguments[$index]}"
+            if [[ "$skip_value" == true ]]; then
+                skip_value=false
+                continue
+            fi
+            case "$argument" in
+                --name|--queue|--stop-when-empty-for|--delay|--backoff|--max-jobs|--max-time|--memory|--sleep|--rest|--timeout|--tries|--env)
+                    skip_value=true ;;
+                -*) ;;
+                *) worker_connection="$argument"; break ;;
+            esac
+        done
+        if [[ "$worker_connection" == "$WORKER_CONNECTION" ]]; then
+            printf 'OK  %-18s proses aplikasi aktif, koneksi %s\n' "$label" "$WORKER_CONNECTION"
+            return
+        fi
+        printf 'INFO Worker PID %s memakai koneksi %s; aplikasi membutuhkan %s.\n' "$process_pid" "$worker_connection" "$WORKER_CONNECTION" >&2
+    done < <(pgrep -f '[a]rtisan[[:space:]]+queue:work' || true)
+    if [[ "$unreadable_count" -gt 0 ]]; then
+        printf 'INFO Ada %s proses yang argumennya tidak dapat dibaca. Jalankan deploy dengan izin membaca /proc atau atur nama program Supervisor.\n' "$unreadable_count" >&2
+    fi
+    fail "$label tidak ditemukan untuk $APP_DIR (koneksi $WORKER_CONNECTION; kandidat $candidate_count, cocok aplikasi $app_count). Pastikan Supervisor RUNNING dan command: php $APP_DIR/artisan queue:work --sleep=3 --tries=3 --timeout=240 --max-time=3600."
+}
+
 check_learner_worker() {
     if [[ -n "$SUPERVISORCTL_BIN" && -n "$LEARNER_QUEUE_PROGRAM" ]]; then
         check_supervisor_program "AI/TTS worker" "$LEARNER_QUEUE_PROGRAM"
     else
-        check_process "AI/TTS worker" "$QUEUE_WORKER_PATTERN"
+        check_queue_process "AI/TTS worker"
     fi
 }
 
@@ -113,14 +172,19 @@ command -v curl >/dev/null || fail "curl tidak ditemukan."
 command -v timeout >/dev/null || fail "timeout tidak ditemukan."
 [[ -f .env ]] || fail ".env tidak ditemukan; deploy dibatalkan."
 [[ -f vendor/autoload.php ]] || fail "vendor belum tersedia; lakukan instalasi awal Composer terlebih dahulu."
+if [[ -z "$QUEUE_PROGRAM" ]]; then
+    QUEUE_PROGRAM="$(dotenv_value QUEUE_SUPERVISOR_PROGRAM)"
+fi
 if [[ -z "$LEARNER_QUEUE_PROGRAM" ]]; then
     LEARNER_QUEUE_PROGRAM="$(dotenv_value LEARNER_QUEUE_SUPERVISOR_PROGRAM)"
+    [[ -n "$LEARNER_QUEUE_PROGRAM" ]] || LEARNER_QUEUE_PROGRAM="$QUEUE_PROGRAM"
 fi
 if [[ -n "$SUPERVISORCTL_BIN" ]]; then
     [[ -x "$SUPERVISORCTL_BIN" ]] || fail "SUPERVISORCTL_BIN tidak dapat dijalankan: $SUPERVISORCTL_BIN"
 fi
-if [[ -z "$SUPERVISORCTL_BIN" || -z "$LEARNER_QUEUE_PROGRAM" ]]; then
+if [[ -z "$SUPERVISORCTL_BIN" || -z "$LEARNER_QUEUE_PROGRAM" || -z "$QUEUE_PROGRAM" ]]; then
     command -v pgrep >/dev/null || fail "pgrep tidak ditemukan; tidak dapat memeriksa proses worker."
+    command -v cat >/dev/null || fail "cat tidak ditemukan; tidak dapat membaca argumen worker."
     command -v readlink >/dev/null || fail "readlink tidak ditemukan; tidak dapat memverifikasi folder worker."
 fi
 [[ "$(git branch --show-current)" == "$DEPLOY_BRANCH" ]] || fail "Branch aktif bukan '$DEPLOY_BRANCH'. Atur DEPLOY_BRANCH sesuai branch yang akan di-deploy."
@@ -131,7 +195,6 @@ git diff --quiet && git diff --cached --quiet || fail "Ada perubahan file tracke
 WORKER_CONNECTION="$(dotenv_value QUEUE_CONNECTION)"
 [[ -n "$WORKER_CONNECTION" ]] || WORKER_CONNECTION=database
 [[ "$WORKER_CONNECTION" =~ ^[a-zA-Z0-9_-]+$ ]] || fail "QUEUE_CONNECTION tidak valid."
-QUEUE_WORKER_PATTERN="[a]rtisan queue:work([[:space:]]+${WORKER_CONNECTION})?([[:space:]]+-|[[:space:]]*$)"
 
 LEARNER_WORKER_REQUIRED=false
 if [[ "$(dotenv_value TTS_ENABLED)" == "true" || ( -n "$(dotenv_value AI_API_URL)" && -n "$(dotenv_value AI_MODEL)" ) ]]; then
@@ -178,11 +241,15 @@ php artisan optimize
 
 printf '\n[10/13] Memeriksa status queue worker dan Reverb...\n'
 if [[ -n "$SUPERVISORCTL_BIN" ]]; then
-    check_supervisor_program "Queue worker" "$QUEUE_PROGRAM"
+    if [[ -n "$QUEUE_PROGRAM" ]]; then
+        check_supervisor_program "Queue worker" "$QUEUE_PROGRAM"
+    else
+        check_queue_process "Queue worker"
+    fi
     check_supervisor_program "Reverb process" "$REVERB_PROGRAM"
 else
     printf 'Supervisor CLI tidak tersedia; memeriksa proses aktif langsung.\n'
-    check_process "Queue worker" "$QUEUE_WORKER_PATTERN"
+    check_queue_process "Queue worker"
     check_process "Reverb process" '[a]rtisan reverb:start'
 fi
 

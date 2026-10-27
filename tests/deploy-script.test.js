@@ -8,7 +8,7 @@ import { spawnSync } from 'node:child_process';
 const bash = process.platform === 'win32' ? 'C:/Program Files/Git/bin/bash.exe' : 'bash';
 const available = spawnSync(bash, ['--version']).status === 0;
 
-function runDeploy({ tts = false, analysis = false, missing = false, failAfterDeploy = false, workerProgram = 'artaswaha-learner:*', wrongDirectory = false, mixedDirectories = false, queueConnection = '' } = {}) {
+function runDeploy({ tts = false, analysis = false, missing = false, failAfterDeploy = false, workerProgram = 'artaswaha-learner:*', wrongDirectory = false, mixedDirectories = false, queueConnection = '', absoluteArtisan = false, processConnection = '', flagsFirst = false, unreadable = false } = {}) {
     const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'artaswaha-deploy-test-'));
     try {
         const bin = path.join(folder, 'fake-bin');
@@ -42,6 +42,7 @@ if [[ "$1" == -r ]]; then
         REVERB_SERVER_PORT) printf 8080;;
         AI_API_URL) if [[ "$TEST_ANALYSIS" == true ]]; then printf 'http://model.invalid/v1'; fi;;
         AI_MODEL) if [[ "$TEST_ANALYSIS" == true ]]; then printf test-model; fi;;
+        QUEUE_SUPERVISOR_PROGRAM) if [[ -n "$TEST_WORKER_PROGRAM" ]]; then printf 'artaswaha-queue:*'; fi;;
         LEARNER_QUEUE_SUPERVISOR_PROGRAM) printf '%s' "$TEST_WORKER_PROGRAM";;
     esac
 elif [[ "$1" == artisan ]]; then
@@ -66,12 +67,25 @@ printf 'PROCESS %s\\n' "$*" >> "$TEST_LOG"
 printf '1234\\n'
 if [[ "$TEST_MIXED_DIRECTORIES" == 1 ]]; then printf '5678\\n'; fi
 `);
-        executable('readlink', 'if [[ "$TEST_WRONG_DIRECTORY" == 1 || ( "$TEST_MIXED_DIRECTORIES" == 1 && "$2" == /proc/1234/cwd ) ]]; then printf "/other-app\\n"; else pwd; fi\n');
+        executable('cat', `
+if [[ "$1" == /proc/*/cmdline ]]; then
+    [[ "$TEST_UNREADABLE" != 1 ]] || exit 1
+    printf '%s\\0' /www/server/php/84/bin/php
+    if [[ "$TEST_ABSOLUTE_ARTISAN" == 1 ]]; then printf '%s\\0' "$PWD/artisan"; else printf '%s\\0' artisan; fi
+    printf '%s\\0' queue:work
+    if [[ "$TEST_FLAGS_FIRST" == 1 ]]; then printf '%s\\0' --sleep 3 --queue default; fi
+    if [[ -n "$TEST_PROCESS_CONNECTION" ]]; then printf '%s\\0' "$TEST_PROCESS_CONNECTION"; fi
+    printf '%s\\0' --tries=3 --timeout=240 --max-time=3600
+else
+    /bin/cat "$@"
+fi
+`);
+        executable('readlink', 'if [[ "$2" == /proc/*/cwd && ( "$TEST_WRONG_DIRECTORY" == 1 || ( "$TEST_MIXED_DIRECTORIES" == 1 && "$2" == /proc/1234/cwd ) ) ]]; then printf "/other-app\\n"; elif [[ "$2" == */artisan ]]; then printf "%s\\n" "$2"; else pwd; fi\n');
         const log = path.join(folder, 'actions.log');
         const maintenance = path.join(folder, 'maintenance');
         const unixBin = bin.replaceAll('\\', '/').replace(/^([A-Za-z]):/, (_, drive) => '/' + drive.toLowerCase());
         const result = spawnSync(bash, ['-c', 'export PATH="$TEST_BIN:$PATH"; exec bash "$1"', '_', path.join(folder, 'deploy.sh').replaceAll('\\', '/')], {
-            env: { ...process.env, TEST_BIN: unixBin, SUPERVISORCTL_BIN: supervisor, TEST_QUEUE_CONNECTION: queueConnection,
+            env: { ...process.env, TEST_BIN: unixBin, SUPERVISORCTL_BIN: supervisor, TEST_QUEUE_CONNECTION: queueConnection, TEST_ABSOLUTE_ARTISAN: absoluteArtisan ? '1' : '0', TEST_PROCESS_CONNECTION: processConnection, TEST_FLAGS_FIRST: flagsFirst ? '1' : '0', TEST_UNREADABLE: unreadable ? '1' : '0',
                 LEARNER_QUEUE_SUPERVISOR_PROGRAM: '', TEST_WORKER_PROGRAM: workerProgram,
                 TEST_WRONG_DIRECTORY: wrongDirectory ? '1' : '0', TEST_MIXED_DIRECTORIES: mixedDirectories ? '1' : '0',
                 DEPLOY_SSH_KEY: path.join(folder, 'no-key').replaceAll('\\', '/'),
@@ -131,7 +145,7 @@ test('deployment accepts the existing aaPanel TTS program name from environment 
 test('without a configured program name deployment checks the configured shared worker command', { skip: !available }, () => {
     const result = runDeploy({ tts: true, workerProgram: '' });
     assert.equal(result.status, 0, result.stdout + result.stderr);
-    assert(result.actions.some(action => action.startsWith('PROCESS -f [a]rtisan queue:work([[:space:]]+database)?')));
+    assert(result.actions.some(action => action === 'PROCESS -f [a]rtisan[[:space:]]+queue:work'));
 });
 
 test('a learner worker from a different app does not permit deployment', { skip: !available }, () => {
@@ -164,5 +178,31 @@ test('worker failure during deployment is reported after the site is live again'
 test('worker detection follows Redis configured in environment', { skip: !available }, () => {
     const result = runDeploy({ analysis: true, workerProgram: '', queueConnection: 'redis' });
     assert.equal(result.status, 0, result.stdout + result.stderr);
-    assert(result.actions.some(action => action.startsWith('PROCESS -f [a]rtisan queue:work([[:space:]]+redis)?')));
+    assert(result.actions.some(action => action === 'PROCESS -f [a]rtisan[[:space:]]+queue:work'));
+});
+
+
+test('absolute artisan path is accepted when aaPanel working directory differs', { skip: !available }, () => {
+    const result = runDeploy({ analysis: true, workerProgram: '', wrongDirectory: true, absoluteArtisan: true, queueConnection: 'redis', processConnection: 'redis' });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.match(result.stdout, /koneksi redis/);
+});
+
+test('connection after options with separate values is detected', { skip: !available }, () => {
+    const result = runDeploy({ analysis: true, workerProgram: '', flagsFirst: true, queueConnection: 'redis', processConnection: 'redis' });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+});
+
+test('wrong queue connection is rejected before maintenance with actionable diagnostics', { skip: !available }, () => {
+    const result = runDeploy({ analysis: true, workerProgram: '', flagsFirst: true, queueConnection: 'redis', processConnection: 'database' });
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(result.stderr, /memakai koneksi database; aplikasi membutuhkan redis/);
+    assert(!result.actions.includes('down'));
+});
+
+test('unreadable process arguments do not silently pass worker validation', { skip: !available }, () => {
+    const result = runDeploy({ analysis: true, workerProgram: '', unreadable: true });
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(result.stderr, /tidak dapat dibaca/);
+    assert(!result.actions.includes('down'));
 });
