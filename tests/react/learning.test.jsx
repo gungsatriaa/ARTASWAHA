@@ -84,7 +84,8 @@ it('sizes and centers the visible glyph rather than the font line height', () =>
         }),
     });
     try {
-        const { container } = render(<CategoryIcon group="aksara" title="Aksara Wreastra & Gantungan" />);
+        const { container } = render(<CategoryIcon group="aksara" title="Pengangge Suara" />);
+        expect(container.querySelector('svg').parentElement.classList.contains('size-8')).toBe(true);
         const [x, y, width, height] = container.querySelector('svg').getAttribute('viewBox').split(' ').map(Number);
         expect(width).toBeCloseTo(22.4);
         expect(height).toBeCloseTo(width);

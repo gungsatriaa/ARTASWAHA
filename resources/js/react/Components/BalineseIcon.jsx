@@ -9,7 +9,7 @@ export default function BalineseIcon({ children, className = 'size-6' }) {
         const center = () => {
             if (disposed || !text.current?.getBBox) return;
             let box = text.current.getBBox();
-            if (!isCombiningMark && typeof CanvasRenderingContext2D !== 'undefined') {
+            if (typeof CanvasRenderingContext2D !== 'undefined') {
                 const context = document.createElement('canvas').getContext('2d');
                 if (context) {
                     context.font = `24px ${getComputedStyle(text.current).fontFamily}`;
