@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\LearnerProfile;
 use App\Models\LearningPath;
 use App\Models\Lesson;
 use App\Models\Quiz;
@@ -49,7 +50,7 @@ class VirtualKeyboardTest extends TestCase
             'keyboard_auto_open' => $automatic,
         ]);
 
-        $response = $this->get(route('learning.lessons.show', $lesson->slug));
+        $response = $this->actingAs(User::factory()->create())->get(route('learning.lessons.show', $lesson->slug));
 
         $response->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
         $response->assertInertiaValue('lesson.keyboard_auto_open', $automatic);
@@ -85,6 +86,7 @@ class VirtualKeyboardTest extends TestCase
             'exercise_prompt' => 'Aksara ka?', 'exercise_options' => ['Ka', 'Na', 'Pa', 'Ma'], 'correct_option' => 0,
         ]);
         $visitorId = (string) Str::uuid();
+        LearnerProfile::create(['visitor_id' => $visitorId, 'learning_path_id' => $lesson->learning_path_id, 'role' => 'murid', 'mode' => 'anonymous', 'name' => 'Made']);
 
         $this->withCookie('artaswaha_device', $visitorId)->get(route('learning.lessons.show', $lesson->slug))
             ->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());

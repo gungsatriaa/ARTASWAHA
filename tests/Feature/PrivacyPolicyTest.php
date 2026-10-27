@@ -17,7 +17,7 @@ class PrivacyPolicyTest extends TestCase
 
     public function test_privacy_route_is_shared_without_duplicating_policy_copy_in_auth(): void
     {
-        foreach (['home', 'login', 'register', 'password.request', 'learning.interview.show'] as $route) {
+        foreach (['login', 'password.request', 'learning.interview.show'] as $route) {
             $this->get(route($route))->assertOk()->assertInertiaValue('navigation.privacy', route('privacy-policy'));
         }
     }

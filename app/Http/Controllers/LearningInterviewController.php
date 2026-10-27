@@ -37,8 +37,8 @@ class LearningInterviewController extends Controller
 
         $learningPaths = LearningPath::query()->where('is_published', true)->orderBy('group')->orderBy('sort_order')->get();
         $answers = $request->session()->get('learning_interview', []);
-        $requestedStep = (int) $request->query('step', 1);
         $availableStep = ! isset($answers['learning_path_ids']) ? 1 : (! isset($answers['role']) ? 2 : (! isset($answers['mode']) ? 3 : 4));
+        $requestedStep = (int) $request->query('step', $availableStep);
 
         return app(PagePresenter::class)->render('learning.interview', [
             'learningPaths' => $learningPaths,
@@ -104,7 +104,7 @@ class LearningInterviewController extends Controller
             $profile = $this->saveProfile($request, $progressService, $answers);
             $request->session()->forget('learning_interview');
             if ($request->user() !== null) {
-                return to_route('learning.paths.show', LearningPath::findOrFail($profile->learning_path_id)->slug)
+                return redirect()->intended(route('learning.paths.show', LearningPath::findOrFail($profile->learning_path_id)->slug))
                     ->withCookie($this->deviceCookie($request, $profile->visitor_id));
             }
 
@@ -141,7 +141,7 @@ class LearningInterviewController extends Controller
         $request->session()->forget('learning_interview');
         $request->session()->forget('learning_interview_destination');
 
-        return to_route('learning.paths.show', LearningPath::findOrFail($profile->learning_path_id)->slug)
+        return redirect()->intended(route('learning.paths.show', LearningPath::findOrFail($profile->learning_path_id)->slug))
             ->with('status', 'Siap belajar, '.$profile->name.'!')
             ->withCookie($this->deviceCookie($request, $profile->visitor_id));
     }

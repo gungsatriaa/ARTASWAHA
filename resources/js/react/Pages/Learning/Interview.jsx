@@ -1,6 +1,5 @@
-import Dialog from '../../Components/Dialog';
 import { useEffect, useState } from 'react';
-import { Link, router, useForm, usePage } from '@inertiajs/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
 import { Button, CategoryIcon, PageMeta } from '../../Components/ui';
 import { Card, Field, Errors } from '../../Components/forms';
 export default function Interview({ paths, answers, step, roles, avatar, meta }) {
@@ -49,20 +48,17 @@ export default function Interview({ paths, answers, step, roles, avatar, meta })
     return (
         <>
             <PageMeta {...meta} />
-            <Dialog
-                open
-                onClose={() => router.visit(navigation.home)}
-                title="Mulai perjalanan belajarmu"
-                id="interview-modal-title"
-                variant={Object.keys(form.errors).length ? 'error' : 'info'}
-                className="!w-[min(56rem,calc(100%-1.5rem))] !p-5 sm:!p-8"
+            <section
+                key={step}
+                aria-label="Perkenalan awal"
+                className="onboarding-step mx-auto max-w-5xl pb-8 pt-2 sm:pt-6"
             >
                 <div className="mb-4 flex items-center justify-between gap-4">
                     <Link
-                        href={step > 1 ? `${links['learning.interview.show']}?step=${step - 1}` : navigation.home}
+                        href={step > 1 ? `${links['learning.interview.show']}?step=${step - 1}` : navigation.login}
                         className="min-h-11 content-center text-sm font-semibold text-foreground/60"
                     >
-                        ← {step > 1 ? 'Kembali' : 'Beranda'}
+                        {step > 1 ? '← Kembali' : 'Sudah punya akun? Masuk'}
                     </Link>
                     <span className="rounded-full bg-surface px-4 py-2 text-sm font-bold text-accent">{step} / 4</span>
                 </div>
@@ -267,7 +263,7 @@ export default function Interview({ paths, answers, step, roles, avatar, meta })
                     </form>
                     <p className="mt-5 text-xs leading-6 text-foreground/45">
                         {step === 4
-                            ? 'Profil anonim tersimpan di perangkat ini dan bisa hilang jika cookie dihapus.'
+                            ? 'Profil tersimpan di server dan dikenali melalui cookie browser ini. Menghapus cookie dapat memutus aksesnya.'
                             : 'Pilihanmu dipakai untuk menyesuaikan pengalaman belajar.'}{' '}
                         <Link href={navigation.privacy} className="text-accent underline underline-offset-4">
                             Lihat penggunaan datamu
@@ -275,7 +271,7 @@ export default function Interview({ paths, answers, step, roles, avatar, meta })
                         .
                     </p>
                 </Card>
-            </Dialog>
+            </section>
         </>
     );
 }

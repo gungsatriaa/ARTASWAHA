@@ -3,7 +3,7 @@ import PageEffects from '../Components/PageEffects';
 import Icon from '../Components/Icon';
 import { FlashNotice, usePresence } from './SiteLayout';
 
-export default function AuthLayout({ children }) {
+export default function AuthLayout({ children, onboarding = false }) {
     const { brand, navigation, flash, csrfToken } = usePage().props;
     usePresence(navigation.presence);
     return (
@@ -25,13 +25,15 @@ export default function AuthLayout({ children }) {
                     <img src={brand.logo} alt="" width="40" height="48" className="h-10 w-9 object-contain" />
                     <span className="font-display text-lg font-bold tracking-tight">ARTASWAHA</span>
                 </Link>
-                <Link
-                    href={navigation.home}
-                    aria-label="Kembali ke beranda"
-                    className="grid size-11 shrink-0 place-items-center rounded-full bg-surface text-foreground/60 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
-                >
-                    <Icon name="close" className="size-5" />
-                </Link>
+                {!onboarding && (
+                    <Link
+                        href={navigation.home}
+                        aria-label="Kembali ke beranda"
+                        className="grid size-11 shrink-0 place-items-center rounded-full bg-surface text-foreground/60 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
+                    >
+                        <Icon name="close" className="size-5" />
+                    </Link>
+                )}
             </header>
             <main
                 id="auth-content"

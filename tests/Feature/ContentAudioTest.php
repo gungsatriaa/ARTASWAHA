@@ -481,7 +481,7 @@ class ContentAudioTest extends TestCase
         }
         $this->assertSame('failed', $audio->fresh()->status);
         $this->assertSame([], Storage::disk('local')->allFiles('content-audio'));
-        $this->get(route('learning.lessons.show', $lesson->slug))->assertOk();
+        $this->actingAs(User::factory()->create())->get(route('learning.lessons.show', $lesson->slug))->assertOk();
     }
 
     public function test_question_narration_excludes_answer_key_and_future_audio_is_not_accessible(): void

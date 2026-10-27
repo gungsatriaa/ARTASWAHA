@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\LearnerProfile;
+use App\Models\LearningPath;
 use App\Models\LearningProgress;
 use App\Models\Lesson;
 use App\Models\User;
@@ -22,6 +24,12 @@ class AuthFlowTest extends TestCase
 
     public function test_login_and_registration_use_their_dedicated_layout(): void
     {
+        $path = LearningPath::factory()->create();
+        $this->post(route('learning.interview.store'), ['step' => 1, 'learning_path_ids' => [$path->id]]);
+        $this->post(route('learning.interview.store'), ['step' => 2, 'role' => 'murid']);
+        $this->post(route('learning.interview.store'), ['step' => 3, 'mode' => 'account']);
+        $profile = LearnerProfile::query()->sole();
+        $this->withCookie('artaswaha_device', $profile->visitor_id);
         foreach ([route('login'), route('register')] as $url) {
             $this->get($url)
                 ->assertOk()
@@ -37,6 +45,7 @@ class AuthFlowTest extends TestCase
     {
         $lesson = Lesson::factory()->create();
         $visitorId = (string) Str::uuid();
+        LearnerProfile::create(['visitor_id' => $visitorId, 'learning_path_id' => $lesson->learning_path_id, 'role' => 'murid', 'mode' => 'anonymous', 'name' => 'Putu']);
         LearningProgress::factory()->create([
             'visitor_id' => $visitorId,
             'lesson_id' => $lesson->id,

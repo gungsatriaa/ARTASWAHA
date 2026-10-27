@@ -212,8 +212,8 @@ class LearningInterviewTest extends TestCase
             ->assertInertia(fn (AssertableInertia $page) => $page->etc());
 
         $otherDevice = (string) Str::uuid();
-        $this->withCookie('artaswaha_device', $otherDevice)->get(route('profile.show'))->assertRedirect(route('login'));
-        $this->withCookie('artaswaha_device', $otherDevice)->get(route('home'))->assertInertiaContains(route('register'))->assertInertiaNotContains('Made');
+        $this->withCookie('artaswaha_device', $otherDevice)->get(route('profile.show'))->assertRedirect(route('learning.interview.show'));
+        $this->withCookie('artaswaha_device', $otherDevice)->get(route('home'))->assertRedirectToRoute('learning.interview.show');
     }
 
     public function test_anonymous_profile_shows_only_this_devices_learning_progress_and_account_menu(): void
@@ -242,7 +242,7 @@ class LearningInterviewTest extends TestCase
             ->assertInertiaContains(route('profile.avatar.update'));
 
         $this->withCookie('artaswaha_device', $visitorId)->get(route('profile.about'))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
-        $this->withCookie('artaswaha_device', (string) Str::uuid())->get(route('profile.about'))->assertRedirect(route('login'));
+        $this->withCookie('artaswaha_device', (string) Str::uuid())->get(route('profile.about'))->assertRedirect(route('learning.interview.show'));
         $this->get('/profil-anonim')->assertRedirect(route('profile.show'));
     }
 

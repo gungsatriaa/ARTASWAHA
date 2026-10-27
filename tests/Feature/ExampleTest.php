@@ -13,12 +13,12 @@ class ExampleTest extends TestCase
     /**
      * A basic test example.
      */
-    public function test_the_application_returns_a_successful_response(): void
+    public function test_new_visitors_are_directed_to_the_required_interview(): void
     {
         $this->seed(LearningPathSeeder::class);
 
         $response = $this->get('/');
 
-        $response->assertStatus(200);
+        $response->assertRedirectToRoute('learning.interview.show');
     }
 }

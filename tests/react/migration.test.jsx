@@ -785,12 +785,24 @@ it('opens the actual latest lesson from the mobile home', () => {
     expect(home.getByRole('link', { name: /Buka pelajaran terakhir/ }).getAttribute('href')).toBe('/pelajaran/sapaan');
 });
 
-it('opens the route-backed interview as a modal with four named steps', () => {
+it('renders mandatory interview as a full page with four named steps and no dismiss control', () => {
     render(<Interview paths={[path]} answers={{}} step={1} roles={{}} meta={meta} />);
-    expect(screen.getByRole('dialog', { name: 'Mulai perjalanan belajarmu' })).toBeTruthy();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.getByRole('region', { name: 'Perkenalan awal' })).toBeTruthy();
     expect(screen.getByRole('list', { name: 'Langkah 1 dari 4' }).children).toHaveLength(4);
-    fireEvent.click(screen.getByRole('button', { name: 'Tutup' }));
-    expect(visit).toHaveBeenCalledWith('/');
+    expect(screen.queryByRole('button', { name: 'Tutup' })).toBeNull();
+    expect(screen.getByRole('link', { name: 'Sudah punya akun? Masuk' }).getAttribute('href')).toBe('/login');
+});
+
+it('uses the full-page interview layout without public navigation or a close-to-home action', async () => {
+    const { resolve } = await import('../../resources/js/react/resolve');
+    const pageModule = await resolve('Learning/Interview');
+    render(pageModule.default.layout(<Interview paths={[path]} answers={{}} step={1} roles={{}} meta={meta} />));
+    expect(screen.getByRole('main').id).toBe('auth-content');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByRole('navigation')).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Kembali ke beranda' })).toBeNull();
+    expect(screen.getByRole('region', { name: 'Perkenalan awal' }).classList.contains('onboarding-step')).toBe(true);
 });
 
 it('renders an accessible FAQ accordion with the first answer available immediately', () => {

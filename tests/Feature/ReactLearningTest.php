@@ -31,10 +31,10 @@ class ReactLearningTest extends TestCase
             ->assertInertiaNotContains($hidden->title);
     }
 
-    public function test_public_visitors_use_the_react_catalog(): void
+    public function test_new_visitors_are_redirected_to_interview_before_the_catalog(): void
     {
         LearningPath::factory()->create(['title' => 'Materi publik']);
-        $this->get(route('learning.paths.index'))->assertOk()->assertInertia(fn (Assert $page): Assert => $page->component('Learning/Catalog')->where('viewer', null)->where('paths.data.0.title', 'Materi publik'));
+        $this->get(route('learning.paths.index'))->assertRedirectToRoute('learning.interview.show');
     }
 
     public function test_authenticated_catalog_is_paginated_and_has_only_public_fields(): void
@@ -123,6 +123,7 @@ class ReactLearningTest extends TestCase
 
     public function test_empty_path_has_zero_progress_for_public_visitors(): void
     {
+        $this->actingAs(User::factory()->create());
         $path = LearningPath::factory()->create();
         $this->get(route('learning.paths.show', $path->slug))->assertOk()
             ->assertInertia(fn (Assert $page): Assert => $page
@@ -131,12 +132,14 @@ class ReactLearningTest extends TestCase
 
     public function test_legacy_preview_query_does_not_switch_the_renderer(): void
     {
+        $this->actingAs(User::factory()->create());
         $this->get(route('learning.paths.index', ['ui' => 'blade']))->assertOk()
             ->assertInertia(fn (Assert $page): Assert => $page->component('Learning/Catalog'));
     }
 
     public function test_home_is_an_inertia_page_in_every_environment(): void
     {
+        $this->actingAs(User::factory()->create());
         $version = (string) app(HandleInertiaRequests::class)->version(Request::create('/'));
         $this->withHeaders(['X-Inertia' => 'true', 'X-Inertia-Version' => $version])->get(route('home'))
             ->assertOk()->assertJsonPath('component', 'Home');

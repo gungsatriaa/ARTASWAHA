@@ -10,7 +10,6 @@ use App\Services\RoomService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
 class AnonymousQuizParticipationTest extends TestCase
@@ -39,7 +38,7 @@ class AnonymousQuizParticipationTest extends TestCase
             'avatar' => 'avatars/komang.webp',
         ]);
 
-        $this->get(route('quizzes.index'))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
+        $this->get(route('quizzes.index'))->assertRedirectToRoute('learning.interview.show');
         $this->post(route('rooms.join'), ['code' => $room->code])->assertRedirect(route('learning.interview.show'));
 
         $this->withCookie('artaswaha_device', $profile->visitor_id)

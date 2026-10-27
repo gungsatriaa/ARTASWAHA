@@ -85,7 +85,7 @@ Catatan: `docs/STYLE.md` masih menyebut Nunito/Atkinson/Quicksand dan Font Aweso
 
 Bangun komponen bersama saat benar-benar dipakai: Button, Card, Input, Dialog, Avatar, Toast, Skeleton, Progress, dan Mascot. Hindari komponen dengan puluhan opsi untuk mengantisipasi semua layar.
 
-Layout yang dibutuhkan: publik, pengguna, dan admin. Pada mobile, dashboard aplikasi berlaku untuk akun atau profil anonim yang sudah selesai interview. Pengunjung baru/interview tetap mengikuti alur publik. Pengguna mobile memakai bottom navigation pill tanpa sidebar/hamburger; admin mempertahankan layout admin tersendiri.
+Layout yang dibutuhkan: publik, pengguna, dan admin. Pada mobile, dashboard aplikasi berlaku untuk akun atau profil anonim yang sudah selesai interview. Pengunjung tanpa akun login atau profil anonim wajib melewati interview, yang memakai halaman layar penuh setelah overlay loading (bukan dialog). Layout interview tidak memakai navbar/footer publik; animasi langkah dijeda selama overlay pembuka masih terlihat. Pengguna mobile memakai bottom navigation pill tanpa sidebar/hamburger; admin mempertahankan layout admin tersendiri.
 
 ## 5. Komunikasi dan batas data
 
@@ -218,7 +218,7 @@ Mulai dari WebP/SVG/aset yang sudah tersedia: sapaan saat tap, respons setelah m
 ## 10. Fitur yang tidak boleh hilang
 
 - Profil anonim dan akun tetap memakai route profil yang sama; avatar, riwayat, progres, dan penautan akun tetap bekerja.
-- Interview disimpan sekali dan pilihan materi tetap mendukung banyak pilihan. Navigasi ulang tidak mengulang atau menghapus jawaban tersimpan.
+- Interview wajib bagi pengunjung baru sebelum mengakses konten atau mendaftar akun baru. Login akun yang sudah ada, pemulihan akun, dan privasi tetap dapat dibuka. Memilih mode akun menyimpan jawaban sementara dan menunggu login/register; profil itu belum dianggap sebagai identitas anonim yang selesai. Interview disimpan sekali dan pilihan materi tetap mendukung banyak pilihan. Navigasi ulang tidak mengulang atau menghapus jawaban tersimpan.
 - Anonim dapat bergabung/menjawab kuis; pembuatan kuis tetap meminta login melalui modal.
 - Host, kepemilikan kuis, larangan terlambat bergabung, room nonaktif, dan hak admin tetap diperiksa server.
 - Jangan mengirim kunci jawaban/soal masa depan untuk memberi efek animasi lebih cepat. Feedback, skor, dan hasil resmi berasal dari server.

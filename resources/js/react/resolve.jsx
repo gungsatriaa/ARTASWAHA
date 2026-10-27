@@ -15,6 +15,8 @@ export async function resolve(name) {
     page.default.layout ??= (content) =>
         name.startsWith('Admin/') ? (
             <AdminLayout>{content}</AdminLayout>
+        ) : name === 'Learning/Interview' ? (
+            <AuthLayout onboarding>{content}</AuthLayout>
         ) : name.startsWith('Auth/') ? (
             <AuthLayout>{content}</AuthLayout>
         ) : (

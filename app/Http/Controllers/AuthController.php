@@ -112,6 +112,6 @@ class AuthController extends Controller
         $pathId = $request->session()->pull('learning_interview_destination');
         $path = is_numeric($pathId) ? LearningPath::query()->where('is_published', true)->find($pathId) : null;
 
-        return $path ? to_route('learning.paths.show', $path->slug) : to_route('home');
+        return redirect()->intended($path ? route('learning.paths.show', $path->slug) : route('home'));
     }
 }

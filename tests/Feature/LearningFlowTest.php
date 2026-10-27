@@ -18,15 +18,16 @@ class LearningFlowTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_welcome_overlay_is_only_rendered_on_the_homepage(): void
+    public function test_new_visitors_receive_the_loading_root_on_the_interview_page(): void
     {
-        $this->get(route('home'))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
-        $this->get(route('learning.paths.index'))->assertOk();
+        $this->get(route('home'))->assertRedirectToRoute('learning.interview.show');
+        $this->get(route('learning.interview.show'))->assertOk()->assertSee('<div data-react-loader', false);
         $this->get(route('login'))->assertOk();
     }
 
     public function test_homepage_lists_learning_features_and_footer_links(): void
     {
+        $this->actingAs(User::factory()->create());
         $this->seed(LearningPathSeeder::class);
 
         $response = $this->get(route('home'))
@@ -45,6 +46,7 @@ class LearningFlowTest extends TestCase
 
     public function test_homepage_learning_picker_lists_every_published_learning_path_by_group(): void
     {
+        $this->actingAs(User::factory()->create());
         $this->seed(LearningPathSeeder::class);
 
         $response = $this->get(route('home'))
@@ -64,10 +66,7 @@ class LearningFlowTest extends TestCase
         $user = User::factory()->create(['name' => 'Komang']);
         LearningProgress::factory()->for($user)->for($lesson)->create();
 
-        $this->get(route('home'))
-            ->assertOk()
-
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
+        $this->get(route('home'))->assertRedirectToRoute('learning.interview.show');
 
         $this->actingAs($user)->get(route('home'))
             ->assertOk()
@@ -103,7 +102,7 @@ class LearningFlowTest extends TestCase
             ->assertInertia(fn (AssertableInertia $page) => $page->etc());
 
         $this->withCookie('artaswaha_device', (string) Str::uuid())->get(route('home'))
-            ->assertOk();
+            ->assertRedirectToRoute('learning.interview.show');
     }
 
     public function test_dashboard_shows_the_users_latest_available_completed_lesson(): void
@@ -199,8 +198,9 @@ class LearningFlowTest extends TestCase
             ->assertInertia(fn (AssertableInertia $page) => $page->etc());
     }
 
-    public function test_learning_catalog_is_accessible_without_an_account_and_handles_no_materials(): void
+    public function test_learning_catalog_handles_no_materials_for_an_existing_account(): void
     {
+        $this->actingAs(User::factory()->create());
         $this->get(route('learning.paths.index'))
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $page) => $page->etc());
@@ -208,6 +208,7 @@ class LearningFlowTest extends TestCase
 
     public function test_unreviewed_lessons_are_not_accessible(): void
     {
+        $this->actingAs(User::factory()->create());
         $lesson = Lesson::factory()->create(['reviewed_at' => null]);
 
         $this->get(route('learning.lessons.show', $lesson->slug))->assertNotFound();
@@ -230,7 +231,7 @@ class LearningFlowTest extends TestCase
 
     public function test_profile_page_requires_authentication_and_shows_account_details(): void
     {
-        $this->get(route('profile.show'))->assertRedirect(route('login'));
+        $this->get(route('profile.show'))->assertRedirect(route('learning.interview.show'));
 
         $this->seed(LearningPathSeeder::class);
         $user = User::factory()->create(['name' => 'Gung Satria', 'email' => 'gung@example.com']);
@@ -252,7 +253,7 @@ class LearningFlowTest extends TestCase
 
     public function test_profile_about_page_explains_the_system_version_and_privacy(): void
     {
-        $this->get(route('profile.about'))->assertRedirect(route('login'));
+        $this->get(route('profile.about'))->assertRedirect(route('learning.interview.show'));
 
         $this->seed(LearningPathSeeder::class);
         $user = User::factory()->create();
@@ -318,6 +319,7 @@ class LearningFlowTest extends TestCase
 
     public function test_path_page_only_lists_published_reviewed_lessons(): void
     {
+        $this->actingAs(User::factory()->create());
         $this->seed(LearningPathSeeder::class);
         $path = LearningPath::query()->where('slug', 'cecimpedan')->firstOrFail();
         Lesson::factory()->create([
@@ -340,6 +342,7 @@ class LearningFlowTest extends TestCase
 
     public function test_empty_learning_path_offers_another_topic(): void
     {
+        $this->actingAs(User::factory()->create());
         $path = LearningPath::factory()->create(['is_published' => true]);
 
         $this->get(route('learning.paths.show', $path->slug))
@@ -351,6 +354,7 @@ class LearningFlowTest extends TestCase
     {
         $lesson = Lesson::factory()->create();
         $visitorId = (string) Str::uuid();
+        LearnerProfile::create(['visitor_id' => $visitorId, 'learning_path_id' => $lesson->learning_path_id, 'role' => 'murid', 'mode' => 'anonymous', 'name' => 'Made']);
 
         $this->withCookie('artaswaha_device', $visitorId)
             ->post(route('learning.progress.store', $lesson->slug), ['points' => 9000])

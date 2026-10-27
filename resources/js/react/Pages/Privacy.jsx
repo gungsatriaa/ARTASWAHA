@@ -191,8 +191,11 @@ export default function Privacy({ meta }) {
                                 Data apa yang digunakan?
                             </h2>
                             <p className={`mt-3 ${textClass}`}>
-                                Buka tiap bagian untuk melihat data dan tujuannya. Menggunakan satu fitur tidak berarti
-                                semua jenis data di bawah selalu dikumpulkan.
+                                Pengunjung baru perlu mengisi perkenalan dan memilih profil anonim atau akun sebelum
+                                membuka konten. Jawabannya disimpan agar tidak perlu diulang. Login akun yang sudah ada
+                                dan kebijakan privasi tetap bisa dibuka. Buka tiap bagian untuk melihat data dan
+                                tujuannya; menggunakan satu fitur tidak berarti semua jenis data di bawah selalu
+                                dikumpulkan.
                             </p>
                         </div>
                         <div className="space-y-3">

@@ -25,11 +25,10 @@ class ReactPageCoverageTest extends TestCase
         $path = LearningPath::factory()->create();
         $lesson = Lesson::factory()->for($path, 'learningPath')->create();
         $routes = [
-            ['home', [], 'Home'], ['login', [], 'Auth/Form'], ['register', [], 'Auth/Form'],
+            ['login', [], 'Auth/Form'],
             ['password.request', [], 'Auth/Form'], ['password.reset', ['token' => 'test-token'], 'Auth/Form'],
             ['privacy-policy', [], 'Privacy'], ['learning.interview.show', [], 'Learning/Interview'],
-            ['learning.paths.index', [], 'Learning/Catalog'], ['learning.paths.show', $path->slug, 'Learning/Path'],
-            ['learning.lessons.show', $lesson->slug, 'Learning/Lesson'], ['quizzes.index', [], 'Quizzes/Index'],
+
         ];
         foreach ($routes as [$route, $parameters, $component]) {
             $this->get(route($route, $parameters))->assertOk()->assertSee('<div data-react-loader', false)->assertDontSee('data-page-loader', false)->assertInertia(fn (Assert $page): Assert => $page->component($component)
@@ -85,7 +84,8 @@ class ReactPageCoverageTest extends TestCase
     public function test_logout_rotates_history_and_removes_account_props(): void
     {
         $this->actingAs(User::factory()->create())->post(route('logout'))->assertRedirect(route('home'));
-        $response = $this->get(route('home'))->assertOk()->assertInertiaValue('viewer', null);
+        $this->get(route('home'))->assertRedirectToRoute('learning.interview.show');
+        $response = $this->get(route('learning.interview.show'))->assertOk()->assertInertiaValue('viewer', null);
         $this->assertTrue($response->viewData('page')['clearHistory']);
         $this->assertTrue($response->viewData('page')['encryptHistory']);
     }
