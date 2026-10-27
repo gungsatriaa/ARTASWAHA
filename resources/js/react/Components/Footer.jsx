@@ -57,11 +57,11 @@ export default function Footer({ className = '' }) {
                                 href="mailto:kerthajayasoftware@gmail.com"
                                 className={`${linkClass} max-w-full gap-2 break-all`}
                             >
-                                <Icon name="mail" className="size-4 shrink-0 text-primary" />
+                                <Icon name="mail" className="size-4 shrink-0 text-accent" />
                                 <span className="min-w-0">kerthajayasoftware@gmail.com</span>
                             </a>
                             <a href="tel:+6281337253221" className={`${linkClass} gap-2`}>
-                                <Icon name="phone" className="size-4 shrink-0 text-primary" />
+                                <Icon name="phone" className="size-4 shrink-0 text-accent" />
                                 <span>0813 3725 3221</span>
                             </a>
                         </address>
