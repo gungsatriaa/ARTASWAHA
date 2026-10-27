@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { Button, PageMeta, Pagination, buttonClass, EmptyState } from '../../Components/ui';
-import { Heading, Card, Field, Action, Errors, secondaryClass } from '../../Components/forms';
+import { Heading, Card, Field, Action, inputClass, secondaryClass } from '../../Components/forms';
 import Dialog from '../../Components/Dialog';
+import Icon from '../../Components/Icon';
 export default function Quizzes({ quizzes, filters, code, meta }) {
     const { viewer, navigation: nav, links } = usePage().props;
     const [login, setLogin] = useState(false),
@@ -16,36 +17,56 @@ export default function Quizzes({ quizzes, filters, code, meta }) {
     return (
         <>
             <PageMeta {...meta} />
-            <Heading
-                title="Belajar lebih seru kalau dimainkan."
-                action={
-                    viewer?.mode === 'account' ? (
-                        <Link href={links['quizzes.create']} className={buttonClass}>
-                            ＋ Buat kuis
-                        </Link>
-                    ) : (
-                        <Button onClick={() => setLogin(true)}>＋ Buat kuis</Button>
-                    )
-                }
-            >
-                Pilih kuis, tantang teman, dan kenali bahasa Bali sambil bermain.
-            </Heading>
-            <Card className="mb-9">
-                <p className="text-sm font-bold text-accent">Sudah ada yang mengajak?</p>
-                <h2 className="mt-2 font-display text-2xl font-bold sm:text-3xl">Masukkan kode room</h2>
-                <p className="mt-3 text-sm leading-7 text-foreground/55">
-                    Gabung ke permainan temanmu. Kode baru terdiri dari 4 huruf atau angka.
-                </p>
-                <form
-                    onSubmit={(e) => {
-                        e.preventDefault();
-                        if (!form.processing) form.post(links['rooms.join']);
-                    }}
-                    className="mt-5 flex flex-col items-stretch gap-3 sm:flex-row sm:items-end"
-                >
-                    <div className="min-w-0 flex-1">
-                        <Field
-                            label="Kode room"
+            <header className="mb-7 flex flex-col items-start justify-between gap-5 sm:mb-9 sm:flex-row sm:items-end">
+                <div className="max-w-2xl">
+                    <p className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-accent">
+                        <Icon name="quiz" className="size-5" /> Arena kuis Bali
+                    </p>
+                    <h1 className="font-display text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
+                        Belajar lebih seru kalau dimainkan.
+                    </h1>
+                    <p className="mt-3 text-sm leading-7 text-foreground/60">
+                        Ajak teman, uji pengetahuanmu, dan temukan hal baru tentang Bali.
+                    </p>
+                </div>
+                {viewer?.mode === 'account' ? (
+                    <Link href={links['quizzes.create']} className={`${secondaryClass} w-full shrink-0 sm:w-auto`}>
+                        <Icon name="edit" className="size-4" /> Buat kuis
+                    </Link>
+                ) : (
+                    <button
+                        type="button"
+                        onClick={() => setLogin(true)}
+                        className={`${secondaryClass} w-full shrink-0 sm:w-auto`}
+                    >
+                        <Icon name="edit" className="size-4" /> Buat kuis
+                    </button>
+                )}
+            </header>
+            <div className="mb-9 grid items-stretch gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.85fr)] lg:gap-6">
+                <Card className="sm:!p-8">
+                    <span className="mb-5 grid size-12 place-items-center rounded-2xl bg-primary/20 text-accent">
+                        <Icon name="quiz" className="size-6" />
+                    </span>
+                    <h2 className="font-display text-2xl font-bold sm:text-3xl">Punya kode room?</h2>
+                    <p className="mt-3 max-w-md text-sm leading-7 text-foreground/55">
+                        Masukkan kode dari host untuk bergabung sebelum permainan dimulai.
+                    </p>
+                    <form
+                        aria-label="Gabung room kuis"
+                        aria-busy={form.processing}
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            if (!form.processing) form.post(links['rooms.join']);
+                        }}
+                        className="mt-6"
+                    >
+                        <label htmlFor="room-code" className="block text-sm font-semibold">
+                            Kode room
+                        </label>
+                        <input
+                            id="room-code"
+                            className={`${inputClass} !min-h-16 !rounded-3xl text-center !text-2xl !font-bold tracking-[0.2em] placeholder:text-foreground/25 sm:!text-3xl`}
                             name="code"
                             placeholder="AB12"
                             value={form.data.code}
@@ -56,14 +77,60 @@ export default function Quizzes({ quizzes, filters, code, meta }) {
                             pattern="[A-Za-z0-9]{4}([A-Za-z0-9]{6})?"
                             autoComplete="off"
                             autoCapitalize="characters"
-                            error={form.errors.code}
+                            spellCheck={false}
+                            aria-invalid={Boolean(form.errors.code)}
+                            aria-describedby={form.errors.code ? 'room-code-error room-code-hint' : 'room-code-hint'}
                         />
-                    </div>
-                    <Button type="submit" disabled={form.processing} className="min-h-12">
-                        Gabung room →
-                    </Button>
-                </form>
-            </Card>
+                        <p id="room-code-hint" className="mt-3 text-xs leading-6 text-foreground/45">
+                            Kode baru berisi 4 huruf atau angka. Kode undangan lama tetap bisa digunakan.
+                        </p>
+                        {form.errors.code && (
+                            <p id="room-code-error" role="alert" className="mt-2 text-sm text-danger">
+                                {form.errors.code}
+                            </p>
+                        )}
+                        <Button type="submit" disabled={form.processing} className="mt-5 min-h-12 w-full">
+                            {form.processing ? 'Menghubungkan…' : 'Gabung room'}
+                            <Icon name="arrow" className="size-4" />
+                        </Button>
+                    </form>
+                </Card>
+                <aside
+                    aria-labelledby="quiz-guide-title"
+                    className="flex flex-col rounded-card bg-primary/10 p-5 sm:p-8"
+                >
+                    <h2 id="quiz-guide-title" className="font-display text-xl font-bold">
+                        Dari kode, jadi keseruan.
+                    </h2>
+                    <p className="mt-3 text-sm leading-7 text-foreground/55">
+                        Tiga langkah untuk mulai bermain bersama.
+                    </p>
+                    <ol className="my-6 space-y-5">
+                        {[
+                            ['Masuk ke room', 'Minta kode undangan dari teman atau gurumu.'],
+                            ['Tunggu host memulai', 'Pastikan namamu sudah masuk dalam daftar pemain.'],
+                            ['Pilih jawabanmu', 'Jawab pertanyaan dan lihat hasilnya setelah bermain.'],
+                        ].map(([title, description], index) => (
+                            <li key={title} className="flex gap-3">
+                                <span
+                                    aria-hidden="true"
+                                    className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/20 text-xs font-bold text-accent"
+                                >
+                                    {index + 1}
+                                </span>
+                                <div className="min-w-0">
+                                    <h3 className="text-sm font-bold">{title}</h3>
+                                    <p className="mt-1 text-xs leading-6 text-foreground/55">{description}</p>
+                                </div>
+                            </li>
+                        ))}
+                    </ol>
+                    <p className="mt-auto flex items-start gap-2 text-xs leading-6 text-foreground/55">
+                        <Icon name="info" className="mt-1 size-4 shrink-0 text-accent" />
+                        Profil anonim juga bisa bergabung. Masuk dengan akun untuk membuat kuis sendiri.
+                    </p>
+                </aside>
+            </div>
             {viewer?.mode === 'account' && (
                 <section>
                     <Heading title="Kuis buatanmu">Koleksi pribadi untuk dimainkan sendiri atau bersama teman.</Heading>
@@ -94,7 +161,11 @@ export default function Quizzes({ quizzes, filters, code, meta }) {
                     </form>
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {quizzes.data.map((quiz) => (
-                            <Card key={quiz.id} as="article" className="flex flex-col">
+                            <Card
+                                key={quiz.id}
+                                as="article"
+                                className="flex flex-col transition-colors hover:bg-primary/10"
+                            >
                                 <p className="text-xs font-semibold text-accent">
                                     {quiz.is_archived ? 'Arsip' : 'Kuis pribadi'}
                                 </p>
