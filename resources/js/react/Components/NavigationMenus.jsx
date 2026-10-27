@@ -13,7 +13,7 @@ export function SubjectLinks({ group, items = [], close }) {
             <div className="max-h-80 space-y-1 overflow-y-auto">
                 {items.map((item) => (
                     <Link href={item.url} key={item.id} className={itemClass} onClick={close}>
-                        <CategoryIcon group={group} className="size-9" />
+                        <CategoryIcon group={group} title={item.title} className="size-9" />
                         <span className="min-w-0 break-words">{item.title}</span>
                         <Icon name="arrow" className="ml-auto size-4 shrink-0 text-foreground/30" />
                     </Link>
@@ -92,7 +92,10 @@ export function ProfileDropdown() {
             </nav>
             {viewer.mode === 'anonymous' ? (
                 <div className="mt-2 grid grid-cols-2 gap-2">
-                    <Link href={navigation.login} className={`${itemClass} justify-center whitespace-nowrap !bg-primary/15 !text-accent`}>
+                    <Link
+                        href={navigation.login}
+                        className={`${itemClass} justify-center whitespace-nowrap !bg-primary/15 !text-accent`}
+                    >
                         Masuk
                     </Link>
                     <Link

@@ -37,15 +37,27 @@ export function PageMeta({ title, description, canonical, robots = 'noindex, fol
     );
 }
 
-export function CategoryIcon({ group, className = 'size-12' }) {
+export function CategoryIcon({ group, title = '', className = 'size-12' }) {
+    const subject = title.toLocaleLowerCase('id-ID');
+    const glyph = subject.includes('wreastra')
+        ? 'ᬳ'
+        : subject.includes('angka')
+          ? '᭑'
+          : subject.includes('arda')
+            ? 'ᬳ᭄ᬬ'
+            : subject.includes('tengenan')
+              ? 'ᬳᬂ'
+              : subject.includes('suara')
+                ? 'ᬳᬶ'
+                : 'ᬳ';
     return (
         <span
             className={`grid shrink-0 place-items-center rounded-2xl bg-primary/20 text-accent ${className}`}
             aria-hidden="true"
         >
             {group === 'aksara' ? (
-                <span lang="ban" className="font-balinese text-2xl leading-none">
-                    ᬅ
+                <span lang="ban" className="font-balinese text-2xl leading-relaxed">
+                    {glyph}
                 </span>
             ) : (
                 <Icon name="chat" className="size-6" />

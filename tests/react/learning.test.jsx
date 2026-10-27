@@ -5,6 +5,7 @@ import Catalog from '../../resources/js/react/Pages/Learning/Catalog';
 import Path from '../../resources/js/react/Pages/Learning/Path';
 import SiteLayout, { usePresence } from '../../resources/js/react/Layouts/SiteLayout';
 import Dialog from '../../resources/js/react/Components/Dialog';
+import { CategoryIcon } from '../../resources/js/react/Components/ui';
 
 const { page, get } = vi.hoisted(() => ({ page: { props: {} }, get: vi.fn() }));
 vi.mock('@inertiajs/react', () => ({
@@ -28,6 +29,17 @@ vi.mock('motion/react-m', async () => {
             }),
         ]),
     );
+});
+
+it.each([
+    ['Aksara Wreastra & Gantungan', 'ᬳ'],
+    ['Pengangge Suara', 'ᬳᬶ'],
+    ['Pengangge Arda Suara', 'ᬳ᭄ᬬ'],
+    ['Pengangge Tengenan', 'ᬳᬂ'],
+    ['Angka Aksara Bali', '᭑'],
+])('uses the requested glyph for %s', (title, glyph) => {
+    const { container } = render(<CategoryIcon group="aksara" title={title} />);
+    expect(container.querySelector('[lang="ban"]').textContent).toBe(glyph);
 });
 
 beforeEach(() => {

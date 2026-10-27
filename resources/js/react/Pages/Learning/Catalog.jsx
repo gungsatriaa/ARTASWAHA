@@ -138,7 +138,7 @@ export default function Catalog({ paths, filters, meta }) {
                                                         className="group flex h-full flex-col rounded-card bg-surface p-5 transition-colors hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:p-6"
                                                     >
                                                         <div className="flex items-center justify-between gap-4">
-                                                            <CategoryIcon group={path.group} />
+                                                            <CategoryIcon group={path.group} title={path.title} />
                                                             <Icon
                                                                 name="arrow"
                                                                 className="size-5 text-foreground/30 transition-colors group-hover:text-accent"

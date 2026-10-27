@@ -25,6 +25,18 @@ const paths = {
 };
 
 export default function Icon({ name, className = 'size-5', ...props }) {
+    if (name === 'aksara') {
+        return (
+            <span
+                lang="ban"
+                aria-hidden="true"
+                className={`inline-grid shrink-0 place-items-center font-balinese leading-none ${className}`}
+                {...props}
+            >
+                ᬳ
+            </span>
+        );
+    }
     return (
         <svg
             viewBox="0 0 24 24"

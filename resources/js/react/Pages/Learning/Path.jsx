@@ -18,7 +18,7 @@ export default function Path({ path, lessons, recommendation, meta }) {
                 <div className="min-w-0 lg:sticky lg:top-28">
                     <header className="rounded-card bg-surface p-6 sm:p-8">
                         <div className="flex items-center gap-3">
-                            <CategoryIcon group={path.group} className="size-12 shrink-0" />
+                            <CategoryIcon group={path.group} title={path.title} className="size-12 shrink-0" />
                             <p className="text-sm font-semibold text-accent">
                                 {path.group === 'aksara' ? 'Aksara Bali' : 'Paribasa Bali'}
                             </p>
