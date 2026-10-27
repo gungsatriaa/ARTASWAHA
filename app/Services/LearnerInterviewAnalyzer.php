@@ -50,7 +50,7 @@ class LearnerInterviewAnalyzer
                 if (! $force && $profile->analysis_status === 'completed' && $profile->analysis_completed_at?->gt(now()->subHours(6))) {
                     return;
                 }
-                if ($profile->analysis_requested_at?->gt(now()->subMinutes(2))) {
+                if (! $force && $profile->analysis_requested_at?->gt(now()->subMinutes(2))) {
                     return;
                 }
             }

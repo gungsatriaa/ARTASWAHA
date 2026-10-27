@@ -100,13 +100,13 @@ class LearnerAnalysisMonitoringTest extends TestCase
         $profile = $this->profile($path);
         $analyzer->enqueue($profile);
         $profile->refresh()->forceFill(['analysis_status' => 'completed', 'analysis_completed_at' => now()])->save();
-        $this->travel(3)->minutes();
         for ($index = 0; $index < 100; $index++) {
             $this->profile($path);
         }
         $max = LearnerProfile::max('id');
         (new QueueLearnerAnalyses($max))->handle($analyzer);
         $this->assertSame('queued', $profile->fresh()->analysis_status);
+        Queue::assertPushed(AnalyzeLearnerInterview::class, fn ($job): bool => $job->profileId === $profile->id);
         Queue::assertPushed(QueueLearnerAnalyses::class, fn ($job): bool => $job->afterId === $max - 1 && $job->throughId === $max);
     }
 

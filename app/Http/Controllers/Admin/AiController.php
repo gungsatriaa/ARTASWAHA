@@ -90,7 +90,7 @@ class AiController extends Controller
         }
         QueueLearnerAnalyses::dispatch((int) LearnerProfile::query()->max('id'));
 
-        return to_route('admin.ai.index', ['tab' => 'interviews'])->with('status', 'Tes semua profil dijadwalkan di background. Buka detail pelajar untuk melihat riwayat dan hasil.');
+        return to_route('admin.ai.index', ['tab' => 'interviews'])->with('status', 'Tes semua profil langsung masuk antrean tanpa menunggu jadwal 6 jam. Worker memproses bergiliran; buka detail pelajar untuk melihat riwayat dan hasil.');
     }
 
     public function draft(QuizDraft $quizDraft): InertiaResponse

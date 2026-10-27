@@ -73,8 +73,8 @@ export default function Ai({
                             <h2 className="font-display text-xl font-bold">Tes analisis seluruh pelajar</h2>
                             <p className="mt-3 text-sm leading-7 text-foreground/60">
                                 Termasuk profil anonim dan profil terbaru setiap akun, tanpa mengikuti filter tanggal.
-                                Diproses bergiliran di background; hasil lama tetap tampil. Permintaan aktif tidak
-                                diduplikasi.
+                                Tes langsung masuk antrean tanpa menunggu 6 jam. Diproses bergiliran oleh worker; hasil
+                                lama tetap tampil. Permintaan aktif tidak diduplikasi.
                             </p>
                             <p className="mt-3 text-xs leading-6 text-foreground/50">
                                 Pemeriksaan berkala terakhir:{' '}
@@ -82,7 +82,8 @@ export default function Ai({
                                     ? new Date(lastCheck).toLocaleString('id-ID', { timeZone: 'Asia/Makassar' }) +
                                       ' WITA'
                                     : 'Belum tercatat — periksa cron schedule:run.'}{' '}
-                                Pemeriksaan tiap jam, analisis diperbarui setelah 6 jam.
+                                Jadwal otomatis: pemeriksaan tiap jam, pembaruan setiap 6 jam. Tes manual tidak
+                                mengikuti jeda ini.
                             </p>
                             <p className="mt-2 text-xs leading-6 text-foreground/50">
                                 Worker terakhir mulai memproses:{' '}
