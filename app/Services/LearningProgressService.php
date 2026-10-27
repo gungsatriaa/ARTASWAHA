@@ -28,15 +28,13 @@ class LearningProgressService
         ));
     }
 
-    public function answerExercise(string $deviceId, Lesson $lesson, int $answerIndex, ?User $user = null): bool
+    public function answerExercise(string $deviceId, Lesson $lesson, int|array $answerIndex, ?User $user = null): bool
     {
         if (LearningProgress::query()->where('visitor_id', $deviceId)->where('lesson_id', $lesson->id)->exists()) {
             return true;
         }
 
-        abort_unless(is_array($lesson->exercise_options) && array_key_exists($answerIndex, $lesson->exercise_options), 422);
-
-        if ($answerIndex !== $lesson->correct_option) {
+        if (! app(QuestionAnswerService::class)->isCorrect($lesson, is_array($answerIndex) ? $answerIndex : ['answer_index' => $answerIndex])) {
             return false;
         }
 

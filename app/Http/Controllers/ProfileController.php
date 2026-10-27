@@ -5,14 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\LearnerProfile;
 use App\Models\LearningPath;
 use App\Services\LearnerInterviewAnalyzer;
-use Illuminate\Contracts\View\View;
+use App\Services\PagePresenter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Inertia\Response as InertiaResponse;
 
 class ProfileController extends Controller
 {
-    public function about(Request $request): View|RedirectResponse
+    public function about(Request $request): InertiaResponse|RedirectResponse
     {
         $user = $request->user();
         $profile = $user === null ? LearnerProfile::completedFor(null, $request->cookie('artaswaha_device')) : null;
@@ -26,10 +27,10 @@ class ProfileController extends Controller
             ->orderBy('sort_order')
             ->get();
 
-        return view('profile.about', compact('learningPaths', 'profile', 'user'));
+        return app(PagePresenter::class)->render('profile.about', compact('learningPaths', 'profile', 'user'));
     }
 
-    public function __invoke(Request $request, LearnerInterviewAnalyzer $analyzer): View|RedirectResponse
+    public function __invoke(Request $request, LearnerInterviewAnalyzer $analyzer): InertiaResponse|RedirectResponse
     {
         $user = $request->user();
         $profile = $user === null ? LearnerProfile::completedFor(null, $request->cookie('artaswaha_device')) : null;
@@ -67,6 +68,6 @@ class ProfileController extends Controller
         $analysis = $analyzer->presentation($analysisProfile, $learningPaths);
         $activity = $analysisProfile !== null ? $analyzer->activity($analysisProfile) : null;
 
-        return view('profile.show', compact('completedLessons', 'learningPaths', 'learningPathsByGroup', 'profile', 'totalLessons', 'user', 'analysisProfile', 'analysis', 'activity'));
+        return app(PagePresenter::class)->render('profile.show', compact('completedLessons', 'learningPaths', 'learningPathsByGroup', 'profile', 'totalLessons', 'user', 'analysisProfile', 'analysis', 'activity'));
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Services\QuestionAnswerService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreQuizRequest extends FormRequest
@@ -16,7 +17,7 @@ class StoreQuizRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
+        $rules = [
             'title' => ['required', 'string', 'max:120'],
             'description' => ['nullable', 'string', 'max:500'],
             'leaderboard_enabled' => ['sometimes', 'boolean'],
@@ -26,20 +27,24 @@ class StoreQuizRequest extends FormRequest
             'questions' => ['required', 'array', 'min:1', 'max:20'],
             'questions.*.prompt' => ['required', 'string', 'max:500'],
             'questions.*.id' => ['prohibited'],
-            'questions.*.options' => ['required', 'array', 'min:2', 'max:5'],
-            'questions.*.options.*' => ['required', 'string', 'max:140'],
-            'questions.*.correct_option' => ['required', 'integer', 'min:0', 'max:4'],
             'questions.*.explanation' => ['nullable', 'string', 'max:500'],
             'questions.*.keyboard_auto_open' => ['sometimes', 'boolean'],
             'questions.*.time_limit_seconds' => ['nullable', 'integer', 'min:5', 'max:300'],
         ];
+        $questions = $this->input('questions', []);
+        foreach (is_array($questions) ? $questions : [] as $index => $question) {
+            foreach (app(QuestionAnswerService::class)->definitionRules(is_array($question) ? $question : []) as $field => $ruleset) {
+                $rules["questions.{$index}.{$field}"] = $ruleset;
+            }
+        }
+
+        return $rules;
     }
 
     public function messages(): array
     {
         return [
             'questions.*.prompt.required' => 'Isi teks pertanyaan ini terlebih dahulu.',
-            'questions.*.options.*.required' => 'Isi pilihan jawaban ini atau hapus pilihan yang tidak dipakai.',
             'questions.*.correct_option.required' => 'Pilih satu jawaban yang benar untuk soal ini.',
             'questions.*.id.exists' => 'Soal tidak termasuk kuis ini. Muat ulang editor.',
             'questions.*.id.distinct' => 'Soal yang sama tidak dapat disimpan dua kali. Gunakan tombol Duplikasikan soal.',

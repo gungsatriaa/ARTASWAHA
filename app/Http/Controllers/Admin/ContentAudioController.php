@@ -7,15 +7,16 @@ use App\Models\ContentAudio;
 use App\Models\Lesson;
 use App\Models\QuizQuestion;
 use App\Services\ContentAudioService;
+use App\Services\PagePresenter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Inertia\Response as InertiaResponse;
 
 class ContentAudioController extends Controller
 {
-    public function index(Request $request, ContentAudioService $service): View
+    public function index(Request $request, ContentAudioService $service): InertiaResponse
     {
         $filters = $request->validate(['type' => ['nullable', 'in:records,modules,questions'], 'status' => ['nullable', 'in:draft,queued,processing,review,ready,failed,stale,unavailable'], 'q' => ['nullable', 'string', 'max:100']]);
         $type = $filters['type'] ?? 'records';
@@ -26,15 +27,15 @@ class ContentAudioController extends Controller
         };
         $configured = $service->isConfigured();
 
-        return view('admin.audio.index', compact('items', 'type', 'configured', 'service'));
+        return app(PagePresenter::class)->render('admin.audio.index', compact('items', 'type', 'configured', 'service'));
     }
 
-    public function lesson(Lesson $lesson, ContentAudioService $service): View
+    public function lesson(Lesson $lesson, ContentAudioService $service): InertiaResponse
     {
         return $this->editor($lesson, $service);
     }
 
-    public function question(QuizQuestion $question, ContentAudioService $service): View
+    public function question(QuizQuestion $question, ContentAudioService $service): InertiaResponse
     {
         return $this->editor($question, $service);
     }
@@ -67,12 +68,11 @@ class ContentAudioController extends Controller
             'version' => $contentAudio->version,
             'status' => $status,
             'progress' => $progress, 'server_now' => now()->toISOString(),
-            'html' => in_array($status, ['queued', 'processing'], true) ? null
-                : view('admin.audio.result', ['audio' => $contentAudio, 'current' => $current, 'progress' => $progress])->render(),
+            'audio' => app(PagePresenter::class)->audio($contentAudio),
         ])->header('Cache-Control', 'private, no-store');
     }
 
-    private function editor(Lesson|QuizQuestion $content, ContentAudioService $service): View
+    private function editor(Lesson|QuizQuestion $content, ContentAudioService $service): InertiaResponse
     {
         $audio = $service->forContent($content);
         $isLesson = $content instanceof Lesson;
@@ -82,7 +82,7 @@ class ContentAudioController extends Controller
         $action = route($isLesson ? 'admin.audio.lessons.store' : 'admin.audio.questions.store', $content);
         $configured = $service->isConfigured();
 
-        return view('admin.audio.edit', compact('content', 'audio', 'title', 'text', 'action', 'configured', 'current', 'isLesson'));
+        return app(PagePresenter::class)->render('admin.audio.edit', compact('content', 'audio', 'title', 'text', 'action', 'configured', 'current', 'isLesson'));
     }
 
     private function save(Request $request, Lesson|QuizQuestion $content, ContentAudioService $service): RedirectResponse

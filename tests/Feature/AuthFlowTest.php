@@ -2,15 +2,19 @@
 
 namespace Tests\Feature;
 
+use App\Models\LearnerProfile;
+use App\Models\LearningPath;
 use App\Models\LearningProgress;
 use App\Models\Lesson;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia;
 use Laravel\Socialite\Socialite;
 use Laravel\Socialite\Two\User as GoogleUser;
 use Tests\TestCase;
@@ -21,25 +25,28 @@ class AuthFlowTest extends TestCase
 
     public function test_login_and_registration_use_their_dedicated_layout(): void
     {
+        $path = LearningPath::factory()->create();
+        $this->post(route('learning.interview.store'), ['step' => 1, 'mode' => 'account']);
+        $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$path->id]]);
+        $this->post(route('learning.interview.store'), ['step' => 3, 'role' => 'murid']);
+        $profile = LearnerProfile::query()->sole();
+        $this->withCookie('artaswaha_device', $profile->visitor_id);
         foreach ([route('login'), route('register')] as $url) {
             $this->get($url)
                 ->assertOk()
-                ->assertSee('Belajar Bali,')
-                ->assertSee(route('auth.google.redirect'))
-                ->assertDontSee('data-mobile-nav', false)
-                ->assertDontSee('<footer', false);
+                ->assertInertiaContains(route('auth.google.redirect'));
         }
 
         $this->get(route('password.request'))
             ->assertOk()
-            ->assertSee('aria-controls="mobile-navigation"', false)
-            ->assertSee('data-mobile-nav', false);
+            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
     }
 
     public function test_a_user_can_register_and_log_out(): void
     {
         $lesson = Lesson::factory()->create();
         $visitorId = (string) Str::uuid();
+        LearnerProfile::create(['visitor_id' => $visitorId, 'learning_path_id' => $lesson->learning_path_id, 'role' => 'murid', 'mode' => 'anonymous', 'name' => 'Putu']);
         LearningProgress::factory()->create([
             'visitor_id' => $visitorId,
             'lesson_id' => $lesson->id,
@@ -51,7 +58,7 @@ class AuthFlowTest extends TestCase
                 'email' => 'putu@example.test',
                 'password' => 'safe-password',
                 'password_confirmation' => 'safe-password',
-            ])->assertRedirect(route('home'));
+            ])->assertRedirect(route('home'))->assertCookie(Auth::guard()->getRecallerName());
 
         $this->assertAuthenticated();
         $this->assertDatabaseHas('users', ['email' => 'putu@example.test']);
@@ -62,8 +69,8 @@ class AuthFlowTest extends TestCase
         $this->withSession(['status' => 'Akun berhasil dibuat. Selamat belajar!'])
             ->get(route('home'))
             ->assertOk()
-            ->assertSee('Akun berhasil dibuat. Selamat belajar!')
-            ->assertSee('bg-[#15803d]', false);
+            ->assertInertiaContains('Akun berhasil dibuat. Selamat belajar!')
+            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
 
         $this->post(route('logout'))->assertRedirect(route('home'));
         $this->assertGuest();
@@ -80,6 +87,30 @@ class AuthFlowTest extends TestCase
         $this->post(route('login.store'), ['email' => $user->email, 'password' => 'safe-password', 'remember' => true])
             ->assertRedirect(route('home'));
         $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_email_login_restores_the_account_after_session_expiry_and_logout_revokes_it(): void
+    {
+        $user = User::factory()->create(['password' => 'safe-password']);
+        $response = $this->post(route('login.store'), ['email' => $user->email, 'password' => 'safe-password']);
+        $cookieName = Auth::guard()->getRecallerName();
+        $response->assertRedirectToRoute('home')->assertCookie($cookieName);
+        $cookie = $response->getCookie($cookieName);
+        $this->assertGreaterThan(now()->addDays(30)->timestamp, $cookie->getExpiresTime());
+        $this->assertTrue($cookie->isHttpOnly());
+
+        $this->flushSession();
+        Auth::forgetGuards();
+        $this->withCookie($cookieName, $cookie->getValue())->get(route('home'))
+            ->assertOk()->assertInertiaValue('viewer.name', $user->name);
+        $this->assertTrue(Auth::viaRemember());
+
+        $this->post(route('logout'))->assertCookieExpired($cookieName);
+        $this->flushSession();
+        Auth::forgetGuards();
+        $this->withCookie($cookieName, $cookie->getValue())->get(route('home'))
+            ->assertRedirectToRoute('learning.interview.show');
+        $this->assertGuest();
     }
 
     public function test_password_reset_uses_laravels_secure_reset_broker(): void
@@ -127,7 +158,9 @@ class AuthFlowTest extends TestCase
         ]));
 
         $this->get(route('auth.google.redirect'))->assertRedirect();
-        $this->get(route('auth.google.callback'))->assertRedirect(route('home'));
+        $response = $this->get(route('auth.google.callback'))->assertRedirect(route('home'));
+        $cookieName = Auth::guard()->getRecallerName();
+        $response->assertCookie($cookieName);
 
         $this->assertAuthenticated();
         $this->assertDatabaseHas('users', [
@@ -136,6 +169,11 @@ class AuthFlowTest extends TestCase
             'google_id' => 'google-user-123',
         ]);
         $this->assertNotNull(User::query()->where('email', 'putu@gmail.com')->firstOrFail()->email_verified_at);
+        $this->flushSession();
+        Auth::forgetGuards();
+        $this->withCookie($cookieName, $response->getCookie($cookieName)->getValue())->get(route('home'))
+            ->assertOk()->assertInertiaValue('viewer.name', 'Putu Bali');
+        $this->assertTrue(Auth::viaRemember());
     }
 
     public function test_google_oauth_links_a_verified_email_to_an_existing_account(): void

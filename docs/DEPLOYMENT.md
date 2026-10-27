@@ -301,9 +301,9 @@ Gunakan PHP 8.4 seperti pada bagian 1. Migrasi menambahkan boolean `keyboard_aut
 
 Pengaturan dan pemeriksaan setelah deploy:
 
-1. **Admin → Modul → Buat/Ubah modul:** pilih kolom materi, pertanyaan latihan, pilihan, atau penjelasan, lalu buka **Keyboard aksara Bali**. Pastikan karakter masuk ke kolom yang dipilih dan tetap sama setelah disimpan/muat ulang. Opsi **Buka keyboard aksara otomatis untuk pelajar** berlaku pada modul tersebut. Perubahan modul tetap mengikuti alur simpan draf → preview → terbitkan.
-2. **Buat/Edit kuis:** atur **Buka keyboard aksara otomatis saat soal ini tampil** secara terpisah pada setiap soal. Uji juga soal dan pilihan yang ditambah/dihapus melalui editor. Kuis yang sudah memiliki room tetap membuat versi baru ketika diedit; room lama mempertahankan pengaturannya.
-3. **Pengguna:** uji satu soal dengan opsi otomatis aktif dan satu nonaktif. Yang aktif langsung membuka panel; yang nonaktif menyediakan tombol buka/tutup. Untuk modul aksara tanpa latihan, panel tersedia setelah materi. Tulisan pengguna adalah coretan latihan di browser, tidak dikirim/disimpan ke server atau dinilai sebagai jawaban; kuis tetap memakai pilihan ganda.
+1. **Admin → Modul → Buat/Ubah modul:** pilih kolom materi, pertanyaan latihan, pilihan, atau penjelasan, lalu buka **Keyboard aksara Bali**. Pastikan karakter masuk ke kolom yang dipilih dan tetap sama setelah disimpan/muat ulang. Pengaturan buka otomatis untuk peserta tidak lagi ditampilkan pada modul pilihan ganda. Perubahan modul tetap mengikuti alur simpan draf → preview → terbitkan.
+2. **Buat/Edit kuis:** keyboard tetap tersedia untuk menulis pertanyaan dan pilihan pada kolom editor yang dipilih. Uji juga soal dan pilihan yang ditambah/dihapus melalui editor. Kuis yang sudah memiliki room tetap membuat versi baru ketika diedit; room lama mempertahankan pengaturannya.
+3. **Pengguna:** keyboard tidak tampil pada materi, soal pilihan ganda/pilihan banyak, preview pilihan, atau setelah pelajaran selesai, termasuk data lama dengan `keyboard_auto_open=true`. Keyboard jawaban tersedia hanya untuk soal esai; lihat bagian tipe soal di bawah. Kolom database lama dipertahankan tanpa migrasi penghapusan.
 4. **Input dan HP:** uji aksara dasar, pangangge, gantungan, adeg-adeg manual tanpa duplikasi, sisip/ganti seleksi, hapus, spasi, enter, serta pindah kolom. Periksa lebar 320–390 px, orientasi, ketukan berulang, scroll panjang dan berhenti, serta pergantian keyboard perangkat. Memakai keyboard tidak menambahkan request per karakter.
 
 Tes PHP modul/kuis, tes JavaScript keyboard, dan build frontend telah lolos secara lokal. Rendering gabungan aksara, gestur, dan perilaku keyboard perangkat pada browser/HP sebenarnya masih perlu diperiksa; pengujian otomatis tersebut bukan verifikasi visual atau jaminan kelancaran semua perangkat.
@@ -322,11 +322,11 @@ Alur editor sekarang **Pengaturan → Kelola soal → Preview & simpan → Detai
 
 Pada **Kelola soal**, soal dapat dilipat, diduplikasikan, dipindah naik/turun, dan dihapus. Penomoran ulang mempertahankan jawaban benar. Duplikasi satu soal menyalin isi/kunci/keyboard sebagai soal baru tanpa ID atau audio lama; simpan dahulu untuk menyiapkan audio sendiri. Duplikasi seluruh kuis mengikuti aturan salinan audio di atas. Batas tetap 20 soal dan 2–5 pilihan per soal.
 
-Keyboard editor mengisi kolom terakhir yang dipilih. Keyboard pada preview mempunyai area coretan terpisah dan mengikuti opsi otomatis tiap soal. Status dan tombol **Kelola audio soal** berada pada soal tersimpan; pengaturan/generate/unggah/persetujuan audio tetap khusus admin. Simpan perubahan sebelum membuka pengaturan audio. Preview hanya memutar audio `ready` yang disetujui dan cocok dengan pertanyaan/pilihan saat ini; teks yang berubah tidak memakai rekaman lama. Preview tidak menjalankan inferensi, timer, penilaian, atau pengiriman jawaban. Audio berhenti saat pindah tahap/soal atau meninggalkan/menyembunyikan halaman.
+Keyboard editor mengisi kolom terakhir yang dipilih. Preview pilihan ganda tidak menampilkan keyboard jawaban. Status dan tombol **Kelola audio soal** berada pada soal tersimpan; pengaturan/generate/unggah/persetujuan audio tetap khusus admin. Simpan perubahan sebelum membuka pengaturan audio. Preview hanya memutar audio `ready` yang disetujui dan cocok dengan pertanyaan/pilihan saat ini; teks yang berubah tidak memakai rekaman lama. Preview tidak menjalankan inferensi, timer, penilaian, atau pengiriman jawaban. Audio berhenti saat pindah tahap/soal atau meninggalkan/menyembunyikan halaman.
 
 Editor menampilkan validasi di dekat kolom, membuka soal yang perlu dilengkapi, memperingatkan ketika meninggalkan perubahan belum tersimpan, dan mengunci tombol simpan selama pengiriman. Peringatan keluar memakai mekanisme browser dan memerlukan interaksi pengguna. Tidak ada autosave atau penyimpanan setiap karakter. Modul JavaScript editor dimuat hanya pada halaman editor; tidak ada dependency baru.
 
-Sesudah deploy/build, muat ulang halaman editor lama sebelum mengedit. Uji ketiga tahap, validasi soal yang dilipat, duplikasi/pindah/hapus pilihan tanpa perubahan kunci yang tidak disengaja, preview keyboard manual/otomatis dan audio, batal/konfirmasi arsip, pencarian/filter/pagination, serta tombol kembali setelah menyimpan. Uji pada HP 320–390 px dan orientasi berbeda, termasuk scroll panjang, fokus input, dan posisi panel keyboard. Tes aplikasi dan JavaScript lokal tidak menggantikan pemeriksaan visual/gestur pada browser sebenarnya; browser pengujian tidak tersedia dalam sesi implementasi.
+Sesudah deploy/build, muat ulang halaman editor lama sebelum mengedit. Uji ketiga tahap, validasi soal yang dilipat, duplikasi/pindah/hapus pilihan tanpa perubahan kunci yang tidak disengaja, keyboard pada kolom editor dan preview audio, batal/konfirmasi arsip, pencarian/filter/pagination, serta tombol kembali setelah menyimpan. Uji pada HP 320–390 px dan orientasi berbeda, termasuk scroll panjang, fokus input, dan posisi panel keyboard. Tes aplikasi dan JavaScript lokal tidak menggantikan pemeriksaan visual/gestur pada browser sebenarnya; browser pengujian tidak tersedia dalam sesi implementasi.
 
 ## Durasi khusus soal dan batas total kuis
 
@@ -392,8 +392,68 @@ exit
 
 Jika salah satu perintah gagal, perbaiki terlebih dahulu dan biarkan TTS_ENABLED=false. Setelah WAV berhasil dibuat dan diperiksa, lanjutkan konfigurasi Supervisor pada bagian 6, environment pada bagian 7, dan pengujian admin pada bagian 8. Ollama/Qwen tetap nonaktif.
 
-## Animasi antarmuka dan overlay pembuka
+## React/Inertia, SSR, dan animasi
 
-Gunakan build frontend dan pembaruan cache Laravel pada alur deploy bagian 3. Perubahan ini tidak menambah dependency, migration, environment, atau service.
+Seluruh halaman menggunakan React/Inertia, termasuk publik, autentikasi, kuis, dan admin. Tidak ada `REACT_UI_ENABLED` atau mode Blade aktif; hapus baris lama tersebut jika masih ada di `.env`. Template Blade lama tetap menjadi referensi. Tidak ada migration atau seeder baru untuk cutover UI. Gunakan `composer install`, `npm ci`, `npm run build`, dan pembaruan cache Laravel pada alur bagian 3. Build sekarang menghasilkan `public/build` dan `bootstrap/ssr`; keduanya harus berada pada release yang sama. Jangan menghapus aset hash versi sebelumnya ketika masih ada tab pengguna terbuka; gunakan release/deployment aset yang mempertahankannya selama transisi.
 
-Setelah deploy, buka beranda dalam sesi tab baru: overlay mengikuti kesiapan aset, tampil minimal 1,2 detik, mencapai 100%, lalu menghilang. Overlay tidak berulang saat reload/navigasi dalam sesi tab yang sama dan tidak dirender pada halaman lain. Uji tombol lewati, sapaan maskot, serta desktop dan mobile. Pengaturan reduced motion melewati jeda pembuka dan animasi. Skeleton dekoratif pada beberapa daftar/ringkasan tampil 400 ms saat masuk layar dan langsung selesai saat isinya disentuh atau difokuskan; data dan timer kuis tidak ditunda.
+Gunakan PHP 8.4 dan Node 22.12+ yang cocok dengan lockfile (baseline lokal Node 22.22.3). SSR aktif secara default dan memerlukan proses Node yang dikelola Supervisor. Pastikan user program dapat menjalankan `node --version` melalui PATH yang sama dengan program Supervisor; PATH shell interaktif belum tentu sama.
+
+Contoh program **baru**, sesuaikan path dan user sebelum dipakai:
+
+```ini
+[program:artaswaha-ssr]
+directory=/www/wwwroot/artaswaha
+command=/www/server/php/84/bin/php artisan inertia:start-ssr --no-interaction
+user=www
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+stopwaitsecs=15
+redirect_stderr=true
+stdout_logfile=/www/wwwroot/artaswaha/storage/logs/inertia-ssr.log
+```
+
+Jangan menimpa konfigurasi Supervisor lain. Server SSR bind hanya ke `127.0.0.1:13714`; jangan membuka port tersebut ke publik. Jika PHP dan Node berada pada container berbeda, konfigurasi jaringan internal SSR perlu disesuaikan dahulu. `INERTIA_SSR_ENABLED=false` hanya opsi darurat untuk menonaktifkan SSR; UI tetap React, tetapi HTML konten publik awal tidak tersedia sampai JavaScript berjalan sehingga SEO menurun.
+
+Setelah build/deploy, restart **hanya** program SSR ARTASWAHA agar memuat bundle terbaru. `deploy.sh` belum mengelola restart proses ini. Worker AI/TTS dan Reverb tetap program yang berbeda; restart hanya yang berubah sesuai panduan sebelumnya. Periksa dengan binary PHP yang sama:
+
+```bash
+"$PHP_BIN" artisan inertia:check-ssr --no-interaction
+```
+
+Jika health check gagal, periksa log program SSR, executable Node pada PATH program, akses file bundle, dan port loopback. Request SSR dibatasi 3 detik; fallback client menjaga aplikasi tetap dapat dibuka, tetapi bukan pengganti SSR publik yang sehat. Rollback memakai release source + build sebelumnya sebagai satu paket, bukan sakelar renderer atau rollback database.
+
+QA setelah deploy: lihat source HTML awal beranda, katalog, pelajaran, dan privasi; pastikan heading/konten dan metadata sudah ada sebelum JavaScript. Periksa hydration/konsol, direct visit, refresh, Back/Forward, form validasi, login/logout, profil anonim, crop avatar, multi-select interview, editor kuis, feedback/timer, host reload/keluar, dan admin. PHP tetap memeriksa akses; props tidak boleh membawa jawaban masa depan, kunci tersembunyi, email peserta, atau path file privat.
+
+Overlay muncul **setiap reload dokumen** pada semua halaman, menunggu bootstrap React/font dengan batas waktu, mencapai 100%, hold sekitar 450 ms, lalu fade. Persentase adalah kesiapan tampilan, bukan byte jaringan atau progres antrean AI. Visit Inertia menggunakan progress tipis/skeleton untuk GET lambat; submit jawaban, countdown, dan deadline tidak ditunda. Uji lewati, kegagalan chunk, reduced motion, reveal kartu di bawah layar, desktop/mobile, serta job queued/completed/failed. Skeleton analisis berhenti pada error/batas polling dan menampilkan status yang jelas.
+
+Sebelum rilis: `php artisan test --compact`, `npm run test:react`, dan `npm run build`. Cakupan, hasil, serta batas pengujian yang masih perlu dilakukan tercatat di `docs/REACT.md`. UI Blade lama dan initializer DOM-nya sudah dihapus; entry build tetap React. Pertahankan root Blade, komponen `react-loader`, dan sitemap XML. Tes helper edit aksara tetap berjalan dengan `node --test tests/aksara-keyboard.test.js`; tes initializer Blade dan tes worker dengan target skrip yang sudah tidak tersedia telah dihapus.
+
+Interview awal kini wajib bagi pengunjung tanpa akun login/profil anonim. Kunjungan beranda, materi, kuis, dan pendaftaran baru diarahkan oleh middleware ke halaman interview penuh setelah loader. Login, pemulihan, privasi, robots, dan sitemap tetap terbuka. Uji resume langkah, banyak pilihan materi, mode anonim/akun, cookie hilang, serta kembali ke URL tujuan semula. Akun yang sudah login tetap langsung masuk. Tidak ada migrasi atau konfigurasi tambahan; konten yang dilindungi ini tidak lagi tersedia langsung bagi pengunjung baru/crawler tanpa identitas.
+
+Login email, Google, dan setelah registrasi kini selalu memakai cookie remember Laravel, tanpa checkbox. Sesi singkat tetap memakai konfigurasi yang ada; tidak perlu memperbesar `SESSION_LIFETIME`. Cookie remember bawaan sekitar 400 hari, tetap dapat berakhir karena logout/reset sandi/penghapusan akun atau pembersihan browser. Pengguna yang masuk sebelum perubahan perlu login ulang sekali untuk menerima cookie remember baru. Uji pemulihan akun setelah sesi hilang dan pastikan middleware interview mengenalinya; tombol Keluar harus tetap membatalkan token.
+
+Urutan perkenalan: pilihan anonim/akun → materi (bisa banyak) → peran → nama/avatar untuk anonim. Mode akun diarahkan ke login/daftar setelah materi dan peran tersimpan. Mengganti mode mengosongkan jawaban langkah berikutnya. Profil yang sudah selesai tetap tidak mengulang interview.
+
+## Materi awal Aksara Bali
+
+Untuk menambahkan lima modul Aksara Bali beserta satu latihan pilihan ganda pada masing-masing modul, jalankan seeder khusus setelah migrasi aplikasi tersedia:
+
+```bash
+php artisan db:seed --class=AksaraBaliLessonSeeder --force --no-interaction
+```
+
+Seeder mencakup Wreastra/gantungan/gempelan, pengangge suara, tengenan, ardasuara, dan angka Bali. Modul baru langsung terbit dan memakai alur materi → latihan → progres yang sudah ada; tidak membuat kuis room, audio, atau panggilan AI. Nol memakai ᭐, pepet memakai ᭂ, dan tanda vokal disimpan setelah aksara dasar menurut urutan Unicode. Peninjauan pengajar tetap diperlukan untuk ragam tutur serta contoh kata.
+
+Perintah ini tidak menjadi bagian dari seeder default agar deploy tidak otomatis menambahkan materi. Aman dijalankan ulang: slug yang sudah ada dipertahankan, termasuk suntingan admin, status arsip, ID pelajaran, dan progres. Karena itu, perubahan berikutnya pada isi seeder tidak memperbarui modul yang sudah terpasang; gunakan editor admin untuk menyuntingnya. Jalur yang sudah diarsipkan juga tidak diterbitkan ulang. Tidak ada migrasi, dependency, build frontend, atau restart worker tambahan untuk seeder ini.
+
+## Tipe soal esai dan pilihan banyak
+
+Jalankan `php artisan migrate --force --no-interaction`, build client/SSR dengan `npm run build`, lalu lakukan pembaruan cache dan restart SSR melalui alur deploy React di atas. Migrasi `2026_10_27_230437_add_question_types_to_learning_and_quizzes` menambahkan tipe, kunci pilihan banyak, alternatif jawaban esai, serta jawaban teks/daftar pilihan peserta. Soal dan jawaban lama tetap bertipe `single`; ID, progres, room aktif, timer, serta skor lama dipertahankan. Tidak ada paket, environment, worker, atau panggilan AI baru.
+
+Pada editor modul dan kuis, pilih **Pilihan ganda**, **Pilihan banyak**, atau **Esai**. Modul tetap memakai empat opsi untuk tipe pilihan, sedangkan kuis memakai dua sampai lima. Checkbox kunci harus mencakup semua jawaban benar; penilaian pilihan banyak memakai kecocokan himpunan penuh tanpa poin parsial dan mengabaikan urutan klik. Esai menerima maksimal sepuluh jawaban acuan, satu per baris, masing-masing maksimal 2.000 karakter. Jawaban peserta maksimal 2.000 karakter; pencocokan merapikan kapital, spasi berlebih, dan normalisasi Unicode NFC, tanpa menghapus tanda aksara. Ini bukan penilaian semantik atau koreksi otomatis oleh AI. Hindari soal esai terbuka yang membutuhkan penilaian manusia; gunakan isian dengan jawaban acuan yang jelas.
+
+Keyboard jawaban hanya tersedia pada esai dan mengisi kolom jawaban sebenarnya. Keyboard editor tetap dapat dipakai untuk menulis materi/soal. Preview tidak mewajibkan jawaban sebelum menyimpan. Kunci baru tidak dikirim ke peserta sebelum feedback diizinkan; hasil akhir mengikuti aturan pengungkapan yang sudah ada. Teks esai room disimpan bersama jawaban dan ikut terhapus ketika room/akun terkait dihapus; analisis AI tetap menerima ringkasan ketepatan, bukan teks esai mentah. Pengeditan kuis yang sudah memiliki room tetap membuat versi baru, dan duplikasi menyertakan tipe/kuncinya.
+
+Uji ketiga tipe pada modul, room bertimer/tanpa timer, feedback aktif/nonaktif, jawaban kosong/terlalu panjang, checkbox kurang/lebih/duplikat, variasi kapital/spasi/Unicode, edit/duplikasi/pergantian tipe, serta keyboard HP. Jangan rollback ke versi lama setelah membuat soal tipe baru: migrasi menolak rollback selama esai/pilihan banyak masih ada agar kunci dan jawaban tidak hilang. Cadangkan dan konversi data terlebih dahulu jika rollback diperlukan.

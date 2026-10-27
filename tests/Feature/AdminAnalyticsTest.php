@@ -2,12 +2,16 @@
 
 namespace Tests\Feature;
 
+use App\Models\LearnerProfile;
 use App\Models\LearningPath;
 use App\Models\LearningProgress;
 use App\Models\Lesson;
+use App\Models\RoomAnswer;
 use App\Models\User;
+use App\Services\AdminAnalyticsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class AdminAnalyticsTest extends TestCase
@@ -34,12 +38,56 @@ class AdminAnalyticsTest extends TestCase
 
         $response = $this->actingAs($admin)->get(route('admin.analytics.index'));
 
-        $response->assertOk()->assertSee('Analitik ARTASWAHA')->assertSee('Cecimpedan');
-        $this->assertSame(1, $response->viewData('metrics')['completedLessons']);
-        $this->assertSame(1, $response->viewData('metrics')['learners']);
-        $this->assertCount(14, $response->viewData('chart')['labels']);
-        $this->assertSame(1, $response->viewData('chart')['completions'][13]);
-        $this->assertSame(0, $response->viewData('chart')['completions'][0]);
+        $response->assertOk()->assertInertiaContains('Analitik ARTASWAHA')->assertInertiaContains('Cecimpedan');
+        $this->assertSame(1, $response->viewData('page')['props']['metrics']['completedLessons']);
+        $this->assertSame(1, $response->viewData('page')['props']['metrics']['learners']);
+        $this->assertCount(14, $response->viewData('page')['props']['chart']['labels']);
+        $this->assertSame(1, $response->viewData('page')['props']['chart']['completions'][13]);
+        $this->assertSame(0, $response->viewData('page')['props']['chart']['completions'][0]);
+    }
+
+    public function test_weekly_comparisons_and_accuracy_use_real_recorded_activity_and_empty_days_stay_null(): void
+    {
+        $this->freezeTime();
+        LearningProgress::factory()->count(2)->create(['completed_at' => now()]);
+        LearningProgress::factory()->create(['completed_at' => now()->subDays(7)]);
+        LearningProgress::factory()->create(['completed_at' => now()->subDays(14)]);
+        LearningProgress::factory()->create(['completed_at' => null]);
+        RoomAnswer::factory()->create(['answered_at' => now(), 'is_correct' => true]);
+        RoomAnswer::factory()->create(['answered_at' => now(), 'is_correct' => false]);
+        RoomAnswer::factory()->create(['answered_at' => now()->subDays(7), 'is_correct' => false]);
+
+        $snapshot = app(AdminAnalyticsService::class)->snapshot();
+        $this->assertSame(['current' => 2, 'previous' => 1], $snapshot['weekly']['completions']);
+        $this->assertSame(['current' => 2, 'previous' => 1], $snapshot['weekly']['answers']);
+        $this->assertSame(50.0, $snapshot['chart']['accuracy'][13]);
+        $this->assertNull($snapshot['chart']['accuracy'][0]);
+        $this->assertSame(0.0, $snapshot['chart']['accuracy'][6]);
+        $this->assertSame(4, $snapshot['metrics']['completedLessons']);
+    }
+
+    public function test_learning_identities_are_deduplicated_across_account_devices_and_delayed_jobs_are_counted(): void
+    {
+        $user = User::factory()->create();
+        LearningProgress::factory()->count(2)->create(['user_id' => $user->id]);
+        $visitor = (string) Str::uuid();
+        LearningProgress::factory()->count(2)->create(['visitor_id' => $visitor]);
+        $path = LearningPath::factory()->create();
+        foreach (['queued', 'processing', 'completed', 'failed'] as $index => $status) {
+            $profile = LearnerProfile::create(['visitor_id' => (string) Str::uuid(), 'learning_path_id' => $path->id, 'name' => 'Pelajar', 'role' => 'murid', 'mode' => 'anonymous']);
+            $profile->forceFill(['analysis_status' => $status, 'analysis_requested_at' => $index === 0 ? now()->subMinutes(11) : now()])->save();
+        }
+        $claimed = LearnerProfile::create(['visitor_id' => (string) Str::uuid(), 'user_id' => $user->id, 'learning_path_id' => $path->id, 'name' => 'Akun', 'role' => 'guru', 'mode' => 'anonymous']);
+
+        $snapshot = app(AdminAnalyticsService::class)->snapshot();
+        $this->assertSame(2, $snapshot['metrics']['learners']);
+        $this->assertSame(4, $snapshot['metrics']['anonymousProfiles']);
+        $this->assertSame(2, $snapshot['metrics']['pendingAnalysis']);
+        $this->assertSame(1, $snapshot['metrics']['delayedAnalysis']);
+        $this->assertSame(1, $snapshot['metrics']['failedAnalysis']);
+        $this->actingAs(User::factory()->create(['is_admin' => true]))->get(route('admin.index'))
+            ->assertOk()->assertInertiaValue('overview.metrics.delayedAnalysis', 1)
+            ->assertInertiaValue('overview.metrics.learners', 2)->assertInertiaNotContains($claimed->visitor_id);
     }
 
     public function test_presence_counts_recent_unique_visitors_without_exposing_identity(): void

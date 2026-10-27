@@ -9,10 +9,11 @@ use App\Models\Quiz;
 use App\Models\Room;
 use App\Models\User;
 use App\Services\ContentAudioService;
+use App\Services\PagePresenter;
 use App\Services\RoomService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
-use Illuminate\View\View;
+use Inertia\Response as InertiaResponse;
 
 class RoomController extends Controller
 {
@@ -34,7 +35,7 @@ class RoomController extends Controller
         return to_route('rooms.show', $room->code);
     }
 
-    public function show(Room $room, RoomService $roomService, ContentAudioService $audioService): View|RedirectResponse
+    public function show(Room $room, RoomService $roomService, ContentAudioService $audioService): InertiaResponse|RedirectResponse
     {
         $player = $this->player();
         if ($player === null) {
@@ -45,7 +46,7 @@ class RoomController extends Controller
         $audio = $data['activeQuestion'] !== null ? $audioService->forContent($data['activeQuestion']) : null;
         $data['audio'] = $audioService->isPlayable($audio) ? $audio : null;
 
-        return view('rooms.show', $data);
+        return app(PagePresenter::class)->render('rooms.show', $data);
     }
 
     public function status(Room $room, RoomService $roomService): Response

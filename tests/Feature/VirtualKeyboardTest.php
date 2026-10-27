@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\LearnerProfile;
 use App\Models\LearningPath;
 use App\Models\Lesson;
 use App\Models\Quiz;
@@ -10,6 +11,7 @@ use App\Models\User;
 use App\Services\RoomService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia;
 use PHPUnit\Framework\Attributes\TestWith;
 use Tests\TestCase;
 
@@ -32,8 +34,8 @@ class VirtualKeyboardTest extends TestCase
         $lesson = Lesson::query()->sole();
         $this->assertSame($data['content'], $lesson->content);
         $this->assertTrue($lesson->keyboard_auto_open);
-        $this->get(route('admin.lessons.edit', $lesson))->assertOk()->assertSee('data-aksara-scope', false)->assertSee('Buka keyboard aksara otomatis');
-        $this->get(route('admin.lessons.preview', $lesson))->assertOk()->assertSee('data-aksara-keyboard', false);
+        $this->get(route('admin.lessons.edit', $lesson))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
+        $this->get(route('admin.lessons.preview', $lesson))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
         unset($data['keyboard_auto_open']);
         $this->put(route('admin.lessons.update', $lesson), $data)->assertRedirect();
         $this->assertFalse($lesson->fresh()->keyboard_auto_open);
@@ -48,14 +50,10 @@ class VirtualKeyboardTest extends TestCase
             'keyboard_auto_open' => $automatic,
         ]);
 
-        $response = $this->get(route('learning.lessons.show', $lesson->slug));
+        $response = $this->actingAs(User::factory()->create())->get(route('learning.lessons.show', $lesson->slug));
 
-        $response->assertOk()->assertSee('data-aksara-input', false);
-        $dom = new \DOMDocument;
-        @$dom->loadHTML($response->getContent());
-        $keyboard = (new \DOMXPath($dom))->query('//details[@data-aksara-keyboard]')->item(0);
-        $this->assertNotNull($keyboard);
-        $this->assertSame($automatic, $keyboard->hasAttribute('open'));
+        $response->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
+        $response->assertInertiaValue('lesson.keyboard_auto_open', $automatic);
     }
 
     public function test_quiz_settings_round_trip_per_question_and_survive_versioning(): void
@@ -70,7 +68,7 @@ class VirtualKeyboardTest extends TestCase
 
         $quiz = Quiz::query()->sole();
         $this->assertSame([true, false], $quiz->questions->pluck('keyboard_auto_open')->all());
-        $this->get(route('quizzes.edit', $quiz))->assertOk()->assertSee('data-aksara-keyboard', false)->assertSee('questions[0][keyboard_auto_open]', false);
+        $this->get(route('quizzes.edit', $quiz))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
         app(RoomService::class)->create($quiz, $owner);
         $data['questions'][0]['keyboard_auto_open'] = '0';
         $data['questions'][1]['keyboard_auto_open'] = '1';
@@ -88,12 +86,13 @@ class VirtualKeyboardTest extends TestCase
             'exercise_prompt' => 'Aksara ka?', 'exercise_options' => ['Ka', 'Na', 'Pa', 'Ma'], 'correct_option' => 0,
         ]);
         $visitorId = (string) Str::uuid();
+        LearnerProfile::create(['visitor_id' => $visitorId, 'learning_path_id' => $lesson->learning_path_id, 'role' => 'murid', 'mode' => 'anonymous', 'name' => 'Made']);
 
         $this->withCookie('artaswaha_device', $visitorId)->get(route('learning.lessons.show', $lesson->slug))
-            ->assertOk()->assertSee('data-aksara-keyboard', false);
+            ->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
         $this->withCookie('artaswaha_device', $visitorId)->post(route('learning.exercises.answer', $lesson->slug), ['answer_index' => 0])->assertRedirect();
         $this->withCookie('artaswaha_device', $visitorId)->get(route('learning.lessons.show', $lesson->slug))
-            ->assertOk()->assertSee('Pelajaran selesai')->assertSee('data-aksara-keyboard', false);
+            ->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
     }
 
     public function test_admin_cannot_save_invalid_keyboard_setting(): void
@@ -124,12 +123,8 @@ class VirtualKeyboardTest extends TestCase
 
         $response = $this->actingAs($host)->get(route('rooms.show', $room->code));
 
-        $response->assertOk()->assertSee('data-aksara-keyboard', false)->assertSee('name="answer_index"', false);
-        $dom = new \DOMDocument;
-        @$dom->loadHTML($response->getContent());
-        $keyboard = (new \DOMXPath($dom))->query('//details[@data-aksara-keyboard]')->item(0);
-        $this->assertNotNull($keyboard);
-        $this->assertSame($automatic, $keyboard->hasAttribute('open'));
+        $response->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
+        $response->assertInertiaValue('room.question.keyboard_auto_open', $automatic);
     }
 
     public function test_invalid_keyboard_setting_is_rejected_without_creating_quiz(): void

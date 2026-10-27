@@ -1,0 +1,547 @@
+import Skeleton from '../../Components/Skeleton';
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { Link, useForm, usePage } from '@inertiajs/react';
+import { PageMeta, Button, buttonClass } from '../../Components/ui';
+import { Card, Action, Field, Errors, secondaryClass } from '../../Components/forms';
+import Dialog from '../../Components/Dialog';
+import Analysis from '../../Components/Analysis';
+import Icon from '../../Components/Icon';
+
+const AvatarCrop = lazy(() => import('../../Components/AvatarCrop'));
+
+export default function Profile({
+    about,
+    paths,
+    interests,
+    completedLessons,
+    totalLessons,
+    activity,
+    analysis,
+    avatars,
+    email,
+    version,
+    meta,
+}) {
+    const { viewer, navigation: nav, links } = usePage().props;
+    const [avatarOpen, setAvatarOpen] = useState(false),
+        [deleteOpen, setDeleteOpen] = useState(false),
+        [preview, setPreview] = useState(null),
+        [candidate, setCandidate] = useState(null);
+    const form = useForm({
+        avatar: avatars.find((item) => item.url === viewer.avatar)?.value ?? '',
+        avatar_upload: null,
+        _method: 'put',
+    });
+    const deletion = useForm({ confirmation: '' });
+    useEffect(() => {
+        if (!form.data.avatar_upload) {
+            setPreview(null);
+            return;
+        }
+        const url = URL.createObjectURL(form.data.avatar_upload);
+        setPreview(url);
+        return () => URL.revokeObjectURL(url);
+    }, [form.data.avatar_upload]);
+    return (
+        <>
+            <PageMeta {...meta} />
+            <div className="mx-auto max-w-6xl space-y-7 sm:space-y-8">
+                <header className="overflow-hidden rounded-card bg-surface">
+                    <div className="flex flex-col items-center gap-4 p-5 sm:flex-row sm:flex-wrap sm:gap-7 sm:p-8">
+                        <button
+                            type="button"
+                            onClick={() => setAvatarOpen(true)}
+                            aria-label="Ganti avatar profil"
+                            className="relative shrink-0 rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+                        >
+                            <img
+                                src={viewer.avatar}
+                                alt=""
+                                width="112"
+                                height="112"
+                                className="size-22 rounded-full object-cover ring-4 ring-primary/25 sm:size-28"
+                            />
+                            <span className="absolute -bottom-1 -right-1 grid size-8 place-items-center rounded-full bg-accent text-background ring-4 ring-surface sm:size-10">
+                                <Icon name="book" className="size-4 sm:size-5" />
+                            </span>
+                        </button>
+                        <div className="min-w-0 w-full text-center sm:w-auto sm:flex-1 sm:text-left">
+                            <p className="text-xs text-foreground/45 sm:text-sm">Profil belajar</p>
+                            <h1 className="mt-2 break-words font-display text-2xl font-bold sm:text-3xl">
+                                {viewer.name}
+                            </h1>
+                            <p className="mt-2 text-xs font-semibold text-accent sm:text-sm">
+                                {viewer.mode === 'anonymous'
+                                    ? 'Akun anonim · hanya di perangkat ini'
+                                    : 'Akun terdaftar'}
+                            </p>
+                            <p className="mx-auto mt-3 max-w-lg break-words text-sm leading-6 text-foreground/50 sm:mx-0">
+                                {viewer.mode === 'anonymous'
+                                    ? 'Progres tersimpan di browser ini. Buat akun untuk melanjutkan belajar di perangkat lain.'
+                                    : email}
+                            </p>
+                        </div>
+                        <div
+                            className={`grid w-full gap-2 sm:ml-auto sm:w-auto sm:shrink-0 ${viewer.mode === 'anonymous' ? 'grid-cols-2 sm:grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}
+                        >
+                            <button
+                                type="button"
+                                onClick={() => setAvatarOpen(true)}
+                                className={`${secondaryClass} !bg-primary/15 !px-3 !text-xs !text-accent sm:!px-4 sm:!text-sm`}
+                            >
+                                <Icon name="edit" />
+                                Ganti avatar
+                            </button>
+                            {viewer.mode === 'anonymous' && (
+                                <Link
+                                    href={nav.register}
+                                    className={`${buttonClass} !px-3 !text-xs sm:!px-4 sm:!text-sm`}
+                                >
+                                    Daftar akun
+                                </Link>
+                            )}
+                        </div>
+                    </div>
+                    <nav
+                        aria-label="Menu profil"
+                        className="grid grid-cols-3 items-center gap-1 bg-background/20 p-2 sm:flex sm:flex-wrap sm:gap-2 sm:px-5 sm:py-4"
+                    >
+                        <Link
+                            href={nav.profile}
+                            aria-current={!about ? 'page' : undefined}
+                            className={`${secondaryClass} !flex-col !gap-1 !px-2 !text-xs sm:!flex-row sm:!gap-2 sm:!px-5 sm:!text-sm ${!about ? '!bg-primary/20 !text-accent' : '!bg-transparent'}`}
+                        >
+                            <Icon name="chart" />
+                            <span className="sm:hidden">Progres</span>
+                            <span className="hidden sm:inline">Progres belajar</span>
+                        </Link>
+                        <Link
+                            href={links['profile.about']}
+                            aria-label="Tentang aplikasi ini"
+                            aria-current={about ? 'page' : undefined}
+                            className={`${secondaryClass} !flex-col !gap-1 !px-2 !text-xs sm:!flex-row sm:!gap-2 sm:!px-5 sm:!text-sm ${about ? '!bg-primary/20 !text-accent' : '!bg-transparent'}`}
+                        >
+                            <Icon name="info" />
+                            <span className="sm:hidden">Tentang</span>
+                            <span className="hidden sm:inline">Tentang aplikasi ini</span>
+                        </Link>
+                        <div className="w-full sm:ml-auto sm:w-auto">
+                            {viewer.mode === 'anonymous' ? (
+                                <Link
+                                    href={nav.login}
+                                    className={`${secondaryClass} w-full !flex-col !gap-1 !bg-transparent !px-2 sm:w-auto sm:!flex-row sm:!gap-2 sm:!px-4`}
+                                >
+                                    <Icon name="login" />
+                                    <span className="text-xs sm:text-sm">Masuk</span>
+                                </Link>
+                            ) : (
+                                <Action
+                                    url={nav.logout}
+                                    className={`${secondaryClass} w-full !flex-col !gap-1 !bg-transparent !px-2 sm:w-auto sm:!flex-row sm:!gap-2 sm:!px-4`}
+                                >
+                                    <Icon name="login" />
+                                    <span className="text-xs sm:text-sm">Keluar</span>
+                                </Action>
+                            )}
+                        </div>
+                    </nav>
+                </header>
+                <div className="min-w-0 space-y-6">
+                    {about ? (
+                        <>
+                            <Card>
+                                <h2 className="font-display text-2xl font-bold sm:text-3xl">Tentang ARTASWAHA</h2>
+                                <p className="mt-4 text-sm leading-8 text-foreground/65">
+                                    ARTASWAHA adalah platform edukasi Bahasa, Sastra, dan Aksara Bali. Pelajari materi
+                                    mandiri dan ikuti kuis bersama dalam room.
+                                </p>
+                                <div className="mt-7 grid gap-4 sm:grid-cols-2">
+                                    <div className="rounded-2xl bg-background p-5">
+                                        <h3 className="font-bold">Paribasa Bali</h3>
+                                        <p className="mt-3 text-sm leading-7 text-foreground/55">
+                                            Cecimpedan, peparikan, dan sesonggakan.
+                                        </p>
+                                    </div>
+                                    <div className="rounded-2xl bg-background p-5">
+                                        <h3 className="font-bold">Aksara Bali</h3>
+                                        <p className="mt-3 text-sm leading-7 text-foreground/55">
+                                            Aksara dasar, gantungan, tanda, dan angka.
+                                        </p>
+                                    </div>
+                                </div>
+                                <Link href={nav.learning} className={`${buttonClass} mt-6`}>
+                                    Jelajahi materi
+                                </Link>
+                            </Card>
+                            <Card>
+                                <h2 className="font-display text-xl font-bold">Privasi dan bantuan</h2>
+                                {version && <p className="mt-3 text-xs text-foreground/50">Versi {version}</p>}
+                                <p className="mt-3 text-sm leading-7 text-foreground/55">
+                                    Pelajari bagaimana data digunakan dan hubungi pengelola bila membutuhkan bantuan.
+                                </p>
+                                <Link
+                                    href={nav.privacy}
+                                    className="mt-3 inline-flex min-h-11 items-center font-bold text-accent"
+                                >
+                                    Kebijakan privasi →
+                                </Link>
+                                <a
+                                    href="mailto:kerthajayasoftware@gmail.com"
+                                    className="mt-2 block break-all text-sm text-accent"
+                                >
+                                    kerthajayasoftware@gmail.com
+                                </a>
+                            </Card>
+                        </>
+                    ) : (
+                        <>
+                            <section aria-labelledby="overview-title">
+                                <h2 id="overview-title" className="mb-4 font-display text-xl font-bold">
+                                    Ringkasan belajar
+                                </h2>
+                                <div className="grid gap-2 sm:grid-cols-3 sm:gap-4">
+                                    {[
+                                        ['Pelajaran selesai', completedLessons, 'check'],
+                                        ['Materi dipelajari', paths.length, 'book'],
+                                        ['Hari aktif minggu ini', `${activity?.active_days_7 ?? 0}/7`, 'calendar'],
+                                    ].map(([label, value, icon]) => (
+                                        <Card
+                                            key={label}
+                                            className="flex items-center gap-3 !p-4 sm:flex-col sm:items-start sm:gap-0 sm:!p-6"
+                                        >
+                                            <Icon
+                                                name={icon}
+                                                className={`size-5 shrink-0 sm:mb-4 sm:size-6 ${icon === 'book' ? 'text-primary' : 'text-accent'}`}
+                                            />
+                                            <p className="min-w-0 flex-1 text-sm leading-5 text-foreground/60 sm:mb-3">
+                                                {label}
+                                            </p>
+                                            <p className="profile-number shrink-0 font-sans text-2xl font-bold tabular-nums sm:text-4xl">
+                                                {value}
+                                            </p>
+                                        </Card>
+                                    ))}
+                                </div>
+                            </section>
+                            <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] sm:gap-6">
+                                <div className="space-y-6">
+                                    {activity && (
+                                        <Card>
+                                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                                <h2 className="font-display text-xl font-bold">Sedikit setiap hari</h2>
+                                                <span className="rounded-full bg-primary/15 px-3 py-2 text-xs font-bold text-accent">
+                                                    <span className="profile-number">
+                                                        {activity.active_days_7 ?? 0}
+                                                    </span>{' '}
+                                                    hari aktif
+                                                </span>
+                                            </div>
+                                            <p className="mt-2 text-xs leading-6 text-foreground/50">
+                                                Aktivitas belajar dalam tujuh hari terakhir.
+                                            </p>
+                                            <ol
+                                                className="mt-5 grid grid-cols-7 gap-1 sm:mt-7 sm:gap-3"
+                                                aria-label="Aktivitas belajar tujuh hari terakhir"
+                                            >
+                                                {activity.daily.slice(-7).map((day) => {
+                                                    const active = day.lessons_completed + day.quiz_answers > 0;
+                                                    const date = new Date(`${day.date}T00:00:00+08:00`);
+                                                    return (
+                                                        <li
+                                                            key={day.date}
+                                                            aria-label={`${day.date}: ${day.lessons_completed} pelajaran selesai, ${day.quiz_answers} jawaban kuis`}
+                                                            className="min-w-0 text-center"
+                                                        >
+                                                            <span className="text-[10px] text-foreground/45">
+                                                                {date.toLocaleDateString('id-ID', {
+                                                                    weekday: 'short',
+                                                                    timeZone: 'Asia/Makassar',
+                                                                })}
+                                                            </span>
+                                                            <span
+                                                                className={`mx-auto mt-2 grid aspect-square max-w-12 place-items-center rounded-full text-sm font-bold ${active ? 'bg-accent text-background' : 'bg-background text-foreground/25'}`}
+                                                            >
+                                                                {active ? '✓' : '·'}
+                                                            </span>
+                                                            <time
+                                                                dateTime={day.date}
+                                                                className="profile-number mt-2 block text-[10px] text-foreground/40"
+                                                            >
+                                                                {day.date.slice(-2)}
+                                                            </time>
+                                                        </li>
+                                                    );
+                                                })}
+                                            </ol>
+                                            <p className="mt-4 text-xs leading-6 text-foreground/45">
+                                                Selesaikan pelajaran atau jawab kuis untuk mencatat hari aktif.
+                                            </p>
+                                            {activity.quiz_answers_14 > 0 && (
+                                                <p className="mt-3 text-xs text-foreground/60">
+                                                    Kuis 14 hari: {activity.quiz_correct_14} dari{' '}
+                                                    {activity.quiz_answers_14} jawaban benar.
+                                                </p>
+                                            )}
+                                        </Card>
+                                    )}
+                                    <Card id="progres">
+                                        <div className="flex flex-wrap justify-between gap-3">
+                                            <h2 className="font-display text-xl font-bold">Progres belajar</h2>
+                                            <Link className="text-sm font-bold text-accent" href={nav.learning}>
+                                                Lihat materi
+                                            </Link>
+                                        </div>
+                                        {paths.length ? (
+                                            <>
+                                                <p className="mt-3 text-sm text-foreground/55">
+                                                    <span className="profile-number">{completedLessons}</span> dari{' '}
+                                                    <span className="profile-number">{totalLessons}</span> pelajaran
+                                                    selesai
+                                                </p>
+                                                <ul className="mt-5 space-y-3">
+                                                    {paths.map((path) => (
+                                                        <li key={path.id}>
+                                                            <Link
+                                                                href={path.url}
+                                                                className="block rounded-2xl bg-background p-4"
+                                                            >
+                                                                <div className="flex items-start justify-between gap-3">
+                                                                    <h3 className="min-w-0 break-words text-sm font-bold">
+                                                                        {path.title}
+                                                                    </h3>
+                                                                    <span className="profile-number shrink-0 text-xs font-bold text-accent">
+                                                                        {Math.round(
+                                                                            (path.completed /
+                                                                                Math.max(1, path.lessonsCount)) *
+                                                                                100,
+                                                                        )}
+                                                                        %
+                                                                    </span>
+                                                                </div>
+                                                                <progress
+                                                                    aria-label={`Progres ${path.title}`}
+                                                                    value={path.completed}
+                                                                    max={Math.max(1, path.lessonsCount)}
+                                                                    className="mt-3 h-2 w-full overflow-hidden rounded-full accent-[var(--color-primary)]"
+                                                                />
+                                                                <p className="mt-2 text-xs text-foreground/45">
+                                                                    <span className="profile-number">
+                                                                        {path.completed}
+                                                                    </span>{' '}
+                                                                    dari{' '}
+                                                                    <span className="profile-number">
+                                                                        {path.lessonsCount}
+                                                                    </span>{' '}
+                                                                    pelajaran
+                                                                </p>
+                                                            </Link>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </>
+                                        ) : (
+                                            <div className="py-8 text-center">
+                                                <h3 className="font-display text-xl font-bold">
+                                                    Belum ada progres belajar
+                                                </h3>
+                                                <p className="mt-3 text-sm leading-7 text-foreground/55">
+                                                    Mulai dari satu pelajaran. Setiap langkahmu akan tercatat di sini.
+                                                </p>
+                                                <Link className={`${buttonClass} mt-5`} href={nav.learning}>
+                                                    Pilih materi
+                                                </Link>
+                                            </div>
+                                        )}
+                                    </Card>
+                                </div>
+                                <div className="space-y-6">
+                                    <Analysis key={`${analysis?.status}-${analysis?.updated_at}`} analysis={analysis} />
+                                    {interests.length > 0 && (
+                                        <Card>
+                                            <h2 className="font-display text-xl font-bold">Minat belajarmu</h2>
+                                            <p className="mt-2 text-xs text-foreground/50">
+                                                {analysis?.role} · Pilihan dari perkenalan awalmu.
+                                            </p>
+                                            <div className="mt-4 flex flex-wrap gap-2">
+                                                {interests.map((path) => (
+                                                    <Link href={path.url} key={path.id} className={secondaryClass}>
+                                                        {path.title}
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        </Card>
+                                    )}
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
+                <section aria-labelledby="delete-account-title" className="rounded-card bg-surface p-5 sm:p-7">
+                    <h2 id="delete-account-title" className="font-display text-xl font-bold">
+                        Hapus akun
+                    </h2>
+                    <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground/55">
+                        {viewer.mode === 'anonymous'
+                            ? 'Hapus profil anonim, avatar unggahan, progres, analisis, dan partisipasi kuis dari perangkat ini.'
+                            : 'Hapus akun, profil belajar, progres, analisis, serta kuis dan room yang kamu buat.'}{' '}
+                        Tindakan ini tidak dapat dibatalkan.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            deletion.reset();
+                            setDeleteOpen(true);
+                        }}
+                        className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-danger/15 px-5 py-3 text-sm font-bold text-danger transition hover:bg-danger/25 focus-visible:outline-2 focus-visible:outline-danger"
+                    >
+                        Hapus akun saya
+                    </button>
+                </section>
+            </div>
+            <Dialog
+                open={deleteOpen}
+                onClose={() => {
+                    if (!deletion.processing) setDeleteOpen(false);
+                }}
+                title="Hapus akun ini?"
+                id="delete-account-modal"
+                variant="error"
+            >
+                <p className="text-sm leading-7 text-foreground/65">
+                    Profil, avatar unggahan, progres belajar, analisis, dan jawaban kuismu akan dihapus dari data aktif
+                    layanan.
+                    {viewer.mode === 'account' &&
+                        ' Kuis, draf, dan room yang kamu buat beserta peserta dan jawaban di dalamnya juga ikut terhapus. Semua sesi login akun akan berakhir.'}
+                    {viewer.mode === 'anonymous' &&
+                        ' Profil anonim ini tidak dapat dipulihkan dan cookie pengenalnya akan dihapus dari browser ini.'}
+                </p>
+                <p className="mt-4 text-sm leading-7">
+                    Ketik <strong className="text-foreground">Hapus Akun Saya</strong> untuk mengonfirmasi. Tindakan ini
+                    tidak dapat dibatalkan.
+                </p>
+                <form
+                    className="mt-5"
+                    onSubmit={(event) => {
+                        event.preventDefault();
+                        if (deletion.data.confirmation === 'Hapus Akun Saya' && !deletion.processing) {
+                            deletion.delete(links['profile.destroy'], {
+                                preserveScroll: true,
+                                onSuccess: () => setDeleteOpen(false),
+                            });
+                        }
+                    }}
+                >
+                    <Field
+                        label="Konfirmasi penghapusan akun"
+                        value={deletion.data.confirmation}
+                        onChange={(event) => deletion.setData('confirmation', event.target.value)}
+                        autoComplete="off"
+                        spellCheck={false}
+                        required
+                        error={deletion.errors.confirmation}
+                    />
+                    <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                        <button
+                            type="button"
+                            className={secondaryClass}
+                            disabled={deletion.processing}
+                            onClick={() => setDeleteOpen(false)}
+                        >
+                            Batal
+                        </button>
+                        <Button
+                            type="submit"
+                            className="!bg-danger !text-background"
+                            disabled={deletion.processing || deletion.data.confirmation !== 'Hapus Akun Saya'}
+                        >
+                            {deletion.processing ? 'Menghapus…' : 'Hapus permanen'}
+                        </Button>
+                    </div>
+                </form>
+            </Dialog>
+            <Dialog
+                open={avatarOpen}
+                onClose={() => setAvatarOpen(false)}
+                title="Pilih avatar belajarmu"
+                id="profile-avatar"
+                variant={Object.keys(form.errors).length ? 'error' : 'info'}
+            >
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        form.post(links['profile.avatar.update'], {
+                            forceFormData: true,
+                            preserveScroll: true,
+                            onSuccess: () => setAvatarOpen(false),
+                        });
+                    }}
+                >
+                    <Errors errors={form.errors} />
+                    <div className="grid grid-cols-4 gap-3">
+                        {avatars.map((avatar) => (
+                            <label
+                                key={avatar.value}
+                                className={`cursor-pointer rounded-full p-1 ring-2 ${form.data.avatar === avatar.value && !preview ? 'ring-accent' : 'ring-transparent'}`}
+                            >
+                                <input
+                                    type="radio"
+                                    name="avatar"
+                                    className="sr-only"
+                                    checked={form.data.avatar === avatar.value && !preview}
+                                    onChange={() => {
+                                        form.setData({ avatar: avatar.value, avatar_upload: null, _method: 'put' });
+                                    }}
+                                />
+                                <img
+                                    src={avatar.url}
+                                    alt={avatar.name}
+                                    width="64"
+                                    height="64"
+                                    className="aspect-square w-full rounded-full object-cover"
+                                />
+                            </label>
+                        ))}
+                    </div>
+                    {preview && (
+                        <img
+                            src={preview}
+                            alt="Preview avatar unggahan"
+                            width="88"
+                            height="88"
+                            className="mx-auto mt-5 size-22 rounded-full object-cover"
+                        />
+                    )}
+                    <div className="mt-5">
+                        <Field
+                            label="Atau unggah avatarmu"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            onChange={(e) => {
+                                setCandidate(e.target.files[0] ?? null);
+                                e.target.value = '';
+                            }}
+                            hint="JPG, PNG, WEBP; maksimal 2 MB dan 2048 × 2048 piksel."
+                            error={form.errors.avatar_upload}
+                        />
+                    </div>
+                    <Suspense fallback={<Skeleton label="Menyiapkan pengaturan gambar…" compact />}>
+                        {candidate && (
+                            <AvatarCrop
+                                key={`${candidate.name}-${candidate.lastModified}`}
+                                file={candidate}
+                                onCancel={() => setCandidate(null)}
+                                onApply={(file) => {
+                                    form.setData('avatar_upload', file);
+                                    setCandidate(null);
+                                }}
+                            />
+                        )}
+                    </Suspense>
+                    <Button type="submit" className="mt-5 w-full" disabled={form.processing || Boolean(candidate)}>
+                        Simpan avatar
+                    </Button>
+                </form>
+            </Dialog>
+        </>
+    );
+}

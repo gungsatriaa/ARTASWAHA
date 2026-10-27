@@ -9,23 +9,25 @@ use App\Http\Requests\SendPasswordResetLinkRequest;
 use App\Models\LearningPath;
 use App\Services\AuthService;
 use App\Services\LearningProgressService;
+use App\Services\PagePresenter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 use Laravel\Socialite\Socialite;
 use Throwable;
 
 class AuthController extends Controller
 {
-    public function createLogin(): View
+    public function createLogin(): InertiaResponse
     {
-        return view('auth.login');
+        return app(PagePresenter::class)->render('auth.login');
     }
 
-    public function createRegistration(): View
+    public function createRegistration(): InertiaResponse
     {
-        return view('auth.register');
+        return app(PagePresenter::class)->render('auth.register');
     }
 
     public function register(RegisterRequest $request, AuthService $authService, LearningProgressService $progressService): RedirectResponse
@@ -73,13 +75,14 @@ class AuthController extends Controller
     public function logout(Request $request, AuthService $authService): RedirectResponse
     {
         $authService->logout($request);
+        Inertia::clearHistory();
 
         return to_route('home');
     }
 
-    public function createPasswordReset(): View
+    public function createPasswordReset(): InertiaResponse
     {
-        return view('auth.forgot-password');
+        return app(PagePresenter::class)->render('auth.forgot-password');
     }
 
     public function sendPasswordResetLink(SendPasswordResetLinkRequest $request, AuthService $authService): RedirectResponse
@@ -89,9 +92,9 @@ class AuthController extends Controller
         return back()->with('status', 'Jika email terdaftar, tautan pemulihan akan dikirim.');
     }
 
-    public function createPasswordResetForm(string $token): View
+    public function createPasswordResetForm(string $token): InertiaResponse
     {
-        return view('auth.reset-password', compact('token'));
+        return app(PagePresenter::class)->render('auth.reset-password', compact('token'));
     }
 
     public function resetPassword(ResetPasswordRequest $request, AuthService $authService): RedirectResponse
@@ -105,9 +108,10 @@ class AuthController extends Controller
 
     private function learningDestination(Request $request): RedirectResponse
     {
+        Inertia::clearHistory();
         $pathId = $request->session()->pull('learning_interview_destination');
         $path = is_numeric($pathId) ? LearningPath::query()->where('is_published', true)->find($pathId) : null;
 
-        return $path ? to_route('learning.paths.show', $path->slug) : to_route('home');
+        return redirect()->intended($path ? route('learning.paths.show', $path->slug) : route('home'));
     }
 }

@@ -21,6 +21,6 @@ class JoinRoomRequest extends FormRequest
      */
     public function rules(): array
     {
-        return ['code' => ['required', 'string', 'regex:/\A[A-Za-z0-9]{4}(?:[A-Za-z0-9]{6})?\z/']];
+        return ['code' => ['required', 'string', 'regex:/\A(?:[0-9]{6}|[A-Za-z0-9]{4}|[A-Za-z0-9]{10})\z/']];
     }
 }

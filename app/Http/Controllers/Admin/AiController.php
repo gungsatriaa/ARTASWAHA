@@ -11,16 +11,17 @@ use App\Models\QuizDraft;
 use App\Services\AdminAiService;
 use App\Services\ContentAudioService;
 use App\Services\LearnerInterviewAnalyzer;
+use App\Services\PagePresenter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\View\View;
+use Inertia\Response as InertiaResponse;
 
 class AiController extends Controller
 {
-    public function index(Request $request, AdminAiService $service, LearnerInterviewAnalyzer $analyzer, ContentAudioService $audioService): View
+    public function index(Request $request, AdminAiService $service, LearnerInterviewAnalyzer $analyzer, ContentAudioService $audioService): InertiaResponse
     {
         $filters = $request->validate([
             'tab' => ['nullable', 'in:overview,interviews,drafts,services'], 'role' => ['nullable', 'in:murid,guru,pendatang,masyarakat'],
@@ -48,15 +49,15 @@ class AiController extends Controller
         $pendingJobs = $tab === 'services' ? DB::table('jobs')->where('queue', 'learner-analysis')->count() : 0;
         $audioCounts = $tab === 'services' ? ContentAudio::select('status')->selectRaw('COUNT(*) as total')->groupBy('status')->pluck('total', 'status') : collect();
 
-        return view('admin.ai.index', compact('tab', 'start', 'end', 'snapshot', 'statuses', 'profiles', 'drafts', 'reports', 'learningPaths', 'aiConfigured', 'ttsConfigured', 'pendingJobs', 'audioCounts'));
+        return app(PagePresenter::class)->render('admin.ai.index', compact('tab', 'start', 'end', 'snapshot', 'statuses', 'profiles', 'drafts', 'reports', 'learningPaths', 'aiConfigured', 'ttsConfigured', 'pendingJobs', 'audioCounts'));
     }
 
-    public function profile(LearnerProfile $learnerProfile, LearnerInterviewAnalyzer $analyzer): View
+    public function profile(LearnerProfile $learnerProfile, LearnerInterviewAnalyzer $analyzer): InertiaResponse
     {
         $paths = LearningPath::whereKey($learnerProfile->learning_path_ids ?: [$learnerProfile->learning_path_id])->get();
         $analysis = $analyzer->presentation($learnerProfile, $paths);
 
-        return view('admin.ai.profile', compact('learnerProfile', 'paths', 'analysis'));
+        return app(PagePresenter::class)->render('admin.ai.profile', compact('learnerProfile', 'paths', 'analysis'));
     }
 
     public function retry(LearnerProfile $learnerProfile, LearnerInterviewAnalyzer $analyzer): RedirectResponse
@@ -66,9 +67,9 @@ class AiController extends Controller
         return back()->with('status', 'Permintaan diperiksa. Hasil yang masih berlaku digunakan kembali; permintaan ganda tidak diproses ulang.');
     }
 
-    public function draft(QuizDraft $quizDraft): View
+    public function draft(QuizDraft $quizDraft): InertiaResponse
     {
-        return view('admin.ai.draft', compact('quizDraft'));
+        return app(PagePresenter::class)->render('admin.ai.draft', compact('quizDraft'));
     }
 
     public function requestReport(Request $request, AdminAiService $service): RedirectResponse
@@ -82,8 +83,8 @@ class AiController extends Controller
         return to_route('admin.ai.reports.show', $report);
     }
 
-    public function report(AiReport $aiReport): View
+    public function report(AiReport $aiReport): InertiaResponse
     {
-        return view('admin.ai.report', compact('aiReport'));
+        return app(PagePresenter::class)->render('admin.ai.report', compact('aiReport'));
     }
 }

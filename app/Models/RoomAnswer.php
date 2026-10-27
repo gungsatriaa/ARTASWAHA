@@ -12,11 +12,11 @@ class RoomAnswer extends Model
     /** @use HasFactory<RoomAnswerFactory> */
     use HasFactory;
 
-    protected $fillable = ['room_participant_id', 'quiz_question_id', 'answer_index', 'is_correct', 'points_awarded', 'answered_at'];
+    protected $fillable = ['answer_indexes', 'answer_text', 'room_participant_id', 'quiz_question_id', 'answer_index', 'is_correct', 'points_awarded', 'answered_at'];
 
     protected function casts(): array
     {
-        return ['answer_index' => 'integer', 'is_correct' => 'boolean', 'answered_at' => 'datetime'];
+        return ['answer_indexes' => 'array', 'answer_index' => 'integer', 'is_correct' => 'boolean', 'answered_at' => 'datetime'];
     }
 
     public function participant(): BelongsTo

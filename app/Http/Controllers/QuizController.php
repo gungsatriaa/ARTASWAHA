@@ -8,16 +8,17 @@ use App\Models\LearnerProfile;
 use App\Models\Quiz;
 use App\Models\QuizQuestion;
 use App\Services\ContentAudioService;
+use App\Services\PagePresenter;
 use App\Services\QuizService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
+use Inertia\Response as InertiaResponse;
 
 class QuizController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): InertiaResponse
     {
         $filters = $request->validate(['q' => ['nullable', 'string', 'max:120'], 'status' => ['nullable', 'in:active,archived']]);
         $profile = Auth::guest() ? LearnerProfile::completedFor(null, request()->cookie('artaswaha_device')) : null;
@@ -29,12 +30,12 @@ class QuizController extends Controller
             ->latest()
             ->paginate(12)->withQueryString();
 
-        return view('quizzes.index', compact('quizzes', 'profile', 'filters'));
+        return app(PagePresenter::class)->render('quizzes.index', compact('quizzes', 'profile', 'filters'));
     }
 
-    public function create(): View
+    public function create(): InertiaResponse
     {
-        return view('quizzes.create');
+        return app(PagePresenter::class)->render('quizzes.create');
     }
 
     public function store(StoreQuizRequest $request, QuizService $quizService): RedirectResponse
@@ -44,7 +45,7 @@ class QuizController extends Controller
         return to_route('quizzes.show', $quiz)->with('status', 'Kuis berhasil dibuat.');
     }
 
-    public function show(Quiz $quiz, ContentAudioService $audioService): View
+    public function show(Quiz $quiz, ContentAudioService $audioService): InertiaResponse
     {
         abort_unless($quiz->user_id === Auth::id(), 404);
         $quiz->load('questions.audio');
@@ -54,16 +55,16 @@ class QuizController extends Controller
             return $audioService->isPlayable($audio) ? [$question->id => $audio] : [];
         });
 
-        return view('quizzes.show', compact('quiz', 'audioByQuestion'));
+        return app(PagePresenter::class)->render('quizzes.show', compact('quiz', 'audioByQuestion'));
     }
 
-    public function edit(Quiz $quiz): View
+    public function edit(Quiz $quiz): InertiaResponse
     {
         abort_unless($quiz->user_id === Auth::id() && ! $quiz->is_archived, 404);
         $quiz->load('questions.audio');
         $hasRooms = $quiz->rooms()->exists();
 
-        return view('quizzes.create', compact('quiz', 'hasRooms'));
+        return app(PagePresenter::class)->render('quizzes.create', compact('quiz', 'hasRooms'));
     }
 
     public function update(UpdateQuizRequest $request, Quiz $quiz, QuizService $quizService): RedirectResponse

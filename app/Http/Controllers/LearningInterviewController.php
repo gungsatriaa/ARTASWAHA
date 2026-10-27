@@ -6,6 +6,7 @@ use App\Models\LearnerProfile;
 use App\Models\LearningPath;
 use App\Services\LearnerInterviewAnalyzer;
 use App\Services\LearningProgressService;
+use App\Services\PagePresenter;
 use App\Services\ProfileAvatarService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
-use Illuminate\View\View;
+use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
@@ -28,18 +29,18 @@ class LearningInterviewController extends Controller
         'masyarakat' => 'Masyarakat umum',
     ];
 
-    public function show(Request $request): View|RedirectResponse
+    public function show(Request $request): InertiaResponse|RedirectResponse
     {
-        if (LearnerProfile::completedFor($request->user()?->id, $request->cookie('artaswaha_device')) !== null) {
+        if ($request->user() !== null || LearnerProfile::completedFor(null, $request->cookie('artaswaha_device')) !== null) {
             return to_route('home');
         }
 
         $learningPaths = LearningPath::query()->where('is_published', true)->orderBy('group')->orderBy('sort_order')->get();
         $answers = $request->session()->get('learning_interview', []);
-        $requestedStep = (int) $request->query('step', 1);
-        $availableStep = ! isset($answers['learning_path_ids']) ? 1 : (! isset($answers['role']) ? 2 : (! isset($answers['mode']) ? 3 : 4));
+        $availableStep = ! isset($answers['mode']) ? 1 : (! isset($answers['learning_path_ids']) ? 2 : (! isset($answers['role']) ? 3 : 4));
+        $requestedStep = (int) $request->query('step', $availableStep);
 
-        return view('learning.interview', [
+        return app(PagePresenter::class)->render('learning.interview', [
             'learningPaths' => $learningPaths,
             'answers' => $answers,
             'step' => max(1, min($requestedStep, $availableStep)),
@@ -49,7 +50,7 @@ class LearningInterviewController extends Controller
 
     public function store(Request $request, LearningProgressService $progressService): RedirectResponse
     {
-        if (LearnerProfile::completedFor($request->user()?->id, $request->cookie('artaswaha_device')) !== null) {
+        if ($request->user() !== null || LearnerProfile::completedFor(null, $request->cookie('artaswaha_device')) !== null) {
             return to_route('home');
         }
 
@@ -57,6 +58,18 @@ class LearningInterviewController extends Controller
         $answers = $request->session()->get('learning_interview', []);
 
         if ($step === 1) {
+            $data = $request->validate(['mode' => ['required', Rule::in(['account', 'anonymous'])]]);
+            $request->session()->put('learning_interview', ['mode' => $data['mode']]);
+            $request->session()->forget('learning_interview_destination');
+
+            return to_route('learning.interview.show', ['step' => 2]);
+        }
+
+        if (! isset($answers['mode'])) {
+            return to_route('learning.interview.show');
+        }
+
+        if ($step === 2) {
             $data = $request->validate([
                 'learning_path_ids' => ['required', 'array', 'min:1'],
                 'learning_path_ids.*' => ['required', 'integer', 'distinct', Rule::exists('learning_paths', 'id')->where('is_published', true)],
@@ -64,56 +77,43 @@ class LearningInterviewController extends Controller
                 'learning_path_ids.required' => 'Silakan pilih minimal satu materi yang ingin kamu pelajari untuk melanjutkan, ya.',
                 'learning_path_ids.min' => 'Silakan pilih minimal satu materi yang ingin kamu pelajari untuk melanjutkan, ya.',
             ]);
-            $request->session()->forget('learning_interview_destination');
-            $request->session()->put('learning_interview', ['learning_path_ids' => array_map('intval', array_values($data['learning_path_ids']))]);
-
-            return to_route('learning.interview.show', ['step' => 2]);
-        }
-
-        if (! isset($answers['learning_path_ids'])) {
-            return to_route('learning.interview.show');
-        }
-
-        if (LearningPath::query()->whereKey($answers['learning_path_ids'])->where('is_published', true)->count() !== count($answers['learning_path_ids'])) {
-            $request->session()->forget('learning_interview');
-
-            return to_route('learning.interview.show')->withErrors(['learning_path_ids' => 'Salah satu materi sudah tidak tersedia. Silakan pilih ulang.']);
-        }
-
-        if ($step === 2) {
-            $data = $request->validate(['role' => ['required', Rule::in(array_keys(self::ROLES))]]);
-            $request->session()->put('learning_interview', ['learning_path_ids' => $answers['learning_path_ids'], 'role' => $data['role']]);
+            $request->session()->put('learning_interview', ['mode' => $answers['mode'], 'learning_path_ids' => array_map('intval', array_values($data['learning_path_ids']))]);
 
             return to_route('learning.interview.show', ['step' => 3]);
         }
 
-        if (! isset($answers['role'])) {
+        if (! isset($answers['learning_path_ids'])) {
             return to_route('learning.interview.show', ['step' => 2]);
         }
 
+        if (LearningPath::query()->whereKey($answers['learning_path_ids'])->where('is_published', true)->count() !== count($answers['learning_path_ids'])) {
+            $request->session()->put('learning_interview', ['mode' => $answers['mode']]);
+
+            return to_route('learning.interview.show', ['step' => 2])->withErrors(['learning_path_ids' => 'Salah satu materi sudah tidak tersedia. Silakan pilih ulang.']);
+        }
+
         if ($step === 3) {
-            $data = $request->validate(['mode' => ['required', Rule::in($request->user() ? ['account'] : ['account', 'anonymous'])]]);
-            $answers['mode'] = $data['mode'];
+            $data = $request->validate(['role' => ['required', Rule::in(array_keys(self::ROLES))]]);
+            $answers['role'] = $data['role'];
             $request->session()->put('learning_interview', $answers);
 
-            if ($data['mode'] === 'anonymous') {
+            if ($answers['mode'] === 'anonymous') {
                 return to_route('learning.interview.show', ['step' => 4]);
             }
 
             $profile = $this->saveProfile($request, $progressService, $answers);
             $request->session()->forget('learning_interview');
-            if ($request->user() !== null) {
-                return to_route('learning.paths.show', LearningPath::findOrFail($profile->learning_path_id)->slug)
-                    ->withCookie($this->deviceCookie($request, $profile->visitor_id));
-            }
-
             $request->session()->put('learning_interview_destination', $profile->learning_path_id);
 
             return to_route('login')->withCookie($this->deviceCookie($request, $profile->visitor_id));
         }
 
-        if ($step !== 4 || ($answers['mode'] ?? null) !== 'anonymous') {
+        if (! isset($answers['role'])) {
             return to_route('learning.interview.show', ['step' => 3]);
+        }
+
+        if ($step !== 4 || $answers['mode'] !== 'anonymous') {
+            return to_route('learning.interview.show');
         }
 
         $data = $request->validate([
@@ -140,7 +140,7 @@ class LearningInterviewController extends Controller
         $request->session()->forget('learning_interview');
         $request->session()->forget('learning_interview_destination');
 
-        return to_route('learning.paths.show', LearningPath::findOrFail($profile->learning_path_id)->slug)
+        return redirect()->intended(route('learning.paths.show', LearningPath::findOrFail($profile->learning_path_id)->slug))
             ->with('status', 'Siap belajar, '.$profile->name.'!')
             ->withCookie($this->deviceCookie($request, $profile->visitor_id));
     }

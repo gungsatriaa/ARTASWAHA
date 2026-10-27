@@ -73,9 +73,9 @@ class AdminLearningContentService
         $data['keyboard_auto_open'] = (bool) ($data['keyboard_auto_open'] ?? false);
 
         if (! $hasExercise) {
-            return [...$data, 'exercise_prompt' => null, 'exercise_options' => null, 'correct_option' => null, 'exercise_explanation' => null];
+            return [...$data, 'exercise_prompt' => null, 'exercise_options' => null, 'correct_option' => null, 'exercise_explanation' => null, 'question_type' => 'single', 'correct_options' => null, 'accepted_answers' => null];
         }
 
-        return $data;
+        return app(QuestionAnswerService::class)->attributes($data, 'exercise_options');
     }
 }
