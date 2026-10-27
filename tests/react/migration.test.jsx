@@ -948,12 +948,11 @@ it('keeps the saved AI summary visible while updating and labels the first factu
     expect(screen.getByText(/belum merupakan hasil AI/)).toBeTruthy();
 });
 
-it('separates existing login from registration interview and Google on the first step', () => {
+it('uses one account entry to login before choosing registration or Google', () => {
     page.props.viewer = null;
     render(<Interview paths={[path]} answers={{}} step={1} roles={{}} meta={meta} />);
-    expect(screen.getByRole('link', { name: 'Masuk' }).getAttribute('href')).toBe('/login');
-    expect(screen.getByRole('link', { name: 'Lanjutkan dengan Google' }).getAttribute('href')).toBe('/auth/google');
+    expect(screen.getByRole('link', { name: 'Masuk / daftar' }).getAttribute('href')).toBe('/login');
+    expect(screen.queryByRole('link', { name: 'Lanjutkan dengan Google' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Daftar akun baru' })).toBeNull();
     expect(send).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Daftar akun baru' }));
-    expect(send.mock.calls[0][2]).toMatchObject({ mode: 'account', step: 1 });
 });
