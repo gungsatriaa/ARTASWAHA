@@ -92,7 +92,7 @@ dialog[open] {
 .page-loader-content { width: min(21rem, 100%); text-align: center; }
 [data-loader-percent] {
     font-family: var(--font-sans);
-    font-weight: 400;
+    font-weight: 600;
     font-variant-numeric: lining-nums tabular-nums;
 }
 .page-loader-content > * {
