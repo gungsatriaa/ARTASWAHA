@@ -11,7 +11,9 @@ export default function Quizzes({ quizzes, filters, code, meta }) {
     const form = useForm({ code: code ?? '' }),
         search = useForm({ q: filters.q ?? '', status: filters.status ?? 'active' });
     useEffect(() => {
-        const key = ['room_started', 'room_finished', 'room_inactive'].find((key) => form.errors[key]);
+        const key = ['room_not_found', 'room_started', 'room_finished', 'room_inactive'].find(
+            (key) => form.errors[key],
+        );
         if (key) setBlocked(form.errors[key]);
     }, [form.errors]);
     return (
@@ -232,12 +234,18 @@ export default function Quizzes({ quizzes, filters, code, meta }) {
             <Dialog
                 open={Boolean(blocked)}
                 onClose={() => setBlocked(null)}
-                title={form.errors.room_started ? 'Kuis sudah dimulai' : 'Room tidak tersedia'}
+                title={
+                    form.errors.room_not_found
+                        ? 'Room tidak ditemukan'
+                        : form.errors.room_started
+                          ? 'Kuis sudah dimulai'
+                          : 'Room tidak tersedia'
+                }
                 id="room-blocked-title"
             >
                 <p className="text-sm leading-7 text-foreground/65">{blocked}</p>
                 <button onClick={() => setBlocked(null)} className={`${secondaryClass} mt-5`}>
-                    Kembali
+                    {form.errors.room_not_found ? 'Perbaiki kode' : 'Kembali'}
                 </button>
             </Dialog>
         </>

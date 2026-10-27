@@ -62,10 +62,13 @@ class RoomService
 
     public function join(string $code, User|LearnerProfile $player): Room
     {
-        $this->deactivateIfHostAbsent(Room::query()->where('code', Str::upper(trim($code)))->firstOrFail());
+        $roomNotFound = fn () => throw ValidationException::withMessages([
+            'room_not_found' => 'Room dengan kode tersebut tidak ditemukan. Periksa kembali kode dari host, lalu coba lagi.',
+        ]);
+        $this->deactivateIfHostAbsent(Room::query()->where('code', Str::upper(trim($code)))->firstOr($roomNotFound));
 
-        $room = DB::transaction(function () use ($code, $player): Room {
-            $room = Room::query()->where('code', Str::upper(trim($code)))->lockForUpdate()->firstOrFail();
+        $room = DB::transaction(function () use ($code, $player, $roomNotFound): Room {
+            $room = Room::query()->where('code', Str::upper(trim($code)))->lockForUpdate()->firstOr($roomNotFound);
             if ($room->status !== 'waiting') {
                 throw ValidationException::withMessages(match ($room->status) {
                     'active' => ['room_started' => 'Kuis sudah dimulai. Kamu tidak bisa bergabung lagi.'],

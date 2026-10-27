@@ -36,7 +36,7 @@ vi.mock('@inertiajs/react', async () => {
             const transform = useRef((value) => value);
             const form = {
                 data,
-                errors: {},
+                errors: page.props.errors ?? {},
                 processing: false,
                 isDirty: false,
                 setData: (key, value) =>
@@ -172,6 +172,19 @@ it('keeps room code validation and legacy invitations available in the redesigne
     expect(input.getAttribute('inputmode')).toBe('numeric');
     expect(input.placeholder).toBe('Contoh: 123456');
     expect(screen.getByRole('form', { name: 'Gabung room kuis' }).getAttribute('aria-busy')).toBe('false');
+});
+
+it('shows a themed room-not-found dialog and preserves the code for correction', () => {
+    page.props.errors = { room_not_found: 'Periksa kembali kode dari host, lalu coba lagi.' };
+    render(<Quizzes quizzes={null} filters={{}} code="012345" meta={meta} />);
+    expect(screen.getByRole('dialog', { name: 'Room tidak ditemukan' })).toBeTruthy();
+    expect(screen.getByText('Periksa kembali kode dari host, lalu coba lagi.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Perbaiki kode' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.getByRole('textbox', { name: 'Kode room' }).value).toBe('012345');
+    fireEvent.change(screen.getByRole('textbox', { name: 'Kode room' }), { target: { value: '654321' } });
+    fireEvent.submit(screen.getByRole('form', { name: 'Gabung room kuis' }));
+    expect(send.mock.calls[0].slice(0, 3)).toEqual(['post', '/room/join', { code: '654321' }]);
 });
 
 it('preserves saved question IDs while removing UI-only keys and correcting a deleted choice', () => {

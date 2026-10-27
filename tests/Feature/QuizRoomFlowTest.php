@@ -298,6 +298,17 @@ class QuizRoomFlowTest extends TestCase
         $this->assertDatabaseCount('rooms', 2);
     }
 
+    public function test_unknown_room_code_returns_a_validation_error_instead_of_a_not_found_page(): void
+    {
+        $player = User::factory()->create();
+
+        $this->actingAs($player)->from(route('quizzes.index'))
+            ->post(route('rooms.join'), ['code' => '012345'])
+            ->assertRedirect(route('quizzes.index'))
+            ->assertSessionHasErrors('room_not_found');
+        $this->assertDatabaseCount('room_participants', 0);
+    }
+
     public function test_room_join_rejects_codes_with_invalid_length(): void
     {
         $player = User::factory()->create();
