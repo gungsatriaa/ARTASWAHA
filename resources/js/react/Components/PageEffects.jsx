@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
-import Skeleton from './Skeleton';
 
 export default function PageEffects({ children }) {
     const { component, url, props } = usePage();
@@ -72,9 +71,9 @@ export default function PageEffects({ children }) {
     return (
         <div ref={content} className="relative min-w-0" aria-busy={loading}>
             {loading && (
-                <div className="fixed inset-x-4 top-24 z-30 mx-auto max-w-lg pointer-events-none">
-                    <Skeleton label="Memuat halaman…" compact />
-                </div>
+                <span role="status" aria-label="Memuat halaman…" className="sr-only">
+                    Memuat halaman…
+                </span>
             )}
             <div className="react-page-enter" key={pageKey}>
                 {children}

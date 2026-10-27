@@ -64,7 +64,7 @@ it('does not pretend that a broken page loaded successfully and releases the ove
     await vi.advanceTimersByTimeAsync(5100);
     expect(document.documentElement.classList.contains('page-loading')).toBe(false);
 });
-it('shows a skeleton for slow GET navigation, never for answer POSTs, and cleans route listeners', () => {
+it('announces slow GET navigation without a floating skeleton, never delays answer POSTs, and cleans route listeners', () => {
     const { unmount } = render(
         <PageEffects>
             <h1>Halaman</h1>
@@ -76,6 +76,8 @@ it('shows a skeleton for slow GET navigation, never for answer POSTs, and cleans
     act(() => callbacks.get('start')({ detail: { visit: { method: 'get' } } }));
     act(() => vi.advanceTimersByTime(181));
     expect(screen.getByRole('status', { name: 'Memuat halaman…' })).toBeTruthy();
+    expect(screen.getByRole('status', { name: 'Memuat halaman…' }).classList.contains('sr-only')).toBe(true);
+    expect(document.querySelector('.skeleton-line')).toBeNull();
     act(() => callbacks.get('finish')());
     expect(screen.queryByRole('status')).toBeNull();
     unmount();
