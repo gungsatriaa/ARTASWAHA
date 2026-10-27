@@ -75,6 +75,7 @@ class AnalyzeLearnerInterview implements ShouldBeUnique, ShouldQueue
             return;
         }
         if (! $analyzer->isConfigured()) {
+            Log::warning('Learner analysis worker has no AI configuration.', ['profile_id' => $this->profileId]);
             $this->profileQuery()->update(['analysis_status' => 'unavailable']);
 
             return;
@@ -82,6 +83,7 @@ class AnalyzeLearnerInterview implements ShouldBeUnique, ShouldQueue
         if ($this->profileQuery()->update(['analysis_status' => 'processing']) === 0) {
             return;
         }
+        Log::info('Learner analysis started.', ['profile_id' => $this->profileId, 'connection' => 'learner-analysis', 'queue' => 'learner-analysis']);
         $started = hrtime(true);
         try {
             $result = $analyzer->generate($profile->analysis_input);
@@ -98,6 +100,7 @@ class AnalyzeLearnerInterview implements ShouldBeUnique, ShouldQueue
         } catch (UnexpectedValueException $exception) {
             $this->failed($exception);
         } catch (Throwable $exception) {
+            Log::warning('Learner analysis attempt will be retried.', ['profile_id' => $this->profileId, 'exception_type' => $exception::class, 'duration_ms' => (int) ((hrtime(true) - $started) / 1e6)]);
             $this->profileQuery()->where('analysis_status', '!=', 'completed')
                 ->update(['analysis_status' => 'queued']);
             throw $exception;

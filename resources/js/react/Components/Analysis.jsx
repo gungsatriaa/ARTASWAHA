@@ -7,20 +7,28 @@ import { Card, Status } from './forms';
 export default function Analysis({ analysis: initial, compact = false, poll = true }) {
     const { links, navigation } = usePage().props;
     const [finished, setFinished] = useState(false);
+    const [slow, setSlow] = useState(false);
     const { data, error, exhausted } = usePolling(links['profile.analysis.show'], {
         active: poll && !finished && ['queued', 'processing'].includes(initial?.status),
         interval: 5000,
-        limit: 120,
+        limit: 24,
     });
     const analysis = data?.analysis ?? initial;
     useEffect(() => {
         if (data?.analysis && !['queued', 'processing'].includes(data.analysis.status)) setFinished(true);
     }, [data]);
+    useEffect(() => {
+        setSlow(false);
+        if (analysis?.status !== 'processing') return;
+        const timer = setTimeout(() => setSlow(true), 20000);
+        return () => clearTimeout(timer);
+    }, [analysis?.status]);
     if (!analysis) return null;
     const notes = {
         queued: 'Analisis menunggu antrean. Kamu bisa melanjutkan belajar sementara menunggu.',
         processing: 'Rekomendasi sedang disiapkan. Kamu tetap bisa mulai belajar dari materi pilihanmu.',
-        failed: 'Analisis belum berhasil. Progresmu tetap tersimpan.',
+        failed: 'Analisis belum berhasil. Sistem akan mencoba lagi pada pembaruan berikutnya. Progresmu tetap tersimpan.',
+        delayed: 'Antrean analisis lebih lama dari biasanya. Kamu bisa melanjutkan belajar dan melihat hasilnya nanti.',
         unavailable: 'Rekomendasi AI belum tersedia. Kamu tetap bisa belajar dari materi pilihanmu.',
     };
     return (
@@ -32,10 +40,16 @@ export default function Analysis({ analysis: initial, compact = false, poll = tr
             <p className="mt-4 whitespace-pre-line break-words text-sm leading-7 text-foreground/65" role="status">
                 {analysis.summary || notes[analysis.status] || notes.unavailable}
             </p>
-            {poll && ['queued', 'processing'].includes(analysis.status) && !error && !exhausted && (
+            {poll && analysis.status === 'processing' && !slow && !error && !exhausted && (
                 <div className="mt-4">
                     <Skeleton label="Menyiapkan analisis belajar…" compact />
                 </div>
+            )}
+            {slow && !error && !exhausted && analysis.status === 'processing' && (
+                <p className="mt-3 text-xs leading-6 text-foreground/50">
+                    AI membutuhkan waktu lebih lama. Hasil akan tampil jika proses selesai; kamu tetap bisa melanjutkan
+                    belajar.
+                </p>
             )}
             {exhausted && ['queued', 'processing'].includes(analysis.status) && (
                 <p role="alert" className="mt-3 text-xs leading-6 text-accent">

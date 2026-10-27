@@ -18,6 +18,7 @@ use Illuminate\Http\Client\Request as ClientRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia;
@@ -607,6 +608,49 @@ class LearnerAnalysisTest extends TestCase
         $this->assertDatabaseHas('learning_progress', ['user_id' => $user->id, 'lesson_id' => $lesson->id]);
         $profile = $this->profile($path, $user);
         $this->assertSame(1, app(LearnerInterviewAnalyzer::class)->activity($profile)['lessons_completed_7']);
+    }
+
+    public function test_a_stale_queue_is_presented_as_delayed_and_logged_once_without_marking_the_job_failed(): void
+    {
+        Log::spy();
+        $path = LearningPath::factory()->create();
+        $profile = $this->profile($path);
+        $analyzer = app(LearnerInterviewAnalyzer::class);
+        $this->prepare($profile, $analyzer);
+        $profile->forceFill(['analysis_requested_at' => now()->subMinutes(11)])->save();
+        foreach (range(1, 2) as $request) {
+            $this->withCookie('artaswaha_device', $profile->visitor_id)->getJson(route('profile.analysis.show'))
+                ->assertOk()->assertJsonPath('analysis.status', 'delayed');
+        }
+        $this->assertSame('queued', $profile->fresh()->analysis_status);
+        Log::shouldHaveReceived('warning')->with('Learner analysis is taking longer than expected.', \Mockery::on(fn (array $context): bool => $context['profile_id'] === $profile->id && $context['queue'] === 'learner-analysis'))->once();
+        Http::assertNothingSent();
+    }
+
+    public function test_invalid_provider_response_is_logged_without_its_private_contents(): void
+    {
+        Log::spy();
+        $path = LearningPath::factory()->create();
+        $profile = $this->profile($path);
+        $analyzer = app(LearnerInterviewAnalyzer::class);
+        $this->prepare($profile, $analyzer);
+        Http::fake(['localhost:20128/v1/chat/completions' => Http::response(['choices' => [['message' => ['content' => 'private raw response']]]])]);
+        (new AnalyzeLearnerInterview($profile->id, $profile->analysis_hash))->handle($analyzer);
+        $this->assertSame('failed', $profile->fresh()->analysis_status);
+        Log::shouldHaveReceived('warning')->with('Learner analysis provider returned invalid JSON.', \Mockery::on(fn (array $context): bool => $context['content_bytes'] === 20 && ! str_contains(json_encode($context), 'private raw response')))->once();
+        Log::shouldHaveReceived('warning')->with('Learner analysis failed.', \Mockery::type('array'))->once();
+    }
+
+    public function test_provider_http_errors_log_status_and_model_without_response_body(): void
+    {
+        Log::spy();
+        Http::fake(['localhost:20128/v1/chat/completions' => Http::response(['error' => ['message' => 'private provider content']], 401)]);
+        try {
+            app(LearnerInterviewAnalyzer::class)->requestJson([], []);
+            $this->fail('Expected a provider error.');
+        } catch (\UnexpectedValueException) {
+            Log::shouldHaveReceived('warning')->with('Learner analysis provider returned an error.', \Mockery::on(fn (array $context): bool => $context['http_status'] === 401 && isset($context['model']) && ! str_contains(json_encode($context), 'private provider content')))->once();
+        }
     }
 
     private function profile(LearningPath $path, ?User $user = null): LearnerProfile

@@ -9,6 +9,7 @@ use App\Models\LearningProgress;
 use App\Models\RoomAnswer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -68,6 +69,7 @@ class LearnerInterviewAnalyzer
                 DB::afterCommit(function () use ($profile, $hash): void {
                     try {
                         AnalyzeLearnerInterview::dispatch($profile->id, $hash, $profile->analysis_requested_at->toDateTimeString());
+                        Log::info('Learner analysis queued.', ['profile_id' => $profile->id, 'requested_at' => $profile->analysis_requested_at->toIso8601String(), 'connection' => 'learner-analysis', 'queue' => 'learner-analysis']);
                     } catch (Throwable $exception) {
                         LearnerProfile::query()->whereKey($profile->id)->where('analysis_hash', $hash)
                             ->update(['analysis_status' => 'failed']);
@@ -203,6 +205,7 @@ class LearnerInterviewAnalyzer
             'result.recommendations.*.reason' => ['required', 'string', 'max:350'],
         ]);
         if ($validator->fails()) {
+            Log::warning('Learner analysis result failed schema validation.', ['invalid_fields' => $validator->errors()->keys(), 'model' => config('services.ai.model')]);
             throw new UnexpectedValueException('Learner analysis provider returned an invalid result.');
         }
 
@@ -235,9 +238,14 @@ class LearnerInterviewAnalyzer
             'max_tokens' => 1000,
             'temperature' => 0,
         ];
-        $response = $request->post('/chat/completions', $payload);
+        try {
+            $response = $request->post('/chat/completions', $payload);
+        } catch (Throwable $exception) {
+            Log::warning('Learner analysis provider request failed.', ['exception_type' => $exception::class, 'provider_host' => parse_url((string) config('services.ai.url'), PHP_URL_HOST), 'model' => config('services.ai.model')]);
+            throw $exception;
+        }
         if (! $response->successful()) {
-            Log::warning('Learner analysis provider returned an error.', ['http_status' => $response->status()]);
+            Log::warning('Learner analysis provider returned an error.', ['http_status' => $response->status(), 'provider_host' => parse_url((string) config('services.ai.url'), PHP_URL_HOST), 'model' => config('services.ai.model')]);
             if ($response->clientError() && $response->status() !== 429) {
                 throw new UnexpectedValueException('Learner analysis provider rejected the request.');
             }
@@ -246,6 +254,7 @@ class LearnerInterviewAnalyzer
         $content = $response->json('choices.0.message.content');
         $data = is_string($content) && strlen($content) <= 16000 ? json_decode($content, true) : null;
         if (! is_array($data)) {
+            Log::warning('Learner analysis provider returned invalid JSON.', ['http_status' => $response->status(), 'content_bytes' => is_string($content) ? strlen($content) : null, 'json_error' => json_last_error_msg(), 'model' => config('services.ai.model')]);
             throw new UnexpectedValueException('AI provider returned an invalid result.');
         }
 
@@ -259,6 +268,13 @@ class LearnerInterviewAnalyzer
     public function presentation(?LearnerProfile $profile, Collection $paths): array
     {
         $status = $profile?->analysis_status ?? 'unavailable';
+        if ($profile !== null && in_array($status, ['queued', 'processing'], true) && $profile->analysis_requested_at?->lte(now()->subMinutes(10))) {
+            $key = 'learner-analysis-delay:'.$profile->id.':'.$profile->analysis_requested_at->timestamp;
+            if (Cache::add($key, true, now()->addMinutes(30))) {
+                Log::warning('Learner analysis is taking longer than expected.', ['profile_id' => $profile->id, 'status' => $status, 'requested_at' => $profile->analysis_requested_at->toIso8601String(), 'connection' => 'learner-analysis', 'queue' => 'learner-analysis']);
+            }
+            $status = 'delayed';
+        }
         if ($profile !== null && $status === 'completed' && ! $this->isCurrentInput($profile)) {
             $status = 'outdated';
         }

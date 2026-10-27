@@ -144,6 +144,7 @@ export function Stat({ label, value, note }) {
 export function Status({ value }) {
     const labels = {
         queued: 'Mengantre',
+        delayed: 'Antrean tertunda',
         processing: 'Diproses',
         completed: 'Selesai',
         failed: 'Gagal',

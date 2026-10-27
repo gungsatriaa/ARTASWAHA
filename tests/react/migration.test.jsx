@@ -384,6 +384,53 @@ it('never marks a correct choice before the server permits feedback', () => {
     expect(send.mock.calls[0][2]).toEqual({ question_id: 1, answer_index: 1 });
 });
 
+it('does not show a skeleton for an analysis that is only queued', async () => {
+    vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({ ok: true, json: async () => ({ analysis: { status: 'queued' } }) }),
+    );
+    const { unmount } = render(<Analysis analysis={{ status: 'queued' }} />);
+    expect(screen.queryByRole('status', { name: 'Menyiapkan analisis belajar…' })).toBeNull();
+    expect(screen.getByText('Mengantre')).toBeTruthy();
+    await act(async () => {});
+    unmount();
+});
+
+it('stops the processing skeleton after twenty seconds and shows the completed analysis when it arrives', async () => {
+    vi.useFakeTimers();
+    const fetcher = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ analysis: { status: 'processing' } }) });
+    vi.stubGlobal('fetch', fetcher);
+    render(<Analysis analysis={{ status: 'processing' }} />);
+    await act(async () => {});
+    expect(screen.getByRole('status', { name: 'Menyiapkan analisis belajar…' })).toBeTruthy();
+    await act(async () => vi.advanceTimersByTimeAsync(20000));
+    expect(screen.queryByRole('status', { name: 'Menyiapkan analisis belajar…' })).toBeNull();
+    expect(screen.getByText(/AI membutuhkan waktu lebih lama/)).toBeTruthy();
+    fetcher.mockResolvedValue({
+        ok: true,
+        json: async () => ({
+            analysis: { status: 'completed', summary: 'Belajar sedikit setiap hari.', recommendations: [] },
+        }),
+    });
+    await act(async () => vi.advanceTimersByTimeAsync(5000));
+    expect(screen.getByText('Belajar sedikit setiap hari.')).toBeTruthy();
+    const calls = fetcher.mock.calls.length;
+    await act(async () => vi.advanceTimersByTimeAsync(10000));
+    expect(fetcher).toHaveBeenCalledTimes(calls);
+});
+
+it('bounds queued analysis polling and leaves learning available', async () => {
+    vi.useFakeTimers();
+    const fetcher = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ analysis: { status: 'queued' } }) });
+    vi.stubGlobal('fetch', fetcher);
+    render(<Analysis analysis={{ status: 'queued' }} />);
+    await act(async () => {});
+    await act(async () => vi.advanceTimersByTimeAsync(130000));
+    expect(fetcher).toHaveBeenCalledTimes(24);
+    expect(screen.getByRole('alert').textContent).toContain('Pemeriksaan otomatis dijeda');
+    expect(screen.queryByRole('status', { name: 'Menyiapkan analisis belajar…' })).toBeNull();
+});
+
 it('retains terminal polling data and aborts in-flight requests during Strict Mode cleanup', async () => {
     const signals = [];
     vi.stubGlobal(
