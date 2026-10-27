@@ -33,9 +33,9 @@ vi.mock('motion/react-m', async () => {
 
 it.each([
     ['Aksara Wreastra & Gantungan', 'ᬳ'],
-    ['Pengangge Suara', 'ᬶ'],
-    ['Pengangge Arda Suara', '᭄ᬬ'],
-    ['Pengangge Tengenan', 'ᬂ'],
+    ['Pengangge Suara', '᭞ᬶ'],
+    ['Pengangge Arda Suara', '᭞᭄ᬬ'],
+    ['Pengangge Tengenan', '᭞ᬂ'],
     ['Angka Aksara Bali', '᭑'],
 ])('uses the requested glyph for %s', (title, glyph) => {
     const { container } = render(<CategoryIcon group="aksara" title={title} />);
@@ -48,8 +48,39 @@ it('centers a Balinese icon using the rendered glyph bounds', () => {
     SVGElement.prototype.getBBox = getBBox;
     try {
         const { container } = render(<CategoryIcon group="aksara" title="Pengangge Tengenan" />);
-        expect(container.querySelector('svg').getAttribute('viewBox')).toBe('-9 -38 28 28');
+        const [x, y, width, height] = container.querySelector('svg').getAttribute('viewBox').split(' ').map(Number);
+        expect(width).toBeCloseTo(17.92);
+        expect(height).toBeCloseTo(width);
+        expect(x + width / 2).toBeCloseTo(5);
+        expect(y + height / 2).toBeCloseTo(-24);
     } finally {
+        if (previous) SVGElement.prototype.getBBox = previous;
+        else delete SVGElement.prototype.getBBox;
+    }
+});
+
+it('sizes and centers the visible glyph rather than the font line height', () => {
+    const previous = SVGElement.prototype.getBBox;
+    SVGElement.prototype.getBBox = () => ({ x: 0, y: -50, width: 40, height: 80 });
+    vi.stubGlobal('CanvasRenderingContext2D', function () {});
+    const context = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+        measureText: () => ({
+            actualBoundingBoxLeft: 2,
+            actualBoundingBoxRight: 10,
+            actualBoundingBoxAscent: 18,
+            actualBoundingBoxDescent: 2,
+        }),
+    });
+    try {
+        const { container } = render(<CategoryIcon group="aksara" title="Pengangge Suara" />);
+        const [x, y, width, height] = container.querySelector('svg').getAttribute('viewBox').split(' ').map(Number);
+        expect(width).toBeCloseTo(22.4);
+        expect(height).toBeCloseTo(width);
+        expect(x + width / 2).toBeCloseTo(4);
+        expect(y + height / 2).toBeCloseTo(-8);
+    } finally {
+        context.mockRestore();
+        vi.unstubAllGlobals();
         if (previous) SVGElement.prototype.getBBox = previous;
         else delete SVGElement.prototype.getBBox;
     }

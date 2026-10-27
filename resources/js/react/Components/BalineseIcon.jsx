@@ -7,9 +7,21 @@ export default function BalineseIcon({ children, className = 'size-6' }) {
         let disposed = false;
         const center = () => {
             if (disposed || !text.current?.getBBox) return;
-            const box = text.current.getBBox();
+            let box = text.current.getBBox();
+            if (typeof CanvasRenderingContext2D !== 'undefined') {
+                const context = document.createElement('canvas').getContext('2d');
+                if (context) {
+                    context.font = `24px ${getComputedStyle(text.current).fontFamily}`;
+                    const metrics = context.measureText(children);
+                    const width = metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight;
+                    const height = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+                    if (width > 0 && height > 0) {
+                        box = { x: -metrics.actualBoundingBoxLeft, y: -metrics.actualBoundingBoxAscent, width, height };
+                    }
+                }
+            }
             if (!box.width || !box.height) return;
-            const side = Math.max(box.width, box.height, 24) + 4;
+            const side = Math.max(box.width, box.height) * 1.12;
             setViewBox(`${box.x + (box.width - side) / 2} ${box.y + (box.height - side) / 2} ${side} ${side}`);
         };
         center();
