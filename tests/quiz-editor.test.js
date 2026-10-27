@@ -7,10 +7,10 @@ const api = new Function('document', source.replaceAll('export function', 'funct
 
 test('reads only participant fields and keeps automatic keyboard setting', () => {
     const question = {
-        querySelector: selector => selector.includes('prompt') ? { value: 'Aksara ka?' } : { checked: true },
+        querySelector: selector => selector.includes('prompt') ? { value: 'Aksara ka?' } : selector.includes('time_limit_seconds') ? { value: '45' } : { checked: true },
         querySelectorAll: () => [{ value: 'Ka' }, { value: 'Na' }],
     };
-    assert.deepEqual(api.readQuestion(question), { prompt: 'Aksara ka?', options: ['Ka', 'Na'], keyboard: true });
+    assert.deepEqual(api.readQuestion(question), { prompt: 'Aksara ka?', options: ['Ka', 'Na'], keyboard: true, seconds: 45 });
 });
 
 test('preview accepts approved audio only while prompt and options still match', () => {

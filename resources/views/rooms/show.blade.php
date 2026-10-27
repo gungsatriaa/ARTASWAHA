@@ -2,12 +2,17 @@
     @php
         $isHost = auth()->id() === $room->host_id;
         $questionCount = $room->quiz->questions->count();
+        $questionSeconds = $activeQuestion?->time_limit_seconds ?? $room->seconds_per_question;
+        $questionDeadline = $participant?->question_ends_at;
+        if ($questionDeadline && $room->ends_at && $room->ends_at->lessThan($questionDeadline)) {
+            $questionDeadline = $room->ends_at;
+        }
         $questionPosition = $activeQuestion
             ? $room->quiz->questions->search(fn ($question) => $question->id === $activeQuestion->id) + 1
             : 0;
     @endphp
 
-    <div class="mx-auto w-full max-w-6xl px-5 sm:px-6 lg:px-10 {{ $room->status === 'active' || $isFeedback ? 'py-4 sm:py-6' : 'py-8 sm:py-12' }}" data-room-code="{{ $room->code }}" data-room-status="{{ $room->status }}" data-room-participants="{{ $room->participants->count() }}" @if (auth()->guest()) data-room-anonymous @endif data-room-status-url="{{ route('rooms.status', $room->code) }}" @if ($isHost && in_array($room->status, ['waiting', 'active'], true)) data-room-heartbeat-url="{{ route('rooms.heartbeat', $room->code) }}" @endif @if ($isFeedback) data-room-feedback-next="{{ route('rooms.show', $room->code) }}" @endif @if ($participant?->question_ends_at && $room->status === 'active' && ! $isFeedback) data-question-ends-at="{{ $participant->question_ends_at->toIso8601String() }}" data-server-now="{{ now()->toIso8601String() }}" @endif>
+    <div class="mx-auto w-full max-w-6xl px-5 sm:px-6 lg:px-10 {{ $room->status === 'active' || $isFeedback ? 'py-4 sm:py-6' : 'py-8 sm:py-12' }}" data-room-code="{{ $room->code }}" data-room-status="{{ $room->status }}" data-room-participants="{{ $room->participants->count() }}" @if (auth()->guest()) data-room-anonymous @endif data-room-status-url="{{ route('rooms.status', $room->code) }}" @if ($isHost && in_array($room->status, ['waiting', 'active'], true)) data-room-heartbeat-url="{{ route('rooms.heartbeat', $room->code) }}" @endif @if ($isFeedback) data-room-feedback-next="{{ route('rooms.show', $room->code) }}" @endif @if ($room->status === 'active') data-server-now="{{ now()->toISOString() }}" @if ($room->ends_at) data-room-ends-at="{{ $room->ends_at->toIso8601String() }}" @endif @if ($questionDeadline && ! $isFeedback) data-question-ends-at="{{ $questionDeadline->toIso8601String() }}" @endif @endif>
         <div class="flex flex-wrap items-center justify-between gap-3 {{ $room->status === 'active' ? 'mb-4' : 'mb-6' }}">
             @if (in_array($room->status, ['waiting', 'active'], true))
                 <form method="POST" action="{{ route('rooms.leave', $room->code) }}">
@@ -55,6 +60,14 @@
             </section>
         @else
             <p data-live-status role="status" class="sr-only">Memeriksa koneksi room…</p>
+        @endif
+
+        @if ($room->status === 'active' && $room->ends_at)
+            <div class="mx-auto mb-4 flex max-w-3xl items-center justify-between gap-3 rounded-control bg-accent/10 px-5 py-3 text-sm font-bold"><span>Sisa waktu total kuis</span><span data-room-total-countdown role="timer" aria-live="off" class="font-display text-lg text-accent">&mdash;</span></div>
+        @elseif ($room->status === 'waiting' && $room->time_limit_seconds)
+            <p class="mt-4 text-sm text-foreground/65">Batas total {{ intdiv($room->time_limit_seconds, 60) }} menit dimulai saat host memulai kuis.</p>
+        @elseif ($room->status === 'finished' && $room->ends_at && $room->finished_at?->equalTo($room->ends_at))
+            <p class="mx-auto mb-4 max-w-3xl rounded-control bg-accent/10 p-4 text-sm font-bold text-accent">Waktu total kuis sudah habis. Jawaban yang sudah dikirim tetap tersimpan.</p>
         @endif
 
         <div class="{{ $room->status === 'waiting' ? 'mt-6' : 'mx-auto max-w-3xl' }}">
@@ -109,14 +122,14 @@
                         </div>
 
                         <div class="mt-4 flex items-center gap-3 text-sm font-semibold">
-                            @if ($participant?->question_ends_at && ! $isFeedback)
+                            @if ($questionDeadline && ! $isFeedback)
                                 <span class="shrink-0 text-foreground/65">Sisa waktu</span>
-                                <div class="h-2 flex-1 overflow-hidden rounded-full bg-background" role="progressbar" aria-label="Sisa waktu soal" aria-valuemin="0" aria-valuemax="{{ $room->seconds_per_question }}" data-room-time-progress>
+                                <div class="h-2 flex-1 overflow-hidden rounded-full bg-background" role="progressbar" aria-label="Sisa waktu soal" aria-valuemin="0" aria-valuemax="{{ $questionSeconds }}" data-room-time-progress>
                                     <div data-room-time-bar class="h-full rounded-full bg-primary transition-[width] duration-700"></div>
                                 </div>
                                 <span class="min-w-14 text-right font-display text-base font-bold text-accent" role="timer" aria-live="off" data-room-countdown>—</span>
-                            @elseif (! $room->seconds_per_question)
-                                <span class="text-foreground/65">Tanpa batas waktu. Kamu langsung lanjut setelah menjawab.</span>
+                            @elseif (! $questionSeconds && ! $isFeedback)
+                                <span class="text-foreground/65">{{ $room->ends_at ? 'Soal ini mengikuti batas total kuis. Kamu lanjut setelah menjawab.' : 'Tanpa batas waktu. Kamu langsung lanjut setelah menjawab.' }}</span>
                             @endif
                         </div>
 

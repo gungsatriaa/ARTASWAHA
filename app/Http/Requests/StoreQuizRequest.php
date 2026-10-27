@@ -22,6 +22,7 @@ class StoreQuizRequest extends FormRequest
             'leaderboard_enabled' => ['sometimes', 'boolean'],
             'show_answers_immediately' => ['sometimes', 'boolean'],
             'seconds_per_question' => ['nullable', 'integer', 'min:5', 'max:300'],
+            'time_limit_minutes' => ['nullable', 'integer', 'min:1', 'max:180'],
             'questions' => ['required', 'array', 'min:1', 'max:20'],
             'questions.*.prompt' => ['required', 'string', 'max:500'],
             'questions.*.id' => ['prohibited'],
@@ -30,6 +31,7 @@ class StoreQuizRequest extends FormRequest
             'questions.*.correct_option' => ['required', 'integer', 'min:0', 'max:4'],
             'questions.*.explanation' => ['nullable', 'string', 'max:500'],
             'questions.*.keyboard_auto_open' => ['sometimes', 'boolean'],
+            'questions.*.time_limit_seconds' => ['nullable', 'integer', 'min:5', 'max:300'],
         ];
     }
 
@@ -41,6 +43,12 @@ class StoreQuizRequest extends FormRequest
             'questions.*.correct_option.required' => 'Pilih satu jawaban yang benar untuk soal ini.',
             'questions.*.id.exists' => 'Soal tidak termasuk kuis ini. Muat ulang editor.',
             'questions.*.id.distinct' => 'Soal yang sama tidak dapat disimpan dua kali. Gunakan tombol Duplikasikan soal.',
+            'time_limit_minutes.integer' => 'Isi batas total dengan menit bulat.',
+            'time_limit_minutes.min' => 'Batas total minimal 1 menit.',
+            'time_limit_minutes.max' => 'Batas total maksimal 180 menit.',
+            'questions.*.time_limit_seconds.integer' => 'Isi waktu khusus soal dengan detik bulat.',
+            'questions.*.time_limit_seconds.min' => 'Waktu khusus soal minimal 5 detik.',
+            'questions.*.time_limit_seconds.max' => 'Waktu khusus soal maksimal 300 detik.',
         ];
     }
 }

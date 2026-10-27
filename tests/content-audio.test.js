@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
 const source = readFileSync(new URL('../resources/js/content-audio.js', import.meta.url), 'utf8');
-function setup({ timed = false, ready = true } = {}) {
+function setup({ timed = false, ready = true, total = null } = {}) {
     const windowEvents = {};
     const documentEvents = {};
     const timers = [];
@@ -24,7 +24,7 @@ function setup({ timed = false, ready = true } = {}) {
     const document = {
         visibilityState: 'visible',
         querySelectorAll: () => players,
-        querySelector: () => timed ? { dataset: { questionEndsAt: '2026-10-25T10:00:05Z', serverNow: '2026-10-25T10:00:00Z' } } : null,
+        querySelector: () => timed || total ? { dataset: { questionEndsAt: timed ? '2026-10-25T10:00:05Z' : undefined, roomEndsAt: total, serverNow: '2026-10-25T10:00:00Z' } } : null,
         addEventListener: (name, callback) => { documentEvents[name] = callback; },
     };
     const window = {
@@ -91,4 +91,16 @@ test('timed questions stop audio at the server-adjusted deadline', () => {
     assert.ok(Math.abs(timers[0].delay - 5000) < 10);
     timers[0].callback();
     assert.ok(players.every((player) => player.pauses === 1));
+});
+
+test('total limit stops audio on a question without its own timer', () => {
+    const { timers } = setup({ total: '2026-10-25T10:00:03Z' });
+    assert.equal(timers.length, 1);
+    assert.ok(Math.abs(timers[0].delay - 3000) < 10);
+});
+
+test('audio uses the earlier of question and total deadlines', () => {
+    const { timers } = setup({ timed: true, total: '2026-10-25T10:00:02Z' });
+    assert.equal(timers.length, 1);
+    assert.ok(Math.abs(timers[0].delay - 2000) < 10);
 });

@@ -15,11 +15,11 @@ class QuizQuestion extends Model
     /** @use HasFactory<QuizQuestionFactory> */
     use HasFactory;
 
-    protected $fillable = ['quiz_id', 'prompt', 'options', 'correct_option', 'explanation', 'sort_order', 'keyboard_auto_open'];
+    protected $fillable = ['quiz_id', 'prompt', 'options', 'correct_option', 'explanation', 'sort_order', 'keyboard_auto_open', 'time_limit_seconds'];
 
     protected function casts(): array
     {
-        return ['options' => 'array', 'correct_option' => 'integer', 'keyboard_auto_open' => 'boolean'];
+        return ['options' => 'array', 'correct_option' => 'integer', 'keyboard_auto_open' => 'boolean', 'time_limit_seconds' => 'integer'];
     }
 
     public function quiz(): BelongsTo

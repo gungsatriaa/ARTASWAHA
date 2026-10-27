@@ -328,6 +328,18 @@ Editor menampilkan validasi di dekat kolom, membuka soal yang perlu dilengkapi, 
 
 Sesudah deploy/build, muat ulang halaman editor lama sebelum mengedit. Uji ketiga tahap, validasi soal yang dilipat, duplikasi/pindah/hapus pilihan tanpa perubahan kunci yang tidak disengaja, preview keyboard manual/otomatis dan audio, batal/konfirmasi arsip, pencarian/filter/pagination, serta tombol kembali setelah menyimpan. Uji pada HP 320–390 px dan orientasi berbeda, termasuk scroll panjang, fokus input, dan posisi panel keyboard. Tes aplikasi dan JavaScript lokal tidak menggantikan pemeriksaan visual/gestur pada browser sebenarnya; browser pengujian tidak tersedia dalam sesi implementasi.
 
+## Durasi khusus soal dan batas total kuis
+
+Sesudah pull, jalankan migrasi `2026_10_27_101856_add_question_and_total_time_limits_to_quizzes`, build frontend, dan perbarui cache melalui alur deploy bagian 3 atau `bash deploy.sh`. Migrasi menambahkan `time_limit_seconds` nullable pada `quizzes`, `quiz_questions`, dan `rooms`, serta `rooms.ends_at`. Data lama tetap mengikuti durasi bawaan per soal tanpa batas total. Tidak ada environment, dependency, seeder, atau service baru; perubahan timer ini tidak memerlukan restart worker TTS/Reverb.
+
+- **Pengaturan kuis:** waktu bawaan per soal tetap 5–300 detik. Batas total opsional 1–180 menit dimulai ketika host menekan **Mulai kuis**, bukan ketika room dibuat, dan berlaku bersama untuk seluruh peserta.
+- **Kelola soal:** waktu khusus 5–300 detik menggantikan bawaan untuk soal tersebut. Jika dikosongkan, soal mengikuti bawaan; jika keduanya kosong, soal tidak mempunyai batas waktu sendiri. Pengaturan ikut dalam preview, duplikasi soal/kuis, dan versi baru. Mengubah durasi saja tidak menandai audio kedaluwarsa.
+- **Peserta:** waktu soal dan total diperlihatkan terpisah. Batas total tidak diperpanjang oleh jawaban, jeda feedback, pemutaran audio, atau reload. Saat batas total habis, server menutup kuis dan menolak jawaban baru; jawaban yang sudah dikirim tetap tersimpan. Audio berhenti pada batas yang lebih awal. Soal tanpa timer sendiri tetap tunduk pada batas total.
+
+Countdown memakai waktu server dan satu interval browser per detik untuk kedua jam, dijeda ketika tab tersembunyi. Permintaan pemeriksaan saat habis dibatasi paling sering tiap tiga detik dan tidak bertumpuk. Server memeriksa batas pada akses/status/jawaban/heartbeat. Scheduler room yang sudah berjalan juga menutup room kedaluwarsa setiap menit; tanpa akses/browser aktif, pencatatan status dapat menunggu tick cron, tetapi waktu selesai tetap batas `ends_at` dan jawaban terlambat tetap ditolak. Pertahankan cron `schedule:run` yang sudah ada; jangan membuat cron/worker duplikat.
+
+QA: uji bawaan saja, override saja, campuran soal bertimer/tanpa timer, total saja, kedua batas bersamaan, total habis ketika feedback/audio berjalan, serta reload atau kembali dari tab tersembunyi. Pastikan durasi soal berikutnya memakai nilai soal itu dan timeout beberapa soal dihitung dari batas sebelumnya, bukan diulang dari waktu reload. Periksa penolakan jawaban tepat pada batas, pelestarian jawaban lama, heartbeat melaporkan `finished` saat waktu habis, dan room lama tetap memakai pengaturan versi lama setelah edit. Uji isian kosong, batas minimum/maksimum, angka pecahan, dan nilai di luar batas. Verifikasi visual/gestur pada browser dan HP sebenarnya tetap diperlukan.
+
 ## Instalasi manual langkah demi langkah
 
 Bagian ini menjalankan langkah installer satu per satu agar prosesnya dapat dipahami. Pilih cara manual ini atau installer pada bagian 4. Contoh memakai CPU; jalankan setelah source baru dipull dan backup tersedia.

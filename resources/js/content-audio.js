@@ -25,8 +25,9 @@ document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') stopAll();
 });
 const room = document.querySelector('[data-room-code]');
-if (room?.dataset.questionEndsAt) {
+if (room?.dataset.questionEndsAt || room?.dataset.roomEndsAt) {
     const offset = Date.parse(room.dataset.serverNow) - Date.now();
-    const remaining = Date.parse(room.dataset.questionEndsAt) - Date.now() - offset;
+    const deadlines = [room.dataset.questionEndsAt, room.dataset.roomEndsAt].map(value => Date.parse(value)).filter(Number.isFinite);
+    const remaining = Math.min(...deadlines) - Date.now() - offset;
     if (Number.isFinite(remaining)) window.setTimeout(stopAll, Math.max(0, remaining));
 }

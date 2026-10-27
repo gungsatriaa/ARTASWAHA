@@ -37,6 +37,13 @@
             <span data-field-error class="block text-xs text-danger" aria-live="polite">@error('questions.'.$index.'.explanation'){{ $message }}@enderror</span>
         </label>
         <label class="flex items-start gap-3 text-sm">
+            <span class="min-w-0 flex-1">Waktu khusus soal (detik)
+                <input type="number" name="questions[{{ $index }}][time_limit_seconds]" min="5" max="300" step="1" value="{{ $question['time_limit_seconds'] ?? '' }}" placeholder="Ikuti waktu bawaan kuis" class="mt-2 min-h-11 w-full rounded-control border border-white/10 bg-background px-4">
+                <span class="mt-1 block text-xs text-foreground/55">5–300 detik. Kosongkan untuk mengikuti bawaan; jika bawaan juga kosong, soal ini tanpa batas waktu sendiri.</span>
+                <span data-field-error class="mt-1 block text-xs text-danger" aria-live="polite">@error('questions.'.$index.'.time_limit_seconds'){{ $message }}@enderror</span>
+            </span>
+        </label>
+        <label class="flex items-start gap-3 text-sm">
             <input type="hidden" name="questions[{{ $index }}][keyboard_auto_open]" value="0">
             <input type="checkbox" name="questions[{{ $index }}][keyboard_auto_open]" value="1" @checked($question['keyboard_auto_open'] ?? false) class="mt-1 size-5 shrink-0 accent-[var(--color-accent)]">
             <span>Buka keyboard aksara otomatis saat soal ini tampil<span class="mt-1 block text-xs text-foreground/60">Peserta tetap dapat membuka atau menutupnya sendiri.</span></span>

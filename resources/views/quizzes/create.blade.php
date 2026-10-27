@@ -8,6 +8,7 @@
             'correct_option' => $question->correct_option,
             'explanation' => $question->explanation,
             'keyboard_auto_open' => $question->keyboard_auto_open,
+            'time_limit_seconds' => $question->time_limit_seconds,
         ])->all()
         : [['prompt' => '', 'options' => ['', '', '', ''], 'correct_option' => null, 'explanation' => '']]);
 @endphp
@@ -30,7 +31,7 @@
                 <details class="mt-3 hidden" data-ai-source><summary class="cursor-pointer font-semibold">Tinjau teks OCR</summary><pre class="mt-2 max-h-48 overflow-auto whitespace-pre-wrap rounded-xl bg-background p-4 text-sm" data-ai-text></pre></details>
             </section>
             @endunless
-            <form method="POST" action="{{ $editing ? route('quizzes.update', $quiz) : route('quizzes.store') }}" class="mt-8 space-y-6" data-quiz-builder data-aksara-scope data-has-errors="{{ $errors->any() ? '1' : '0' }}" data-error-step="{{ $errors->has('title') || $errors->has('description') || $errors->has('seconds_per_question') ? '0' : '1' }}" data-preview-requested="{{ request()->boolean('preview') ? '1' : '0' }}">
+            <form method="POST" action="{{ $editing ? route('quizzes.update', $quiz) : route('quizzes.store') }}" class="mt-8 space-y-6" data-quiz-builder data-aksara-scope data-has-errors="{{ $errors->any() ? '1' : '0' }}" data-error-step="{{ $errors->has('title') || $errors->has('description') || $errors->has('seconds_per_question') || $errors->has('time_limit_minutes') ? '0' : '1' }}" data-preview-requested="{{ request()->boolean('preview') ? '1' : '0' }}">
                 @csrf
                 @if ($editing) @method('PUT') @endif
                 <nav data-quiz-steps hidden aria-label="Tahap membuat kuis" class="flex flex-wrap gap-2">
@@ -47,11 +48,16 @@
                     <label class="mt-5 block text-sm font-semibold">Deskripsi <span class="font-normal text-foreground/50">(opsional)</span>
                         <textarea data-aksara-input data-aksara-label="Deskripsi" name="description" maxlength="500" rows="3" class="mt-2 w-full rounded-control border border-white/10 bg-background p-4 outline-none focus:border-accent">{{ old('description', $quiz->description ?? '') }}</textarea><span data-field-error class="mt-1 block text-xs text-danger" aria-live="polite">@error('description'){{ $message }}@enderror</span>
                     </label>
-                    <label class="mt-5 block text-sm font-semibold">Waktu per soal <span class="font-normal text-foreground/50">(opsional)</span>
+                    <label class="mt-5 block text-sm font-semibold">Waktu bawaan per soal <span class="font-normal text-foreground/50">(opsional)</span>
                         <input type="number" name="seconds_per_question" value="{{ old('seconds_per_question', $quiz->seconds_per_question ?? '') }}" min="5" max="300" step="1" placeholder="Tanpa batas waktu" class="mt-2 min-h-12 w-full rounded-control border border-white/10 bg-background px-4 outline-none focus:border-accent sm:max-w-xs">
                         <span data-field-error class="mt-1 block text-xs text-danger" aria-live="polite">@error('seconds_per_question'){{ $message }}@enderror</span>
                     </label>
-                    <p class="mt-2 text-sm text-foreground/55">Isi 5–300 detik sebagai batas waktu setiap soal. Setelah menjawab, pemain langsung lanjut sendiri. Kosongkan untuk bermain tanpa batas waktu.</p>
+                    <p class="mt-2 text-sm text-foreground/55">Isi 5–300 detik sebagai bawaan. Durasi khusus pada tiap soal menggantikan nilai ini. Setelah menjawab atau waktu soal habis, pemain lanjut sendiri.</p>
+                    <label class="mt-5 block text-sm font-semibold">Batas waktu total kuis (menit) <span class="font-normal text-foreground/50">(opsional)</span>
+                        <input type="number" name="time_limit_minutes" min="1" max="180" step="1" value="{{ old('time_limit_minutes', isset($quiz) && $quiz->time_limit_seconds ? intdiv($quiz->time_limit_seconds, 60) : '') }}" placeholder="Tanpa batas total" class="mt-2 min-h-12 w-full rounded-control border border-white/10 bg-background px-4 sm:max-w-xs">
+                        <span data-field-error class="mt-1 block text-xs text-danger" aria-live="polite">@error('time_limit_minutes'){{ $message }}@enderror</span>
+                    </label>
+                    <p class="mt-2 text-sm text-foreground/55">1–180 menit, dihitung sejak host menekan Mulai kuis dan berlaku untuk semua peserta. Saat habis, kuis ditutup; jawaban yang sudah dikirim tetap tersimpan. Kosongkan agar hanya batas per soal yang berlaku.</p>
                     <label class="mt-6 flex cursor-pointer items-start gap-3 rounded-2xl border border-white/10 bg-background p-4">
                         <input type="hidden" name="show_answers_immediately" value="0">
                         <input type="checkbox" name="show_answers_immediately" value="1" @checked(old('show_answers_immediately', $quiz->show_answers_immediately ?? true)) class="mt-1 size-5 shrink-0 accent-[var(--color-accent)]">
@@ -93,6 +99,7 @@
                     <h2 tabindex="-1" class="font-display text-2xl font-bold">Preview sebagai peserta</h2>
                     <p class="mt-2 text-sm leading-6 text-foreground/60">Coba pilihan jawaban, keyboard, dan audio yang masih sesuai. Preview tidak mengirim jawaban atau menjalankan timer.</p>
                     <p data-preview-position class="mt-5 font-bold text-accent"></p>
+                    <p data-preview-timing class="mt-2 text-sm text-foreground/65"></p>
                     <h3 data-preview-prompt class="mt-3 whitespace-pre-wrap break-words text-xl font-bold"></h3>
                     <audio data-preview-audio controls preload="none" hidden class="mt-4 w-full"></audio>
                     <p data-preview-audio-note class="mt-2 text-xs text-foreground/60"></p>

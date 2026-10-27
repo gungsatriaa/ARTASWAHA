@@ -15,7 +15,7 @@ use Throwable;
 
 class QuizService
 {
-    /** @param array{title: string, description?: string|null, leaderboard_enabled?: bool, show_answers_immediately?: bool, seconds_per_question?: int|null, questions: array<int, array{id?: int|null, prompt: string, options: array<int, string>, correct_option: int, explanation?: string|null, keyboard_auto_open?: bool}>} $data */
+    /** @param array{title: string, description?: string|null, leaderboard_enabled?: bool, show_answers_immediately?: bool, seconds_per_question?: int|null, time_limit_minutes?: int|null, questions: array<int, array{id?: int|null, prompt: string, options: array<int, string>, correct_option: int, explanation?: string|null, keyboard_auto_open?: bool, time_limit_seconds?: int|null}>} $data */
     public function create(User $user, array $data): Quiz
     {
         $this->validateQuestions($data['questions']);
@@ -27,6 +27,7 @@ class QuizService
                 'leaderboard_enabled' => $data['leaderboard_enabled'] ?? true,
                 'show_answers_immediately' => $data['show_answers_immediately'] ?? false,
                 'seconds_per_question' => $data['seconds_per_question'] ?? null,
+                'time_limit_seconds' => isset($data['time_limit_minutes']) ? $data['time_limit_minutes'] * 60 : null,
             ]);
 
             $this->saveQuestions($quiz, $data['questions']);
@@ -35,7 +36,7 @@ class QuizService
         });
     }
 
-    /** @param array{title: string, description?: string|null, show_answers_immediately?: bool, seconds_per_question?: int|null, questions: array<int, array{id?: int|null, prompt: string, options: array<int, string>, correct_option: int, explanation?: string|null, keyboard_auto_open?: bool}>} $data */
+    /** @param array{title: string, description?: string|null, show_answers_immediately?: bool, seconds_per_question?: int|null, time_limit_minutes?: int|null, questions: array<int, array{id?: int|null, prompt: string, options: array<int, string>, correct_option: int, explanation?: string|null, keyboard_auto_open?: bool, time_limit_seconds?: int|null}>} $data */
     public function update(Quiz $quiz, User $user, array $data): Quiz
     {
         $this->validateQuestions($data['questions']);
@@ -57,6 +58,7 @@ class QuizService
                     'description' => $data['description'] ?? null,
                     'show_answers_immediately' => $data['show_answers_immediately'] ?? false,
                     'seconds_per_question' => $data['seconds_per_question'] ?? null,
+                    'time_limit_seconds' => isset($data['time_limit_minutes']) ? $data['time_limit_minutes'] * 60 : null,
                 ];
 
                 if ($quiz->rooms()->exists()) {
@@ -82,6 +84,7 @@ class QuizService
                     unset($attributes['id']);
                     $attributes['keyboard_auto_open'] = (bool) ($attributes['keyboard_auto_open'] ?? false);
                     $attributes['explanation'] = $attributes['explanation'] ?? null;
+                    $attributes['time_limit_seconds'] = $attributes['time_limit_seconds'] ?? null;
                     $attributes['sort_order'] = $sortOrder++;
                     if ($updatedQuiz->id === $quiz->id && $source !== null) {
                         $source->fill($attributes)->save();
@@ -123,9 +126,10 @@ class QuizService
                     'title' => mb_substr($quiz->title, 0, 110).' (salinan)', 'description' => $quiz->description,
                     'seconds_per_question' => $quiz->seconds_per_question, 'leaderboard_enabled' => $quiz->leaderboard_enabled,
                     'show_answers_immediately' => $quiz->show_answers_immediately,
+                    'time_limit_seconds' => $quiz->time_limit_seconds,
                 ]);
                 foreach ($quiz->questions()->with('audio')->get() as $source) {
-                    $question = $copy->questions()->create($source->only(['prompt', 'options', 'correct_option', 'explanation', 'sort_order', 'keyboard_auto_open']));
+                    $question = $copy->questions()->create($source->only(['prompt', 'options', 'correct_option', 'explanation', 'sort_order', 'keyboard_auto_open', 'time_limit_seconds']));
                     $this->copyAudio($source, $question, $copiedPaths);
                 }
 
@@ -168,7 +172,7 @@ class QuizService
         }
     }
 
-    /** @param array<int, array{id?: int|null, prompt: string, options: array<int, string>, correct_option: int, explanation?: string|null, keyboard_auto_open?: bool}> $questions */
+    /** @param array<int, array{id?: int|null, prompt: string, options: array<int, string>, correct_option: int, explanation?: string|null, keyboard_auto_open?: bool, time_limit_seconds?: int|null}> $questions */
     private function saveQuestions(Quiz $quiz, array $questions): void
     {
         $sortOrder = 1;

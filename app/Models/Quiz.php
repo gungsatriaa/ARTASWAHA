@@ -13,11 +13,11 @@ class Quiz extends Model
     /** @use HasFactory<QuizFactory> */
     use HasFactory;
 
-    protected $fillable = ['user_id', 'title', 'description', 'leaderboard_enabled', 'seconds_per_question', 'show_answers_immediately', 'is_archived'];
+    protected $fillable = ['user_id', 'title', 'description', 'leaderboard_enabled', 'seconds_per_question', 'show_answers_immediately', 'is_archived', 'time_limit_seconds'];
 
     protected function casts(): array
     {
-        return ['leaderboard_enabled' => 'boolean', 'seconds_per_question' => 'integer', 'show_answers_immediately' => 'boolean', 'is_archived' => 'boolean'];
+        return ['leaderboard_enabled' => 'boolean', 'seconds_per_question' => 'integer', 'show_answers_immediately' => 'boolean', 'is_archived' => 'boolean', 'time_limit_seconds' => 'integer'];
     }
 
     public function user(): BelongsTo

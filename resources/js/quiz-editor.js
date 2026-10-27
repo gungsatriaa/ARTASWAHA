@@ -3,6 +3,7 @@ export function readQuestion(question) {
         prompt: question.querySelector('[name$="[prompt]"]').value,
         options: [...question.querySelectorAll('[name$="[options][]"]')].map(input => input.value),
         keyboard: question.querySelector('[type="checkbox"][name$="[keyboard_auto_open]"]').checked,
+        seconds: Number(question.querySelector('[name$="[time_limit_seconds]"]').value) || null,
     };
 }
 
@@ -77,6 +78,9 @@ document.querySelectorAll('[data-quiz-builder]').forEach((form) => {
         const question = questions[previewIndex];
         const values = readQuestion(question);
         form.querySelector('[data-preview-position]').textContent = `Soal ${previewIndex + 1} dari ${questions.length}`;
+        const seconds = values.seconds || Number(form.querySelector('[name="seconds_per_question"]').value);
+        const total = Number(form.querySelector('[name="time_limit_minutes"]').value);
+        form.querySelector('[data-preview-timing]').textContent = `${seconds ? `${seconds} detik untuk soal ini` : 'Soal tanpa batas waktu sendiri'} · ${total ? `Batas total ${total} menit` : 'Tanpa batas total'}. Timer tidak berjalan dalam preview.`;
         form.querySelector('[data-preview-prompt]').textContent = values.prompt;
         const options = form.querySelector('[data-preview-options]');
         const fragment = document.createDocumentFragment();

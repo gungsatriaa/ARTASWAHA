@@ -16,6 +16,7 @@
                 <div class="mt-6 flex flex-wrap items-center gap-3 text-sm font-bold">
                     <span class="rounded-full border border-white/10 px-4 py-2 text-foreground/75">{{ $quiz->questions->count() }} pertanyaan</span>
                     <span class="rounded-full border border-white/10 px-4 py-2 text-foreground/75">Bermain bersama</span>
+                    <span class="rounded-full border border-white/10 px-4 py-2 text-foreground/75">{{ $quiz->time_limit_seconds ? 'Total '.intdiv($quiz->time_limit_seconds, 60).' menit' : 'Tanpa batas total' }}</span>
                     <span class="rounded-full border border-white/10 px-4 py-2 text-foreground/75">{{ $quiz->show_answers_immediately ? 'Jawaban langsung' : 'Hasil di akhir' }}</span>
                 </div>
                 @if ($quiz->is_archived)
@@ -58,6 +59,7 @@
                                 @endif
                                 <p class="mt-2 text-sm text-foreground/50">{{ count($question->options) }} pilihan jawaban</p>
                                 <p class="mt-2 text-xs font-bold text-accent">Keyboard: {{ $question->keyboard_auto_open ? 'terbuka otomatis' : 'dibuka peserta' }}</p>
+                                <p class="mt-2 text-xs text-foreground/60">Waktu soal: {{ ($question->time_limit_seconds ?? $quiz->seconds_per_question) ? ($question->time_limit_seconds ?? $quiz->seconds_per_question).' detik' : 'tanpa batas sendiri' }}{{ $question->time_limit_seconds ? ' · khusus soal ini' : ' · mengikuti bawaan' }}</p>
                                 @if ($question->audio)<div class="mt-3"><span class="mr-2 text-xs text-foreground/60">Audio</span><x-job-status :status="$question->audio->source_hash === app(\App\Services\ContentAudioService::class)->sourceHash($question) ? $question->audio->status : 'stale'" /></div>@else<p class="mt-2 text-xs text-foreground/55">Belum ada audio soal.</p>@endif
                                 <details class="mt-3"><summary class="inline-flex min-h-11 cursor-pointer items-center text-sm font-bold">Lihat pilihan dan kunci jawaban</summary><ol class="mt-2 space-y-2 text-sm">@foreach ($question->options as $optionIndex => $option)<li class="break-words">{{ chr(65 + $optionIndex) }}. {{ $option }} @if ($optionIndex === $question->correct_option)<span class="font-bold text-success">· jawaban benar</span>@endif</li>@endforeach</ol>@if ($question->explanation)<p class="mt-3 whitespace-pre-wrap text-sm text-foreground/60">{{ $question->explanation }}</p>@endif</details>
                             </div>

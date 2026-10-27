@@ -37,7 +37,9 @@ Schedule::call(function (): void {
     $roomService = app(RoomService::class);
 
     Room::query()->whereIn('status', ['waiting', 'active'])
-        ->where(fn ($query) => $query->whereNull('host_last_seen_at')->orWhere('host_last_seen_at', '<', now()->subSeconds(90)))
+        ->where(fn (Builder $query): Builder => $query
+            ->where(fn (Builder $query): Builder => $query->whereNull('host_last_seen_at')->orWhere('host_last_seen_at', '<', now()->subSeconds(90)))
+            ->orWhere(fn (Builder $query): Builder => $query->where('status', 'active')->whereNotNull('ends_at')->where('ends_at', '<=', now())))
         ->chunkById(100, function ($rooms) use ($roomService): void {
             foreach ($rooms as $room) {
                 $roomService->deactivateIfHostAbsent($room);

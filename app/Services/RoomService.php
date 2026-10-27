@@ -35,6 +35,7 @@ class RoomService
                         'code' => Str::upper(Str::random(4)),
                         'leaderboard_enabled' => $quiz->leaderboard_enabled,
                         'seconds_per_question' => $quiz->seconds_per_question,
+                        'time_limit_seconds' => $quiz->time_limit_seconds,
                         'host_last_seen_at' => now(),
                     ]);
 
@@ -90,6 +91,16 @@ class RoomService
     {
         $changed = DB::transaction(function () use ($room, $player): bool {
             $room = Room::query()->whereKey($room->id)->lockForUpdate()->firstOrFail();
+            $isHost = $player instanceof User && $room->host_id === $player->id;
+            if (! $isHost) {
+                $room->participants()->where($this->participantKey($player))->firstOrFail();
+            }
+            if ($this->finishIfTimeLimitReached($room)) {
+                return true;
+            }
+            if ($room->status === 'finished') {
+                return false;
+            }
             if ($player instanceof User && $room->host_id === $player->id) {
                 if (! in_array($room->status, ['waiting', 'active'], true)) {
                     return false;
@@ -101,7 +112,7 @@ class RoomService
             }
 
             $room->participants()->where($this->participantKey($player))->firstOrFail()->delete();
-            if ($room->seconds_per_question) {
+            if ($room->hasQuestionTimers()) {
                 $this->finishTimedIfComplete($room);
             } else {
                 $this->finishUntimedIfComplete($room);
@@ -115,22 +126,30 @@ class RoomService
         }
     }
 
-    public function heartbeat(Room $room, User $host): void
+    public function heartbeat(Room $room, User $host): Room
     {
         abort_unless($room->host_id === $host->id, 403);
         $this->deactivateIfHostAbsent($room);
 
-        DB::transaction(function () use ($room): void {
+        return DB::transaction(function () use ($room): Room {
             $room = Room::query()->whereKey($room->id)->lockForUpdate()->firstOrFail();
+            if ($room->status === 'finished') {
+                return $room;
+            }
             abort_unless(in_array($room->status, ['waiting', 'active'], true), 410, 'Room sudah tidak aktif.');
             $room->update(['host_last_seen_at' => now()]);
+
+            return $room;
         });
     }
 
     public function deactivateIfHostAbsent(Room $room): void
     {
-        $deactivated = DB::transaction(function () use ($room): bool {
+        $changed = DB::transaction(function () use ($room): bool {
             $lockedRoom = Room::query()->whereKey($room->id)->lockForUpdate()->firstOrFail();
+            if ($this->finishIfTimeLimitReached($lockedRoom)) {
+                return true;
+            }
             if (! in_array($lockedRoom->status, ['waiting', 'active'], true)
                 || ($lockedRoom->host_last_seen_at && $lockedRoom->host_last_seen_at->greaterThan(now()->subSeconds(90)))) {
                 return false;
@@ -141,7 +160,7 @@ class RoomService
             return true;
         });
 
-        if ($deactivated) {
+        if ($changed) {
             $this->broadcastRoomUpdate($room->fresh());
         }
     }
@@ -169,15 +188,18 @@ class RoomService
 
             $question = $room->quiz->questions()->first();
             abort_if($question === null, 422, 'Kuis ini belum memiliki pertanyaan.');
+            $started = now();
+            $seconds = $question->time_limit_seconds ?? $room->seconds_per_question;
 
             $room->update([
                 'status' => 'active',
                 'current_question_id' => $question->id,
-                'started_at' => now(),
-                'question_ends_at' => $room->seconds_per_question ? now()->addSeconds($room->seconds_per_question) : null,
+                'started_at' => $started,
+                'ends_at' => $room->time_limit_seconds ? $started->copy()->addSeconds($room->time_limit_seconds) : null,
+                'question_ends_at' => $seconds ? $started->copy()->addSeconds($seconds) : null,
             ]);
 
-            if ($room->seconds_per_question) {
+            if ($room->hasQuestionTimers()) {
                 $room->participants()->update([
                     'question_position' => 0,
                     'question_ends_at' => $room->question_ends_at,
@@ -199,6 +221,7 @@ class RoomService
         $answer = DB::transaction(function () use ($room, $player, $data): RoomAnswer {
             $room = Room::query()->whereKey($room->id)->lockForUpdate()->firstOrFail();
             abort_unless($room->status === 'active', 422, 'Room belum aktif.');
+            abort_if($room->ends_at && now()->greaterThanOrEqualTo($room->ends_at), 422, 'Waktu kuis sudah habis.');
 
             $participant = $room->participants()->where($this->participantKey($player))->firstOrFail();
             $existingAnswer = $participant->answers()->where('quiz_question_id', $data['question_id'])->first();
@@ -206,8 +229,8 @@ class RoomService
                 return $existingAnswer;
             }
 
-            $question = $room->seconds_per_question
-                ? $room->quiz->questions()->skip($participant->question_position)->first()
+            $question = $room->hasQuestionTimers()
+                ? $room->quiz->questions->get($participant->question_position)
                 : $this->nextQuestionFor($room, $participant);
             if (! $question || (int) $data['question_id'] !== $question->id) {
                 throw ValidationException::withMessages(['question_id' => 'Pertanyaan ini sudah tidak aktif.']);
@@ -237,12 +260,14 @@ class RoomService
                 $participant->increment('score', $answer->points_awarded);
             }
 
-            if ($room->seconds_per_question) {
+            if ($room->hasQuestionTimers()) {
                 $nextPosition = $participant->question_position + 1;
+                $nextQuestion = $room->quiz->questions->get($nextPosition);
+                $seconds = $nextQuestion ? ($nextQuestion->time_limit_seconds ?? $room->seconds_per_question) : null;
                 $participant->update([
                     'question_position' => $nextPosition,
-                    'question_ends_at' => $nextPosition < $room->quiz->questions()->count()
-                        ? now()->addSeconds($room->seconds_per_question + ($room->quiz->show_answers_immediately ? 3 : 0))
+                    'question_ends_at' => $seconds !== null
+                        ? now()->addSeconds($seconds + ($room->quiz->show_answers_immediately ? 3 : 0))
                         : null,
                 ]);
                 $this->finishTimedIfComplete($room);
@@ -266,25 +291,29 @@ class RoomService
 
         $changed = DB::transaction(function () use ($room): bool {
             $room = Room::query()->whereKey($room->id)->lockForUpdate()->firstOrFail();
-            if ($room->status !== 'active' || ! $room->seconds_per_question) {
+            if ($this->finishIfTimeLimitReached($room)) {
+                return true;
+            }
+            if ($room->status !== 'active' || ! $room->hasQuestionTimers()) {
                 return false;
             }
 
-            $questions = $room->quiz->questions()->get();
+            $questions = $room->quiz->questions;
             $questionCount = $questions->count();
+            $firstSeconds = $questions->first()?->time_limit_seconds ?? $room->seconds_per_question;
             $changed = false;
             foreach ($room->participants as $participant) {
-                if ($participant->question_ends_at === null && $participant->question_position === 0) {
+                if ($participant->question_ends_at === null && $participant->question_position === 0 && $firstSeconds !== null) {
                     $participant->question_position = max(0, $questions->search(fn ($question) => $question->id === $room->current_question_id));
-                    $participant->question_ends_at = $room->question_ends_at ?? now()->addSeconds($room->seconds_per_question);
+                    $participant->question_ends_at = $room->question_ends_at ?? $room->started_at?->copy()->addSeconds($firstSeconds);
                     $changed = true;
                 }
 
                 while ($participant->question_position < $questionCount && $participant->question_ends_at && now()->greaterThanOrEqualTo($participant->question_ends_at)) {
                     $participant->question_position++;
-                    $participant->question_ends_at = $participant->question_position < $questionCount
-                        ? $participant->question_ends_at->copy()->addSeconds($room->seconds_per_question)
-                        : null;
+                    $next = $questions->get($participant->question_position);
+                    $seconds = $next ? ($next->time_limit_seconds ?? $room->seconds_per_question) : null;
+                    $participant->question_ends_at = $seconds !== null ? $participant->question_ends_at->copy()->addSeconds($seconds) : null;
                     $changed = true;
                 }
 
@@ -315,7 +344,7 @@ class RoomService
         $room->refresh();
         $room->load(['quiz.questions', 'currentQuestion', 'participants.user', 'participants.learnerProfile']);
         $participant = $room->participants->first(fn (RoomParticipant $participant): bool => $participant->getAttribute(key($this->participantKey($player))) === $player->id);
-        $feedbackAnswer = $participant && $room->quiz->show_answers_immediately
+        $feedbackAnswer = $participant && $room->quiz->show_answers_immediately && ! ($room->ends_at && now()->greaterThanOrEqualTo($room->ends_at))
             ? $participant->answers()->whereKey(request()->query('feedback'))->first()
             : null;
         $isFeedback = $feedbackAnswer !== null;
@@ -323,7 +352,7 @@ class RoomService
         if ($feedbackAnswer) {
             $activeQuestion = $room->quiz->questions->firstWhere('id', $feedbackAnswer->quiz_question_id);
         } elseif ($room->status === 'active' && $participant) {
-            $activeQuestion = $room->seconds_per_question
+            $activeQuestion = $room->hasQuestionTimers()
                 ? $room->quiz->questions->get($participant->question_position)
                 : $this->nextQuestionFor($room, $participant);
         }
@@ -348,9 +377,20 @@ class RoomService
             ->first();
     }
 
+    private function finishIfTimeLimitReached(Room $room): bool
+    {
+        if ($room->status !== 'active' || $room->ends_at === null || now()->lessThan($room->ends_at)) {
+            return false;
+        }
+        $room->update(['status' => 'finished', 'finished_at' => $room->ends_at, 'question_ends_at' => null]);
+        $room->participants()->update(['question_ends_at' => null]);
+
+        return true;
+    }
+
     private function finishUntimedIfComplete(Room $room): void
     {
-        if ($room->status !== 'active' || $room->seconds_per_question) {
+        if ($room->status !== 'active' || $room->hasQuestionTimers()) {
             return;
         }
 
@@ -372,7 +412,7 @@ class RoomService
     private function broadcastRoomUpdate(Room $room): void
     {
         $room->load('currentQuestion');
-        $question = $room->status === 'active' && ! $room->seconds_per_question ? $room->currentQuestion : null;
+        $question = $room->status === 'active' && ! $room->hasQuestionTimers() ? $room->currentQuestion : null;
 
         event(new RoomUpdated($room->code, [
             'status' => $room->status,
