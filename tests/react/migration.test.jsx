@@ -9,6 +9,7 @@ import Room, { Countdown } from '../../resources/js/react/Pages/Rooms/Show';
 import Lesson from '../../resources/js/react/Pages/Learning/Lesson';
 import Auth from '../../resources/js/react/Pages/Auth/Form';
 import Privacy from '../../resources/js/react/Pages/Privacy';
+import Faq from '../../resources/js/react/Components/Faq';
 import Home from '../../resources/js/react/Pages/Home';
 import Analysis from '../../resources/js/react/Components/Analysis';
 import Keyboard from '../../resources/js/react/Components/Keyboard';
@@ -522,4 +523,17 @@ it('opens the route-backed interview as a modal with four named steps', () => {
     expect(screen.getByRole('list', { name: 'Langkah 1 dari 4' }).children).toHaveLength(4);
     fireEvent.click(screen.getByRole('button', { name: 'Tutup' }));
     expect(visit).toHaveBeenCalledWith('/');
+});
+
+it('renders an accessible FAQ accordion with the first answer available immediately', () => {
+    render(<Faq />);
+    const first = screen.getByText('Apa itu ARTASWAHA?').closest('details');
+    const account = screen.getByText('Apakah harus membuat akun?').closest('summary');
+    expect(first.open).toBe(true);
+    expect(account.closest('details').open).toBe(false);
+    fireEvent.click(account);
+    expect(account.closest('details').open).toBe(true);
+    expect(screen.getByRole('link', { name: 'Hubungi kami' }).getAttribute('href')).toBe(
+        'mailto:kerthajayasoftware@gmail.com',
+    );
 });

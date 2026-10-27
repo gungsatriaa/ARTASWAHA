@@ -5,6 +5,7 @@ import { PageMeta, CategoryIcon, buttonClass, EmptyState } from '../Components/u
 import { Card, secondaryClass } from '../Components/forms';
 import Analysis from '../Components/Analysis';
 import Testimonials from '../Components/Testimonials';
+import Faq from '../Components/Faq';
 import Icon from '../Components/Icon';
 
 export default function Home({ paths, selectedIds, recent, analysis, meta }) {
@@ -305,28 +306,7 @@ export default function Home({ paths, selectedIds, recent, analysis, meta }) {
                     </div>
                 </section>
                 <Testimonials />
-                <section id="faq" className="mx-auto max-w-3xl py-12">
-                    <h2 className="mb-6 font-display text-3xl font-bold">Yang sering ditanyakan</h2>
-                    {[
-                        [
-                            'Apa itu ARTASWAHA?',
-                            'Platform edukasi bahasa, sastra, dan aksara Bali dengan materi mandiri serta kuis bersama.',
-                        ],
-                        [
-                            'Apa saja yang bisa dipelajari?',
-                            'Paribasa Bali dan Aksara Bali, melalui modul yang telah ditinjau.',
-                        ],
-                        [
-                            'Apakah harus membuat akun?',
-                            'Kamu bisa belajar dan mengikuti kuis dengan profil anonim. Akun diperlukan untuk membuat kuis.',
-                        ],
-                    ].map(([question, answer]) => (
-                        <details key={question} className="my-3 rounded-card bg-surface p-5">
-                            <summary className="min-h-11 cursor-pointer content-center font-bold">{question}</summary>
-                            <p className="mt-3 text-sm leading-7 text-foreground/60">{answer}</p>
-                        </details>
-                    ))}
-                </section>
+                <Faq />
                 <section className="mt-6 flex flex-col items-start justify-between gap-6 rounded-card bg-primary/15 p-6 sm:p-9 lg:flex-row lg:items-center">
                     <div>
                         <h2 className="max-w-xl font-display text-2xl font-bold sm:text-3xl">
