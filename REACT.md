@@ -1,0 +1,256 @@
+# Panduan migrasi UI ARTASWAHA ke React dan Inertia
+
+Status: rencana implementasi, 27 Oktober 2026. Dokumen ini belum memasang dependency atau mengganti halaman. UI Blade yang sekarang wajib tetap tersedia sebagai referensi dan jalur pemulihan.
+
+Tujuan: UI terasa seperti aplikasi, animasi responsif, navigasi lebih mulus, dan pemuatan tetap ringan pada HP. React mengelola tampilan dan interaksi; Laravel tetap mengelola aturan bisnis, identitas pengguna, penyimpanan, otorisasi, antrean, dan realtime.
+
+## 1. Keputusan dasar
+
+- Gunakan React dan Inertia dalam aplikasi Laravel yang sama, dengan Tailwind v4 dan Vite yang sudah digunakan.
+- Gunakan JSX untuk mengikuti JavaScript proyek saat ini. Jangan sekaligus menambahkan migrasi bahasa, framework UI besar, atau state manager global.
+- Routing tetap di `routes/web.php`. Jangan menambahkan React Router atau membuat REST API pengganti seluruh controller.
+- Pertahankan service, Form Request, policy/middleware, job, model, route bernama, dan kontrak data yang masih relevan.
+- Gunakan React state untuk interaksi lokal, props Inertia untuk data server, serta context kecil hanya untuk kebutuhan lintas halaman yang nyata.
+- Animasi sederhana memakai CSS. Motion for React dipakai untuk interaksi yang memerlukan urutan, gesture, atau animasi masuk/keluar terkoordinasi.
+- Jangan menggabungkan AOS, GSAP, Motion, dan runtime animasi maskot lain untuk mengerjakan hal yang sama.
+
+Inertia menghubungkan halaman React dengan routing/controller server; bukan pengganti backend Laravel. [Konsep resmi Inertia](https://inertiajs.com/).
+
+## 2. Kondisi proyek dan pemeriksaan versi
+
+Saat dokumen dibuat, Laravel terpasang pada versi 13.38.0. Proyek memakai Vite 8, Tailwind 4, Chart.js, Laravel Echo, dan Pusher JS. React, adapter Inertia, dan Motion belum tercantum dalam dependency proyek.
+
+Dokumentasi resmi Inertia saat ini mengarah ke v3. Arah pilihan adalah React 19 dan Inertia 3, setelah kompatibilitas pasangan adapter Laravel/React, PHP, Vite, dan Node diverifikasi. Jangan menyalin contoh v2 ke v3 tanpa memeriksa API-nya.
+
+Sebelum pemasangan:
+
+1. Periksa `composer show --direct`, `package.json`, lockfile, versi PHP, serta Node lokal dan production.
+2. Periksa dokumentasi instalasi untuk major yang dipilih. Tentukan integrasi Vite resmi yang diperlukan tanpa menggandakan fungsi plugin.
+3. Pasang hanya dependency yang dibutuhkan fase tersebut; commit perubahan manifest dan lockfile bersama.
+4. Pertahankan entry Blade. Jangan memakai starter kit yang menimpa auth, route, atau konfigurasi aplikasi.
+
+Dependency yang direncanakan: `react`, `react-dom`, `@inertiajs/react`, adapter `inertiajs/inertia-laravel`, serta integrasi React/Vite yang sesuai. Tambahkan `motion` ketika komponen animasi mulai dibuat. Tidak perlu Redux, React Query, UI kit penuh, atau wrapper Chart.js pada fase awal.
+
+## 3. UI lama harus tetap utuh
+
+Referensi yang harus dibaca sebelum memigrasikan layar:
+
+| Area | Referensi sekarang |
+| --- | --- |
+| Tema dan motion | `resources/css/app.css`, `resources/js/page-motion.js`, `docs/STYLE.md` |
+| Beranda | `resources/views/welcome.blade.php` |
+| Dashboard mobile | `resources/views/components/mobile-learning-dashboard.blade.php` |
+| Layout dan navigasi | `resources/views/components/layouts/`, `site-nav.blade.php`, `mobile-app-nav.blade.php` |
+| Interview | `resources/views/learning/interview.blade.php` |
+| Materi dan pelajaran | `resources/views/learning/paths/`, `resources/views/learning/lessons/` |
+| Profil dan analisis | `resources/views/profile/`, `resources/views/components/learner-analysis.blade.php` |
+| Kuis dan room | `resources/views/quizzes/`, `resources/views/rooms/show.blade.php` |
+| Admin | `resources/views/admin/` |
+
+Aturan selama transisi:
+
+- Jangan menghapus, memindahkan, atau menimpa template dan skrip Blade sebagai cara memasang React.
+- Tambahkan entry React terpisah di dalam `resources/js/` dan root view Inertia terpisah di `resources/views/`. Nama/lokasi final ditetapkan saat fase fondasi; jangan membuat direktori aplikasi baru di luar struktur proyek.
+- Root Blade hanya memuat entry lama; root Inertia hanya memuat entry React dan CSS bersama. Jangan mengimpor `app.js` lama ke bootstrap React.
+- Satu subtree DOM hanya punya satu pemilik. Event listener dan `querySelector` lama tidak boleh mengubah elemen React.
+- Gunakan Inertia `Link` untuk tujuan yang sudah dimigrasikan. Gunakan navigasi dokumen biasa untuk melewati batas React–Blade agar respons Blade tidak dianggap respons Inertia.
+- Preview React sebelum mengganti route utama harus terlindungi atau terbatas di lingkungan pengembangan. Preview bukan endpoint yang melewati otorisasi.
+- Saat route dialihkan, gunakan aturan bisnis yang sama. Jangan menggandakan service hanya untuk renderer baru.
+- Simpan acuan visual desktop/mobile dan matriks fitur. Pemulihan harus bisa mengembalikan renderer sebelumnya tanpa memulihkan database.
+
+## 4. Tema dan komponen bersama
+
+Pertahankan token dari `resources/css/app.css`:
+
+| Token | Nilai saat ini | Penggunaan |
+| --- | --- | --- |
+| Background | `#0A0A0A` | Latar aplikasi |
+| Surface | `#101113` | Kartu dan panel tanpa border dekoratif |
+| Primary | `#007C80` | Aksi dan progres |
+| Accent | `#FFC700` | Sorotan dan status aktif |
+| Foreground | `#F5F3EE` | Teks utama |
+| Radius kartu | `1.75rem` | Kartu utama |
+| Radius kontrol | `0.875rem` | Input dan kontrol |
+
+Tombol utama tetap pill, avatar bulat, dan ikon aktif navigasi mobile berada dalam lingkaran. Fokus keyboard, pilihan jawaban, error, dan divider yang membantu membaca tetap terlihat; larangan border dekoratif bukan alasan menghilangkan indikator interaksi.
+
+Catatan: `docs/STYLE.md` masih menyebut Nunito/Atkinson/Quicksand dan Font Awesome, sedangkan UI aktif menggunakan Plus Jakarta Sans, Outfit, Vimala, serta banyak SVG inline. Untuk migrasi, pertahankan tampilan aktif sebagai referensi. Selaraskan perbedaan dokumen sebelum standardisasi; jangan tiba-tiba memuat font dan paket ikon tambahan.
+
+Bangun komponen bersama saat benar-benar dipakai: Button, Card, Input, Dialog, Avatar, Toast, Skeleton, Progress, dan Mascot. Hindari komponen dengan puluhan opsi untuk mengantisipasi semua layar.
+
+Layout yang dibutuhkan: publik, pengguna, dan admin. Pada mobile, dashboard aplikasi berlaku untuk akun atau profil anonim yang sudah selesai interview. Pengunjung baru/interview tetap mengikuti alur publik. Pengguna mobile memakai bottom navigation pill tanpa sidebar/hamburger; admin mempertahankan layout admin tersendiri.
+
+## 5. Komunikasi dan batas data
+
+| Kebutuhan | Jalur yang dipakai |
+| --- | --- |
+| Membuka halaman React | Visit Inertia → controller → props yang dibatasi |
+| Submit form | Form Inertia → route Laravel → Form Request/service → redirect dan error/flash |
+| Filter/pagination | Parameter URL dan partial reload pada page component yang sama |
+| Ringkasan tambahan | Deferred props atau pemuatan saat terlihat bila tersedia di major terpilih |
+| Analisis AI/audio | Job server; client hanya memeriksa status/hasil |
+| Room realtime | Echo/Reverb untuk event; aksi tetap divalidasi server |
+| Audio/file privat | Endpoint yang sudah mengotorisasi akses; tidak dibundel sebagai props |
+
+- Shared props hanya berisi identitas ringkas, mode anonim/akun, flash, dan data shell yang diperlukan. Jangan membagikan seluruh katalog, statistik, atau model pada setiap visit.
+- Pilih field/relasi secara eksplisit. Semua props dapat dibaca pengguna; menyembunyikan elemen React bukan otorisasi.
+- Data awal halaman harus cukup untuk menampilkan tugas utama. Jangan menunggu grafik atau analisis sebelum menampilkan nama dan materi.
+- Partial reload harus disertai lazy evaluation di server bila ingin menghindari query yang tidak dibutuhkan. Gunakan hanya untuk page component yang sama. [Partial reloads](https://inertiajs.com/docs/v3/data-props/partial-reloads).
+- Deferred props mengambil data setelah respons awal; ini bukan pengganti queue untuk inferensi AI. Kelompokkan data terkait untuk menghindari banyak request kecil. [Deferred props](https://inertiajs.com/docs/v3/data-props/deferred-props).
+- Endpoint status yang sekarang mengembalikan fragmen Blade perlu kontrak props/JSON untuk React. Jangan memasukkan fragmen itu dengan `dangerouslySetInnerHTML`. Pertahankan kontrak legacy selama masih dipakai Blade.
+- Gunakan session/cookie dan mekanisme CSRF Laravel yang ada. Jangan memindahkan identitas anonim atau sesi login menjadi JWT di localStorage.
+- Jangan pernah memasukkan API key AI, payload internal job, jawaban benar yang belum boleh dibuka, atau data pengguna lain ke props/variabel `VITE_*`.
+- Bersihkan state pribadi, cache props, draft yang sensitif, dan subscription saat logout/pergantian identitas. Uji tombol Back setelah logout.
+
+## 6. Batas performa dan pemuatan kode
+
+Angka berikut adalah target awal internal, bukan hasil benchmark atau jaminan. Catat baseline UI lama, kemudian ukur build production di perangkat/koneksi yang sama.
+
+| Ukuran | Target awal |
+| --- | --- |
+| JS yang ditransfer untuk membuka layar pengguna pertama | Maksimal 180 KiB gzip, termasuk shared chunk dan page chunk yang dimuat |
+| Tambahan JS route biasa | Maksimal 70 KiB gzip; editor/grafik berat ditinjau terpisah |
+| Props awal | Maksimal 100 KiB sebelum kompresi; pagination untuk daftar besar |
+| LCP / INP / CLS | Target ≤2,5 detik / ≤200 ms / ≤0,1 pada skenario ukur yang dicatat |
+| Kebocoran lifecycle | Tidak ada penambahan listener, timer, atau subscription setelah keluar-masuk layar berulang |
+
+Aturan implementasi:
+
+1. Split page per route. Jangan memakai `import.meta.glob(..., { eager: true })` untuk seluruh halaman. Verifikasi resolver/build mengikuti adapter terpasang. [Code splitting Inertia](https://inertiajs.com/docs/v3/advanced/code-splitting).
+2. Lazy-load Chart.js pada halaman grafik, editor soal saat diperlukan, dan keyboard Aksara Bali ketika dibuka. Echo/Pusher hanya dimuat untuk fitur yang memerlukannya.
+3. Gunakan `React.lazy` dan `Suspense` untuk kode komponen tambahan; deklarasikan `lazy` di level modul. Tambahkan error boundary untuk kegagalan chunk. Suspense tidak otomatis menangani semua fetch di effect. [React lazy](https://react.dev/reference/react/lazy).
+4. Jangan prefetch seluruh aplikasi. Prefetch selektif pada tujuan yang mungkin dibuka, dan hentikan pemuatan spekulatif yang tidak perlu pada koneksi hemat data.
+5. Batasi gambar maskot/ilustrasi menurut ukuran tampil; tetapkan dimensi agar layout stabil. Gambar hero penting tidak di-lazy-load; gambar di bawah layar boleh lazy.
+6. Pertahankan font yang dipakai, fallback, dan glyph Vimala. Jangan memuat banyak keluarga/font weight demi satu heading.
+7. Jangan menambahkan `memo`, `useMemo`, atau `useCallback` pada semua komponen. Gunakan setelah profiler menunjukkan pekerjaan render yang bermasalah.
+8. Timer kuis tidak boleh menyebabkan seluruh halaman, daftar peserta, dan layout dirender ulang setiap frame. Isolasi countdown dan gunakan ref/motion value bila sesuai.
+9. Hindari efek blur besar, shadow bertumpuk, filter SVG kompleks, dan animasi ukuran/layout pada daftar panjang. Virtualisasi hanya bila pengukuran membuktikan pagination tidak cukup.
+
+## 7. Sistem animasi
+
+Maksimalkan kualitas respons terhadap tindakan, bukan jumlah elemen bergerak.
+
+| Interaksi | Durasi acuan | Teknik awal |
+| --- | --- | --- |
+| Tekan tombol/pilih opsi | 100–160 ms | CSS transform dan warna |
+| Dialog, toast, pergantian panel | 160–240 ms | CSS atau Motion masuk/keluar |
+| Pergantian konten halaman | 180–280 ms | Opacity/translate kecil pada area konten |
+| Pengisian progres | 300–450 ms | Transform; nilai tetap dari server |
+| Sapaan maskot | 600–900 ms, sekali | Transform aset yang sudah ada |
+
+- Pilih satu pemilik transisi halaman. Jangan menumpuk View Transitions global lama dengan animasi keluar/masuk Motion pada area yang sama.
+- Persistent layout mempertahankan shell. Jangan memberi key seluruh aplikasi berdasarkan URL yang membuat layout, form, audio, dan subscription remount pada setiap filter.
+- `AnimatePresence` hanya melingkupi bagian yang memang berganti. State server baru dan pencatatan jawaban tidak boleh menunggu exit animation.
+- Utamakan `transform` dan `opacity`; jangan menjanjikan semua efek otomatis berjalan di compositor.
+- Gunakan satu konfigurasi reduced motion. Gerakan dekoratif dihentikan, informasi/hasil tetap muncul, dan pengguna tidak dipaksa menunggu durasi animasi.
+- Target sentuh nyaman, fokus keyboard jelas, dialog memiliki focus trap/restore, dan status penting dapat dibaca screen reader.
+- Tidak ada suara otomatis. Haptic/suara tambahan bukan prasyarat keberhasilan aksi.
+
+### Motion tetap ringan
+
+Gunakan `LazyMotion` dan `m` dengan feature bundle async; jangan mengimpor fitur penuh dari setiap komponen. `domAnimation` cukup untuk banyak entrance/exit/gesture. Fitur layout/drag yang membutuhkan `domMax` dimuat hanya pada bagian yang memerlukannya. [Panduan bundle Motion](https://motion.dev/docs/react-reduce-bundle-size).
+
+Pola ilustratif untuk versi Motion yang mendukung API berikut, bukan bootstrap aplikasi yang siap ditempel:
+
+```jsx
+// motion-features.js: modul terpisah, dimuat saat dibutuhkan
+export { domAnimation as default } from 'motion/react';
+
+// MotionBoundary.jsx: modul berbeda dari motion-features.js
+import { LazyMotion, MotionConfig } from 'motion/react';
+import * as m from 'motion/react-m';
+
+const loadFeatures = () => import('./motion-features.js').then(module => module.default);
+
+export function MotionBoundary({ children }) {
+    return (
+        <MotionConfig reducedMotion="user">
+            <LazyMotion features={loadFeatures} strict>
+                {children}
+            </LazyMotion>
+        </MotionConfig>
+    );
+}
+
+// Di dalam boundary; konten tetap terlihat sebelum fitur selesai dimuat.
+export function FeedbackPanel({ children }) {
+    return <m.div initial={false} animate={{ opacity: 1 }}>{children}</m.div>;
+}
+```
+
+Jangan mengawali seluruh halaman dengan opacity nol sambil menunggu bundle animasi. Kegagalan animasi harus tetap menghasilkan UI yang bisa dibaca dan dioperasikan.
+
+### Maskot
+
+Mulai dari WebP/SVG/aset yang sudah tersedia: sapaan saat tap, respons setelah menyelesaikan pelajaran, dan perayaan singkat. Jangan menambah runtime Lottie/Rive atau canvas/WebGL sebelum kebutuhan animasi karakter membuktikan aset biasa tidak cukup. Hentikan efek saat elemen tidak terlihat/tab tersembunyi. Jangan menjalankan loop idle tanpa akhir, mengikuti pointer global, atau mengubah React state setiap frame.
+
+## 8. Loading dan skeleton
+
+- Bedakan loading kode, menunggu data, menunggu queue, dan error. Semua state punya akhir atau fallback yang dapat dipahami.
+- Pertahankan overlay pembuka beranda sekali per sesi tab: minimum sekitar 1,2 detik, penutupan setelah bar 100%, hold sekitar 450 ms, lalu fade sekitar 240 ms. Sediakan lewati dan fail-safe. Reduced motion melewati jeda dekoratif.
+- Bootstrap overlay harus dapat tampil sebelum React siap. Jangan menunggu `useEffect` halaman selesai lalu baru menampilkan overlay.
+- Gunakan satu session marker bersama UI lama/baru; jangan reset saat Inertia visit, partial reload, atau mount ulang komponen. Pemulihan tab browser dapat mempertahankan sessionStorage.
+- Overlay pembuka bukan indikator semua request selesai. Jangan menunggu job AI, audio, prefetch, atau gambar lazy untuk menutupnya; jangan mengklaim persentasenya sebagai byte unduhan jaringan.
+- Visit berikutnya memakai progress navigasi tipis bila diperlukan, bukan overlay fullscreen. Jangan menampilkan progress navigasi kedua bersamaan dengan indikator Inertia bawaan.
+- Skeleton mengikuti ruang konten agar layout stabil. Error/gagal analisis harus mengganti skeleton dengan pesan, bukan terus beranimasi.
+- Skeleton dekoratif 400 ms yang sudah disepakati boleh dipertahankan pada bagian terpilih. Jangan menambah delay ke request, pencatatan progres, submit jawaban, atau timer berikutnya. Fokus/ketukan langsung mengakhiri efek.
+
+## 9. Lifecycle React dan realtime
+
+- Setiap effect yang membuat timer, observer, listener, audio, request, atau subscription harus memiliki cleanup yang sesuai.
+- Uji dengan Strict Mode di development. Jangan menonaktifkannya untuk menyembunyikan double subscription atau effect yang tidak bersih.
+- Batalkan/abaikan respons request lama setelah pindah halaman atau filter berubah. Jangan biarkan respons lama menimpa state terbaru.
+- Persistent layout tidak boleh membuat heartbeat presence baru pada setiap visit. Pertahankan interval yang sesuai perilaku sekarang dan berhenti saat tab tidak terlihat.
+- Room subscribe hanya sekali untuk room/identitas aktif; leave saat keluar. Reconnect harus mengambil snapshot server untuk mengejar event yang terlewat.
+- Urutkan/abaikan event lama memakai identitas/versi state yang disediakan backend. Jangan menambah skema event baru sebelum mengecek kontrak yang sudah ada.
+- Gunakan batas waktu server sebagai acuan countdown; jangan menghitung durasi resmi dengan mengurangi satu angka per interval client.
+- Feedback benar/salah tidak boleh memotong durasi soal berikutnya. Pertahankan aturan durasi per soal, pengaturan global, batas total, dan mode feedback yang ada di service saat migrasi dilakukan.
+- Prefetch tidak boleh menjalankan aksi tulis: join room, mulai kuis, mencatat jawaban/progres, atau memicu inferensi berulang. Pisahkan side effect yang sekarang terjadi saat GET dari jalur prefetch sebelum mengaktifkannya.
+- Hook React untuk analisis tidak memanggil provider AI langsung. Status antrean, percobaan ulang, dan deduplikasi tetap keputusan server.
+
+## 10. Fitur yang tidak boleh hilang
+
+- Profil anonim dan akun tetap memakai route profil yang sama; avatar, riwayat, progres, dan penautan akun tetap bekerja.
+- Interview disimpan sekali dan pilihan materi tetap mendukung banyak pilihan. Navigasi ulang tidak mengulang atau menghapus jawaban tersimpan.
+- Anonim dapat bergabung/menjawab kuis; pembuatan kuis tetap meminta login melalui modal.
+- Host, kepemilikan kuis, larangan terlambat bergabung, room nonaktif, dan hak admin tetap diperiksa server.
+- Jangan mengirim kunci jawaban/soal masa depan untuk memberi efek animasi lebih cepat. Feedback, skor, dan hasil resmi berasal dari server.
+- Editor tetap mempertahankan ID soal, audio, duplikasi, arsip, keyboard, dan pengaturan durasi yang berlaku saat itu.
+- Keyboard Aksara Bali dan audio privat tetap dapat digunakan pada mobile. Jangan mereset tulisan atau menghentikan audio karena render kecil.
+- Toast hanya satu pengelola per shell; pertahankan posisi atas dan gaya sukses hijau/pill. Jangan merender flash yang sama dua kali.
+- Statistik admin dan progres pengguna berasal dari data nyata. Jangan membuat streak, angka online, atau skor contoh terlihat sebagai hasil pengguna.
+
+## 11. SEO dan halaman publik
+
+Pertahankan title, description, canonical, Open Graph, robots, sitemap, semantic HTML, dan URL yang sudah ada. Setiap halaman punya heading utama yang jelas; gunakan link/button sesuai fungsi.
+
+Halaman publik yang diindeks tetap dilayani Blade sampai strategi HTML awal/SSR React terverifikasi. Jangan menggantinya dengan root kosong yang baru berisi konten setelah JavaScript berjalan. Jika halaman publik dipindahkan penuh ke Inertia React, siapkan dan uji SSR beserta fallback, metadata, hydration, serta proses production yang dibutuhkan. `Head` saja tidak menggantikan pengujian HTML awal. [SSR Inertia](https://inertiajs.com/docs/v3/advanced/server-side-rendering).
+
+Kode yang dibaca saat SSR tidak mengakses `window`, `document`, atau sessionStorage di level modul. Inisialisasi fitur browser pada lifecycle client, dengan markup awal yang konsisten untuk mencegah hydration mismatch.
+
+## 12. Urutan migrasi dan kriteria selesai
+
+| Fase | Pekerjaan | Syarat sebelum lanjut |
+| --- | --- | --- |
+| 0 | Inventaris route/fitur, acuan visual, baseline performa, versi dependency | Perbedaan dokumen/style dicatat; UI lama tetap utuh |
+| 1 | Root Inertia, entry React terpisah, satu halaman pilot, batas Blade–React | Direct visit, refresh, Back/Forward, auth, 404, dan rollback bekerja |
+| 2 | Token, komponen dasar, shell pengguna, toast dan navigasi mobile | Desktop/mobile dan aksesibilitas lolos |
+| 3 | Katalog, detail pelajaran, profil/dashboard, interview | Progres, identitas anonim, multi-select, upload, dan error form setara |
+| 4 | Kuis, editor, room realtime, keyboard/audio | Multi-peserta, reconnect, timer, scoring, dan kontrol akses lolos |
+| 5 | Admin dan analitik | Grafik terpisah dari bundle pengguna; data/otorisasi setara |
+| 6 | Beranda dan halaman publik React, bila SSR siap | HTML awal, metadata, SEO, dan deployment SSR lolos |
+| 7 | Cutover per route dan pengukuran ulang | Tidak ada regresi fitur/performa; referensi lama tetap disimpan |
+
+Mulai dengan satu halaman katalog sebagai pilot. Jangan mengganti beranda, auth, room realtime, dan admin sekaligus. Memasang React bukan alasan mengubah skema database atau menulis ulang backend.
+
+Setiap fase harus mencakup:
+
+- Tes PHP terhadap respons/props, validation, kepemilikan, dan data yang tidak boleh bocor. Pertahankan tes renderer Blade yang masih aktif.
+- Tes komponen/interaksi hanya untuk state penting: form, multi-select, dialog, feedback, cleanup, dan error. Pilih alat React yang minimal pada fase fondasi; jangan menganggap tes VM DOM lama cukup untuk lifecycle React.
+- Uji browser untuk batas Blade–React, submit ganda, navigasi Back, upload gagal, koneksi lambat/putus, chunk gagal, dan reload versi aset setelah deploy.
+- Uji lebar 320, 360, 393, 440, 768, dan 1280+ px, orientasi landscape, safe area, keyboard virtual, fokus keyboard, dan reduced motion.
+- Uji beberapa peserta room sekaligus, tab latar, reconnect, serta AI queued/processing/completed/failed. Animasi tidak menentukan hasil/timing server.
+- Build production, pemeriksaan ukuran chunk/request, React Profiler, dan trace browser pada perangkat representatif. Catat metode, bukan hanya skor Lighthouse.
+- Diff terarah, formatter, tes relevan, serta commit kecil sesuai `docs/COMMIT.md`. Perbarui `docs/DEPLOYMENT.md` ketika build/runtime/SSR benar-benar berubah.
+
+UI lama tidak dihapus otomatis setelah fase 7. Penghapusan kode referensi memerlukan permintaan terpisah dari pengguna. Risiko sisa yang harus dicatat sebelum rilis: peningkatan bundle, konsumsi memori tab panjang, regresi aksesibilitas, state lintas navigasi, dan operasional SSR bila diaktifkan.
