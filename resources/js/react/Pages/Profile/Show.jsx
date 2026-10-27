@@ -216,7 +216,7 @@ export default function Profile({
                                             <p className="min-w-0 flex-1 text-sm leading-5 text-foreground/60 sm:mb-3">
                                                 {label}
                                             </p>
-                                            <p className="shrink-0 font-sans text-2xl font-bold tabular-nums sm:text-4xl">
+                                            <p className="profile-number shrink-0 font-sans text-2xl font-bold tabular-nums sm:text-4xl">
                                                 {value}
                                             </p>
                                         </Card>
@@ -230,7 +230,10 @@ export default function Profile({
                                             <div className="flex flex-wrap items-center justify-between gap-3">
                                                 <h2 className="font-display text-xl font-bold">Sedikit setiap hari</h2>
                                                 <span className="rounded-full bg-primary/15 px-3 py-2 text-xs font-bold text-accent">
-                                                    {activity.active_days_7 ?? 0} hari aktif
+                                                    <span className="profile-number">
+                                                        {activity.active_days_7 ?? 0}
+                                                    </span>{' '}
+                                                    hari aktif
                                                 </span>
                                             </div>
                                             <p className="mt-2 text-xs leading-6 text-foreground/50">
@@ -262,7 +265,7 @@ export default function Profile({
                                                             </span>
                                                             <time
                                                                 dateTime={day.date}
-                                                                className="mt-2 block text-[10px] text-foreground/40"
+                                                                className="profile-number mt-2 block text-[10px] text-foreground/40"
                                                             >
                                                                 {day.date.slice(-2)}
                                                             </time>
@@ -291,7 +294,9 @@ export default function Profile({
                                         {paths.length ? (
                                             <>
                                                 <p className="mt-3 text-sm text-foreground/55">
-                                                    {completedLessons} dari {totalLessons} pelajaran selesai
+                                                    <span className="profile-number">{completedLessons}</span> dari{' '}
+                                                    <span className="profile-number">{totalLessons}</span> pelajaran
+                                                    selesai
                                                 </p>
                                                 <ul className="mt-5 space-y-3">
                                                     {paths.map((path) => (
@@ -304,7 +309,7 @@ export default function Profile({
                                                                     <h3 className="min-w-0 break-words text-sm font-bold">
                                                                         {path.title}
                                                                     </h3>
-                                                                    <span className="shrink-0 text-xs font-bold text-accent">
+                                                                    <span className="profile-number shrink-0 text-xs font-bold text-accent">
                                                                         {Math.round(
                                                                             (path.completed /
                                                                                 Math.max(1, path.lessonsCount)) *
@@ -320,7 +325,14 @@ export default function Profile({
                                                                     className="mt-3 h-2 w-full overflow-hidden rounded-full accent-[var(--color-primary)]"
                                                                 />
                                                                 <p className="mt-2 text-xs text-foreground/45">
-                                                                    {path.completed} dari {path.lessonsCount} pelajaran
+                                                                    <span className="profile-number">
+                                                                        {path.completed}
+                                                                    </span>{' '}
+                                                                    dari{' '}
+                                                                    <span className="profile-number">
+                                                                        {path.lessonsCount}
+                                                                    </span>{' '}
+                                                                    pelajaran
                                                                 </p>
                                                             </Link>
                                                         </li>
