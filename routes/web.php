@@ -70,6 +70,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/analitik', [AdminAnalyticsController::class, 'index'])->name('analytics.index');
     Route::get('/analitik/online', [AdminAnalyticsController::class, 'online'])->name('analytics.online');
     Route::get('/ai', [AdminAiController::class, 'index'])->name('ai.index');
+    Route::post('/ai/interview/tes-semua', [AdminAiController::class, 'testAll'])->middleware('throttle:admin-ai-write')->name('ai.profiles.test-all');
     Route::get('/ai/interview/{learnerProfile}', [AdminAiController::class, 'profile'])->name('ai.profiles.show');
     Route::post('/ai/interview/{learnerProfile}', [AdminAiController::class, 'retry'])->middleware('throttle:admin-ai-write')->name('ai.profiles.retry');
     Route::get('/ai/draf/{quizDraft}', [AdminAiController::class, 'draft'])->name('ai.drafts.show');

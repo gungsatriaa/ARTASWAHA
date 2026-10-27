@@ -19,7 +19,10 @@ class GenerateQuizDraft implements ShouldQueue
 
     public int $timeout = 240;
 
-    public function __construct(public int $draftId) {}
+    public function __construct(public int $draftId)
+    {
+        $this->onConnection('learner-analysis')->onQueue('default');
+    }
 
     public function handle(): void
     {

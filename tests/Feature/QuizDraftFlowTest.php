@@ -26,7 +26,7 @@ class QuizDraftFlowTest extends TestCase
         $response = $this->actingAs($owner)->postJson(route('quizzes.drafts.store'), ['file' => UploadedFile::fake()->create('lesson.pdf', 100, 'application/pdf')]);
         $draft = QuizDraft::query()->firstOrFail();
         $response->assertAccepted()->assertJsonPath('id', $draft->id);
-        Queue::assertPushed(GenerateQuizDraft::class);
+        Queue::assertPushed(GenerateQuizDraft::class, fn (GenerateQuizDraft $job): bool => $job->connection === 'learner-analysis' && $job->queue === 'default');
         $this->actingAs($other)->getJson(route('quizzes.drafts.show', $draft))->assertNotFound();
 
         $this->actingAs($owner)->getJson(route('quizzes.drafts.show', $draft))->assertOk()->assertJsonPath('status', 'queued');

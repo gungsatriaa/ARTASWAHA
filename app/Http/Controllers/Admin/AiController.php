@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\QueueLearnerAnalyses;
 use App\Models\AiReport;
 use App\Models\ContentAudio;
 use App\Models\LearnerProfile;
@@ -16,6 +17,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Inertia\Response as InertiaResponse;
 
@@ -25,7 +27,7 @@ class AiController extends Controller
     {
         $filters = $request->validate([
             'tab' => ['nullable', 'in:overview,interviews,drafts,services'], 'role' => ['nullable', 'in:murid,guru,pendatang,masyarakat'],
-            'status' => ['nullable', 'in:queued,processing,completed,failed,unavailable,not_requested'],
+            'status' => ['nullable', 'in:queued,processing,completed,failed,unavailable,outdated,not_requested'],
             'mode' => ['nullable', 'in:account,anonymous'], 'learning_path_id' => ['nullable', 'integer'],
             'start' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'], 'end' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:start', 'before_or_equal:today'],
         ]);
@@ -35,7 +37,8 @@ class AiController extends Controller
         $tab = $filters['tab'] ?? 'overview';
         $snapshot = $tab === 'overview' ? $service->snapshot($start, $end) : [];
         $statuses = $tab === 'overview' ? LearnerProfile::select('analysis_status')->selectRaw('COUNT(*) as total')->groupBy('analysis_status')->get() : collect();
-        $profiles = $tab === 'interviews' ? LearnerProfile::with('learningPath:id,title')->whereBetween('created_at', [$start, $end])
+        $profiles = $tab === 'interviews' ? LearnerProfile::with('learningPath:id,title')
+            ->when($request->filled('start') || $request->filled('end'), fn (Builder $query): Builder => $query->whereBetween('analysis_requested_at', [$start, $end]))
             ->when($filters['role'] ?? null, fn (Builder $query, string $role): Builder => $query->where('role', $role))
             ->when($filters['mode'] ?? null, fn (Builder $query, string $mode): Builder => $query->where('mode', $mode))
             ->when($filters['learning_path_id'] ?? null, fn (Builder $query, mixed $path): Builder => $query->where('learning_path_id', $path))
@@ -44,12 +47,14 @@ class AiController extends Controller
         $drafts = $tab === 'drafts' ? QuizDraft::latest('id')->paginate(20)->withQueryString() : null;
         $reports = $tab === 'overview' ? AiReport::latest('id')->paginate(10)->withQueryString() : null;
         $learningPaths = $tab === 'interviews' ? LearningPath::orderBy('title')->get(['id', 'title']) : collect();
+        $lastCheck = Cache::get('learner-analysis-last-check');
+        $lastWorker = Cache::get('learner-analysis-last-worker');
         $aiConfigured = $analyzer->isConfigured();
         $ttsConfigured = $audioService->isConfigured();
         $pendingJobs = $tab === 'services' ? DB::table('jobs')->where('queue', 'learner-analysis')->count() : 0;
         $audioCounts = $tab === 'services' ? ContentAudio::select('status')->selectRaw('COUNT(*) as total')->groupBy('status')->pluck('total', 'status') : collect();
 
-        return app(PagePresenter::class)->render('admin.ai.index', compact('tab', 'start', 'end', 'snapshot', 'statuses', 'profiles', 'drafts', 'reports', 'learningPaths', 'aiConfigured', 'ttsConfigured', 'pendingJobs', 'audioCounts'));
+        return app(PagePresenter::class)->render('admin.ai.index', compact('tab', 'start', 'end', 'snapshot', 'statuses', 'profiles', 'drafts', 'reports', 'learningPaths', 'aiConfigured', 'ttsConfigured', 'pendingJobs', 'audioCounts', 'lastCheck', 'lastWorker'));
     }
 
     public function profile(LearnerProfile $learnerProfile, LearnerInterviewAnalyzer $analyzer): InertiaResponse
@@ -62,9 +67,19 @@ class AiController extends Controller
 
     public function retry(LearnerProfile $learnerProfile, LearnerInterviewAnalyzer $analyzer): RedirectResponse
     {
-        $analyzer->enqueue($learnerProfile);
+        $analyzer->enqueue($learnerProfile, force: true);
 
-        return back()->with('status', 'Permintaan diperiksa. Hasil yang masih berlaku digunakan kembali; permintaan ganda tidak diproses ulang.');
+        return back()->with('status', 'Tes analisis diminta. Hasil sebelumnya tetap tampil; pekerjaan yang masih aktif tidak diduplikasi.');
+    }
+
+    public function testAll(LearnerInterviewAnalyzer $analyzer): RedirectResponse
+    {
+        if (! $analyzer->isConfigured()) {
+            return back()->withErrors(['analysis' => 'AI_API_URL atau AI_MODEL belum dikonfigurasi.']);
+        }
+        QueueLearnerAnalyses::dispatch((int) LearnerProfile::query()->max('id'));
+
+        return to_route('admin.ai.index', ['tab' => 'interviews'])->with('status', 'Tes semua profil dijadwalkan di background. Buka detail pelajar untuk melihat riwayat dan hasil.');
     }
 
     public function draft(QuizDraft $quizDraft): InertiaResponse

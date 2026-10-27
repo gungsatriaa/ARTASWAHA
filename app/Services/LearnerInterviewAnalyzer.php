@@ -32,12 +32,12 @@ class LearnerInterviewAnalyzer
             && in_array(parse_url(config('services.ai.url'), PHP_URL_SCHEME), ['http', 'https'], true);
     }
 
-    public function enqueue(LearnerProfile $profile): void
+    public function enqueue(LearnerProfile $profile, bool $force = false): void
     {
-        DB::transaction(function () use ($profile): void {
+        DB::transaction(function () use ($profile, $force): void {
             $profile = LearnerProfile::query()->lockForUpdate()->findOrFail($profile->id);
             if ($this->isCurrentInput($profile)) {
-                if ($profile->analysis_status === 'completed' && $profile->analysis_requested_at?->gt(now()->subHours(6))) {
+                if (! $force && $profile->analysis_status === 'completed' && $profile->analysis_completed_at?->gt(now()->subHours(6))) {
                     return;
                 }
                 if (in_array($profile->analysis_status, ['queued', 'processing'], true) && $profile->analysis_requested_at?->gt(now()->subMinutes(30))) {
@@ -47,7 +47,7 @@ class LearnerInterviewAnalyzer
             $input = $this->input($profile);
             $hash = $this->hash($input);
             if ($profile->analysis_hash === $hash) {
-                if ($profile->analysis_status === 'completed') {
+                if (! $force && $profile->analysis_status === 'completed' && $profile->analysis_completed_at?->gt(now()->subHours(6))) {
                     return;
                 }
                 if ($profile->analysis_requested_at?->gt(now()->subMinutes(2))) {
@@ -55,15 +55,22 @@ class LearnerInterviewAnalyzer
                 }
             }
 
+            if ($profile->analysis_hash === $hash && $profile->analysis_status === 'unavailable' && ! $this->isConfigured()) {
+                return;
+            }
+
+            $keepResult = $this->isCurrentInput($profile);
             $configured = $this->isConfigured();
             $profile->forceFill([
                 'analysis_input' => $input,
                 'analysis_hash' => $hash,
                 'analysis_status' => $configured ? 'queued' : 'unavailable',
-                'analysis_result' => null,
+                'analysis_result' => $keepResult ? $profile->analysis_result : null,
                 'analysis_requested_at' => $configured ? now() : null,
-                'analysis_completed_at' => null,
+                'analysis_completed_at' => $keepResult ? $profile->analysis_completed_at : null,
             ])->save();
+
+            $profile->recordAnalysisEvent($configured ? 'queued' : 'unavailable', $configured ? 'Permintaan masuk antrean learner-analysis.' : 'AI_API_URL atau AI_MODEL belum dikonfigurasi.');
 
             if ($configured) {
                 DB::afterCommit(function () use ($profile, $hash): void {
@@ -73,6 +80,7 @@ class LearnerInterviewAnalyzer
                     } catch (Throwable $exception) {
                         LearnerProfile::query()->whereKey($profile->id)->where('analysis_hash', $hash)
                             ->update(['analysis_status' => 'failed']);
+                        $profile->recordAnalysisEvent('failed', 'Gagal memasukkan pekerjaan ke antrean. Periksa koneksi queue/cache server.');
                         Log::warning('Learner analysis dispatch failed.', ['profile_id' => $profile->id, 'exception_type' => $exception::class]);
                     }
                 });
@@ -247,9 +255,9 @@ class LearnerInterviewAnalyzer
         if (! $response->successful()) {
             Log::warning('Learner analysis provider returned an error.', ['http_status' => $response->status(), 'provider_host' => parse_url((string) config('services.ai.url'), PHP_URL_HOST), 'model' => config('services.ai.model')]);
             if ($response->clientError() && $response->status() !== 429) {
-                throw new UnexpectedValueException('Learner analysis provider rejected the request.');
+                throw new UnexpectedValueException('Learner analysis provider rejected the request.', $response->status());
             }
-            throw new RuntimeException('Learner analysis provider returned HTTP '.$response->status());
+            throw new RuntimeException('Learner analysis provider returned HTTP '.$response->status(), $response->status());
         }
         $content = $response->json('choices.0.message.content');
         $data = is_string($content) && strlen($content) <= 16000 ? json_decode($content, true) : null;
@@ -280,13 +288,23 @@ class LearnerInterviewAnalyzer
         }
         $result = $profile?->analysis_result;
         $recommendations = [];
-        if ($profile !== null && $status === 'completed' && $this->isCurrentInput($profile)) {
+        if ($profile !== null && $this->isCurrentInput($profile)) {
             foreach ($result['recommendations'] ?? [] as $recommendation) {
                 $path = $paths->firstWhere('id', $recommendation['learning_path_id']);
                 if ($path !== null && $path->is_published && in_array($path->id, $profile->analysis_input['learning_path_ids'], true)) {
                     $recommendations[] = ['id' => $path->id, 'title' => $path->title, 'url' => route('learning.paths.show', $path->slug), 'reason' => $recommendation['reason']];
                 }
             }
+        }
+        $summary = $recommendations !== []
+            ? (count($recommendations) === count($result['recommendations']) ? $result['summary'] : 'Berikut materi pilihanmu yang masih tersedia untuk dipelajari.')
+            : null;
+        $source = $summary !== null ? 'ai' : 'initial';
+        if ($summary === null && $profile !== null && $status !== 'outdated' && $paths->where('is_published', true)->isNotEmpty()) {
+            $activity = $profile->analysis_input['activity'] ?? $this->activity($profile);
+            $summary = sprintf('Dalam 7 hari terakhir, tercatat %d hari aktif dan %d pelajaran selesai. %s',
+                $activity['active_days_7'], $activity['lessons_completed_7'],
+                $activity['active_days_7'] === 0 ? 'Belum cukup aktivitas untuk menilai kebiasaan belajar. Mulai dengan satu pelajaran dari materi pilihanmu.' : 'Lanjutkan satu pelajaran berikutnya sesuai waktumu.');
         }
         $role = self::ROLES[$profile?->role] ?? 'Pelajar';
         $nodes = [['id' => 'role', 'label' => $role, 'type' => 'role']];
@@ -302,12 +320,11 @@ class LearnerInterviewAnalyzer
 
         return [
             'status' => $status,
-            'summary' => $recommendations !== []
-                ? (count($recommendations) === count($result['recommendations']) ? $result['summary'] : 'Berikut materi pilihanmu yang masih tersedia untuk dipelajari.')
-                : null,
+            'summary' => $summary,
+            'source' => $source,
             'role' => $role,
             'activity' => $profile?->analysis_input['activity'] ?? null,
-            'updated_at' => $profile?->analysis_completed_at?->toIso8601String(),
+            'updated_at' => $source === 'ai' ? $profile?->analysis_completed_at?->toIso8601String() : null,
             'recommendations' => $recommendations,
             'graph' => ['nodes' => $nodes, 'edges' => $edges],
         ];

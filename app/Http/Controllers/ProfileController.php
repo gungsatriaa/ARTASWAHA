@@ -61,7 +61,7 @@ class ProfileController extends Controller
         $completedLessons = $studiedPaths->sum('completed_lessons_count');
 
         $analysisProfile = $user === null ? $profile : LearnerProfile::completedFor($user->id, null);
-        if ($analysisProfile !== null && $analyzer->isConfigured()) {
+        if ($analysisProfile !== null) {
             $analyzer->enqueue($analysisProfile);
             $analysisProfile->refresh();
         }

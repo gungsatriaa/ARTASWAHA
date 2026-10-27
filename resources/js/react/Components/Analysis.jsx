@@ -15,6 +15,9 @@ export default function Analysis({ analysis: initial, compact = false, poll = tr
     });
     const analysis = data?.analysis ?? initial;
     useEffect(() => {
+        setFinished(false);
+    }, [initial?.status, initial?.updated_at]);
+    useEffect(() => {
         if (data?.analysis && !['queued', 'processing'].includes(data.analysis.status)) setFinished(true);
     }, [data]);
     useEffect(() => {
@@ -40,7 +43,7 @@ export default function Analysis({ analysis: initial, compact = false, poll = tr
             <p className="mt-4 whitespace-pre-line break-words text-sm leading-7 text-foreground/65" role="status">
                 {analysis.summary || notes[analysis.status] || notes.unavailable}
             </p>
-            {poll && analysis.status === 'processing' && !slow && !error && !exhausted && (
+            {poll && !analysis.summary && analysis.status === 'processing' && !slow && !error && !exhausted && (
                 <div className="mt-4">
                     <Skeleton label="Menyiapkan analisis belajar…" compact />
                 </div>
@@ -60,6 +63,17 @@ export default function Analysis({ analysis: initial, compact = false, poll = tr
             {error && (
                 <p role="alert" className="mt-3 text-xs text-danger">
                     {error}
+                </p>
+            )}
+            {analysis.source === 'initial' && analysis.summary && (
+                <p className="mt-3 text-xs leading-6 text-foreground/45">
+                    Ringkasan awal dari data tercatat, belum merupakan hasil AI.
+                </p>
+            )}
+            {analysis.summary && analysis.status !== 'completed' && (
+                <p className="mt-3 text-xs leading-6 text-foreground/50">
+                    {notes[analysis.status] || notes.unavailable}{' '}
+                    {analysis.source === 'ai' ? 'Hasil AI terakhir tetap ditampilkan.' : ''}
                 </p>
             )}
             {analysis.updated_at && (

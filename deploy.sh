@@ -62,7 +62,7 @@ check_learner_worker() {
     if [[ -n "$SUPERVISORCTL_BIN" && -n "$LEARNER_QUEUE_PROGRAM" ]]; then
         check_supervisor_program "AI/TTS worker" "$LEARNER_QUEUE_PROGRAM"
     else
-        check_process "AI/TTS worker" '[a]rtisan queue:work[[:space:]]+learner-analysis([[:space:]]|$)'
+        check_process "AI/TTS worker" '[a]rtisan (queue([[:space:]]|$)|queue:work[[:space:]]+learner-analysis([[:space:]]|$))'
     fi
 }
 
@@ -177,7 +177,7 @@ if [[ -n "$SUPERVISORCTL_BIN" ]]; then
     check_supervisor_program "Reverb process" "$REVERB_PROGRAM"
 else
     printf 'Supervisor CLI tidak tersedia; memeriksa proses aktif langsung.\n'
-    check_process "Queue worker" '[a]rtisan queue:work'
+    check_process "Queue worker" '[a]rtisan queue(:work)?([[:space:]]|$)'
     check_process "Reverb process" '[a]rtisan reverb:start'
 fi
 

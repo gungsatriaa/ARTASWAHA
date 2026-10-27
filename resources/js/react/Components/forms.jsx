@@ -157,6 +157,7 @@ export function Status({ value }) {
         review: 'Perlu tinjauan',
         ready: 'Siap digunakan',
         stale: 'Perlu diperbarui',
+        outdated: 'Perlu analisis baru',
         draft: 'Draf',
         published: 'Terbit',
         archived: 'Diarsipkan',
