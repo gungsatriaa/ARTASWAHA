@@ -358,6 +358,26 @@ it('escapes lesson and AI-provider output instead of executing HTML', () => {
     expect(document.querySelector('[onerror]')).toBeNull();
 });
 
+it('does not show an answer keyboard for multiple-choice lessons or rooms, including legacy auto-open flags', () => {
+    const lesson = {
+        title: 'Latihan aksara',
+        content: 'Materi',
+        path: { ...path, group: 'aksara' },
+        exercise_prompt: 'Pilih aksara Ha',
+        exercise_options: ['ᬳ', 'ᬦ'],
+        keyboard_auto_open: true,
+    };
+    const { rerender } = render(<Lesson lesson={lesson} meta={meta} />);
+    expect(screen.getAllByRole('radio')).toHaveLength(2);
+    expect(screen.queryByText('Keyboard aksara Bali')).toBeNull();
+    expect(screen.queryByRole('textbox', { name: 'Coretan latihan aksara' })).toBeNull();
+    rerender(<Lesson lesson={lesson} progress={{ completed_at: '2026-10-27', points: 10 }} meta={meta} />);
+    expect(screen.queryByText('Keyboard aksara Bali')).toBeNull();
+    rerender(<Room room={{ ...room, question: { ...question, keyboard_auto_open: true } }} meta={meta} />);
+    expect(screen.getAllByRole('radio')).toHaveLength(2);
+    expect(screen.queryByText('Keyboard aksara Bali')).toBeNull();
+});
+
 it('edits Balinese scratch text without losing it when keyboard modes change', () => {
     render(<Keyboard autoOpen />);
     fireEvent.click(screen.getByRole('button', { name: 'Ka', exact: true }));

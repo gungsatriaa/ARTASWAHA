@@ -442,12 +442,7 @@ export default function Editor({ quiz, hasRooms, preview, meta }) {
                                             onChange={(e) => change(index, 'time_limit_seconds', e.target.value)}
                                             error={form.errors[`questions.${index}.time_limit_seconds`]}
                                         />
-                                        <Check
-                                            checked={q.keyboard_auto_open ?? false}
-                                            onChange={(e) => change(index, 'keyboard_auto_open', e.target.checked)}
-                                        >
-                                            Buka keyboard aksara otomatis saat soal ini tampil
-                                        </Check>
+
                                         {q.audioEditUrl && (
                                             <Link href={q.audioEditUrl} className={secondaryClass}>
                                                 Kelola audio soal
@@ -547,7 +542,6 @@ export default function Editor({ quiz, hasRooms, preview, meta }) {
                                 </button>
                             ))}
                         </div>
-                        <Keyboard key={question?._key} autoOpen={question?.keyboard_auto_open} />
                         <div className="mt-6 flex flex-wrap justify-between gap-3">
                             <button
                                 type="button"

@@ -1,7 +1,6 @@
 import { useForm } from '@inertiajs/react';
 import { PageMeta, Button } from '../../Components/ui';
 import { Back, Card, Errors, Heading, Action } from '../../Components/forms';
-import Keyboard from '../../Components/LazyKeyboard';
 import AudioPlayer from '../../Components/AudioPlayer';
 export default function Lesson({ lesson, progress, audio, meta }) {
     const form = useForm({ answer_index: '' });
@@ -32,7 +31,6 @@ export default function Lesson({ lesson, progress, audio, meta }) {
             ) : lesson.exercise_prompt ? (
                 <Card className="mt-5">
                     <h2 className="font-display text-xl font-bold">{lesson.exercise_prompt}</h2>
-                    <Keyboard autoOpen={lesson.keyboard_auto_open} />
                     <form
                         onSubmit={(e) => {
                             e.preventDefault();
@@ -71,10 +69,6 @@ export default function Lesson({ lesson, progress, audio, meta }) {
                     <Action url={lesson.completeUrl}>Tandai pelajaran selesai</Action>
                 </div>
             )}
-            {(lesson.path.group === 'aksara' || lesson.keyboard_auto_open) &&
-                (!lesson.exercise_prompt || progress?.completed_at) && (
-                    <Keyboard autoOpen={lesson.keyboard_auto_open} />
-                )}
         </div>
     );
 }

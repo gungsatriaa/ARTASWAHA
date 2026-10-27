@@ -95,8 +95,7 @@ export default function Quiz({ quiz, meta }) {
                                     <p className="mt-4 text-xs text-foreground/45">
                                         {question.time_limit_seconds
                                             ? `${question.time_limit_seconds} detik khusus soal ini`
-                                            : 'Mengikuti waktu bawaan'}{' '}
-                                        · Keyboard {question.keyboard_auto_open ? 'otomatis' : 'manual'}
+                                            : 'Mengikuti waktu bawaan'}
                                     </p>
                                     <AudioPlayer audio={question.audio} label="Preview audio soal" />
                                     {question.audioEditUrl && (

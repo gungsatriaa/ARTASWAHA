@@ -3,7 +3,6 @@ import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { Button, PageMeta, buttonClass } from '../../Components/ui';
 import { Action, Card, Errors, secondaryClass } from '../../Components/forms';
 import Dialog from '../../Components/Dialog';
-import Keyboard from '../../Components/LazyKeyboard';
 import AudioPlayer from '../../Components/AudioPlayer';
 import useRoom from '../../Hooks/useRoom';
 
@@ -170,7 +169,6 @@ function Question({ room, onExpire }) {
                             </label>
                         ))}
                     </fieldset>
-                    <Keyboard autoOpen={room.question.keyboard_auto_open} />
                     <Button
                         type="submit"
                         disabled={form.processing || form.data.answer_index === ''}

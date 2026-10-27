@@ -102,12 +102,7 @@ export default function LessonForm({ lesson, paths, meta }) {
                             onChange={(e) => form.setData('sort_order', e.target.value)}
                             error={form.errors.sort_order}
                         />
-                        <Check
-                            checked={form.data.keyboard_auto_open}
-                            onChange={(e) => form.setData('keyboard_auto_open', e.target.checked)}
-                        >
-                            Buka keyboard aksara otomatis untuk pelajar
-                        </Check>
+
                         <Check
                             checked={form.data.has_exercise}
                             onChange={(e) => form.setData('has_exercise', e.target.checked)}

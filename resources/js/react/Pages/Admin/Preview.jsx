@@ -2,7 +2,6 @@ import { Link, usePage } from '@inertiajs/react';
 import { PageMeta, buttonClass } from '../../Components/ui';
 import { Card, Back, Heading, Action, Status, secondaryClass } from '../../Components/forms';
 import AudioPlayer from '../../Components/AudioPlayer';
-import Keyboard from '../../Components/LazyKeyboard';
 export default function Preview({ lesson, audio, meta }) {
     const { links } = usePage().props;
     return (
@@ -45,7 +44,6 @@ export default function Preview({ lesson, audio, meta }) {
                         <p className="mt-4 text-sm leading-7 text-foreground/55">{lesson.exercise_explanation}</p>
                     </section>
                 )}
-                <Keyboard autoOpen={lesson.keyboard_auto_open} />
                 <div className="mt-6 flex flex-wrap gap-3">
                     <Link className={secondaryClass} href={lesson.editUrl}>
                         Ubah modul
