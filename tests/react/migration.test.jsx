@@ -101,6 +101,7 @@ beforeEach(() => {
             'quizzes.store': '/kuis',
             'profile.about': '/profil/tentang',
             'profile.destroy': '/profil',
+            'auth.google.redirect': '/auth/google',
         },
         brand: { mascot: '/image/asset1.webp', avatarBase: '/avatar' },
         flash: {},
@@ -265,6 +266,30 @@ it('renders public content, privacy disclosures and testimonials as escaped Reac
     expect(screen.getByRole('link', { name: 'kerthajayasoftware@gmail.com' }).href).toBe(
         'mailto:kerthajayasoftware@gmail.com',
     );
+});
+
+it('resolves auth pages to the dedicated layout without public or mobile navigation', async () => {
+    const { resolve } = await import('../../resources/js/react/resolve');
+    const pageModule = await resolve('Auth/Form');
+    render(pageModule.default.layout(<Auth mode="login" meta={meta} />));
+    expect(screen.queryByRole('navigation')).toBeNull();
+    expect(screen.getByRole('link', { name: 'Kembali ke beranda' })).toBeTruthy();
+    expect(screen.getByRole('main').id).toBe('auth-content');
+});
+
+it.each(['login', 'register'])('keeps the Google %s button as a full-document OAuth link with its icon', (mode) => {
+    render(<Auth mode={mode} meta={meta} />);
+    const google = screen.getByRole('link', { name: 'Lanjutkan dengan Google' });
+    expect(google.getAttribute('href')).toBe('/auth/google');
+    expect(google.querySelector('svg')).not.toBeNull();
+    expect(google.querySelector('svg').getAttribute('aria-hidden')).toBe('true');
+});
+
+it('shows a Google login error without hiding the sign-in form', () => {
+    page.props.errors = { google: 'Login Google belum dikonfigurasi.' };
+    render(<Auth mode="login" meta={meta} />);
+    expect(screen.getByRole('alert').textContent).toContain('Login Google belum dikonfigurasi.');
+    expect(screen.getByRole('textbox', { name: 'Email' })).toBeTruthy();
 });
 
 it.each(['login', 'register', 'forgot-password', 'reset-password'])(
