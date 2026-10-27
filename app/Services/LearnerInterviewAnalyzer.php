@@ -149,12 +149,32 @@ class LearnerInterviewAnalyzer
     /** @param array<string, mixed> $input */
     public function hash(array $input): string
     {
-        return hash('sha256', json_encode([
+        return hash('sha256', json_encode($this->sortObjectKeys([
             'version' => self::VERSION,
             'model' => config('services.ai.model'),
             'url' => config('services.ai.url'),
             'answers' => $input,
-        ], JSON_THROW_ON_ERROR));
+        ]), JSON_THROW_ON_ERROR));
+    }
+
+    /**
+     * Database JSON storage may reorder object keys; list order must stay intact.
+     *
+     * @param  array<array-key, mixed>  $value
+     * @return array<array-key, mixed>
+     */
+    private function sortObjectKeys(array $value): array
+    {
+        if (! array_is_list($value)) {
+            ksort($value, SORT_STRING);
+        }
+        foreach ($value as $key => $item) {
+            if (is_array($item)) {
+                $value[$key] = $this->sortObjectKeys($item);
+            }
+        }
+
+        return $value;
     }
 
     /**

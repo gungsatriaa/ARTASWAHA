@@ -17,6 +17,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request as ClientRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
@@ -38,6 +39,35 @@ class LearnerAnalysisTest extends TestCase
         ]]);
         Http::preventStrayRequests();
         $this->withCredentials();
+    }
+
+    public function test_worker_accepts_input_after_database_reorders_json_object_keys(): void
+    {
+        Queue::fake([AnalyzeLearnerInterview::class]);
+        $path = LearningPath::factory()->create(['is_published' => true]);
+        $profile = $this->profile($path);
+        $analyzer = app(LearnerInterviewAnalyzer::class);
+        $analyzer->enqueue($profile);
+        $profile->refresh();
+        $job = new AnalyzeLearnerInterview($profile->id, $profile->analysis_hash, $profile->analysis_requested_at->toDateTimeString());
+        $input = array_reverse($profile->analysis_input, true);
+        $input['activity'] = array_reverse($input['activity'], true);
+        $input['activity']['daily'] = array_map(fn (array $day): array => array_reverse($day, true), $input['activity']['daily']);
+        DB::table('learner_profiles')->where('id', $profile->id)->update(['analysis_input' => json_encode($input, JSON_THROW_ON_ERROR)]);
+        Http::fake(['*' => Http::response(['choices' => [['message' => ['content' => json_encode($this->analysisResult($path))]]]])]);
+
+        $job->handle($analyzer);
+
+        $this->assertSame('completed', $profile->fresh()->analysis_status);
+        Http::assertSentCount(1);
+    }
+
+    public function test_hash_preserves_learning_path_order_and_detects_changed_values(): void
+    {
+        $analyzer = app(LearnerInterviewAnalyzer::class);
+        $input = ['role' => 'murid', 'learning_path_ids' => [1, 2]];
+        $this->assertNotSame($analyzer->hash($input), $analyzer->hash([...$input, 'learning_path_ids' => [2, 1]]));
+        $this->assertNotSame($analyzer->hash($input), $analyzer->hash([...$input, 'role' => 'guru']));
     }
 
     public function test_finishing_interview_queues_once_without_contacting_llm(): void

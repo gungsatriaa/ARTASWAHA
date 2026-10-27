@@ -75,6 +75,7 @@ class AnalyzeLearnerInterview implements ShouldBeUnique, ShouldQueue
             return;
         }
         if (! $analyzer->isCurrentInput($profile)) {
+            Log::warning('Learner analysis input is outdated.', ['profile_id' => $this->profileId, 'stage' => 'before_request']);
             $this->profileQuery()->update(['analysis_status' => 'outdated']);
             $profile->recordAnalysisEvent('outdated', 'Jawaban interview atau konfigurasi berubah. Permintaan lama dilewati.');
 
@@ -97,6 +98,7 @@ class AnalyzeLearnerInterview implements ShouldBeUnique, ShouldQueue
             $result = $analyzer->generate($profile->analysis_input);
             $currentProfile = $this->profileQuery()->first();
             if ($currentProfile !== null && ! $analyzer->isCurrentInput($currentProfile)) {
+                Log::warning('Learner analysis input is outdated.', ['profile_id' => $this->profileId, 'stage' => 'after_response']);
                 $this->profileQuery()->update(['analysis_status' => 'outdated']);
             } elseif ($currentProfile !== null) {
                 $saved = $this->profileQuery()
