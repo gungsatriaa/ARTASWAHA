@@ -9,7 +9,7 @@ export default function Privacy({ meta }) {
                     <p className="mt-4 font-readable text-lg leading-8 text-foreground/70">
                         Apa yang ARTASWAHA kumpulkan, mengapa dibutuhkan, dan bagaimana kamu dapat mengontrol datamu.
                     </p>
-                    <p className="mt-3 text-sm text-foreground/50">Diperbarui 26 Oktober 2026</p>
+                    <p className="mt-3 text-sm text-foreground/50">Diperbarui 27 Oktober 2026</p>
                 </header>
 
                 <div className="mt-12 grid gap-12 lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-16">
@@ -257,9 +257,28 @@ export default function Privacy({ meta }) {
                                 profil sebelum memproses permintaan.
                             </p>
                             <p className="mt-3">
-                                Penghapusan akun belum tersedia secara mandiri di aplikasi. Menghapus cookie hanya
-                                memutus pengenalan profil anonim di browser tersebut, bukan menghapus data profil dari
-                                server.
+                                Akun terdaftar dan profil anonim dapat dihapus melalui halaman Profil, bagian Hapus
+                                akun. Buka konfirmasi, lalu ketik persis “Hapus Akun Saya” dan pilih Hapus permanen.
+                                Penghapusan menghapus profil, avatar unggahan, jawaban perkenalan, analisis, progres
+                                belajar, dan partisipasi serta jawaban kuis milikmu dari basis data aktif. Untuk akun
+                                terdaftar, akun, tautan login Google yang tersimpan, token pemulihan kata sandi, draf
+                                dan dokumen unggahan, kuis, audio kuis, serta room buatanmu beserta peserta dan jawaban
+                                di dalamnya ikut dihapus. Materi pembelajaran platform tidak ikut dihapus.
+                            </p>
+                            <p className="mt-3">
+                                Setelah penghapusan, sesi login berakhir dan cookie pengenal profil di browser ini
+                                dihapus. Penghapusan profil anonim hanya berlaku untuk data yang dikenali melalui profil
+                                browser tersebut; tidak menghapus akun atau profil pengguna lain. Jika cookie sudah
+                                hilang, hubungi pengelola agar permintaan dapat diverifikasi. Tindakan ini tidak dapat
+                                dibatalkan melalui aplikasi. Menghapus cookie saja tidak menghapus data di server.
+                            </p>
+                            <p className="mt-3">
+                                Statistik agregat tanpa identitas pribadi dapat tetap tersimpan. Log keamanan, cuplikan
+                                log teknis, cadangan server, dan data yang telah diterima penyedia layanan lain tidak
+                                otomatis terhapus oleh fitur ini; masa simpannya mengikuti pengelolaan infrastruktur
+                                atau penyedia tersebut. Jika pembersihan file gagal karena gangguan penyimpanan,
+                                kegagalan dicatat untuk ditangani pengelola. Hubungi email di bawah untuk pertanyaan
+                                atau permintaan lanjutan terkait data tersebut.
                             </p>
                         </section>
 

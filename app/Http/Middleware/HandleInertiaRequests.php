@@ -57,7 +57,7 @@ class HandleInertiaRequests extends Middleware
             'routeName' => fn (): ?string => $request->route()?->getName(),
             'links' => fn (): array => collect([
                 'learning.interview.show', 'learning.interview.store', 'login.store', 'register.store', 'password.request', 'password.email', 'password.update', 'auth.google.redirect',
-                'profile.about', 'profile.analysis.show', 'profile.avatar.update', 'quizzes.create', 'quizzes.store', 'quizzes.drafts.store', 'rooms.join',
+                'profile.about', 'profile.destroy', 'profile.analysis.show', 'profile.avatar.update', 'quizzes.create', 'quizzes.store', 'quizzes.drafts.store', 'rooms.join',
                 'admin.index', 'admin.analytics.index', 'admin.analytics.online', 'admin.learning-paths.index', 'admin.learning-paths.create', 'admin.learning-paths.store',
                 'admin.lessons.index', 'admin.lessons.create', 'admin.lessons.store', 'admin.audio.index', 'admin.ai.index', 'admin.ai.reports.store',
             ])->mapWithKeys(fn (string $name): array => [$name => route($name)])->all(),

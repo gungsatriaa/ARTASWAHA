@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\LearningPathController as AdminLearningPathContro
 use App\Http\Controllers\Admin\LessonController as AdminLessonController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ContentAudioController;
+use App\Http\Controllers\DestroyProfileController;
 use App\Http\Controllers\LearnerAnalysisController;
 use App\Http\Controllers\LearningInterviewController;
 use App\Http\Controllers\LearningPathController;
@@ -35,6 +36,7 @@ Route::get('/mulai-belajar/avatar', [LearningInterviewController::class, 'avatar
 Route::redirect('/profil-anonim', '/profil');
 Route::redirect('/profil-anonim/tentang', '/profil/tentang');
 Route::get('/profil', ProfileController::class)->name('profile.show');
+Route::delete('/profil', DestroyProfileController::class)->middleware('throttle:5,1')->name('profile.destroy');
 Route::get('/audio/{contentAudio}', ContentAudioController::class)->name('content-audio.show');
 Route::get('/profil/analisis', [LearnerAnalysisController::class, 'show'])->middleware('throttle:learner-analysis-read')->name('profile.analysis.show');
 Route::post('/profil/analisis', [LearnerAnalysisController::class, 'store'])->middleware('throttle:learner-analysis-write')->name('profile.analysis.store');

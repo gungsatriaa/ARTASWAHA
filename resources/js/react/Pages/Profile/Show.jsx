@@ -24,6 +24,7 @@ export default function Profile({
 }) {
     const { viewer, navigation: nav, links } = usePage().props;
     const [avatarOpen, setAvatarOpen] = useState(false),
+        [deleteOpen, setDeleteOpen] = useState(false),
         [preview, setPreview] = useState(null),
         [candidate, setCandidate] = useState(null);
     const form = useForm({
@@ -31,6 +32,7 @@ export default function Profile({
         avatar_upload: null,
         _method: 'put',
     });
+    const deletion = useForm({ confirmation: '' });
     useEffect(() => {
         if (!form.data.avatar_upload) {
             setPreview(null);
@@ -362,7 +364,89 @@ export default function Profile({
                         </>
                     )}
                 </div>
+                <section aria-labelledby="delete-account-title" className="rounded-card bg-surface p-5 sm:p-7">
+                    <h2 id="delete-account-title" className="font-display text-xl font-bold">
+                        Hapus akun
+                    </h2>
+                    <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground/55">
+                        {viewer.mode === 'anonymous'
+                            ? 'Hapus profil anonim, avatar unggahan, progres, analisis, dan partisipasi kuis dari perangkat ini.'
+                            : 'Hapus akun, profil belajar, progres, analisis, serta kuis dan room yang kamu buat.'}{' '}
+                        Tindakan ini tidak dapat dibatalkan.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            deletion.reset();
+                            setDeleteOpen(true);
+                        }}
+                        className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-danger/15 px-5 py-3 text-sm font-bold text-danger transition hover:bg-danger/25 focus-visible:outline-2 focus-visible:outline-danger"
+                    >
+                        Hapus akun saya
+                    </button>
+                </section>
             </div>
+            <Dialog
+                open={deleteOpen}
+                onClose={() => {
+                    if (!deletion.processing) setDeleteOpen(false);
+                }}
+                title="Hapus akun ini?"
+                id="delete-account-modal"
+                variant="error"
+            >
+                <p className="text-sm leading-7 text-foreground/65">
+                    Profil, avatar unggahan, progres belajar, analisis, dan jawaban kuismu akan dihapus dari data aktif
+                    layanan.
+                    {viewer.mode === 'account' &&
+                        ' Kuis, draf, dan room yang kamu buat beserta peserta dan jawaban di dalamnya juga ikut terhapus. Semua sesi login akun akan berakhir.'}
+                    {viewer.mode === 'anonymous' &&
+                        ' Profil anonim ini tidak dapat dipulihkan dan cookie pengenalnya akan dihapus dari browser ini.'}
+                </p>
+                <p className="mt-4 text-sm leading-7">
+                    Ketik <strong className="text-foreground">Hapus Akun Saya</strong> untuk mengonfirmasi. Tindakan ini
+                    tidak dapat dibatalkan.
+                </p>
+                <form
+                    className="mt-5"
+                    onSubmit={(event) => {
+                        event.preventDefault();
+                        if (deletion.data.confirmation === 'Hapus Akun Saya' && !deletion.processing) {
+                            deletion.delete(links['profile.destroy'], {
+                                preserveScroll: true,
+                                onSuccess: () => setDeleteOpen(false),
+                            });
+                        }
+                    }}
+                >
+                    <Field
+                        label="Konfirmasi penghapusan akun"
+                        value={deletion.data.confirmation}
+                        onChange={(event) => deletion.setData('confirmation', event.target.value)}
+                        autoComplete="off"
+                        spellCheck={false}
+                        required
+                        error={deletion.errors.confirmation}
+                    />
+                    <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                        <button
+                            type="button"
+                            className={secondaryClass}
+                            disabled={deletion.processing}
+                            onClick={() => setDeleteOpen(false)}
+                        >
+                            Batal
+                        </button>
+                        <Button
+                            type="submit"
+                            className="!bg-danger !text-background"
+                            disabled={deletion.processing || deletion.data.confirmation !== 'Hapus Akun Saya'}
+                        >
+                            {deletion.processing ? 'Menghapus…' : 'Hapus permanen'}
+                        </Button>
+                    </div>
+                </form>
+            </Dialog>
             <Dialog
                 open={avatarOpen}
                 onClose={() => setAvatarOpen(false)}

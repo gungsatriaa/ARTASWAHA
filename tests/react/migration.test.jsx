@@ -100,6 +100,7 @@ beforeEach(() => {
             'profile.analysis.show': '/analysis',
             'quizzes.store': '/kuis',
             'profile.about': '/profil/tentang',
+            'profile.destroy': '/profil',
         },
         brand: { mascot: '/image/asset1.webp', avatarBase: '/avatar' },
         flash: {},
@@ -537,6 +538,38 @@ it('offers a document reload when a page chunk cannot be resolved', async () => 
     page.url = '/tujuan';
     render(<FailedPage />);
     expect(screen.getByRole('link', { name: 'Muat ulang halaman' }).getAttribute('href')).toBe('/tujuan');
+});
+
+it.each(['anonymous', 'account'])('requires the exact typed phrase before deleting the %s profile', (mode) => {
+    page.props.viewer = { ...page.props.viewer, mode };
+    render(<Profile paths={[]} interests={[]} completedLessons={0} totalLessons={0} avatars={[]} meta={meta} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Hapus akun saya' }));
+    const dialog = within(screen.getByRole('dialog', { name: 'Hapus akun ini?' }));
+    expect(screen.getByRole('dialog').getAttribute('data-variant')).toBe('error');
+    const confirmation = dialog.getByRole('textbox', { name: 'Konfirmasi penghapusan akun' });
+    const remove = dialog.getByRole('button', { name: 'Hapus permanen' });
+    expect(remove.disabled).toBe(true);
+    fireEvent.change(confirmation, { target: { value: 'hapus akun saya' } });
+    fireEvent.click(remove);
+    expect(send).not.toHaveBeenCalled();
+    fireEvent.change(confirmation, { target: { value: 'Hapus Akun Saya' } });
+    expect(remove.disabled).toBe(false);
+    fireEvent.submit(remove.closest('form'));
+    expect(send.mock.calls[0].slice(0, 3)).toEqual(['delete', '/profil', { confirmation: 'Hapus Akun Saya' }]);
+});
+
+it('can cancel account deletion without sending a request and clears the phrase when reopened', () => {
+    render(<Profile paths={[]} interests={[]} completedLessons={0} totalLessons={0} avatars={[]} meta={meta} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Hapus akun saya' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Konfirmasi penghapusan akun' }), {
+        target: { value: 'Hapus Akun Saya' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Batal' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(send).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Hapus akun saya' }));
+    expect(screen.getByRole('textbox', { name: 'Konfirmasi penghapusan akun' }).value).toBe('');
+    expect(screen.getByRole('button', { name: 'Hapus permanen' }).disabled).toBe(true);
 });
 
 it('keeps account profiles free of anonymous registration prompts', () => {
