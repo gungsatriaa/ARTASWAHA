@@ -1,17 +1,15 @@
 import { useState } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import * as m from 'motion/react-m';
-import { PageMeta, CategoryIcon, buttonClass, EmptyState } from '../Components/ui';
+import { PageMeta, CategoryIcon, buttonClass } from '../Components/ui';
 import { Card, secondaryClass } from '../Components/forms';
-import Analysis from '../Components/Analysis';
 import Testimonials from '../Components/Testimonials';
 import Faq from '../Components/Faq';
 import Icon from '../Components/Icon';
 
-export default function Home({ paths, selectedIds, recent, analysis, meta }) {
+export default function Home({ recent, meta }) {
     const { viewer, navigation: nav, brand, links } = usePage().props;
     const [hello, setHello] = useState(false);
-    const selected = selectedIds.length ? paths.filter((path) => selectedIds.includes(path.id)) : paths;
     const start = viewer ? (
         <Link className={buttonClass} href={nav.learning}>
             Lanjut belajar
@@ -25,7 +23,7 @@ export default function Home({ paths, selectedIds, recent, analysis, meta }) {
         <>
             <PageMeta {...meta} />
             {viewer && (
-                <div className="mx-auto max-w-lg space-y-7 md:hidden">
+                <section aria-label="Beranda belajarmu" className="mx-auto max-w-lg space-y-6 md:hidden">
                     <header className="flex items-center justify-between gap-4">
                         <div className="min-w-0">
                             <p className="text-sm text-foreground/55">Selamat datang kembali,</p>
@@ -46,70 +44,75 @@ export default function Home({ paths, selectedIds, recent, analysis, meta }) {
                             />
                         </Link>
                     </header>
-                    <section className="rounded-card bg-accent p-6 text-background">
-                        <p className="text-sm font-semibold">Riwayat belajar terakhir</p>
-                        <h2 className="mt-3 font-display text-2xl font-bold leading-tight">
-                            {recent?.title ?? 'Belum ada riwayat belajar'}
-                        </h2>
-                        <p className="mt-3 text-sm leading-7 text-background/65">
+                    <section className="overflow-hidden rounded-card bg-surface p-5">
+                        <div className="grid grid-cols-[minmax(0,1fr)_6rem] items-center gap-3">
+                            <div className="min-w-0">
+                                <p className="text-xs font-semibold text-accent">
+                                    {recent ? 'Lanjutkan langkahmu' : 'Sedikit waktu, cerita baru'}
+                                </p>
+                                <h2 className="mt-3 break-words font-display text-2xl font-bold leading-tight">
+                                    {recent?.title ?? 'Yuk, kenali Bali lebih dekat.'}
+                                </h2>
+                            </div>
+                            <m.button
+                                type="button"
+                                aria-label="Sapa maskot belajarmu"
+                                onClick={() => setHello(!hello)}
+                                whileTap={{ rotate: -5, scale: 0.96 }}
+                                className="rounded-full focus-visible:outline-2 focus-visible:outline-accent"
+                            >
+                                <img
+                                    src={brand.mascot}
+                                    alt="Maskot ARTASWAHA"
+                                    width="160"
+                                    height="200"
+                                    className="h-auto w-full object-contain"
+                                />
+                            </m.button>
+                        </div>
+                        {hello && (
+                            <p role="status" className="mt-3 text-sm text-accent">
+                                Rahajeng! Siap belajar bareng?
+                            </p>
+                        )}
+                        <p className="mt-4 text-sm leading-7 text-foreground/60">
                             {recent
-                                ? `${recent.pathTitle} · ${recent.points} poin`
-                                : 'Selesaikan pelajaran pertamamu untuk melihat riwayat belajar di sini.'}
+                                ? recent.pathTitle
+                                : 'Mulai satu pelajaran singkat. Belajar sesuai waktu dan rasa ingin tahumu.'}
                         </p>
-                        <Link
-                            href={recent?.url ?? nav.learning}
-                            className="mt-6 inline-flex min-h-12 items-center rounded-full bg-background px-6 text-sm font-bold text-accent"
-                        >
-                            {recent ? 'Buka pelajaran' : 'Pilih materi'} →
+                        <Link href={recent?.url ?? nav.learning} className={`${buttonClass} mt-5 w-full`}>
+                            {recent ? 'Buka pelajaran terakhir' : 'Mulai satu pelajaran'}
+                            <Icon name="arrow" className="size-4" />
                         </Link>
                     </section>
-                    <section>
-                        <header className="mb-4 flex justify-between gap-3">
-                            <h2 className="font-display text-xl font-bold">Materi pilihanmu</h2>
-                            <Link href={nav.learning} className="min-h-11 text-sm font-bold text-accent">
-                                Lihat semua
-                            </Link>
-                        </header>
-                        <div className="space-y-3">
-                            {selected.map((path) => (
-                                <Link
-                                    key={path.id}
-                                    href={path.url}
-                                    className="flex items-center gap-4 rounded-card bg-surface p-4"
-                                >
-                                    <CategoryIcon group={path.group} />
-                                    <div className="min-w-0 flex-1">
-                                        <h3 className="break-words font-display text-base font-bold">{path.title}</h3>
-                                        <p className="mt-1 text-xs text-foreground/50">
-                                            {path.lessonsCount
-                                                ? `${path.completed} dari ${path.lessonsCount} pelajaran selesai`
-                                                : 'Pelajaran sedang disiapkan'}
-                                        </p>
-                                    </div>
-                                    <span className="text-foreground/40">›</span>
-                                </Link>
-                            ))}
-                            {!selected.length && (
-                                <EmptyState title="Materi pilihanmu belum tersedia">
-                                    Pilih materi lain melalui Lihat semua untuk melanjutkan belajar.
-                                </EmptyState>
-                            )}
+                    <section aria-labelledby="home-greeting-title" className="rounded-card bg-primary/15 p-5 sm:p-6">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-accent">
+                            <Icon name="chat" className="size-4" />
+                            Kenali satu sapaan
                         </div>
+                        <p lang="ban" className="mt-4 break-words font-balinese text-3xl leading-loose text-foreground">
+                            ᬒᬁ ᬲ᭄ᬯᬲ᭄ᬢ᭄ᬬᬲ᭄ᬢᬸ᭟
+                        </p>
+                        <h2 id="home-greeting-title" className="mt-3 font-display text-xl font-bold">
+                            Om Swastyastu
+                        </h2>
+                        <p className="mt-2 text-sm leading-7 text-foreground/60">
+                            Salam pembuka dalam bahasa Bali. Satu sapaan untuk mengawali percakapan.
+                        </p>
                     </section>
-                    <Analysis key={`${analysis?.status}-${analysis?.updated_at}`} analysis={analysis} compact />
                     <Link
                         href={nav.quizzes}
-                        className="flex items-center justify-between gap-4 rounded-card bg-primary/15 p-6"
+                        className="group flex items-center justify-between gap-4 rounded-card bg-surface p-5 focus-visible:outline-2 focus-visible:outline-accent"
                     >
                         <div>
                             <h2 className="font-display text-xl font-bold">Main kuis bareng</h2>
                             <p className="mt-2 text-sm text-foreground/55">Masukkan kode untuk gabung kuis.</p>
                         </div>
-                        <span className="grid size-12 shrink-0 place-items-center rounded-full bg-primary text-2xl">
-                            →
+                        <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary/20 text-accent group-hover:bg-primary/35">
+                            <Icon name="arrow" className="size-5" />
                         </span>
                     </Link>
-                </div>
+                </section>
             )}
             <div className={viewer ? 'hidden md:block' : ''}>
                 <section className="grid items-center gap-10 pb-12 pt-5 sm:gap-14 sm:py-12 lg:grid-cols-[1.08fr_.92fr] lg:gap-12 lg:py-16">

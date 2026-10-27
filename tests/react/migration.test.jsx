@@ -1,6 +1,6 @@
 import { StrictMode, useRef, useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, renderHook, screen, waitFor, within } from '@testing-library/react';
 import Interview from '../../resources/js/react/Pages/Learning/Interview';
 import Profile from '../../resources/js/react/Pages/Profile/Show';
 import Quizzes from '../../resources/js/react/Pages/Quizzes/Index';
@@ -516,6 +516,27 @@ it.each(['account', 'anonymous'])(
         expect(screen.queryByText('Mulai belajar gratis')).toBeNull();
     },
 );
+
+it.each(['account', 'anonymous'])('keeps the %s mobile home focused without repeating catalog or analysis', (mode) => {
+    page.props.viewer = { ...page.props.viewer, mode };
+    render(<Home paths={[path]} selectedIds={[1]} analysis={{ status: 'queued' }} meta={meta} />);
+    const home = within(screen.getByRole('region', { name: 'Beranda belajarmu' }));
+    expect(home.queryByText('Materi pilihanmu')).toBeNull();
+    expect(home.queryByText('Analisis belajarmu')).toBeNull();
+    expect(home.queryByText('Belum ada riwayat belajar')).toBeNull();
+    expect(home.getByRole('link', { name: /Mulai satu pelajaran/ }).getAttribute('href')).toBe('/belajar');
+    fireEvent.click(home.getByRole('button', { name: 'Sapa maskot belajarmu' }));
+    expect(home.getByRole('status').textContent).toContain('Rahajeng!');
+});
+
+it('opens the actual latest lesson from the mobile home', () => {
+    render(
+        <Home recent={{ title: 'Sapaan pertama', pathTitle: 'Bahasa Bali', url: '/pelajaran/sapaan' }} meta={meta} />,
+    );
+    const home = within(screen.getByRole('region', { name: 'Beranda belajarmu' }));
+    expect(home.getByRole('heading', { name: 'Sapaan pertama' })).toBeTruthy();
+    expect(home.getByRole('link', { name: /Buka pelajaran terakhir/ }).getAttribute('href')).toBe('/pelajaran/sapaan');
+});
 
 it('opens the route-backed interview as a modal with four named steps', () => {
     render(<Interview paths={[path]} answers={{}} step={1} roles={{}} meta={meta} />);
