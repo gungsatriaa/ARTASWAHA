@@ -27,14 +27,17 @@ export default function Interview({ paths, answers, step, roles, avatar, meta })
     }, [form.data.avatar_upload]);
     const submit = (e) => {
         e.preventDefault();
-        if (!form.processing)
-            form.transform((data) => data).post(links['learning.interview.store'], {
-                forceFormData: step === 4,
-                preserveScroll: false,
-            });
+        if (form.processing) return;
+        form.transform((data) => data);
+        form.post(links['learning.interview.store'], {
+            forceFormData: step === 4,
+            preserveScroll: false,
+        });
     };
     const mode = (value) => {
-        form.transform((data) => ({ ...data, mode: value, step: 3 })).post(links['learning.interview.store'], {
+        if (form.processing) return;
+        form.transform((data) => ({ ...data, mode: value, step: 3 }));
+        form.post(links['learning.interview.store'], {
             preserveScroll: false,
             preserveState: false,
         });

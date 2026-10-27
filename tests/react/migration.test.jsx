@@ -11,6 +11,7 @@ import Editor, { blankQuestion, payloadQuestions, withoutOption } from '../../re
 import Room, { Countdown } from '../../resources/js/react/Pages/Rooms/Show';
 import Lesson from '../../resources/js/react/Pages/Learning/Lesson';
 import Auth from '../../resources/js/react/Pages/Auth/Form';
+import AudioEdit from '../../resources/js/react/Pages/Admin/AudioEdit';
 import Privacy from '../../resources/js/react/Pages/Privacy';
 import Faq from '../../resources/js/react/Components/Faq';
 import Home from '../../resources/js/react/Pages/Home';
@@ -46,7 +47,6 @@ vi.mock('@inertiajs/react', async () => {
                     setData((current) => (typeof key === 'string' ? { ...current, [key]: value } : key)),
                 transform: (callback) => {
                     transform.current = callback;
-                    return form;
                 },
                 reset: () => setData(initial),
             };
@@ -149,6 +149,24 @@ it('retains several interview selections and submits their IDs, not a single rad
     expect(send.mock.calls[0][2].learning_path_ids).toEqual([1, 2]);
     fireEvent.click(screen.getByRole('checkbox', { name: /Cecimpedan/ }));
     expect(screen.getByRole('checkbox', { name: /Aksara Wreastra/ }).checked).toBe(true);
+});
+
+it.each([
+    ['Simpan narasi', 'save'],
+    ['Buat audio offline', 'generate'],
+    ['Gunakan rekaman', 'upload'],
+])('submits the %s audio action when transform returns void', (label, action) => {
+    render(<AudioEdit title="Narasi" text="Materi Bali" action="/admin/audio/modul/1" configured meta={meta} />);
+    const button = screen.getByRole('button', { name: label });
+    fireEvent(
+        button.closest('form'),
+        new SubmitEvent('submit', { bubbles: true, cancelable: true, submitter: button }),
+    );
+    expect(send.mock.calls[0].slice(0, 3)).toEqual([
+        'post',
+        '/admin/audio/modul/1',
+        expect.objectContaining({ action, spoken_text: 'Materi Bali' }),
+    ]);
 });
 
 it('requires login only when an anonymous learner tries to create a quiz', () => {

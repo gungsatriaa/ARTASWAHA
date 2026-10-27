@@ -26,11 +26,12 @@ export default function AudioEdit({ title, text, action, configured, audio, back
                     onSubmit={(e) => {
                         e.preventDefault();
                         const chosen = e.nativeEvent.submitter?.value ?? 'save';
-                        if (!form.processing)
-                            form.transform((data) => ({ ...data, action: chosen })).post(action, {
-                                forceFormData: true,
-                                preserveScroll: true,
-                            });
+                        if (form.processing) return;
+                        form.transform((data) => ({ ...data, action: chosen }));
+                        form.post(action, {
+                            forceFormData: true,
+                            preserveScroll: true,
+                        });
                     }}
                     className="space-y-5"
                 >

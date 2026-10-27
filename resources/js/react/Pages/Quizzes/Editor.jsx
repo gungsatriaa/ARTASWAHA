@@ -173,14 +173,12 @@ export default function Editor({ quiz, hasRooms, preview, meta }) {
     const submit = (e) => {
         e.preventDefault();
         if (form.processing) return;
-        form.transform((data) => ({ ...data, questions: payloadQuestions(data.questions) }))[quiz ? 'put' : 'post'](
-            quiz?.action ?? links['quizzes.store'],
-            {
-                onError: (errors) => {
-                    setStep(Object.keys(errors).some((key) => key.startsWith('questions')) ? 1 : 0);
-                },
+        form.transform((data) => ({ ...data, questions: payloadQuestions(data.questions) }));
+        form[quiz ? 'put' : 'post'](quiz?.action ?? links['quizzes.store'], {
+            onError: (errors) => {
+                setStep(Object.keys(errors).some((key) => key.startsWith('questions')) ? 1 : 0);
             },
-        );
+        });
     };
     const question = form.data.questions[Math.min(position, form.data.questions.length - 1)];
     const original = quiz?.questions.find((item) => item.id === question?.id);
