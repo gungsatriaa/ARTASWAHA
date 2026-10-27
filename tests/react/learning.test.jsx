@@ -111,6 +111,14 @@ describe('learning pages', () => {
         expect(get).toHaveBeenLastCalledWith('/belajar');
     });
 
+    it('shows an honest empty module list with a way to browse other materials', () => {
+        render(<Path path={{ title: 'Cecimpedan', group: 'paribasa' }} lessons={{ data: [], total: 0 }} meta={meta} />);
+        expect(screen.getByRole('heading', { name: 'Daftar modul' })).toBeTruthy();
+        expect(screen.getByText('Pelajaran sedang disiapkan')).toBeTruthy();
+        expect(screen.getByRole('link', { name: /Jelajahi materi lain/ }).getAttribute('href')).toBe('/belajar');
+        expect(screen.queryByRole('list')).toBeNull();
+    });
+
     it('escapes lesson text and uses document links for legacy lesson pages', () => {
         const title = '<script>bad()</script>';
         render(

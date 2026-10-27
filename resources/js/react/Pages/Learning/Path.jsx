@@ -1,6 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import Icon from '../../Components/Icon';
-import { CategoryIcon, EmptyState, PageMeta, Pagination } from '../../Components/ui';
+import { CategoryIcon, PageMeta, Pagination } from '../../Components/ui';
 
 export default function Path({ path, lessons, recommendation, meta }) {
     const { navigation } = usePage().props;
@@ -14,30 +14,26 @@ export default function Path({ path, lessons, recommendation, meta }) {
                 <Icon name="back" />
                 Semua materi
             </Link>
-            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.65fr)] lg:gap-10">
+            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.7fr)] lg:gap-6">
                 <div className="min-w-0 lg:sticky lg:top-28">
                     <header className="rounded-card bg-surface p-6 sm:p-8">
-                        <div className="flex items-start gap-4 lg:flex-col lg:gap-6">
-                            <CategoryIcon group={path.group} className="size-14" />
-                            <div className="min-w-0">
-                                <p className="text-sm font-semibold text-accent">
-                                    {path.group === 'aksara' ? 'Aksara Bali' : 'Paribasa Bali'}
-                                </p>
-                                <h1 className="mt-2 break-words font-display text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
-                                    {path.title}
-                                </h1>
-                            </div>
+                        <div className="flex items-center gap-3">
+                            <CategoryIcon group={path.group} className="size-12 shrink-0" />
+                            <p className="text-sm font-semibold text-accent">
+                                {path.group === 'aksara' ? 'Aksara Bali' : 'Paribasa Bali'}
+                            </p>
                         </div>
+                        <h1 className="mt-6 break-words font-display text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
+                            {path.title}
+                        </h1>
                         {path.description && (
                             <p className="mt-5 max-w-2xl text-sm leading-7 text-foreground/60 sm:text-base">
                                 {path.description}
                             </p>
                         )}
-                        <div className="mt-6 flex items-center gap-3 rounded-2xl bg-background p-4">
+                        <div className="mt-7 flex items-center gap-3 text-foreground/60">
                             <Icon name="book" className="size-5 shrink-0 text-accent" />
-                            <p className="text-sm font-semibold text-foreground/75">
-                                {lessons.total} pelajaran tersedia
-                            </p>
+                            <p className="text-sm font-medium">{lessons.total} pelajaran tersedia</p>
                         </div>
                     </header>
                     {recommendation && (
@@ -53,12 +49,12 @@ export default function Path({ path, lessons, recommendation, meta }) {
                         </aside>
                     )}
                 </div>
-                <section aria-labelledby="lesson-list-title" className="min-w-0 lg:pt-2">
+                <section aria-labelledby="lesson-list-title" className="min-w-0 rounded-card bg-surface p-5 sm:p-8">
                     <h2 id="lesson-list-title" className="font-display text-2xl font-bold">
                         Daftar modul
                     </h2>
                     <p className="mt-2 text-sm leading-6 text-foreground/55">
-                        Pilih pelajaran untuk membaca materi dan mencoba latihan singkatnya.
+                        Materi dan latihan singkat, satu pelajaran dalam satu waktu.
                     </p>
                     {lessons.data.length ? (
                         <ol className="mt-5 grid gap-3 sm:gap-4">
@@ -66,7 +62,7 @@ export default function Path({ path, lessons, recommendation, meta }) {
                                 <li key={lesson.id}>
                                     <Link
                                         href={lesson.url}
-                                        className="group flex h-full min-h-24 items-center gap-3 rounded-card bg-surface p-4 transition-colors hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:gap-5 sm:p-6"
+                                        className="group flex h-full min-h-24 items-center gap-3 rounded-3xl bg-background p-4 transition-colors hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:gap-5 sm:p-6"
                                     >
                                         <span
                                             aria-hidden="true"
@@ -93,21 +89,21 @@ export default function Path({ path, lessons, recommendation, meta }) {
                             ))}
                         </ol>
                     ) : (
-                        <div className="mt-5">
-                            <EmptyState
-                                title="Pelajaran sedang disiapkan"
-                                action={
-                                    <Link
-                                        href={navigation.learning}
-                                        className="inline-flex min-h-11 items-center rounded-full bg-accent px-5 py-3 text-sm font-bold text-background"
-                                    >
-                                        Pilih materi lain
-                                    </Link>
-                                }
+                        <div className="mt-7 rounded-3xl bg-background p-5 sm:p-7">
+                            <span className="grid size-12 place-items-center rounded-full bg-primary/15 text-accent">
+                                <Icon name="book" className="size-6" />
+                            </span>
+                            <h3 className="mt-5 font-display text-xl font-bold">Pelajaran sedang disiapkan</h3>
+                            <p className="mt-2 max-w-lg text-sm leading-7 text-foreground/60">
+                                Belum ada pelajaran untuk {path.title}. Kamu bisa belajar dari materi lain yang
+                                tersedia.
+                            </p>
+                            <Link
+                                href={navigation.learning}
+                                className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-accent px-5 py-3 text-sm font-bold text-background transition-colors hover:bg-accent/90 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
                             >
-                                Belum ada pelajaran untuk {path.title}. Sementara itu, kamu bisa menjelajahi materi
-                                lain.
-                            </EmptyState>
+                                Jelajahi materi lain <Icon name="arrow" className="size-4" />
+                            </Link>
                         </div>
                     )}
                     <Pagination {...lessons} />
