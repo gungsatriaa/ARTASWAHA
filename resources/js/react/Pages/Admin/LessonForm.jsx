@@ -195,10 +195,12 @@ export default function LessonForm({ lesson, paths, meta }) {
                                 />
                             </fieldset>
                         )}
-                        <Keyboard targetRef={target} />
-                        <Button type="submit" disabled={form.processing}>
-                            Simpan sebagai draf
-                        </Button>
+                        <div className="flex flex-col gap-4 pt-2 sm:flex-row sm:flex-wrap sm:items-center [&>button]:!my-0 [&>details]:!my-0 [&>details]:w-full">
+                            <Keyboard targetRef={target} />
+                            <Button type="submit" disabled={form.processing}>
+                                Simpan sebagai draf
+                            </Button>
+                        </div>
                     </form>
                     {lesson.id && (
                         <div className="mt-5 flex flex-wrap gap-3">
