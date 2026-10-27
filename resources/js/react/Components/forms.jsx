@@ -141,7 +141,7 @@ export function Stat({ label, value, note }) {
     return (
         <div data-ui="stat" className="min-w-0 rounded-card bg-surface p-4 sm:p-6">
             <p className="text-xs leading-5 text-foreground/55 sm:text-sm">{label}</p>
-            <p className="mt-3 font-display text-3xl font-bold tabular-nums sm:text-4xl">{value ?? '—'}</p>
+            <p className="mt-3 font-sans text-3xl font-bold tabular-nums sm:text-4xl">{value ?? '—'}</p>
             {note && <p className="mt-2 text-xs leading-5 text-foreground/45">{note}</p>}
         </div>
     );

@@ -78,7 +78,7 @@ export default function AdminLayout({ children }) {
         </nav>
     );
     return (
-        <div className="min-h-screen lg:grid lg:grid-cols-[16.5rem_minmax(0,1fr)]">
+        <div className="admin-shell min-h-screen font-sans lg:grid lg:grid-cols-[16.5rem_minmax(0,1fr)]">
             <Head>
                 <meta name="csrf-token" content={csrfToken} head-key="csrf-token" />
             </Head>

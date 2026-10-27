@@ -6,7 +6,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { PageMeta, buttonClass } from '../../Components/ui';
 import { Card, Heading, Stat, Status, secondaryClass } from '../../Components/forms';
 const Chart = lazy(() => import('../../Components/Chart'));
-export default function Dashboard({ counts, tasks, paths, lessons, overview, meta }) {
+export default function Dashboard({ counts, tasks, lessons, overview, meta }) {
     const { links } = usePage().props;
     const series = useMemo(
         () => [
@@ -40,7 +40,7 @@ export default function Dashboard({ counts, tasks, paths, lessons, overview, met
                 <Card>
                     <div className="flex items-center justify-between gap-3">
                         <h2 className="font-display text-lg font-bold">Kesiapan modul</h2>
-                        <span className="font-display text-2xl font-bold text-accent">{publication}%</span>
+                        <span className="font-sans text-2xl font-bold text-accent">{publication}%</span>
                     </div>
                     <progress
                         aria-label="Persentase modul terbit"
@@ -111,7 +111,7 @@ export default function Dashboard({ counts, tasks, paths, lessons, overview, met
                     </Link>
                 ))}
             </section>
-            <div className="mt-6 grid items-start gap-5 xl:grid-cols-[1.5fr_1fr]">
+            <div className="mt-6">
                 <Card>
                     <div className="mb-5 flex flex-wrap justify-between gap-3">
                         <h2 className="font-display text-xl font-bold">Modul terakhir diubah</h2>
@@ -141,34 +141,6 @@ export default function Dashboard({ counts, tasks, paths, lessons, overview, met
                         {!lessons.length && (
                             <p className="py-5 text-sm text-foreground/55">Belum ada modul pembelajaran.</p>
                         )}
-                    </div>
-                </Card>
-                <Card>
-                    <div className="mb-5 flex justify-between gap-3">
-                        <h2 className="font-display text-xl font-bold">Jalur belajar</h2>
-                        <Link href={links['admin.learning-paths.index']} className="text-sm font-bold text-accent">
-                            Kelola
-                        </Link>
-                    </div>
-                    <div className="space-y-3">
-                        {paths.map((path) => (
-                            <Link
-                                href={path.editUrl}
-                                key={path.id}
-                                className="flex items-center justify-between gap-3 rounded-2xl bg-background p-4"
-                            >
-                                <div className="min-w-0">
-                                    <h3 className="break-words text-sm font-bold">{path.title}</h3>
-                                    <p className="mt-2 text-xs text-foreground/45">{path.count} modul</p>
-                                </div>
-                                <span
-                                    className={`text-xs font-bold ${path.is_published ? 'text-success' : 'text-foreground/40'}`}
-                                >
-                                    {path.is_published ? 'Tampil' : 'Draf'}
-                                </span>
-                            </Link>
-                        ))}
-                        {!paths.length && <p className="text-sm text-foreground/55">Belum ada jalur belajar.</p>}
                     </div>
                 </Card>
             </div>

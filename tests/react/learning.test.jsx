@@ -83,6 +83,21 @@ it('uses a distinct vector shape for each Balinese subject', () => {
     expect(new Set([...container.querySelectorAll('path')].map((path) => path.getAttribute('d'))).size).toBe(5);
 });
 
+it.each(['Pengangge Suara', 'Pengangge Tengenan', 'Pengangge Arda Suara'])(
+    'uses the interface stroke weight for %s without filled glyphs',
+    (title) => {
+        const { container, unmount } = render(<CategoryIcon group="aksara" title={title} />);
+        const mark = container.querySelector('svg');
+        const weight = mark.getAttribute('stroke-width');
+        expect(mark.getAttribute('fill')).toBe('none');
+        expect(mark.getAttribute('stroke')).toBe('currentColor');
+        expect(mark.getAttribute('stroke-linecap')).toBe('round');
+        unmount();
+        const reference = render(<Icon name="book" />);
+        expect(weight).toBe(reference.container.querySelector('svg').getAttribute('stroke-width'));
+    },
+);
+
 beforeEach(() => {
     page.component = 'Learning/Catalog';
     page.props = {

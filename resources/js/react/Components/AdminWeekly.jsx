@@ -18,7 +18,7 @@ export default function AdminWeekly({ weekly = {} }) {
                             <h3>{label}</h3>
                             <Icon name={icon} className="size-4 text-accent" />
                         </div>
-                        <p className="mt-4 font-display text-3xl font-bold tabular-nums">{current}</p>
+                        <p className="mt-4 font-sans text-3xl font-bold tabular-nums">{current}</p>
                         <p className="mt-3 text-xs leading-6 text-foreground/50">
                             <span
                                 className={

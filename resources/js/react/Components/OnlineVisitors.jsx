@@ -24,7 +24,7 @@ export default function OnlineVisitors() {
                 </span>
             </div>
             <div className="mt-5 flex flex-wrap items-end gap-x-7 gap-y-3">
-                <p aria-live="polite" className="font-display text-4xl font-bold tabular-nums text-accent">
+                <p aria-live="polite" className="font-sans text-4xl font-bold tabular-nums text-accent">
                     {data?.total ?? '—'}
                 </p>
                 <p className="pb-1 text-xs text-foreground/55">
