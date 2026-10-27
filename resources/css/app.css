@@ -120,6 +120,7 @@ dialog[open] {
     background: var(--color-accent);
     transform: scaleX(0);
     transform-origin: left;
+    transition: transform 90ms linear;
 }
 @keyframes mascot-wave {
     0%, 100% { rotate: 0deg; }
