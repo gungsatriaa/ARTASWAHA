@@ -6,6 +6,7 @@ import Path from '../../resources/js/react/Pages/Learning/Path';
 import SiteLayout, { usePresence } from '../../resources/js/react/Layouts/SiteLayout';
 import Dialog from '../../resources/js/react/Components/Dialog';
 import { CategoryIcon } from '../../resources/js/react/Components/ui';
+import Icon from '../../resources/js/react/Components/Icon';
 
 const { page, get } = vi.hoisted(() => ({ page: { props: {} }, get: vi.fn() }));
 vi.mock('@inertiajs/react', () => ({
@@ -29,6 +30,20 @@ vi.mock('motion/react-m', async () => {
             }),
         ]),
     );
+});
+
+it.each([
+    ['Cecimpedan', 'question'],
+    ['Peparikan', 'conversation'],
+    ['Sesonggan', 'leaf'],
+    ['Sesonggakan', 'leaf'],
+])('uses the matching Paribasa icon for %s', (title, name) => {
+    const { container, unmount } = render(<CategoryIcon group="paribasa" title={title} />);
+    const path = container.querySelector('path').getAttribute('d');
+    expect(container.querySelector('svg').classList.contains('size-6')).toBe(true);
+    unmount();
+    const expected = render(<Icon name={name} />);
+    expect(expected.container.querySelector('path').getAttribute('d')).toBe(path);
 });
 
 it.each([

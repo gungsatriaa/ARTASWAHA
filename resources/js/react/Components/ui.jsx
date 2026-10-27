@@ -40,6 +40,13 @@ export function PageMeta({ title, description, canonical, robots = 'noindex, fol
 
 export function CategoryIcon({ group, title = '', className = 'size-12' }) {
     const subject = title.toLocaleLowerCase('id-ID');
+    const paribasaIcon = subject.includes('cecimpedan')
+        ? 'question'
+        : subject.includes('peparikan')
+          ? 'conversation'
+          : subject.includes('sesongg')
+            ? 'leaf'
+            : 'chat';
     const glyph = subject.includes('wreastra')
         ? 'ᬳ'
         : subject.includes('angka')
@@ -56,7 +63,11 @@ export function CategoryIcon({ group, title = '', className = 'size-12' }) {
             className={`grid shrink-0 place-items-center rounded-2xl bg-primary/20 text-accent ${className}`}
             aria-hidden="true"
         >
-            {group === 'aksara' ? <BalineseIcon>{glyph}</BalineseIcon> : <Icon name="chat" className="size-6" />}
+            {group === 'aksara' ? (
+                <BalineseIcon>{glyph}</BalineseIcon>
+            ) : (
+                <Icon name={paribasaIcon} className="size-6" />
+            )}
         </span>
     );
 }

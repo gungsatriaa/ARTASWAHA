@@ -1,5 +1,8 @@
 import BalineseIcon from './BalineseIcon';
 const paths = {
+    question: 'M9 8a3 3 0 1 1 5 2.2c-1.3.8-2 1.3-2 3.3M12 17h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0',
+    conversation: 'M14 12H8l-4 3V5h13v4M9 16v2h7l4 3V9H9z',
+    leaf: 'M20 3c0 9-1 16-8 16a7 7 0 0 1-7-7C5 5 12 4 20 3ZM4 21 15 10M9 16v-5M9 16h5',
     mail: 'M3 5h18v14H3zM3 7l9 6 9-6',
     phone: 'M7 3H4a1 1 0 0 0-1 1c0 9.4 7.6 17 17 17a1 1 0 0 0 1-1v-3l-5-2-2 2a15 15 0 0 1-7-7l2-2z',
     chevron: 'm6 9 6 6 6-6',
