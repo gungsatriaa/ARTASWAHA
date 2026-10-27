@@ -210,3 +210,27 @@ describe('shared shell', () => {
         expect(vi.getTimerCount()).toBe(0);
     });
 });
+
+it('opens separate subject dropdowns and supports keyboard dismissal with restored focus', () => {
+    page.props.materials = {
+        paribasa: [{ id: 1, title: 'Cecimpedan', url: '/belajar/cecimpedan' }],
+        aksara: [{ id: 2, title: 'Wreastra', url: '/belajar/wreastra' }],
+    };
+    render(
+        <SiteLayout>
+            <h1>Materi</h1>
+        </SiteLayout>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Paribasa Bali' });
+    fireEvent.keyDown(trigger, { key: 'ArrowDown' });
+    const lesson = screen.getByRole('link', { name: 'Cecimpedan' });
+    expect(document.activeElement).toBe(lesson);
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(document.activeElement).toBe(trigger);
+    fireEvent.click(screen.getByRole('button', { name: 'Aksara Bali' }));
+    expect(screen.getByRole('link', { name: 'Wreastra' }).getAttribute('href')).toBe('/belajar/wreastra');
+    fireEvent.pointerDown(document.body);
+    expect(screen.queryByRole('link', { name: 'Wreastra' })).toBeNull();
+});

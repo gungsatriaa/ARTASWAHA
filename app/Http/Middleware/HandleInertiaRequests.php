@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\LearningPath;
 use App\Services\ReactUi;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -38,6 +39,7 @@ class HandleInertiaRequests extends Middleware
     {
         return [
             ...parent::share($request),
+            'materials' => fn (): array => collect(['paribasa', 'aksara'])->mapWithKeys(fn (string $group): array => [$group => LearningPath::query()->where('is_published', true)->where('group', $group)->orderBy('sort_order')->orderBy('id')->limit(12)->get(['id', 'title', 'slug'])->map(fn (LearningPath $path): array => ['id' => $path->id, 'title' => $path->title, 'url' => route('learning.paths.show', $path->slug)])->all()])->all(),
             'viewer' => fn (): ?array => app(ReactUi::class)->viewer($request),
             'flash' => fn (): array => [
                 'message' => $request->session()->get('status'),

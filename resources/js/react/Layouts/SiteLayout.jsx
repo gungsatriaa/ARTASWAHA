@@ -1,3 +1,4 @@
+import { ProfileDropdown, SubjectDropdown, SubjectLinks } from '../Components/NavigationMenus';
 import PageEffects from '../Components/PageEffects';
 import { useEffect, useState } from 'react';
 import { Head, Link, usePage } from '@inertiajs/react';
@@ -70,7 +71,7 @@ function FlashNotice({ flash }) {
 export { FlashNotice };
 export default function SiteLayout({ children }) {
     const { props, component } = usePage();
-    const { viewer, navigation: nav, brand, flash, csrfToken, links } = props;
+    const { viewer, navigation: nav, brand, flash, csrfToken, links, materials = {} } = props;
     const [menu, setMenu] = useState(false);
     const appMobile =
         viewer && !['Learning/Interview', 'Learning/Lesson'].includes(component) && !component.startsWith('Auth/');
@@ -114,39 +115,41 @@ export default function SiteLayout({ children }) {
                             height="44"
                             className="size-10 object-contain sm:size-11"
                         />
-                        <span className="font-display text-lg font-bold tracking-tight sm:text-2xl">ARTASWAHA</span>
+                        <span className="font-display text-lg font-bold tracking-tight sm:text-2xl md:hidden lg:inline">
+                            ARTASWAHA
+                        </span>
                     </Link>
                     <nav aria-label="Navigasi utama" className="hidden items-center gap-1 md:flex">
-                        {[
-                            ['home', 'Beranda', nav.home],
-                            ['book', 'Belajar', nav.learning],
-                            ['quiz', 'Kuis', nav.quizzes],
-                        ].map(([icon, label, url]) => (
-                            <Link
-                                key={icon}
-                                href={url}
-                                aria-current={active === icon ? 'page' : undefined}
-                                className={`${secondaryClass} ${active === icon ? '!bg-primary/20 !text-accent' : '!bg-transparent'}`}
-                            >
-                                <Icon name={icon} />
-                                {label}
-                            </Link>
-                        ))}
+                        <Link
+                            href={nav.home}
+                            aria-current={active === 'home' ? 'page' : undefined}
+                            className={`${secondaryClass} !px-3 ${active === 'home' ? '!bg-primary/20 !text-accent' : '!bg-transparent'}`}
+                        >
+                            <Icon name="home" />
+                            Beranda
+                        </Link>
+                        <SubjectDropdown
+                            group="paribasa"
+                            items={materials.paribasa}
+                            active={
+                                active === 'book' && (props.path?.group ?? props.lesson?.path?.group) === 'paribasa'
+                            }
+                        />
+                        <SubjectDropdown
+                            group="aksara"
+                            items={materials.aksara}
+                            active={active === 'book' && (props.path?.group ?? props.lesson?.path?.group) === 'aksara'}
+                        />
+                        <Link
+                            href={nav.quizzes}
+                            aria-current={active === 'quiz' ? 'page' : undefined}
+                            className={`${secondaryClass} !px-3 ${active === 'quiz' ? '!bg-primary/20 !text-accent' : '!bg-transparent'}`}
+                        >
+                            <Icon name="quiz" />
+                            Kuis
+                        </Link>
                         {viewer ? (
-                            <button
-                                type="button"
-                                aria-label={`Menu profil ${viewer.name}`}
-                                onClick={() => setMenu(true)}
-                                className="ml-3 rounded-full focus-visible:outline-2 focus-visible:outline-accent"
-                            >
-                                <img
-                                    src={viewer.avatar}
-                                    alt=""
-                                    width="44"
-                                    height="44"
-                                    className="size-11 rounded-full object-cover"
-                                />
-                            </button>
+                            <ProfileDropdown />
                         ) : (
                             <>
                                 <Link href={nav.login} className={secondaryClass}>
@@ -238,6 +241,15 @@ export default function SiteLayout({ children }) {
                     <p className="mb-4 text-sm font-semibold text-accent">Akun anonim · di perangkat ini</p>
                 )}
                 <nav className="grid gap-2" aria-label="Menu halaman">
+                    {[
+                        ['paribasa', 'Paribasa Bali'],
+                        ['aksara', 'Aksara Bali'],
+                    ].map(([group, title]) => (
+                        <details key={group} className="rounded-2xl bg-background p-3">
+                            <summary className="min-h-11 cursor-pointer content-center font-bold">{title}</summary>
+                            <SubjectLinks group={group} items={materials[group]} close={() => setMenu(false)} />
+                        </details>
+                    ))}
                     {[
                         ['Beranda', nav.home],
                         ['Semua materi', nav.learning],

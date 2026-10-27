@@ -17,6 +17,19 @@ class ReactLearningTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_subject_navigation_only_shares_published_paths_and_public_fields(): void
+    {
+        $paribasa = LearningPath::factory()->create(['group' => 'paribasa', 'is_published' => true]);
+        $aksara = LearningPath::factory()->create(['group' => 'aksara', 'is_published' => true]);
+        $hidden = LearningPath::factory()->create(['is_published' => false]);
+        $this->get(route('login'))->assertOk()->assertInertia(fn (Assert $page): Assert => $page
+            ->has('materials.paribasa', 1)->has('materials.aksara', 1)
+            ->where('materials.paribasa.0.title', $paribasa->title)
+            ->where('materials.aksara.0.url', route('learning.paths.show', $aksara->slug))
+            ->missing('materials.paribasa.0.created_at')->missing('materials.paribasa.0.is_published'))
+            ->assertInertiaNotContains($hidden->title);
+    }
+
     public function test_public_visitors_use_the_react_catalog(): void
     {
         LearningPath::factory()->create(['title' => 'Materi publik']);
