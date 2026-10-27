@@ -7,6 +7,7 @@
     font-family: Vimala;
     src: url('../../public/fonts/vimala.ttf') format('truetype');
     font-display: swap;
+    unicode-range: U+1B00-1B7F;
 }
 
 @theme {
@@ -92,7 +93,8 @@ dialog[open] {
 .page-loader-content { width: min(21rem, 100%); text-align: center; }
 [data-loader-percent] {
     font-family: var(--font-sans);
-    font-weight: 600;
+    font-size: 1rem;
+    font-weight: 700;
     font-variant-numeric: lining-nums tabular-nums;
 }
 .page-loader-content > * {
