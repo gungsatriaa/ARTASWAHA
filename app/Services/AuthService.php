@@ -16,20 +16,17 @@ class AuthService
     public function register(array $data, Request $request, LearningProgressService $progressService): User
     {
         $user = User::query()->create($data);
-        Auth::login($user);
+        Auth::login($user, true);
         $request->session()->regenerate();
         $progressService->claimDeviceProgress($request, $user);
 
         return $user;
     }
 
-    /** @param array{email: string, password: string, remember?: bool} $credentials */
+    /** @param array{email: string, password: string} $credentials */
     public function login(array $credentials, Request $request, LearningProgressService $progressService): bool
     {
-        $remember = $credentials['remember'] ?? false;
-        unset($credentials['remember']);
-
-        if (! Auth::attempt($credentials, $remember)) {
+        if (! Auth::attempt($credentials, true)) {
             return false;
         }
 
@@ -70,7 +67,7 @@ class AuthService
             'email_verified_at' => $user->email_verified_at ?? now(),
         ])->save();
 
-        Auth::login($user);
+        Auth::login($user, true);
         $request->session()->regenerate();
         $progressService->claimDeviceProgress($request, $user);
 

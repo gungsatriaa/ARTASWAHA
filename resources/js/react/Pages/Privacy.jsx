@@ -280,12 +280,16 @@ export default function Privacy({ meta }) {
                                 </dd>
                             </div>
                             <div>
-                                <dt className="font-semibold">Sesi, keamanan formulir, dan “Ingat saya”</dt>
+                                <dt className="font-semibold">Sesi, keamanan formulir, dan login berkelanjutan</dt>
                                 <dd className={`mt-2 ${textClass}`}>
                                     Cookie sesi menjaga status masuk; token keamanan membantu melindungi formulir.
-                                    Pilihan Ingat saya dapat mempertahankan login lebih lama. Masa berlaku sesi dan
-                                    cookie login mengikuti konfigurasi layanan serta pengaturan browser, sehingga tidak
-                                    selalu sama dengan cookie profil.
+                                    Setelah daftar atau masuk lewat email maupun Google, cookie login jangka panjang
+                                    diaktifkan otomatis agar akun tetap dikenali ketika sesi singkat berakhir. Cookie
+                                    ini memakai token autentikasi, bukan kata sandi asli. Masa berlaku bawaan hingga
+                                    sekitar 400 hari dan mengikuti pengaturan browser; ini bukan jaminan login
+                                    selamanya. Keluar, penghapusan akun, atau reset kata sandi dapat mengakhiri akses
+                                    tersebut. Menghapus cookie atau menggunakan browser/perangkat lain dapat
+                                    mengharuskan login kembali. Selalu gunakan Keluar pada perangkat bersama.
                                 </dd>
                             </div>
                             <div>

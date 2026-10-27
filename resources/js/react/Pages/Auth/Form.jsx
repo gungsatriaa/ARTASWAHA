@@ -13,7 +13,6 @@ export default function AuthForm({ mode, token, email, meta }) {
         email: email ?? '',
         password: '',
         password_confirmation: '',
-        remember: false,
         token,
     });
     const generalErrors = Object.fromEntries(
@@ -159,15 +158,7 @@ export default function AuthForm({ mode, token, email, meta }) {
                             )}
                             {!register && !reset && (
                                 <div className="flex flex-wrap items-center justify-between gap-2">
-                                    <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-sm text-foreground/65">
-                                        <input
-                                            type="checkbox"
-                                            checked={form.data.remember}
-                                            onChange={(e) => form.setData('remember', e.target.checked)}
-                                            className="size-4 accent-[var(--color-accent)]"
-                                        />
-                                        Ingat saya
-                                    </label>
+                                    <p className="text-xs text-foreground/50">Tetap masuk otomatis di browser ini.</p>
                                     <Link
                                         className="min-h-11 content-center text-sm font-bold text-accent"
                                         href={links['password.request']}
