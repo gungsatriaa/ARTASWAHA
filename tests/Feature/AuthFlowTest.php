@@ -26,9 +26,9 @@ class AuthFlowTest extends TestCase
     public function test_login_and_registration_use_their_dedicated_layout(): void
     {
         $path = LearningPath::factory()->create();
-        $this->post(route('learning.interview.store'), ['step' => 1, 'learning_path_ids' => [$path->id]]);
-        $this->post(route('learning.interview.store'), ['step' => 2, 'role' => 'murid']);
-        $this->post(route('learning.interview.store'), ['step' => 3, 'mode' => 'account']);
+        $this->post(route('learning.interview.store'), ['step' => 1, 'mode' => 'account']);
+        $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$path->id]]);
+        $this->post(route('learning.interview.store'), ['step' => 3, 'role' => 'murid']);
         $profile = LearnerProfile::query()->sole();
         $this->withCookie('artaswaha_device', $profile->visitor_id);
         foreach ([route('login'), route('register')] as $url) {

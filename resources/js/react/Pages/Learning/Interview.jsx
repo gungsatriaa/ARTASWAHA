@@ -37,16 +37,16 @@ export default function Interview({ paths, answers, step, roles, avatar, meta })
     };
     const mode = (value) => {
         if (form.processing) return;
-        form.transform((data) => ({ ...data, mode: value, step: 3 }));
+        form.transform((data) => ({ ...data, mode: value, step: 1 }));
         form.post(links['learning.interview.store'], {
             preserveScroll: false,
             preserveState: false,
         });
     };
     const titles = [
+        'Bagaimana kamu ingin lanjut?',
         'Budaya Bali apa yang ingin kamu pelajari?',
         'Siapakah kamu?',
-        'Bagaimana kamu ingin lanjut?',
         'Apa nama panggilanmu?',
     ];
     return (
@@ -67,7 +67,7 @@ export default function Interview({ paths, answers, step, roles, avatar, meta })
                     <span className="rounded-full bg-surface px-4 py-2 text-sm font-bold text-accent">{step} / 4</span>
                 </div>
                 <ol aria-label={`Langkah ${step} dari 4`} className="mb-6 grid grid-cols-4 gap-2 sm:gap-3">
-                    {['Materi', 'Tentangmu', 'Akun', 'Profil'].map((label, index) => (
+                    {['Akun', 'Materi', 'Tentangmu', 'Profil'].map((label, index) => (
                         <li key={label} aria-current={index + 1 === step ? 'step' : undefined}>
                             <div className={`mb-2 h-1.5 rounded-full ${index < step ? 'bg-accent' : 'bg-white/10'}`} />
                             <p
@@ -84,17 +84,17 @@ export default function Interview({ paths, answers, step, roles, avatar, meta })
                         {titles[step - 1]}
                     </h1>
                     <p className="mt-3 text-sm leading-7 text-foreground/55">
-                        {step === 1
+                        {step === 2
                             ? 'Boleh memilih beberapa materi Paribasa dan Aksara sekaligus. Pilihanmu membantu AI memberikan saran belajar.'
-                            : step === 2
+                            : step === 3
                               ? 'Kami akan menyesuaikan cara menyapa dan rekomendasi belajar untukmu.'
-                              : step === 3
+                              : step === 1
                                 ? 'Kamu bebas belajar tanpa akun. Akun memudahkan progres di perangkat lain.'
                                 : 'Lengkapi profil anonim untuk mulai belajar.'}
                     </p>
                     <Errors errors={form.errors} />
                     <form onSubmit={submit} className="mt-6">
-                        {step === 1 && (
+                        {step === 2 && (
                             <div className="space-y-6">
                                 <p role="status" className="text-sm font-semibold text-accent">
                                     {form.data.learning_path_ids.length} materi dipilih · boleh lebih dari satu
@@ -147,7 +147,7 @@ export default function Interview({ paths, answers, step, roles, avatar, meta })
                                 ))}
                             </div>
                         )}
-                        {step === 2 && (
+                        {step === 3 && (
                             <fieldset className="grid gap-3 sm:grid-cols-2">
                                 <legend className="sr-only">Pilih peran</legend>
                                 {Object.entries(roles).map(([value, label]) => (
@@ -168,7 +168,7 @@ export default function Interview({ paths, answers, step, roles, avatar, meta })
                                 ))}
                             </fieldset>
                         )}
-                        {step === 3 && (
+                        {step === 1 && (
                             <div className="grid gap-4 sm:grid-cols-2">
                                 {!viewer && (
                                     <section className="flex flex-col rounded-card bg-background p-5 sm:p-7">
@@ -197,8 +197,8 @@ export default function Interview({ paths, answers, step, roles, avatar, meta })
                                         {viewer ? 'Lanjut dengan akunmu' : 'Masuk atau daftar'}
                                     </h2>
                                     <p className="mt-3 flex-1 text-sm leading-7 text-foreground/55">
-                                        Pilihan belajar tetap tersimpan. Akun memudahkanmu melanjutkan di perangkat
-                                        lain.
+                                        Isi pilihan belajar berikutnya, lalu masuk atau daftar. Akun memudahkanmu
+                                        melanjutkan di perangkat lain.
                                     </p>
                                     <Button
                                         type="button"
@@ -261,7 +261,7 @@ export default function Interview({ paths, answers, step, roles, avatar, meta })
                                 </div>
                             </div>
                         )}
-                        {step !== 3 && (
+                        {step !== 1 && (
                             <div className="mt-6 flex justify-end">
                                 <Button type="submit" disabled={form.processing} className="w-full sm:w-auto">
                                     {form.processing ? 'Menyimpan…' : step === 4 ? 'Mulai belajar →' : 'Lanjutkan →'}

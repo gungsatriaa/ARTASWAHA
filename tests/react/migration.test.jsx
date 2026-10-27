@@ -138,7 +138,7 @@ it('retains several interview selections and submits their IDs, not a single rad
         <Interview
             paths={[path, { ...path, id: 2, title: 'Aksara Wreastra', group: 'aksara' }]}
             answers={{}}
-            step={1}
+            step={2}
             roles={{}}
             meta={meta}
         />,
@@ -556,7 +556,7 @@ it('does not carry the anonymous-mode transform into the name submission', () =>
         <Interview
             paths={[path]}
             answers={{ learning_path_ids: [1], role: 'murid' }}
-            step={3}
+            step={1}
             roles={{}}
             meta={meta}
         />,
@@ -804,10 +804,13 @@ it('opens the actual latest lesson from the mobile home', () => {
 });
 
 it('renders mandatory interview as a full page with four named steps and no dismiss control', () => {
+    page.props.viewer = null;
     render(<Interview paths={[path]} answers={{}} step={1} roles={{}} meta={meta} />);
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(screen.getByRole('region', { name: 'Perkenalan awal' })).toBeTruthy();
     expect(screen.getByRole('list', { name: 'Langkah 1 dari 4' }).children).toHaveLength(4);
+    expect(screen.getByRole('button', { name: 'Pilih anonim' })).toBeTruthy();
+    expect(screen.queryByRole('checkbox')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Tutup' })).toBeNull();
     expect(screen.getByRole('link', { name: 'Sudah punya akun? Masuk' }).getAttribute('href')).toBe('/login');
 });

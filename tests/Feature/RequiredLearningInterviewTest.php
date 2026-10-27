@@ -14,6 +14,21 @@ class RequiredLearningInterviewTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_account_choice_is_required_first_and_changing_it_clears_later_answers(): void
+    {
+        $path = LearningPath::factory()->create();
+        $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$path->id]])
+            ->assertRedirectToRoute('learning.interview.show');
+        $this->post(route('learning.interview.store'), ['step' => 1, 'mode' => 'invalid'])->assertSessionHasErrors('mode');
+        $this->post(route('learning.interview.store'), ['step' => 1, 'mode' => 'anonymous']);
+        $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$path->id]]);
+        $this->post(route('learning.interview.store'), ['step' => 1, 'mode' => 'account'])
+            ->assertRedirectToRoute('learning.interview.show', ['step' => 2])
+            ->assertSessionHas('learning_interview', ['mode' => 'account']);
+        $this->get(route('learning.interview.show', ['step' => 4]))->assertInertiaValue('step', 2);
+        $this->assertDatabaseCount('learner_profiles', 0);
+    }
+
     public function test_new_visitors_must_finish_interview_before_accessing_content_or_registering(): void
     {
         $lesson = Lesson::factory()->create();
@@ -40,10 +55,10 @@ class RequiredLearningInterviewTest extends TestCase
         $lesson = Lesson::factory()->create();
         $path = $lesson->learningPath;
         $this->get(route('learning.lessons.show', $lesson->slug))->assertRedirectToRoute('learning.interview.show');
-        $this->post(route('learning.interview.store'), ['step' => 1, 'learning_path_ids' => [$path->id]]);
+        $this->post(route('learning.interview.store'), ['step' => 1, 'mode' => 'anonymous']);
         $this->get(route('learning.interview.show'))->assertInertiaValue('step', 2);
-        $this->post(route('learning.interview.store'), ['step' => 2, 'role' => 'murid']);
-        $this->post(route('learning.interview.store'), ['step' => 3, 'mode' => 'anonymous']);
+        $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$path->id]]);
+        $this->post(route('learning.interview.store'), ['step' => 3, 'role' => 'murid']);
         $this->get(route('home'))->assertRedirectToRoute('learning.interview.show');
         $this->get(route('learning.interview.show'))->assertInertiaValue('step', 4);
         $this->post(route('learning.interview.store'), ['step' => 4, 'name' => 'Made'])
@@ -57,9 +72,9 @@ class RequiredLearningInterviewTest extends TestCase
     {
         $path = LearningPath::factory()->create();
         $this->get(route('quizzes.index'))->assertRedirectToRoute('learning.interview.show');
-        $this->post(route('learning.interview.store'), ['step' => 1, 'learning_path_ids' => [$path->id]]);
-        $this->post(route('learning.interview.store'), ['step' => 2, 'role' => 'guru']);
-        $this->post(route('learning.interview.store'), ['step' => 3, 'mode' => 'account'])->assertRedirectToRoute('login');
+        $this->post(route('learning.interview.store'), ['step' => 1, 'mode' => 'account']);
+        $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$path->id]]);
+        $this->post(route('learning.interview.store'), ['step' => 3, 'role' => 'guru'])->assertRedirectToRoute('login');
         $profile = LearnerProfile::query()->sole();
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('home'))->assertRedirectToRoute('login');
         $this->get(route('learning.interview.show'))->assertRedirectToRoute('login');

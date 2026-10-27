@@ -21,12 +21,13 @@ class LearningInterviewTest extends TestCase
 
     public function test_missing_learning_selection_shows_a_friendly_message_above_the_choices(): void
     {
+        $this->post(route('learning.interview.store'), ['step' => 1, 'mode' => 'anonymous']);
         $path = LearningPath::factory()->create(['is_published' => true]);
         $message = 'Silakan pilih minimal satu materi yang ingin kamu pelajari untuk melanjutkan, ya.';
 
         $this->from(route('learning.interview.show'))
             ->followingRedirects()
-            ->post(route('learning.interview.store'), ['step' => 1])
+            ->post(route('learning.interview.store'), ['step' => 2])
             ->assertOk()
             ->assertInertiaValue('errors.learning_path_ids', $message)
             ->assertInertiaNotContains('validation.required');
@@ -38,9 +39,9 @@ class LearningInterviewTest extends TestCase
         $path = LearningPath::factory()->create(['is_published' => true]);
 
         $this->get(route('learning.interview.show'))->assertOk()->assertInertiaContains($path->title);
-        $this->post(route('learning.interview.store'), ['step' => 1, 'learning_path_ids' => [$path->id]])->assertRedirect(route('learning.interview.show', ['step' => 2]));
-        $this->post(route('learning.interview.store'), ['step' => 2, 'role' => 'murid'])->assertRedirect(route('learning.interview.show', ['step' => 3]));
-        $this->post(route('learning.interview.store'), ['step' => 3, 'mode' => 'anonymous'])->assertRedirect(route('learning.interview.show', ['step' => 4]));
+        $this->post(route('learning.interview.store'), ['step' => 1, 'mode' => 'anonymous']);
+        $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$path->id]])->assertRedirect(route('learning.interview.show', ['step' => 3]));
+        $this->post(route('learning.interview.store'), ['step' => 3, 'role' => 'murid'])->assertRedirect(route('learning.interview.show', ['step' => 4]));
         $this->get(route('learning.interview.show', ['step' => 4]))
             ->assertOk()
             ->assertInertiaNotContains('Petualanganmu dimulai di sini.');
@@ -69,9 +70,9 @@ class LearningInterviewTest extends TestCase
         $otherPath = LearningPath::factory()->create(['is_published' => true]);
         $user = User::factory()->create(['password' => 'safe-password']);
 
-        $this->post(route('learning.interview.store'), ['step' => 1, 'learning_path_ids' => [$path->id, $otherPath->id]]);
-        $this->post(route('learning.interview.store'), ['step' => 2, 'role' => 'guru']);
-        $this->post(route('learning.interview.store'), ['step' => 3, 'mode' => 'account'])->assertRedirect(route('login'))->assertCookie('artaswaha_device');
+        $this->post(route('learning.interview.store'), ['step' => 1, 'mode' => 'account']);
+        $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$path->id, $otherPath->id]]);
+        $this->post(route('learning.interview.store'), ['step' => 3, 'role' => 'guru'])->assertRedirect(route('login'))->assertCookie('artaswaha_device');
 
         $profile = LearnerProfile::query()->firstOrFail();
         $this->withCookie('artaswaha_device', $profile->visitor_id)->post(route('login.store'), ['email' => $user->email, 'password' => 'safe-password'])
@@ -83,19 +84,19 @@ class LearningInterviewTest extends TestCase
 
     public function test_multiple_topics_are_selected_and_saved_for_the_profile(): void
     {
+        $this->post(route('learning.interview.store'), ['step' => 1, 'mode' => 'anonymous']);
         $firstPath = LearningPath::factory()->create(['is_published' => true, 'title' => 'Cecimpedan', 'group' => 'paribasa']);
         $secondPath = LearningPath::factory()->create(['is_published' => true, 'title' => 'Pepengangge', 'group' => 'aksara']);
 
         $this->get(route('learning.interview.show'))
             ->assertInertia(fn (AssertableInertia $page) => $page->etc());
 
-        $this->post(route('learning.interview.store'), ['step' => 1, 'learning_path_ids' => [$firstPath->id, $secondPath->id]])
-            ->assertRedirect(route('learning.interview.show', ['step' => 2]));
-        $this->get(route('learning.interview.show', ['step' => 1]))
+        $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$firstPath->id, $secondPath->id]])
+            ->assertRedirect(route('learning.interview.show', ['step' => 3]));
+        $this->get(route('learning.interview.show', ['step' => 2]))
             ->assertInertiaValue('answers.learning_path_ids', [$firstPath->id, $secondPath->id]);
 
-        $this->post(route('learning.interview.store'), ['step' => 2, 'role' => 'murid']);
-        $this->post(route('learning.interview.store'), ['step' => 3, 'mode' => 'anonymous']);
+        $this->post(route('learning.interview.store'), ['step' => 3, 'role' => 'murid']);
         $this->post(route('learning.interview.store'), ['step' => 4, 'name' => 'Made'])
             ->assertRedirect(route('learning.paths.show', $firstPath->slug));
 
@@ -110,13 +111,14 @@ class LearningInterviewTest extends TestCase
 
     public function test_topic_selection_rejects_empty_duplicate_and_unpublished_choices(): void
     {
+        $this->post(route('learning.interview.store'), ['step' => 1, 'mode' => 'anonymous']);
         $published = LearningPath::factory()->create(['is_published' => true]);
         $unpublished = LearningPath::factory()->create(['is_published' => false]);
 
-        $this->post(route('learning.interview.store'), ['step' => 1])->assertSessionHasErrors('learning_path_ids');
-        $this->post(route('learning.interview.store'), ['step' => 1, 'learning_path_ids' => [$published->id, $published->id]])
+        $this->post(route('learning.interview.store'), ['step' => 2])->assertSessionHasErrors('learning_path_ids');
+        $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$published->id, $published->id]])
             ->assertSessionHasErrors('learning_path_ids.0');
-        $this->post(route('learning.interview.store'), ['step' => 1, 'learning_path_ids' => [$published->id, $unpublished->id]])
+        $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$published->id, $unpublished->id]])
             ->assertSessionHasErrors('learning_path_ids.1');
         $this->assertDatabaseCount('learner_profiles', 0);
     }
@@ -125,9 +127,9 @@ class LearningInterviewTest extends TestCase
     {
         $path = LearningPath::factory()->create(['is_published' => true]);
 
-        $this->post(route('learning.interview.store'), ['step' => 1, 'learning_path_ids' => [$path->id]]);
-        $this->post(route('learning.interview.store'), ['step' => 2, 'role' => 'pendatang']);
-        $this->post(route('learning.interview.store'), ['step' => 3, 'mode' => 'anonymous']);
+        $this->post(route('learning.interview.store'), ['step' => 1, 'mode' => 'anonymous']);
+        $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$path->id]]);
+        $this->post(route('learning.interview.store'), ['step' => 3, 'role' => 'pendatang']);
         $this->post(route('learning.interview.store'), ['step' => 4, 'name' => 'Made'])->assertRedirect(route('learning.paths.show', $path->slug));
 
         $this->assertContains(LearnerProfile::query()->firstOrFail()->avatar, array_keys(ProfileAvatarService::DEFAULT_AVATARS));
@@ -138,9 +140,9 @@ class LearningInterviewTest extends TestCase
         $path = LearningPath::factory()->create(['is_published' => true]);
         $otherPath = LearningPath::factory()->create(['is_published' => true]);
 
-        $this->post(route('learning.interview.store'), ['step' => 1, 'learning_path_ids' => [$path->id]]);
-        $this->post(route('learning.interview.store'), ['step' => 2, 'role' => 'murid']);
-        $this->post(route('learning.interview.store'), ['step' => 3, 'mode' => 'anonymous']);
+        $this->post(route('learning.interview.store'), ['step' => 1, 'mode' => 'anonymous']);
+        $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$path->id]]);
+        $this->post(route('learning.interview.store'), ['step' => 3, 'role' => 'murid']);
         $this->post(route('learning.interview.store'), ['step' => 4, 'name' => 'Made']);
 
         $profile = LearnerProfile::query()->firstOrFail();
@@ -193,9 +195,9 @@ class LearningInterviewTest extends TestCase
     public function test_anonymous_profile_replaces_guest_navigation_on_desktop_and_mobile(): void
     {
         $path = LearningPath::factory()->create(['is_published' => true]);
-        $this->post(route('learning.interview.store'), ['step' => 1, 'learning_path_ids' => [$path->id]]);
-        $this->post(route('learning.interview.store'), ['step' => 2, 'role' => 'murid']);
-        $this->post(route('learning.interview.store'), ['step' => 3, 'mode' => 'anonymous']);
+        $this->post(route('learning.interview.store'), ['step' => 1, 'mode' => 'anonymous']);
+        $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$path->id]]);
+        $this->post(route('learning.interview.store'), ['step' => 3, 'role' => 'murid']);
         $this->post(route('learning.interview.store'), ['step' => 4, 'name' => 'Made']);
 
         $profile = LearnerProfile::query()->firstOrFail();
@@ -274,9 +276,9 @@ class LearningInterviewTest extends TestCase
     {
         $path = LearningPath::factory()->create(['is_published' => true]);
 
-        $this->post(route('learning.interview.store'), ['step' => 1, 'learning_path_ids' => [$path->id]]);
-        $this->post(route('learning.interview.store'), ['step' => 2, 'role' => 'pendatang']);
-        $this->post(route('learning.interview.store'), ['step' => 3, 'mode' => 'account'])->assertRedirect(route('login'));
+        $this->post(route('learning.interview.store'), ['step' => 1, 'mode' => 'account']);
+        $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$path->id]]);
+        $this->post(route('learning.interview.store'), ['step' => 3, 'role' => 'pendatang'])->assertRedirect(route('login'));
         $profile = LearnerProfile::query()->firstOrFail();
 
         $this->withCookie('artaswaha_device', $profile->visitor_id)->post(route('register.store'), [
@@ -292,9 +294,9 @@ class LearningInterviewTest extends TestCase
     public function test_registering_from_anonymous_profile_changes_navigation_to_account_profile(): void
     {
         $path = LearningPath::factory()->create(['is_published' => true]);
-        $this->post(route('learning.interview.store'), ['step' => 1, 'learning_path_ids' => [$path->id]]);
-        $this->post(route('learning.interview.store'), ['step' => 2, 'role' => 'guru']);
-        $this->post(route('learning.interview.store'), ['step' => 3, 'mode' => 'anonymous']);
+        $this->post(route('learning.interview.store'), ['step' => 1, 'mode' => 'anonymous']);
+        $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$path->id]]);
+        $this->post(route('learning.interview.store'), ['step' => 3, 'role' => 'guru']);
         $this->post(route('learning.interview.store'), ['step' => 4, 'name' => 'Putu']);
         $profile = LearnerProfile::query()->firstOrFail();
 
@@ -315,21 +317,23 @@ class LearningInterviewTest extends TestCase
 
     public function test_interview_requires_published_path_and_prior_steps(): void
     {
+        $this->post(route('learning.interview.store'), ['step' => 1, 'mode' => 'anonymous']);
         $path = LearningPath::factory()->create(['is_published' => false]);
 
-        $this->post(route('learning.interview.store'), ['step' => 1, 'learning_path_ids' => [$path->id]])->assertSessionHasErrors('learning_path_ids.0');
-        $this->post(route('learning.interview.store'), ['step' => 4, 'name' => 'Made'])->assertRedirect(route('learning.interview.show'));
+        $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$path->id]])->assertSessionHasErrors('learning_path_ids.0');
+        $this->post(route('learning.interview.store'), ['step' => 4, 'name' => 'Made'])->assertRedirect(route('learning.interview.show', ['step' => 2]));
         $this->assertDatabaseCount('learner_profiles', 0);
     }
 
     public function test_interview_returns_to_topic_selection_if_material_is_archived_midway(): void
     {
+        $this->post(route('learning.interview.store'), ['step' => 1, 'mode' => 'anonymous']);
         $path = LearningPath::factory()->create(['is_published' => true]);
-        $this->post(route('learning.interview.store'), ['step' => 1, 'learning_path_ids' => [$path->id]]);
+        $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$path->id]]);
         $path->update(['is_published' => false]);
 
-        $this->post(route('learning.interview.store'), ['step' => 2, 'role' => 'guru'])
-            ->assertRedirect(route('learning.interview.show'))
+        $this->post(route('learning.interview.store'), ['step' => 3, 'role' => 'guru'])
+            ->assertRedirect(route('learning.interview.show', ['step' => 2]))
             ->assertSessionHasErrors('learning_path_ids');
         $this->assertDatabaseCount('learner_profiles', 0);
     }
