@@ -33,14 +33,24 @@ vi.mock('motion/react-m', async () => {
 
 it.each([
     ['Aksara Wreastra & Gantungan', 'ᬳ'],
-    ['Pengangge Suara', '᭞ᬶ'],
-    ['Pengangge Arda Suara', '᭞᭄ᬬ'],
-    ['Pengangge Tengenan', '᭞ᬂ'],
+    ['Pengangge Suara', 'ᬶ'],
+    ['Pengangge Arda Suara', '᭄ᬬ'],
+    ['Pengangge Tengenan', 'ᬂ'],
     ['Angka Aksara Bali', '᭑'],
 ])('uses the requested glyph for %s', (title, glyph) => {
     const { container } = render(<CategoryIcon group="aksara" title={title} />);
     expect(container.querySelector('[lang="ban"]').textContent).toBe(glyph);
 });
+
+it.each(['Pengangge Suara', 'Pengangge Tengenan', 'Pengangge Arda Suara'])(
+    'places three dots underneath %s and hides the placeholder circle',
+    (title) => {
+        const { container } = render(<CategoryIcon group="aksara" title={title} />);
+        expect(screen.getByText('...')).toBeTruthy();
+        expect(container.querySelector('tspan[fill="transparent"]').textContent).toBe('◌');
+        expect(container.querySelector('[lang="ban"]').textContent).not.toContain('᭞');
+    },
+);
 
 it('centers a Balinese icon using the rendered glyph bounds', () => {
     const getBBox = vi.fn(() => ({ x: -3, y: -30, width: 16, height: 12 }));
@@ -72,7 +82,7 @@ it('sizes and centers the visible glyph rather than the font line height', () =>
         }),
     });
     try {
-        const { container } = render(<CategoryIcon group="aksara" title="Pengangge Suara" />);
+        const { container } = render(<CategoryIcon group="aksara" title="Aksara Wreastra & Gantungan" />);
         const [x, y, width, height] = container.querySelector('svg').getAttribute('viewBox').split(' ').map(Number);
         expect(width).toBeCloseTo(22.4);
         expect(height).toBeCloseTo(width);

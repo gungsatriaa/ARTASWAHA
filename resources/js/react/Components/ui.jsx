@@ -45,11 +45,11 @@ export function CategoryIcon({ group, title = '', className = 'size-12' }) {
         : subject.includes('angka')
           ? '᭑'
           : subject.includes('arda')
-            ? '᭞᭄ᬬ'
+            ? '᭄ᬬ'
             : subject.includes('tengenan')
-              ? '᭞ᬂ'
+              ? 'ᬂ'
               : subject.includes('suara')
-                ? '᭞ᬶ'
+                ? 'ᬶ'
                 : 'ᬳ';
     return (
         <span
