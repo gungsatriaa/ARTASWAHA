@@ -264,11 +264,38 @@ it('renders public content, privacy disclosures and testimonials as escaped Reac
     expect(screen.getByText(/bukan testimoni pengguna nyata/)).toBeTruthy();
     unmount();
     render(<Privacy meta={meta} />);
-    for (const id of ['data', 'tujuan', 'cookie', 'layanan', 'penyimpanan', 'kendali', 'kontak'])
+    for (const id of [
+        'ringkasan',
+        'data',
+        'ai',
+        'cookie',
+        'akses',
+        'penyimpanan',
+        'kendali',
+        'keamanan',
+        'pertanyaan',
+        'kontak',
+    ])
         expect(document.getElementById(id)).toBeTruthy();
     expect(screen.getByRole('link', { name: 'kerthajayasoftware@gmail.com' }).href).toBe(
         'mailto:kerthajayasoftware@gmail.com',
     );
+});
+
+it('keeps privacy topics reachable and opens data disclosures without a custom modal', () => {
+    render(<Privacy meta={meta} />);
+    const navigation = screen.getByRole('navigation', { name: 'Isi kebijakan privasi' });
+    for (const link of within(navigation).getAllByRole('link')) {
+        expect(document.querySelector(link.getAttribute('href'))).toBeTruthy();
+    }
+    const disclosure = screen.getByText('Profil anonim').closest('details');
+    expect(disclosure.open).toBe(false);
+    fireEvent.click(disclosure.querySelector('summary'));
+    expect(disclosure.open).toBe(true);
+    expect(within(disclosure).getByText(/Profil dan progres tersimpan di server/)).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Buka profil/ }).getAttribute('href')).toBe('/profil');
+    expect(screen.getByText(/Hapus Akun Saya/)).toBeTruthy();
+    expect(screen.getByText(/Analisis otomatis belum memiliki pengaturan nonaktif per profil/)).toBeTruthy();
 });
 
 it('resolves auth pages to the dedicated layout without public or mobile navigation', async () => {
