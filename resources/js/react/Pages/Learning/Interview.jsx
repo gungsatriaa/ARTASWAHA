@@ -171,7 +171,7 @@ export default function Interview({ paths, answers, step, roles, avatar, meta })
                         {step === 1 && (
                             <div className="grid gap-4 sm:grid-cols-2">
                                 {!viewer && (
-                                    <section className="flex flex-col rounded-card bg-background p-5 sm:p-7">
+                                    <section className="flex min-w-0 flex-col rounded-card bg-surface p-5 sm:p-7">
                                         <span className="grid size-12 place-items-center rounded-2xl bg-primary/20 text-accent">
                                             <Icon name="user" className="size-6" />
                                         </span>
@@ -189,7 +189,7 @@ export default function Interview({ paths, answers, step, roles, avatar, meta })
                                         </Button>
                                     </section>
                                 )}
-                                <section className="flex flex-col rounded-card bg-background p-5 sm:p-7">
+                                <section className="flex min-w-0 flex-col rounded-card bg-surface p-5 sm:p-7">
                                     <span className="grid size-12 place-items-center rounded-2xl bg-primary/20 text-accent">
                                         <Icon name="login" className="size-6" />
                                     </span>
