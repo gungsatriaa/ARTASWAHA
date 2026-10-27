@@ -40,7 +40,7 @@ export default function Dashboard({ counts, tasks, lessons, overview, meta }) {
                 <Card>
                     <div className="flex items-center justify-between gap-3">
                         <h2 className="font-display text-lg font-bold">Kesiapan modul</h2>
-                        <span className="font-sans text-2xl font-bold text-accent">{publication}%</span>
+                        <span className="admin-number font-sans text-2xl font-bold text-accent">{publication}%</span>
                     </div>
                     <progress
                         aria-label="Persentase modul terbit"

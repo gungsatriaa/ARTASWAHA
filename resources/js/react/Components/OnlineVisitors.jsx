@@ -24,14 +24,14 @@ export default function OnlineVisitors() {
                 </span>
             </div>
             <div className="mt-5 flex flex-wrap items-end gap-x-7 gap-y-3">
-                <p aria-live="polite" className="font-sans text-4xl font-bold tabular-nums text-accent">
+                <p aria-live="polite" className="admin-number font-sans text-4xl font-bold tabular-nums text-accent">
                     {data?.total ?? '—'}
                 </p>
                 <p className="pb-1 text-xs text-foreground/55">
-                    <strong className="mr-2 text-foreground">{data?.accounts ?? '—'}</strong>Akun
+                    <strong className="admin-number mr-2 text-foreground">{data?.accounts ?? '—'}</strong>Akun
                 </p>
                 <p className="pb-1 text-xs text-foreground/55">
-                    <strong className="mr-2 text-foreground">{data?.anonymous ?? '—'}</strong>Tanpa akun
+                    <strong className="admin-number mr-2 text-foreground">{data?.anonymous ?? '—'}</strong>Tanpa akun
                 </p>
             </div>
             {error && (

@@ -18,16 +18,16 @@ export default function AdminWeekly({ weekly = {} }) {
                             <h3>{label}</h3>
                             <Icon name={icon} className="size-4 text-accent" />
                         </div>
-                        <p className="mt-4 font-sans text-3xl font-bold tabular-nums">{current}</p>
+                        <p className="mt-4 admin-number font-sans text-3xl font-bold tabular-nums">{current}</p>
                         <p className="mt-3 text-xs leading-6 text-foreground/50">
                             <span
-                                className={
+                                className={`admin-number ${
                                     change > 0
                                         ? 'font-semibold text-success'
                                         : change < 0
                                           ? 'font-semibold text-accent'
                                           : ''
-                                }
+                                }`}
                             >
                                 {change > 0 ? `+${change}` : change}
                             </span>{' '}

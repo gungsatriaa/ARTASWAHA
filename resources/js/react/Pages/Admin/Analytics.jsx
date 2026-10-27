@@ -86,7 +86,7 @@ export default function Analytics({
                         <Stat label="Jawaban tercatat" value={metrics.answers} />
                     </div>
                     <p className="mt-5 text-sm text-foreground/55">
-                        <strong className="mr-3 font-sans text-3xl text-accent">
+                        <strong className="mr-3 admin-number font-sans text-3xl text-accent">
                             {metrics.accuracy === null ? '—' : `${metrics.accuracy}%`}
                         </strong>
                         jawaban benar
@@ -101,7 +101,7 @@ export default function Analytics({
                                 className="flex justify-between gap-3 rounded-2xl bg-background p-4 text-sm"
                             >
                                 <span className="break-words">{path.title}</span>
-                                <strong className="text-accent">{path.completions}</strong>
+                                <strong className="admin-number text-accent">{path.completions}</strong>
                             </li>
                         ))}
                         {!topPaths.length && (
@@ -137,7 +137,7 @@ export default function Analytics({
                             }).map(([key, label]) => (
                                 <div key={key} className="rounded-2xl bg-background p-4">
                                     <p className="min-h-10 text-xs leading-5 text-foreground/50">{label}</p>
-                                    <p className="mt-2 font-sans text-2xl font-bold">{roomStatuses[key] ?? 0}</p>
+                                    <p className="mt-2 admin-number font-sans text-2xl font-bold">{roomStatuses[key] ?? 0}</p>
                                 </div>
                             ))}
                         </div>
@@ -163,7 +163,7 @@ export default function Analytics({
                                                     masyarakat: 'Masyarakat umum',
                                                 }[item.role] ?? 'Lainnya'}
                                             </span>
-                                            <strong className="text-accent">{item.total}</strong>
+                                            <strong className="admin-number text-accent">{item.total}</strong>
                                         </div>
                                         <progress
                                             aria-label={`Proporsi peran ${item.role}`}
@@ -199,7 +199,7 @@ export default function Analytics({
                             ].map(([label, value]) => (
                                 <div key={label} className="rounded-2xl bg-background p-4">
                                     <p className="min-h-10 text-xs leading-5 text-foreground/50">{label}</p>
-                                    <p className="mt-2 font-sans text-2xl font-bold">{value}</p>
+                                    <p className="mt-2 admin-number font-sans text-2xl font-bold">{value}</p>
                                 </div>
                             ))}
                         </div>

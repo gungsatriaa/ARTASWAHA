@@ -157,7 +157,7 @@ export default function Ai({
                                 {statuses.map((item, index) => (
                                     <li key={index} className="flex justify-between gap-3">
                                         <Status value={item.analysis_status} />
-                                        <strong>{item.total}</strong>
+                                        <strong className="admin-number">{item.total}</strong>
                                     </li>
                                 ))}
                             </ul>
@@ -174,7 +174,7 @@ export default function Ai({
                                 {(snapshot.primary_materials ?? []).map((item, index) => (
                                     <li key={index} className="flex justify-between gap-3 text-sm">
                                         <span>{item.title}</span>
-                                        <strong>{item.total}</strong>
+                                        <strong className="admin-number">{item.total}</strong>
                                     </li>
                                 ))}
                             </ul>
