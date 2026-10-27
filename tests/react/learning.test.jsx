@@ -246,6 +246,10 @@ it('shows the shared homepage footer for an existing identity with published sub
         </SiteLayout>,
     );
     expect(screen.getByRole('contentinfo', { name: 'Footer ARTASWAHA' })).toBeTruthy();
+    const contact = screen.getByRole('link', { name: '0813 3725 3221' }).closest('address');
+    expect(contact).toBeTruthy();
+    expect(contact.textContent).not.toContain('Main kuis bareng');
+    expect(screen.getByRole('navigation', { name: 'Informasi layanan' }).textContent).toContain('Main kuis bareng');
     expect(screen.getByRole('link', { name: 'Cecimpedan' }).getAttribute('href')).toBe('/belajar/cecimpedan');
     expect(screen.getByRole('link', { name: 'Kebijakan privasi' }).getAttribute('href')).toBe('/kebijakan-privasi');
     expect(screen.getByRole('link', { name: 'kerthajayasoftware@gmail.com' }).getAttribute('href')).toBe(

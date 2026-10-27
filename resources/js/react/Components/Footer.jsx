@@ -52,23 +52,27 @@ export default function Footer({ className = '' }) {
                     ))}
                     <div className="min-w-0">
                         <h2 className="mb-3 font-display text-base font-bold">Tetap terhubung</h2>
-                        <a href="mailto:kerthajayasoftware@gmail.com" className={`${linkClass} gap-2 break-all`}>
-                            <Icon name="mail" className="size-4 shrink-0 text-primary" />
-                            <span>kerthajayasoftware@gmail.com</span>
-                        </a>
-                        <a href="tel:+6281337253221" className={`${linkClass} flex gap-2`}>
-                            <Icon name="phone" className="size-4 shrink-0 text-primary" />
-                            0813 3725 3221
-                        </a>
-                        <Link href={navigation.quizzes} className={`${linkClass} mt-3 gap-2`}>
-                            <Icon name="quiz" className="size-4" />
-                            Main kuis bareng
-                        </Link>
+                        <address className="flex flex-col items-start gap-1 not-italic">
+                            <a
+                                href="mailto:kerthajayasoftware@gmail.com"
+                                className={`${linkClass} max-w-full gap-2 break-all`}
+                            >
+                                <Icon name="mail" className="size-4 shrink-0 text-primary" />
+                                <span className="min-w-0">kerthajayasoftware@gmail.com</span>
+                            </a>
+                            <a href="tel:+6281337253221" className={`${linkClass} gap-2`}>
+                                <Icon name="phone" className="size-4 shrink-0 text-primary" />
+                                <span>0813 3725 3221</span>
+                            </a>
+                        </address>
                     </div>
                 </div>
                 <div className="mt-9 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 pt-6 text-xs text-foreground/35">
                     <p>© {new Date().getFullYear()} ARTASWAHA</p>
                     <nav aria-label="Informasi layanan" className="flex flex-wrap gap-5">
+                        <Link href={navigation.quizzes} className="inline-flex min-h-10 items-center hover:text-accent">
+                            Main kuis bareng
+                        </Link>
                         <Link
                             href={`${navigation.home}#tentang`}
                             className="inline-flex min-h-10 items-center hover:text-accent"
