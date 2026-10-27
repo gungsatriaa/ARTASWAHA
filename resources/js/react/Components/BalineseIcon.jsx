@@ -1,52 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
+// Glyph outlines from the bundled Vimala font keep combining marks free of fallback circles.
+const shapes = {
+    'ᬂ': 'M16.36 22.00Q13.35 12.51 6.49 5.78L8.92 2.00Q12.71 4.31 14.82 10.04Q16.94 15.78 17.51 21.74Z',
+    '᭑': 'M17.59 7.60Q18.08 7.60 18.57 7.44Q17.61 5.41 16.34 5.41Q15.44 5.48 15.44 6.21Q15.44 6.79 16.05 7.20Q16.65 7.60 17.59 7.60ZM16.02 19.66L15.96 19.37Q17.38 18.30 17.56 15.31Q17.54 11.99 15.11 11.79L14.55 11.79Q12.77 11.99 11.70 13.39L11.65 13.39L11.65 13.37Q10.58 11.99 8.80 11.79L8.27 11.79Q6.37 11.94 5.95 13.93L5.90 14.91Q5.90 17.70 7.80 19.21L7.57 19.53Q5.88 19.17 4.39 18.50Q2.56 17.72 2.56 15.78Q2.56 14.69 3.23 13.44Q3.78 12.55 3.78 12.10Q3.78 11.70 3.29 11.70Q2.51 11.70 2.51 12.77Q2.51 13.17 2.62 13.71L2.31 13.75Q2.00 12.93 2.00 12.10Q2.00 9.60 3.65 9.60Q5.01 9.69 5.01 10.99Q5.01 11.79 4.21 13.01Q3.40 14.24 3.40 15.07Q3.40 16.40 5.55 17.18Q5.21 16.40 5.12 15.09Q5.19 9.74 8.20 9.63Q9.42 9.63 10.25 10.27Q11.07 10.92 11.68 12.21Q12.26 10.96 13.03 10.29Q13.79 9.63 15.18 9.63Q18.21 9.76 18.21 15.20Q18.10 17.03 17.65 18.12Q20.15 17.16 20.15 13.75L20.15 13.39Q20.08 11.48 19.24 9.51L18.45 9.60Q16.63 9.58 15.63 8.74Q14.64 7.91 14.58 6.82L14.58 6.55Q14.58 4.74 16.34 4.74Q18.05 4.74 19.26 7.22Q21.02 6.28 21.69 4.34L21.96 4.34L22.00 5.17Q22.00 7.82 19.95 9.11Q21.06 11.77 21.06 14.00L21.04 14.46Q20.77 19.32 16.02 19.66Z',
+    ᬳ: 'M6.75 17.66Q2.91 17.61 2.43 14.34L2.38 13.80Q2.38 12.43 3.42 10.76Q4.06 9.74 4.06 9.26Q4.06 8.78 3.47 8.78Q2.58 8.78 2.58 10.02Q2.58 10.45 2.71 11.06L2.38 11.11Q2.00 10.15 2.00 9.18Q2.00 6.39 3.88 6.39Q5.43 6.49 5.43 7.96Q5.43 8.90 4.51 10.30Q3.47 11.87 3.47 12.86L3.50 13.17Q3.83 15.17 6.75 15.17Q10.20 15.17 10.20 12.71L10.20 12.13Q10.20 6.39 13.60 6.39Q17.03 6.39 17.05 12.53L17.05 14.23Q17.05 15.96 17.63 16.04Q18.22 15.96 18.24 14.23L18.24 6.34Q21.87 6.62 22.00 10.63L22.00 17.56L21.24 17.56L21.24 12.53Q21.16 9.11 19.03 8.88L19.03 13.55Q19.01 17.53 17.66 17.56Q16.26 17.53 16.26 13.55L16.26 12.79Q16.09 8.88 13.62 8.88Q10.83 8.88 10.83 12.41L10.83 12.94Q10.83 15.38 9.63 16.51Q8.42 17.63 6.75 17.66Z',
+    'ᬶ': 'M11.53 20.52Q6.36 18.45 2.00 12.92L2.94 11.93Q5.69 14.94 7.08 15.93Q5.91 13.78 5.91 11.66L6.00 10.63Q6.45 7.44 8.74 5.46Q11.03 3.48 14.13 3.48Q17.51 3.48 19.75 5.73Q22.00 7.98 22.00 11.39L22.00 11.84Q21.82 14.72 20.63 16.61Q19.44 18.49 17.15 20.34L16.56 19.80Q19.21 16.70 19.44 14.13L19.48 13.06Q19.48 10.45 17.98 8.94Q16.47 7.44 13.78 7.44L12.61 7.53Q8.47 8.29 8.20 12.47L8.16 13.10Q8.16 16.97 11.98 19.44Z',
+    '᭄ᬬ': 'M10.95 22.00Q8.76 22.00 7.51 20.74Q6.26 19.47 6.26 17.68Q6.26 14.29 8.58 12.41Q10.90 10.53 14.99 10.41L14.99 10.86Q11.17 11.05 9.12 12.74Q7.06 14.43 6.95 17.04Q6.95 18.80 7.95 19.61Q8.95 20.42 10.62 20.42Q12.89 20.42 14.21 19.25Q15.52 18.07 15.52 14.80L15.52 12.26L16.00 12.26L16.00 15.38Q16.00 22.00 10.95 22.00ZM15.52 14.48L15.52 9.13Q15.49 3.55 14.23 2.23Q14.57 2.00 15.05 2.00Q16.44 2.00 17.09 3.22Q17.74 4.43 17.74 7.38L17.74 21.92L17.16 21.92L17.16 7.35Q17.10 3.53 15.65 3.53L15.53 3.53Q15.94 4.30 16.00 9.81L16.00 14.98Z',
+};
 
 export default function BalineseIcon({ children, className = 'size-6' }) {
-    const text = useRef(null);
-    const isCombiningMark = ['ᬶ', 'ᬂ', '᭄ᬬ'].includes(children);
-    const [viewBox, setViewBox] = useState('-4 -28 40 40');
-    useEffect(() => {
-        let disposed = false;
-        const center = () => {
-            if (disposed || !text.current?.getBBox) return;
-            let box = text.current.getBBox();
-            if (typeof CanvasRenderingContext2D !== 'undefined') {
-                const context = document.createElement('canvas').getContext('2d');
-                if (context) {
-                    context.font = `24px ${getComputedStyle(text.current).fontFamily}`;
-                    const metrics = context.measureText(children);
-                    const width = metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight;
-                    const height = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
-                    if (width > 0 && height > 0) {
-                        box = { x: -metrics.actualBoundingBoxLeft, y: -metrics.actualBoundingBoxAscent, width, height };
-                    }
-                }
-            }
-            if (!box.width || !box.height) return;
-            const side = Math.max(box.width, box.height) * 1.12;
-            setViewBox(`${box.x + (box.width - side) / 2} ${box.y + (box.height - side) / 2} ${side} ${side}`);
-        };
-        center();
-        document.fonts?.ready.then(center);
-        return () => {
-            disposed = true;
-        };
-    }, [children]);
     return (
-        <span aria-hidden="true" className={`relative inline-grid shrink-0 place-items-center ${className}`}>
-            <svg viewBox={viewBox} className="h-full w-full overflow-visible">
-                {isCombiningMark ? (
-                    <text x="0" y="0" fontSize="24" className="font-balinese">
-                        <tspan fill="transparent">◌</tspan>
-                        <tspan ref={text} lang="ban" fill="currentColor">
-                            {children}
-                        </tspan>
-                    </text>
-                ) : (
-                    <text ref={text} lang="ban" x="0" y="0" fontSize="24" fill="currentColor" className="font-balinese">
-                        {children}
-                    </text>
-                )}
-            </svg>
-        </span>
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" className={`shrink-0 ${className}`}>
+            <path d={shapes[children] ?? shapes['ᬳ']} />
+        </svg>
     );
 }

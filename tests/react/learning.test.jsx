@@ -32,71 +32,40 @@ vi.mock('motion/react-m', async () => {
 });
 
 it.each([
-    ['Aksara Wreastra & Gantungan', 'ᬳ'],
-    ['Pengangge Suara', 'ᬶ'],
-    ['Pengangge Arda Suara', '᭄ᬬ'],
-    ['Pengangge Tengenan', 'ᬂ'],
-    ['Angka Aksara Bali', '᭑'],
-])('uses the requested glyph for %s', (title, glyph) => {
+    'Aksara Wreastra & Gantungan',
+    'Pengangge Suara',
+    'Pengangge Arda Suara',
+    'Pengangge Tengenan',
+    'Angka Aksara Bali',
+])('renders %s as a fixed-size centered vector without font placeholder circles', (title) => {
     const { container } = render(<CategoryIcon group="aksara" title={title} />);
-    expect(container.querySelector('[lang="ban"]').textContent).toBe(glyph);
+    const icon = container.querySelector('svg');
+    expect(icon.getAttribute('viewBox')).toBe('0 0 24 24');
+    expect(icon.classList.contains('size-6')).toBe(true);
+    expect(container.querySelector('text, tspan')).toBeNull();
+    expect(screen.queryByText('...')).toBeNull();
+    const path = icon.querySelector('path').getAttribute('d');
+    expect(path).toMatch(/^M/);
+    const coordinates = [...path.matchAll(/-?\d+\.\d+/g)].map(([value]) => Number(value));
+    expect(Math.min(...coordinates)).toBeGreaterThanOrEqual(1.99);
+    expect(Math.max(...coordinates)).toBeLessThanOrEqual(22.01);
 });
 
-it.each(['Pengangge Suara', 'Pengangge Tengenan', 'Pengangge Arda Suara'])(
-    'keeps %s centered at full icon size without dots or a visible placeholder',
-    (title) => {
-        const { container } = render(<CategoryIcon group="aksara" title={title} />);
-        expect(screen.queryByText('...')).toBeNull();
-        expect(container.querySelector('svg').classList.contains('h-full')).toBe(true);
-        expect(container.querySelector('svg').classList.contains('w-full')).toBe(true);
-        expect(container.querySelector('tspan[fill="transparent"]').textContent).toBe('◌');
-        expect(container.querySelector('[lang="ban"]').textContent).not.toContain('᭞');
-    },
-);
-
-it('centers a Balinese icon using the rendered glyph bounds', () => {
-    const getBBox = vi.fn(() => ({ x: -3, y: -30, width: 16, height: 12 }));
-    const previous = SVGElement.prototype.getBBox;
-    SVGElement.prototype.getBBox = getBBox;
-    try {
-        const { container } = render(<CategoryIcon group="aksara" title="Pengangge Tengenan" />);
-        const [x, y, width, height] = container.querySelector('svg').getAttribute('viewBox').split(' ').map(Number);
-        expect(width).toBeCloseTo(17.92);
-        expect(height).toBeCloseTo(width);
-        expect(x + width / 2).toBeCloseTo(5);
-        expect(y + height / 2).toBeCloseTo(-24);
-    } finally {
-        if (previous) SVGElement.prototype.getBBox = previous;
-        else delete SVGElement.prototype.getBBox;
-    }
-});
-
-it('sizes and centers the visible glyph rather than the font line height', () => {
-    const previous = SVGElement.prototype.getBBox;
-    SVGElement.prototype.getBBox = () => ({ x: 0, y: -50, width: 40, height: 80 });
-    vi.stubGlobal('CanvasRenderingContext2D', function () {});
-    const context = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
-        measureText: () => ({
-            actualBoundingBoxLeft: 2,
-            actualBoundingBoxRight: 10,
-            actualBoundingBoxAscent: 18,
-            actualBoundingBoxDescent: 2,
-        }),
-    });
-    try {
-        const { container } = render(<CategoryIcon group="aksara" title="Pengangge Suara" />);
-        expect(container.querySelector('svg').parentElement.classList.contains('size-8')).toBe(true);
-        const [x, y, width, height] = container.querySelector('svg').getAttribute('viewBox').split(' ').map(Number);
-        expect(width).toBeCloseTo(22.4);
-        expect(height).toBeCloseTo(width);
-        expect(x + width / 2).toBeCloseTo(4);
-        expect(y + height / 2).toBeCloseTo(-8);
-    } finally {
-        context.mockRestore();
-        vi.unstubAllGlobals();
-        if (previous) SVGElement.prototype.getBBox = previous;
-        else delete SVGElement.prototype.getBBox;
-    }
+it('uses a distinct vector shape for each Balinese subject', () => {
+    const { container } = render(
+        <>
+            {[
+                'Aksara Wreastra & Gantungan',
+                'Pengangge Suara',
+                'Pengangge Tengenan',
+                'Pengangge Arda Suara',
+                'Angka Aksara Bali',
+            ].map((title) => (
+                <CategoryIcon key={title} group="aksara" title={title} />
+            ))}
+        </>,
+    );
+    expect(new Set([...container.querySelectorAll('path')].map((path) => path.getAttribute('d'))).size).toBe(5);
 });
 
 beforeEach(() => {

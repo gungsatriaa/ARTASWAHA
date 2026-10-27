@@ -56,7 +56,7 @@ export function CategoryIcon({ group, title = '', className = 'size-12' }) {
             className={`grid shrink-0 place-items-center rounded-2xl bg-primary/20 text-accent ${className}`}
             aria-hidden="true"
         >
-            {group === 'aksara' ? <BalineseIcon className="size-8">{glyph}</BalineseIcon> : <Icon name="chat" className="size-6" />}
+            {group === 'aksara' ? <BalineseIcon>{glyph}</BalineseIcon> : <Icon name="chat" className="size-6" />}
         </span>
     );
 }
