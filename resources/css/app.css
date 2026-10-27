@@ -171,3 +171,9 @@ a.rounded-full:active { scale: 0.98; }
 }
 
 .admin-analytics [data-ui='stat'] > p:first-child { min-height: 2.5rem; }
+
+/* The guest menu uses native dialog focus handling with a side-drawer position. */
+.site-drawer { scale: 1; translate: 100% 0; transition: translate 220ms ease-out, display 220ms allow-discrete, overlay 220ms allow-discrete; }
+.site-drawer[open] { translate: 0 0; }
+@starting-style { .site-drawer[open] { opacity: 1; scale: 1; translate: 100% 0; } }
+@media (prefers-reduced-motion: reduce) { .site-drawer { transition: none; } }

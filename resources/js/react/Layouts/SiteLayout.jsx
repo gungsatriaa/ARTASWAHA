@@ -164,7 +164,10 @@ export default function SiteLayout({ children }) {
                     </nav>
                     {!appMobile && (
                         <button
+                            type="button"
                             aria-label="Buka menu"
+                            aria-expanded={menu}
+                            aria-haspopup="dialog"
                             onClick={() => setMenu(true)}
                             className="grid size-11 place-items-center rounded-full bg-surface md:hidden"
                         >
@@ -218,48 +221,120 @@ export default function SiteLayout({ children }) {
             <Dialog
                 open={menu}
                 onClose={() => setMenu(false)}
-                title={viewer?.name ?? 'Mau ke mana?'}
+                title={viewer?.name ?? 'Menu ARTASWAHA'}
                 id="site-menu-title"
+                className="site-drawer !fixed !inset-y-0 !left-auto !right-0 !m-0 !h-dvh !max-h-dvh !w-[min(22rem,calc(100%-1rem))] !rounded-r-none !p-5"
             >
-                {viewer?.mode === 'anonymous' && (
-                    <p className="mb-4 text-sm font-semibold text-accent">Akun anonim · di perangkat ini</p>
-                )}
-                <nav className="grid gap-2" aria-label="Menu halaman">
-                    {[
-                        ['paribasa', 'Paribasa Bali'],
-                        ['aksara', 'Aksara Bali'],
-                    ].map(([group, title]) => (
-                        <details key={group} className="rounded-2xl bg-background p-3">
-                            <summary className="min-h-11 cursor-pointer content-center font-bold">{title}</summary>
-                            <SubjectLinks group={group} items={materials[group]} close={() => setMenu(false)} />
-                        </details>
-                    ))}
-                    {[
-                        ['Beranda', nav.home],
-                        ['Semua materi', nav.learning],
-                        ['Kuis', nav.quizzes],
-                        ...(viewer
-                            ? [
-                                  ['Profil', nav.profile],
-                                  ['Tentang aplikasi ini', links['profile.about']],
-                              ]
-                            : [
-                                  ['Masuk', nav.login],
-                                  ['Daftar akun', nav.register],
-                              ]),
-                        ...(viewer?.isAdmin ? [['Admin', nav.admin]] : []),
-                        ...(viewer?.mode === 'anonymous' ? [['Masuk dengan akun', nav.login]] : []),
-                    ].map(([label, url]) => (
-                        <Link onClick={() => setMenu(false)} key={label} href={url} className={secondaryClass}>
-                            {label}
+                <div className="flex min-h-[calc(100dvh-7rem)] flex-col gap-6 pb-[env(safe-area-inset-bottom)]">
+                    {viewer?.mode === 'anonymous' && (
+                        <p className="text-sm font-semibold text-accent">Akun anonim · di perangkat ini</p>
+                    )}
+                    <nav className="space-y-5" aria-label="Menu halaman">
+                        <div className="space-y-1">
+                            {[
+                                ['Beranda', nav.home, 'home', active === 'home'],
+                                ['Semua materi', nav.learning, 'book', active === 'book'],
+                                ['Kuis', nav.quizzes, 'quiz', active === 'quiz'],
+                            ].map(([label, url, icon, selected]) => (
+                                <Link
+                                    onClick={() => setMenu(false)}
+                                    key={label}
+                                    href={url}
+                                    aria-current={selected ? 'page' : undefined}
+                                    className={`flex min-h-12 items-center gap-3 rounded-2xl px-4 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-accent ${selected ? 'bg-primary/20 text-accent' : 'text-foreground/65 hover:bg-background hover:text-foreground'}`}
+                                >
+                                    <Icon name={icon} />
+                                    <span>{label}</span>
+                                </Link>
+                            ))}
+                        </div>
+                        <div className="space-y-2">
+                            <p className="px-4 text-xs font-semibold text-foreground/40">Materi belajar</p>
+                            {[
+                                ['paribasa', 'Paribasa Bali', 'chat'],
+                                ['aksara', 'Aksara Bali', 'aksara'],
+                            ].map(([group, title, icon]) => (
+                                <details key={group} className="group rounded-2xl bg-background p-2">
+                                    <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 rounded-xl px-2 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-accent [&::-webkit-details-marker]:hidden">
+                                        <Icon name={icon} className="size-5 text-accent" />
+                                        <span className="flex-1">{title}</span>
+                                        <Icon
+                                            name="chevron"
+                                            className="size-4 text-foreground/40 transition-transform group-open:rotate-180 motion-reduce:transition-none"
+                                        />
+                                    </summary>
+                                    <SubjectLinks group={group} items={materials[group]} close={() => setMenu(false)} />
+                                </details>
+                            ))}
+                        </div>
+                        {viewer && (
+                            <div className="space-y-1">
+                                {[
+                                    ['Profil', nav.profile, 'user'],
+                                    ['Tentang aplikasi ini', links['profile.about'], 'info'],
+                                    ...(viewer.isAdmin ? [['Admin', nav.admin, 'chart']] : []),
+                                ].map(([label, url, icon]) => (
+                                    <Link
+                                        onClick={() => setMenu(false)}
+                                        key={label}
+                                        href={url}
+                                        className="flex min-h-12 items-center gap-3 rounded-2xl px-4 text-sm font-semibold text-foreground/65 hover:bg-background hover:text-accent"
+                                    >
+                                        <Icon name={icon} />
+                                        {label}
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
+                    </nav>
+                    <div className="mt-auto space-y-3 pt-4">
+                        {!viewer && (
+                            <>
+                                <p className="text-sm leading-6 text-foreground/50">
+                                    Simpan progres dan lanjutkan belajar dari perangkat lain dengan akunmu.
+                                </p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Link
+                                        onClick={() => setMenu(false)}
+                                        href={nav.login}
+                                        className={`${secondaryClass} !px-3`}
+                                    >
+                                        <Icon name="login" className="size-4" />
+                                        Masuk
+                                    </Link>
+                                    <Link
+                                        onClick={() => setMenu(false)}
+                                        href={nav.register}
+                                        className={`${buttonClass} !px-3`}
+                                    >
+                                        Daftar akun
+                                    </Link>
+                                </div>
+                            </>
+                        )}
+                        {viewer?.mode === 'anonymous' && (
+                            <Link
+                                onClick={() => setMenu(false)}
+                                href={nav.login}
+                                className={`${secondaryClass} w-full`}
+                            >
+                                Masuk dengan akun
+                            </Link>
+                        )}
+                        {viewer?.mode === 'account' && (
+                            <Action url={nav.logout} className={`${secondaryClass} w-full`}>
+                                Keluar
+                            </Action>
+                        )}
+                        <Link
+                            onClick={() => setMenu(false)}
+                            href={nav.privacy}
+                            className="flex min-h-11 items-center justify-center text-xs text-foreground/45 hover:text-accent"
+                        >
+                            Kebijakan privasi
                         </Link>
-                    ))}
-                </nav>
-                {viewer?.mode === 'account' && (
-                    <div className="mt-5">
-                        <Action url={nav.logout}>Keluar</Action>
                     </div>
-                )}
+                </div>
             </Dialog>
         </>
     );

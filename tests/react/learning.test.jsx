@@ -1,6 +1,6 @@
 import { StrictMode, useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import Catalog from '../../resources/js/react/Pages/Learning/Catalog';
 import Path from '../../resources/js/react/Pages/Learning/Path';
 import SiteLayout, { usePresence } from '../../resources/js/react/Layouts/SiteLayout';
@@ -233,6 +233,30 @@ describe('learning pages', () => {
 });
 
 describe('shared shell', () => {
+    it('opens the guest menu as a side drawer and closes it after choosing a destination', () => {
+        page.props.viewer = null;
+        render(
+            <SiteLayout>
+                <h1>Materi</h1>
+            </SiteLayout>,
+        );
+        const trigger = screen.getByRole('button', { name: 'Buka menu' });
+        trigger.focus();
+        fireEvent.click(trigger);
+        const drawer = screen.getByRole('dialog', { name: 'Menu ARTASWAHA' });
+        expect(drawer.classList.contains('site-drawer')).toBe(true);
+        expect(trigger.getAttribute('aria-expanded')).toBe('true');
+        expect(within(drawer).getByRole('link', { name: 'Masuk', exact: true }).getAttribute('href')).toBe('/masuk');
+        expect(within(drawer).getByRole('link', { name: 'Daftar akun' }).getAttribute('href')).toBe('/daftar');
+        const destination = within(drawer).getByRole('link', { name: 'Semua materi' });
+        expect(destination.getAttribute('aria-current')).toBe('page');
+        destination.addEventListener('click', (event) => event.preventDefault());
+        fireEvent.click(destination);
+        expect(screen.queryByRole('dialog')).toBeNull();
+        expect(document.body.style.overflow).not.toBe('hidden');
+        expect(document.activeElement).toBe(trigger);
+    });
+
     it('shows one flash and removes it after its bounded lifetime', () => {
         vi.useFakeTimers();
         page.props.flash = { message: 'Progres tersimpan.', tone: 'success' };
