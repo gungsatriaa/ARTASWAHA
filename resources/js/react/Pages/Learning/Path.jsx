@@ -35,6 +35,21 @@ export default function Path({ path, lessons, recommendation, meta }) {
                             <Icon name="book" className="size-5 shrink-0 text-accent" />
                             <p className="text-sm font-medium">{lessons.total} pelajaran tersedia</p>
                         </div>
+                        <div className="mt-6">
+                            <div className="flex items-center justify-between gap-3 text-sm">
+                                <span className="font-semibold">Progres materi</span>
+                                <span className="font-bold tabular-nums text-accent">{path.progress ?? 0}%</span>
+                            </div>
+                            <progress
+                                aria-label={`Progres materi ${path.title}`}
+                                value={path.progress ?? 0}
+                                max={100}
+                                className="mt-3 block h-2 w-full overflow-hidden rounded-full accent-[var(--color-primary)]"
+                            />
+                            <p className="mt-3 text-xs leading-6 text-foreground/50">
+                                {path.completedLessons ?? 0} dari {lessons.total} modul selesai
+                            </p>
+                        </div>
                     </header>
                     {recommendation && (
                         <aside aria-label="Alasan rekomendasi" className="mt-5 rounded-card bg-primary/10 p-5">
@@ -79,6 +94,20 @@ export default function Path({ path, lessons, recommendation, meta }) {
                                                     {lesson.summary}
                                                 </span>
                                             )}
+                                            <span className="mt-4 flex items-center justify-between gap-3 text-xs">
+                                                <span className="text-foreground/50">
+                                                    {lesson.progress === 100 ? 'Selesai' : 'Belum selesai'}
+                                                </span>
+                                                <span className="font-bold tabular-nums text-accent">
+                                                    {lesson.progress ?? 0}%
+                                                </span>
+                                            </span>
+                                            <progress
+                                                aria-label={`Progres modul ${lesson.title}`}
+                                                value={lesson.progress ?? 0}
+                                                max={100}
+                                                className="mt-2 block h-1.5 w-full overflow-hidden rounded-full accent-[var(--color-primary)]"
+                                            />
                                         </span>
                                         <Icon
                                             name="arrow"

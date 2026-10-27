@@ -119,6 +119,27 @@ describe('learning pages', () => {
         expect(screen.queryByRole('list')).toBeNull();
     });
 
+    it('renders the material and module progress bars from persisted percentages', () => {
+        render(
+            <Path
+                path={{ title: 'Cecimpedan', group: 'paribasa', progress: 50, completedLessons: 1 }}
+                lessons={{
+                    data: [
+                        { id: 1, title: 'Modul pertama', url: '/pelajaran/pertama', progress: 100 },
+                        { id: 2, title: 'Modul kedua', url: '/pelajaran/kedua', progress: 0 },
+                    ],
+                    from: 1,
+                    total: 2,
+                }}
+                meta={meta}
+            />,
+        );
+        expect(screen.getByRole('progressbar', { name: 'Progres materi Cecimpedan' }).value).toBe(50);
+        expect(screen.getByRole('progressbar', { name: 'Progres modul Modul pertama' }).value).toBe(100);
+        expect(screen.getByRole('progressbar', { name: 'Progres modul Modul kedua' }).value).toBe(0);
+        expect(screen.getByText('1 dari 2 modul selesai')).toBeTruthy();
+    });
+
     it('escapes lesson text and uses document links for legacy lesson pages', () => {
         const title = '<script>bad()</script>';
         render(

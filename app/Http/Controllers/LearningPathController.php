@@ -95,12 +95,22 @@ class LearningPathController extends Controller
     {
         abort_unless($learningPath->is_published, 404);
 
+        $user = $request->user();
+        $profile = $ui->profile($request);
+        $completedIds = $user !== null || $profile !== null
+            ? $learningPath->lessons()->whereHas('progress', fn (Builder $query): Builder => $query
+                ->when($user !== null, fn (Builder $query): Builder => $query->where('user_id', $user->id))
+                ->when($user === null, fn (Builder $query): Builder => $query->where('visitor_id', $profile->visitor_id)->whereNull('user_id'))
+                ->whereNotNull('completed_at'))->pluck('id')
+            : collect();
+        $totalLessons = $learningPath->lessons()->count();
+        $progress = $totalLessons > 0 ? (int) round($completedIds->count() / $totalLessons * 100) : 0;
         $lessons = fn () => $learningPath->lessons()->select(['id', 'title', 'slug', 'summary'])->paginate(12)
-            ->through(fn (Lesson $lesson): array => ['id' => $lesson->id, 'title' => $lesson->title, 'summary' => $lesson->summary, 'url' => route('learning.lessons.show', $lesson->slug)]);
-        $analysis = $analyzer->presentation($ui->profile($request), collect([$learningPath]));
+            ->through(fn (Lesson $lesson): array => ['id' => $lesson->id, 'title' => $lesson->title, 'summary' => $lesson->summary, 'url' => route('learning.lessons.show', $lesson->slug), 'progress' => $completedIds->contains($lesson->id) ? 100 : 0]);
+        $analysis = $analyzer->presentation($profile, collect([$learningPath]));
 
         return Inertia::render('Learning/Path', [
-            'path' => ['id' => $learningPath->id, 'title' => $learningPath->title, 'description' => $learningPath->description, 'group' => $learningPath->group],
+            'path' => ['id' => $learningPath->id, 'title' => $learningPath->title, 'description' => $learningPath->description, 'group' => $learningPath->group, 'progress' => $progress, 'completedLessons' => $completedIds->count()],
             'lessons' => $lessons,
             'recommendation' => $analysis['recommendations'][0]['reason'] ?? null,
             'meta' => ['title' => $learningPath->title.' — ARTASWAHA', 'description' => $learningPath->description, 'robots' => 'index, follow', 'canonical' => route('learning.paths.show', $learningPath->slug)],
