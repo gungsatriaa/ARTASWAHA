@@ -152,26 +152,41 @@ it('requires login only when an anonymous learner tries to create a quiz', () =>
     expect(screen.getByRole('dialog')).toBeTruthy();
     expect(send).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Tutup' }));
-    fireEvent.change(screen.getByRole('textbox', { name: 'Kode room' }), { target: { value: 'abcd' } });
+    fireEvent.paste(screen.getByRole('textbox', { name: 'Digit 1 kode room' }), {
+        clipboardData: { getData: () => '012345' },
+    });
     fireEvent.submit(screen.getByRole('button', { name: /Gabung room/ }).closest('form'));
-    expect(send.mock.calls[0].slice(0, 3)).toEqual(['post', '/room/join', { code: 'ABCD' }]);
+    expect(send.mock.calls[0].slice(0, 3)).toEqual(['post', '/room/join', { code: '012345' }]);
 });
 
-it('keeps room code validation and legacy invitations available in the redesigned join form', () => {
+it('supports six code boxes, automatic focus, replacement, backspace, arrows and paste', () => {
     render(<Quizzes quizzes={null} filters={{}} meta={meta} />);
-    const input = screen.getByRole('textbox', { name: 'Kode room' });
-    for (const code of ['012345', 'AB12', 'AB12345678']) {
-        fireEvent.change(input, { target: { value: code.toLowerCase() } });
-        expect(input.value).toBe(code);
-        expect(input.checkValidity()).toBe(true);
-    }
-    for (const code of ['AB!2', 'ABCDEF', '12345', '1234567']) {
-        fireEvent.change(input, { target: { value: code } });
-        expect(input.checkValidity()).toBe(false);
-    }
-    expect(input.getAttribute('inputmode')).toBe('numeric');
-    expect(input.placeholder).toBe('Contoh: 123456');
-    expect(screen.getByRole('form', { name: 'Gabung room kuis' }).getAttribute('aria-busy')).toBe('false');
+    const digits = screen.getAllByRole('textbox');
+    expect(digits).toHaveLength(6);
+    fireEvent.change(digits[0], { target: { value: '0' } });
+    expect(document.activeElement).toBe(digits[1]);
+    fireEvent.change(digits[1], { target: { value: '2' } });
+    expect(document.activeElement).toBe(digits[2]);
+    fireEvent.keyDown(digits[2], { key: 'Backspace' });
+    expect(document.activeElement).toBe(digits[1]);
+    expect(digits[1].value).toBe('');
+    fireEvent.keyDown(digits[1], { key: 'ArrowLeft' });
+    expect(document.activeElement).toBe(digits[0]);
+    fireEvent.paste(digits[0], { clipboardData: { getData: () => '012345' } });
+    expect(digits.map((input) => input.value).join('')).toBe('012345');
+    fireEvent.change(digits[2], { target: { value: '9' } });
+    expect(digits.map((input) => input.value).join('')).toBe('019345');
+    fireEvent.paste(digits[0], { clipboardData: { getData: () => 'ABCDEF' } });
+    expect(digits.map((input) => input.value).join('')).toBe('019345');
+    fireEvent.submit(screen.getByRole('form', { name: 'Gabung room kuis' }));
+    expect(send.mock.calls[0][2]).toEqual({ code: '019345' });
+});
+
+it.each(['AB12', 'AB12345678'])('preserves a prefilled legacy invitation %s', (code) => {
+    render(<Quizzes quizzes={null} filters={{}} code={code} meta={meta} />);
+    expect(screen.getByRole('textbox', { name: 'Kode room' }).value).toBe(code);
+    fireEvent.submit(screen.getByRole('form', { name: 'Gabung room kuis' }));
+    expect(send.mock.calls[0][2]).toEqual({ code });
 });
 
 it('shows a themed room-not-found dialog and preserves the code for correction', () => {
@@ -181,8 +196,15 @@ it('shows a themed room-not-found dialog and preserves the code for correction',
     expect(screen.getByText('Periksa kembali kode dari host, lalu coba lagi.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Perbaiki kode' }));
     expect(screen.queryByRole('dialog')).toBeNull();
-    expect(screen.getByRole('textbox', { name: 'Kode room' }).value).toBe('012345');
-    fireEvent.change(screen.getByRole('textbox', { name: 'Kode room' }), { target: { value: '654321' } });
+    expect(
+        screen
+            .getAllByRole('textbox')
+            .map((input) => input.value)
+            .join(''),
+    ).toBe('012345');
+    fireEvent.paste(screen.getByRole('textbox', { name: 'Digit 1 kode room' }), {
+        clipboardData: { getData: () => '654321' },
+    });
     fireEvent.submit(screen.getByRole('form', { name: 'Gabung room kuis' }));
     expect(send.mock.calls[0].slice(0, 3)).toEqual(['post', '/room/join', { code: '654321' }]);
 });

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { Button, PageMeta, Pagination, buttonClass, EmptyState } from '../../Components/ui';
-import { Heading, Card, Field, Action, inputClass, secondaryClass } from '../../Components/forms';
+import { Heading, Card, Field, Action, secondaryClass } from '../../Components/forms';
 import Dialog from '../../Components/Dialog';
 import Icon from '../../Components/Icon';
+import RoomCodeInput from '../../Components/RoomCodeInput';
 export default function Quizzes({ quizzes, filters, code, meta }) {
     const { viewer, navigation: nav, links } = usePage().props;
     const [login, setLogin] = useState(false),
@@ -63,26 +64,10 @@ export default function Quizzes({ quizzes, filters, code, meta }) {
                         }}
                         className="mt-6"
                     >
-                        <label htmlFor="room-code" className="block text-sm font-semibold">
-                            Kode room
-                        </label>
-                        <input
-                            id="room-code"
-                            className={`${inputClass} !min-h-16 !rounded-3xl text-center !text-xl !font-bold tracking-[0.16em] placeholder:!text-sm placeholder:font-normal placeholder:tracking-normal placeholder:text-foreground/40 sm:!text-2xl`}
-                            name="code"
-                            placeholder="Contoh: 123456"
-                            inputMode="numeric"
+                        <RoomCodeInput
                             value={form.data.code}
-                            onChange={(e) => form.setData('code', e.target.value.toUpperCase())}
-                            required
-                            minLength={4}
-                            maxLength={10}
-                            pattern="([0-9]{6}|[A-Za-z0-9]{4}|[A-Za-z0-9]{10})"
-                            autoComplete="off"
-                            autoCapitalize="characters"
-                            spellCheck={false}
-                            aria-invalid={Boolean(form.errors.code)}
-                            aria-describedby={form.errors.code ? 'room-code-error room-code-hint' : 'room-code-hint'}
+                            onChange={(value) => form.setData('code', value)}
+                            error={form.errors.code}
                         />
                         <p id="room-code-hint" className="mt-3 text-xs leading-6 text-foreground/45">
                             Masukkan 6 digit angka dari host. Kode undangan lama tetap bisa digunakan.
