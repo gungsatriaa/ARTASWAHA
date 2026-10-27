@@ -212,59 +212,87 @@ export default function Interview({ paths, answers, step, roles, avatar, meta })
                             </div>
                         )}
                         {step === 4 && (
-                            <div className="grid gap-5 lg:grid-cols-2">
-                                <Field
-                                    label="Nama panggilan"
-                                    name="name"
-                                    autoComplete="nickname"
-                                    required
-                                    minLength={2}
-                                    maxLength={80}
-                                    value={form.data.name}
-                                    onChange={(e) => form.setData('name', e.target.value)}
-                                    placeholder="Misalnya, Komang"
-                                    error={form.errors.name}
-                                />
-                                <div className="rounded-2xl bg-background p-5">
-                                    <div className="mb-4 flex items-center gap-4">
-                                        <img
-                                            src={preview ?? avatar}
-                                            width="64"
-                                            height="64"
-                                            alt="Preview avatar"
-                                            className="size-16 rounded-full object-cover"
-                                        />
-                                        <div>
-                                            <p className="font-bold">{preview ? 'Avatar pilihanmu' : 'Avatar acak'}</p>
-                                            <p className="mt-1 text-xs leading-6 text-foreground/50">
-                                                Pakai karakter acak, atau unggah fotomu.
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <Field
-                                        label="Unggah avatar sendiri (opsional)"
-                                        type="file"
-                                        accept="image/jpeg,image/png,image/webp"
-                                        onChange={(e) => form.setData('avatar_upload', e.target.files[0] ?? null)}
-                                        error={form.errors.avatar_upload}
-                                        hint="JPG, PNG, WEBP · maksimal 2 MB dan 2048 × 2048 piksel."
+                            <div className="grid gap-7 rounded-card bg-surface p-5 sm:p-8 md:grid-cols-[15rem_minmax(0,1fr)] md:gap-10">
+                                <div className="flex min-w-0 flex-col items-center rounded-3xl bg-primary/10 px-5 py-6 text-center">
+                                    <img
+                                        src={preview ?? avatar}
+                                        width="112"
+                                        height="112"
+                                        alt="Preview avatar"
+                                        className="size-28 rounded-full object-cover ring-4 ring-primary/20"
                                     />
+                                    <p className="mt-5 font-display text-lg font-bold">
+                                        {preview ? 'Avatar pilihanmu' : 'Avatar acak untukmu'}
+                                    </p>
+                                    <p className="mt-2 text-sm leading-6 text-foreground/55">
+                                        Pakai karakter ini atau pilih foto yang kamu suka.
+                                    </p>
+                                    <label className="relative mt-5 inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full bg-primary/20 px-5 py-3 text-sm font-bold text-accent transition hover:bg-primary/30 focus-within:outline-2 focus-within:outline-offset-4 focus-within:outline-accent">
+                                        <Icon name="edit" className="size-4" />
+                                        {preview ? 'Ganti foto' : 'Unggah foto'}
+                                        <input
+                                            type="file"
+                                            name="avatar_upload"
+                                            accept="image/jpeg,image/png,image/webp"
+                                            aria-label="Unggah avatar sendiri (opsional)"
+                                            aria-invalid={Boolean(form.errors.avatar_upload)}
+                                            aria-describedby="avatar-upload-help"
+                                            className="sr-only"
+                                            onChange={(e) => form.setData('avatar_upload', e.target.files[0] ?? null)}
+                                        />
+                                    </label>
                                     {preview && (
                                         <button
                                             type="button"
-                                            className="mt-2 min-h-11 text-sm text-accent"
+                                            className="mt-2 min-h-11 text-sm text-foreground/65 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
                                             onClick={() => form.setData('avatar_upload', null)}
                                         >
                                             Gunakan avatar acak
                                         </button>
                                     )}
+                                    <p id="avatar-upload-help" className="mt-4 text-xs leading-5 text-foreground/45">
+                                        Opsional · JPG, PNG, WEBP
+                                        <br />
+                                        Maksimal 2 MB · 2048 × 2048 piksel
+                                    </p>
+                                    {form.errors.avatar_upload && (
+                                        <p role="alert" className="mt-3 text-sm text-danger">
+                                            {form.errors.avatar_upload}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="flex min-w-0 flex-col justify-center py-1 md:py-4">
+                                    <h2 className="font-display text-2xl font-bold">Buat profil belajarmu</h2>
+                                    <p className="mb-6 mt-2 max-w-md text-sm leading-7 text-foreground/55">
+                                        Nama ini akan tampil di profil dan saat kamu bergabung dalam kuis.
+                                    </p>
+                                    <Field
+                                        label="Nama panggilan"
+                                        name="name"
+                                        autoComplete="nickname"
+                                        required
+                                        minLength={2}
+                                        maxLength={80}
+                                        value={form.data.name}
+                                        onChange={(e) => form.setData('name', e.target.value)}
+                                        placeholder="Misalnya, Komang"
+                                        error={form.errors.name}
+                                        hint="Gunakan nama yang ingin kamu pakai saat belajar."
+                                    />
+                                    <Button
+                                        type="submit"
+                                        disabled={form.processing}
+                                        className="mt-7 w-full sm:self-start sm:w-auto"
+                                    >
+                                        {form.processing ? 'Menyimpan…' : 'Mulai belajar →'}
+                                    </Button>
                                 </div>
                             </div>
                         )}
-                        {step !== 1 && (
+                        {step !== 1 && step !== 4 && (
                             <div className="mt-6 flex justify-end">
                                 <Button type="submit" disabled={form.processing} className="w-full sm:w-auto">
-                                    {form.processing ? 'Menyimpan…' : step === 4 ? 'Mulai belajar →' : 'Lanjutkan →'}
+                                    {form.processing ? 'Menyimpan…' : 'Lanjutkan →'}
                                 </Button>
                             </div>
                         )}
