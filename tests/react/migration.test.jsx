@@ -9,6 +9,7 @@ import Room, { Countdown } from '../../resources/js/react/Pages/Rooms/Show';
 import Lesson from '../../resources/js/react/Pages/Learning/Lesson';
 import Auth from '../../resources/js/react/Pages/Auth/Form';
 import Privacy from '../../resources/js/react/Pages/Privacy';
+import LearningPicker from '../../resources/js/react/Components/LearningPicker';
 import Home from '../../resources/js/react/Pages/Home';
 import Analysis from '../../resources/js/react/Components/Analysis';
 import Keyboard from '../../resources/js/react/Components/Keyboard';
@@ -498,4 +499,26 @@ it('keeps account profiles free of anonymous registration prompts', () => {
     expect(screen.getByText('made@example.test')).toBeTruthy();
     expect(screen.queryByRole('link', { name: 'Daftar akun', exact: true })).toBeNull();
     expect(screen.queryByText('Akun anonim · hanya di perangkat ini')).toBeNull();
+});
+
+it('walks through category and material selection before opening a lesson path', () => {
+    const close = vi.fn();
+    render(<LearningPicker paths={[path]} onClose={close} />);
+    expect(screen.getByRole('button', { name: 'Lanjutkan →' }).disabled).toBe(true);
+    fireEvent.click(screen.getByRole('radio', { name: /Paribasa Bali/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Lanjutkan →' }));
+    expect(screen.getByText('Pilih materi Paribasa Bali')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Mulai belajar →' }).disabled).toBe(true);
+    fireEvent.click(screen.getByRole('radio', { name: /Cecimpedan/ }));
+    expect(screen.getByRole('link', { name: 'Mulai belajar →' }).getAttribute('href')).toBe(path.url);
+    fireEvent.click(screen.getByRole('button', { name: '← Kembali' }));
+    expect(screen.getByRole('radio', { name: /Paribasa Bali/ }).checked).toBe(true);
+});
+
+it('opens the route-backed interview as a modal with four named steps', () => {
+    render(<Interview paths={[path]} answers={{}} step={1} roles={{}} meta={meta} />);
+    expect(screen.getByRole('dialog', { name: 'Mulai perjalanan belajarmu' })).toBeTruthy();
+    expect(screen.getByRole('list', { name: 'Langkah 1 dari 4' }).children).toHaveLength(4);
+    fireEvent.click(screen.getByRole('button', { name: 'Tutup' }));
+    expect(visit).toHaveBeenCalledWith('/');
 });

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import Icon from './Icon';
 
-export default function Dialog({ open, onClose, title, id, children }) {
+export default function Dialog({ open, onClose, title, id, children, className = '' }) {
     const dialog = useRef(null);
     useEffect(() => {
         if (!open || !dialog.current) return;
@@ -37,7 +37,7 @@ export default function Dialog({ open, onClose, title, id, children }) {
                 )
                     onClose();
             }}
-            className="m-auto max-h-[calc(100dvh-2rem)] w-[min(28rem,calc(100%-2rem))] overflow-y-auto rounded-card bg-surface p-6 text-foreground shadow-2xl backdrop:bg-black/75 sm:p-8"
+            className={`m-auto max-h-[calc(100dvh-2rem)] w-[min(28rem,calc(100%-2rem))] overflow-y-auto rounded-card bg-surface p-6 text-foreground shadow-2xl backdrop:bg-black/75 sm:p-8 ${className}`}
         >
             <header className="mb-5 flex items-center justify-between gap-4">
                 <h2 id={id} className="font-display text-xl font-bold">

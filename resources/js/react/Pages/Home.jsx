@@ -3,7 +3,7 @@ import { Link, usePage } from '@inertiajs/react';
 import * as m from 'motion/react-m';
 import { PageMeta, CategoryIcon, buttonClass, EmptyState } from '../Components/ui';
 import { Card, secondaryClass } from '../Components/forms';
-import Dialog from '../Components/Dialog';
+import LearningPicker from '../Components/LearningPicker';
 import Analysis from '../Components/Analysis';
 import Testimonials from '../Components/Testimonials';
 
@@ -239,24 +239,7 @@ export default function Home({ paths, selectedIds, hasInterview, recent, analysi
                     ))}
                 </section>
             </div>
-            <Dialog open={choose} onClose={() => setChoose(false)} title="Mau belajar apa?" id="choose-learning">
-                <div className="grid gap-3">
-                    {paths.map((path) => (
-                        <Link
-                            key={path.id}
-                            onClick={() => setChoose(false)}
-                            href={path.url}
-                            className="flex items-center gap-3 rounded-2xl bg-background p-4"
-                        >
-                            <CategoryIcon group={path.group} className="size-10" />
-                            <span className="min-w-0 font-bold">{path.title}</span>
-                        </Link>
-                    ))}
-                </div>
-                {!paths.length && (
-                    <EmptyState title="Materi sedang disiapkan">Silakan kembali beberapa saat lagi.</EmptyState>
-                )}
-            </Dialog>
+            {choose && <LearningPicker paths={paths} onClose={() => setChoose(false)} />}
         </>
     );
 }
