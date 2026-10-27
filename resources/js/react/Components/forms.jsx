@@ -87,7 +87,13 @@ export function Action({ url, method = 'post', data = {}, confirm, children, cla
                 {children}
             </button>
             {confirm && (
-                <Dialog open={open} onClose={() => setOpen(false)} title={confirm} id={id}>
+                <Dialog
+                    open={open}
+                    onClose={() => setOpen(false)}
+                    title={confirm}
+                    id={id}
+                    variant={Object.keys(form.errors).length ? 'error' : 'info'}
+                >
                     <p className="text-sm leading-7 text-foreground/60">Pastikan pilihanmu sebelum melanjutkan.</p>
                     <Errors errors={form.errors} />
                     <div className="mt-6 flex flex-wrap justify-end gap-3">

@@ -242,6 +242,7 @@ export default function Quizzes({ quizzes, filters, code, meta }) {
                           : 'Room tidak tersedia'
                 }
                 id="room-blocked-title"
+                variant="error"
             >
                 <p className="text-sm leading-7 text-foreground/65">{blocked}</p>
                 <button onClick={() => setBlocked(null)} className={`${secondaryClass} mt-5`}>

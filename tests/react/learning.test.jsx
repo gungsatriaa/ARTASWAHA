@@ -170,6 +170,25 @@ describe('shared shell', () => {
         expect(screen.getByRole('link', { name: 'Masuk', exact: true }).getAttribute('href')).toBe('/masuk');
     });
 
+    it.each([
+        ['success', 'text-success'],
+        ['error', 'text-danger'],
+        ['info', ''],
+    ])('uses the shared %s dialog treatment', (variant, color) => {
+        render(
+            <Dialog open onClose={() => {}} title="Status proses" id="status-dialog" variant={variant}>
+                Pesan proses.
+            </Dialog>,
+        );
+        const heading = screen.getByRole('heading', { name: 'Status proses' });
+        expect(screen.getByRole('dialog').getAttribute('data-variant')).toBe(variant);
+        if (color) expect(heading.classList.contains(color)).toBe(true);
+        else {
+            expect(heading.classList.contains('text-success')).toBe(false);
+            expect(heading.classList.contains('text-danger')).toBe(false);
+        }
+    });
+
     it('restores focus and body scrolling after cancelling a native dialog', () => {
         function Example() {
             const [open, setOpen] = useState(false);

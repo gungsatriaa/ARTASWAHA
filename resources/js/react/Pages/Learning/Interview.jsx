@@ -54,6 +54,7 @@ export default function Interview({ paths, answers, step, roles, avatar, meta })
                 onClose={() => router.visit(navigation.home)}
                 title="Mulai perjalanan belajarmu"
                 id="interview-modal-title"
+                variant={Object.keys(form.errors).length ? 'error' : 'info'}
                 className="!w-[min(56rem,calc(100%-1.5rem))] !p-5 sm:!p-8"
             >
                 <div className="mb-4 flex items-center justify-between gap-4">

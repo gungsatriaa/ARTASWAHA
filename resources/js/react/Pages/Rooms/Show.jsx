@@ -380,6 +380,7 @@ export default function Room({ room, meta }) {
                 onClose={() => router.visit(nav.quizzes)}
                 title={unavailable === 'inactive' ? 'Room dinonaktifkan' : 'Room dihapus oleh host'}
                 id="room-unavailable-title"
+                variant="error"
             >
                 <p className="text-sm leading-7 text-foreground/60">
                     Sesi ini sudah tidak tersedia. Kamu dapat memilih kuis lainnya.

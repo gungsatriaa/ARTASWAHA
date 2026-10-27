@@ -368,6 +368,7 @@ export default function Profile({
                 onClose={() => setAvatarOpen(false)}
                 title="Pilih avatar belajarmu"
                 id="profile-avatar"
+                variant={Object.keys(form.errors).length ? 'error' : 'info'}
             >
                 <form
                     onSubmit={(e) => {

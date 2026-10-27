@@ -177,7 +177,7 @@ it('keeps room code validation and legacy invitations available in the redesigne
 it('shows a themed room-not-found dialog and preserves the code for correction', () => {
     page.props.errors = { room_not_found: 'Periksa kembali kode dari host, lalu coba lagi.' };
     render(<Quizzes quizzes={null} filters={{}} code="012345" meta={meta} />);
-    expect(screen.getByRole('dialog', { name: 'Room tidak ditemukan' })).toBeTruthy();
+    expect(screen.getByRole('dialog', { name: 'Room tidak ditemukan' }).getAttribute('data-variant')).toBe('error');
     expect(screen.getByText('Periksa kembali kode dari host, lalu coba lagi.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Perbaiki kode' }));
     expect(screen.queryByRole('dialog')).toBeNull();
