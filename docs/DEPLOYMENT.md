@@ -139,11 +139,11 @@ Jika sukses, runner mencetak JSON waktu proses dan ukuran WAV; pada Linux juga p
 
 Pada RAM terbatas, ukur peak memory sebelum memakai generate bersamaan dengan pekerjaan lain. Model lebih berat dapat gagal dalam batas waktu aplikasi pada CPU. Jangan menaikkan timeout sendirian tanpa menyesuaikan job/reservation/lock/Supervisor; pertimbangkan hardware yang memadai atau narasi lebih pendek setelah pengukuran.
 
-## 6. Worker Laravel learner-analysis
+## 6. Worker Laravel sesuai QUEUE_CONNECTION
 
-Worker default dan Reverb yang sudah ada tetap digunakan. Analisis/TTS memakai koneksi bernama `learner-analysis`, driver database, antrean `learner-analysis`; worker Redis default tidak mengonsumsinya. Nama antrean ini tidak mengaktifkan Ollama.
+Seluruh job baru mengikuti `QUEUE_CONNECTION` serta antrean default koneksi tersebut: Redis memakai REDIS_QUEUE, database memakai DB_QUEUE, keduanya default `default`. Analisis, audio, laporan AI, draf kuis, dan tes massal tidak lagi dipaksa ke koneksi `learner-analysis`. Reverb tetap terpisah. Koneksi database lama `learner-analysis` dipertahankan hanya untuk menghabiskan pekerjaan yang sudah terantre sebelum perpindahan.
 
-Analisis progres memakai `AI_API_URL`, `AI_API_KEY`, dan `AI_MODEL` yang sama dengan AI kuis. Jadwal `learning:analyze` berjalan setiap enam jam melalui scheduler Laravel. Pastikan cron yang sudah ada menjalankan `php artisan schedule:run` setiap menit dari folder aplikasi; jangan menambahkan cron duplikat. Untuk lokal gunakan `php artisan schedule:work`. Worker `learner-analysis` tetap harus aktif untuk memproses antreannya. Analisis memakai ringkasan pelajaran selesai dan jawaban kuis 14 hari terakhir, bukan pelacakan durasi membaca.
+Analisis progres memakai `AI_API_URL`, `AI_API_KEY`, dan `AI_MODEL` yang sama dengan AI kuis. Jadwal `learning:analyze` memeriksa setiap jam dan memperbarui hasil yang sudah berusia enam jam melalui scheduler Laravel. Pastikan cron yang sudah ada menjalankan `php artisan schedule:run` setiap menit dari folder aplikasi; jangan menambahkan cron duplikat. Untuk lokal gunakan `php artisan schedule:work`. Worker sesuai QUEUE_CONNECTION tetap harus aktif untuk memproses antreannya. Analisis memakai ringkasan pelajaran selesai dan jawaban kuis 14 hari terakhir, bukan pelacakan durasi membaca.
 
 Jeda enam jam berlaku untuk analisis yang sudah selesai. Percobaan gagal bisa dijadwalkan ulang setelah dua menit; antrean/pemrosesan yang tersangkut bisa diganti setelah 30 menit saat profil dibuka atau perintah `learning:analyze` dijalankan. Lock unik sekarang mengikuti waktu permintaan, sehingga percobaan lama tidak menghalangi penggantinya dan tidak menimpa status/hasil baru. Status menunggu antrean tidak menampilkan skeleton pemrosesan.
 
@@ -156,16 +156,16 @@ Name: laravel-worker-tts-artaswaha
 Run User: www
 Processes: 1
 Process directory: /www/wwwroot/artaswaha.kerthajaya.com/
-Start command: php artisan queue
+Start command: php artisan queue:work --sleep=3 --tries=3 --timeout=240 --max-time=3600
 ```
 
-Pastikan autostart/autorestart aktif. Gunakan menu Log/Restart untuk program tersebut di Supervisor aaPanel. Jika PHP tidak ditemukan oleh Supervisor, gunakan path absolut PHP 8.4 hasil `command -v php` pada Start command. Tiga worker Redis default tetap terpisah. Jika service systemd dari langkah sebelumnya pernah dipasang, nonaktifkan agar tidak menjalankan worker ganda:
+Pastikan autostart/autorestart aktif. Gunakan menu Log/Restart untuk program tersebut di Supervisor aaPanel. Jika PHP tidak ditemukan oleh Supervisor, gunakan path absolut PHP 8.4 hasil `command -v php` pada Start command. Gunakan satu program worker yang sesuai koneksi .env; nonaktifkan duplikat setelah antrean lama selesai. Jika service systemd dari langkah sebelumnya pernah dipasang, nonaktifkan agar tidak menjalankan worker ganda:
 
 ```bash
 systemctl disable --now artaswaha-learner.service
 ```
 
-`deploy.sh` menerima nama program yang sudah ada melalui `.env` atau environment shell. Jika Supervisor CLI tersedia, set nama group sesuai konfigurasi aaPanel, misalnya `LEARNER_QUEUE_SUPERVISOR_PROGRAM=laravel-worker-tts-artaswaha:*`. Jika nama dikosongkan atau Supervisor CLI tidak tersedia, deploy memeriksa proses `artisan queue` (atau worker eksplisit `artisan queue:work learner-analysis` yang lama) beserta working directory-nya, sehingga hanya proses dari folder proyek ini yang diterima. Pemeriksaan ini tidak bergantung pada nama program systemd/Supervisor. Worker yang tidak ditemukan tetap menggagalkan deploy sebelum maintenance. Jalankan deploy dengan user yang dapat membaca `/proc/<pid>/cwd`, seperti root yang digunakan pada server ini.
+`deploy.sh` menerima nama program yang sudah ada melalui `.env` atau environment shell. Jika Supervisor CLI tersedia, set nama group sesuai konfigurasi aaPanel, misalnya `LEARNER_QUEUE_SUPERVISOR_PROGRAM=laravel-worker-tts-artaswaha:*`. Jika nama dikosongkan atau Supervisor CLI tidak tersedia, deploy memeriksa proses `artisan queue:work` tanpa argumen koneksi atau dengan argumen yang sama dengan QUEUE_CONNECTION, beserta working directory-nya, sehingga hanya proses dari folder proyek ini yang diterima. Pemeriksaan ini tidak bergantung pada nama program systemd/Supervisor. Worker yang tidak ditemukan tetap menggagalkan deploy sebelum maintenance. Jalankan deploy dengan user yang dapat membaca `/proc/<pid>/cwd`, seperti root yang digunakan pada server ini.
 
 Untuk tuning CPU, set `TTS_CPU_THREADS=4` dan `TTS_PERSISTENT=true` dalam `.env`, jalankan `php artisan config:cache`, lalu restart hanya program TTS di Supervisor aaPanel. Nilai bawaan thread tetap 2; coba 4 kemudian 8 pada server banyak core dengan narasi yang sama. Runner membatasi jumlah thread berdasarkan CPU yang tersedia dan menyisakan setidaknya satu CPU jika memungkinkan. Satu tugas inferensi tetap dijalankan pada satu waktu. Lebih banyak thread belum tentu lebih cepat, dan jumlah thread bukan jaminan batas penggunaan CPU seluruh proses.
 
@@ -189,7 +189,7 @@ Contoh konfigurasi Supervisor mentah jika diperlukan (sesuaikan nama/path dengan
 [program:artaswaha-learner]
 process_name=%(program_name)s_%(process_num)02d
 directory=/www/wwwroot/artaswaha
-command=/www/server/php/84/bin/php /www/wwwroot/artaswaha/artisan queue
+command=/www/server/php/84/bin/php /www/wwwroot/artaswaha/artisan queue:work --sleep=3 --tries=3 --timeout=240 --max-time=3600
 user=www
 numprocs=1
 autostart=true
@@ -209,7 +209,7 @@ supervisorctl update
 supervisorctl status
 ```
 
-Jika program sudah ada, periksa dan sesuaikan; jangan membuat duplikat. `retry_after` koneksi learner adalah 1860 detik; timeout inferensi 1800, job 1830, lock 1845, dan stopwaitsecs 1860. Setelah perubahan ini, cache konfigurasi dan restart worker TTS agar reservasi antrean dan batas proses memakai nilai baru. Pertahankan cache lock bersama yang sudah digunakan aplikasi. Pastikan PHP CLI mengizinkan `proc_open`, `proc_get_status`, `proc_terminate`, dan `proc_close` yang digunakan untuk proses anak. Pengaturan CLI aaPanel dapat berbeda dari PHP-FPM.
+Jika program sudah ada, periksa dan sesuaikan; jangan membuat duplikat. `retry_after` Redis/database minimal 1860 detik; timeout inferensi 1800, job 1830, lock 1845, dan stopwaitsecs 1860. Setelah perubahan ini, cache konfigurasi dan restart worker TTS agar reservasi antrean dan batas proses memakai nilai baru. Pertahankan cache lock bersama yang sudah digunakan aplikasi. Pastikan PHP CLI mengizinkan `proc_open`, `proc_get_status`, `proc_terminate`, dan `proc_close` yang digunakan untuk proses anak. Pengaturan CLI aaPanel dapat berbeda dari PHP-FPM.
 
 ## 7. Aktifkan setelah smoke test sukses
 
@@ -460,7 +460,7 @@ Uji ketiga tipe pada modul, room bertimer/tanpa timer, feedback aktif/nonaktif, 
 
 ## Analisis pelajar: hasil awal, pembaruan, dan diagnosis admin
 
-Deploy perubahan ini dengan migrasi `2026_10_28_002814_add_analysis_events_to_learner_profiles`, build client/SSR, pembaruan cache konfigurasi, dan restart **worker learner-analysis serta SSR**. Tidak ada dependency, installer Python, model, atau environment baru. Gunakan binary PHP dan direktori release yang sama dengan Supervisor:
+Deploy perubahan ini dengan migrasi `2026_10_28_002814_add_analysis_events_to_learner_profiles`, build client/SSR, pembaruan cache konfigurasi, dan restart **worker sesuai QUEUE_CONNECTION serta SSR**. Tidak ada dependency, installer Python, model, atau environment baru. Gunakan binary PHP dan direktori release yang sama dengan Supervisor:
 
 ```bash
 php artisan migrate --force --no-interaction
@@ -471,7 +471,7 @@ php artisan queue:restart
 php artisan schedule:list --no-interaction
 ```
 
-Restart program SSR ARTASWAHA melalui Supervisor sesuai bagian React. Pastikan worker menggunakan koneksi dan nama antrean `learner-analysis`. Gunakan `php artisan queue` untuk seluruh pekerjaan aplikasi; perintah eksplisit yang setara dijelaskan pada bagian worker terpusat berikut. Supervisor harus `autorestart=true`. Pesan `Maximum run time exceeded` setiap sekitar satu jam sesuai `--max-time=3600` bukan dengan sendirinya error model; pastikan proses kembali RUNNING. Job analisis mempunyai timeout sendiri 120 detik dan HTTP timeout 90 detik.
+Restart program SSR ARTASWAHA melalui Supervisor sesuai bagian React. Pastikan worker membaca koneksi QUEUE_CONNECTION dan antrean defaultnya. Gunakan perintah bawaan `php artisan queue:work --sleep=3 --tries=3 --timeout=240 --max-time=3600` untuk seluruh pekerjaan aplikasi; lihat bagian berikut. Supervisor harus `autorestart=true`. Pesan `Maximum run time exceeded` setiap sekitar satu jam sesuai `--max-time=3600` bukan dengan sendirinya error model; pastikan proses kembali RUNNING. Job analisis mempunyai timeout sendiri 120 detik dan HTTP timeout 90 detik.
 
 **Worker tidak menggantikan scheduler.** Pertahankan satu cron `* * * * * cd /direktori/aplikasi && /path/php artisan schedule:run >> /dev/null 2>&1` dengan user yang benar; jangan membuat duplikat cron yang sudah ada. Scheduler memeriksa tiap jam dan hanya mengantrekan profil yang jatuh tempo setelah enam jam sejak hasil berhasil. Membuka profil juga dapat mengantrekan analisis pertama atau yang jatuh tempo. Untuk memulai pemeriksaan segera setelah deploy, jalankan `php artisan learning:analyze --no-interaction` sekali; perintah ini tidak memanggil model secara sinkron. Pastikan konfigurasi AI_API_URL/AI_MODEL yang telah di-cache dapat diakses dari lingkungan worker; alamat 127.0.0.1 menunjuk lingkungan worker sendiri. Restart worker setelah perubahan konfigurasi. Referensi: [Laravel scheduler](https://laravel.com/docs/13.x/scheduling#running-the-scheduler), [worker dan deploy](https://laravel.com/docs/13.x/queues#queue-workers-and-deployment).
 
@@ -484,20 +484,30 @@ Daftar analisis tanpa filter tanggal mencakup seluruh profil; jika tanggal diter
 Waktu pemeriksaan berkala dan worker terakhir pada admin adalah riwayat eksekusi dalam cache bersama, **bukan status online proses**; cache yang dibersihkan akan mengosongkan indikator sampai eksekusi berikutnya. Bedakan `queued` (belum diambil), `processing` (worker mulai), dan `completed` (hasil divalidasi/disimpan). Untuk pekerjaan yang dilewati, cari `Learner analysis skipped` di log Laravel; `DONE` saja tidak membuktikan inferensi berhasil. Uji hasil pertama, kegagalan provider, pelestarian hasil lama, tes ulang individual/massal, serta cron setelah deploy. Verifikasi production harus memakai tes admin pada server sebenarnya; tes lokal menggunakan respons AI tiruan.
 
 
-## Satu command worker aplikasi
+## Satu worker bawaan yang mengikuti environment
 
-Semua job aplikasi baru (analisis pelajar, laporan AI, tes massal, draf kuis/OCR, dan audio) memakai koneksi database `learner-analysis`. Jalankan:
+Command tambahan `php artisan queue` telah dihapus. Semua job baru mengikuti `QUEUE_CONNECTION` dan antrean default pada konfigurasi koneksi tersebut. Gunakan command Laravel bawaan tanpa argumen koneksi agar mengikuti .env:
 
 ```bash
-php artisan queue
+php artisan queue:work --sleep=3 --tries=3 --timeout=240 --max-time=3600
 ```
 
-Command ini menjalankan worker Laravel pada koneksi `learner-analysis`, memprioritaskan antrean `learner-analysis` lalu `default`, dengan `sleep=2`, `tries=3`, `timeout=1830`, dan `max-time=3600`. Timeout khusus setiap job tetap berlaku. `retry_after=1860` tetap lebih panjang daripada timeout terpanjang. Nama koneksi dipertahankan agar pekerjaan AI/audio lama yang sudah tersimpan tetap terbaca. Draf kuis baru masuk `default` pada koneksi yang sama dan tidak lagi mengikuti `QUEUE_CONNECTION=redis/sync`. Tidak perlu mengganti QUEUE_CONNECTION untuk fitur ini. `php artisan queue:work` tanpa argumen masih menggunakan koneksi default Laravel, jadi gunakan **`php artisan queue`** untuk worker terpusat.
+Contoh `QUEUE_CONNECTION=redis` memakai Redis/REDIS_QUEUE; `QUEUE_CONNECTION=database` memakai database/DB_QUEUE. Keduanya memakai antrean `default` bila nama antrean tidak diatur. Jika ingin memaksa Redis terlepas dari QUEUE_CONNECTION, command ini juga didukung:
 
-Ubah **satu** program worker Supervisor yang dipertahankan menjadi command di atas, dengan PHP binary/directory/user yang benar, `numprocs=1`, `autostart=true`, `autorestart=true`, `stopasgroup=true`, `killasgroup=true`, dan `stopwaitsecs=1860`. Jangan menjalankannya manual bersamaan dengan Supervisor. Jika deploy memeriksa nama program, arahkan QUEUE_SUPERVISOR_PROGRAM dan LEARNER_QUEUE_SUPERVISOR_PROGRAM ke group worker yang sama yang benar-benar ada. `deploy.sh` menerima command terpusat dalam pemeriksaan proses berdasarkan direktori aplikasi. Perubahan ini tidak otomatis menyunting Supervisor production.
+```bash
+php artisan queue:work redis --sleep=3 --tries=3 --timeout=240 --max-time=3600
+```
 
-Sebelum menonaktifkan worker lama, periksa antrean lama pada koneksi default sebelumnya. Habiskan pekerjaan Redis/default yang sudah ada melalui worker lamanya atau `php artisan queue:work redis --queue=default --stop-when-empty --timeout=240 --tries=3`; jika koneksi sebelumnya database, gunakan `database` sebagai ganti `redis`. Jalankan hanya koneksi yang memang digunakan instalasi tersebut. Jangan menghapus antrean atau memakai `queue:flush/clear`; command baru tidak memindahkan pekerjaan lama dari backend lain. Setelah antrean lama habis dan worker baru RUNNING, nonaktifkan worker duplikat. Job baru tidak lagi memerlukan worker Redis terpisah.
+Argumen koneksi eksplisit **harus cocok dengan tujuan job**. Jangan memakai command `redis` bila .env mengirim ke `database`. `QUEUE_CONNECTION=sync` mengikuti perilaku Laravel: tugas berjalan pada request dan tidak masuk worker. Untuk pemrosesan background production gunakan Redis atau database. Setelah mengubah .env, jalankan `php artisan config:cache`, lalu restart program worker yang benar melalui Supervisor agar command serta environment yang baru dipakai. Job lama yang sudah terserialisasi mempertahankan koneksi/antreannya; perubahan .env tidak memindahkannya.
 
-Satu proses mengerjakan tugas satu per satu: audio panjang tetap dapat menahan analisis, dan banjir pekerjaan prioritas dapat menunda draf kuis. Batasan ini disengaja untuk mempertahankan RAM/lock inferensi yang ada; pisahkan pool audio jika pengukuran production menunjukkan kebutuhan paralel. Command tidak menjalankan atau menggantikan Reverb, SSR, dan scheduler cron. Ketiga layanan tersebut tetap menggunakan proses masing-masing. Saat deploy, `queue:restart` tetap berlaku dan Supervisor menjalankan ulang command setelah job aktif selesai. `--max-time=3600` menyebabkan worker keluar berkala secara normal.
+Job audio tetap memiliki timeout 1830 detik karena inferensi dapat memerlukan 1800 detik. **Timeout job mengesampingkan `--timeout=240` pada command**; audio tidak dipotong menjadi empat menit. Redis dan database memakai `retry_after` minimum 1860 detik (env yang lebih tinggi tetap dihormati), sehingga satu audio tidak diambil ulang sebelum batas prosesnya. Job AI 120 detik dan draf kuis 240 detik tetap memakai batas masing-masing. Pertahankan lock/cache bersama, dan set Supervisor `stopwaitsecs=1860`, `stopasgroup=true`, `killasgroup=true`, `autorestart=true`, `autostart=true`, serta `numprocs=1` pada konfigurasi RAM saat ini. Satu worker mengerjakan satu tugas pada satu waktu, sehingga audio panjang dapat menunda analisis. `--max-time=3600` menyebabkan keluar berkala secara normal dan memerlukan autorestart.
 
-Pemeriksaan singkat command: `php artisan queue --help`; untuk memproses satu pekerjaan lalu keluar gunakan `php artisan queue --once`, dan untuk menghabiskan antrean lalu keluar gunakan `php artisan queue --stop-when-empty`. Kedua opsi mengerjakan job nyata, jadi jangan dipakai sebagai pemeriksaan read-only di production. Tidak ada migrasi atau dependency tambahan khusus penyatuan worker ini.
+Sebelum menonaktifkan worker database `learner-analysis` lama, habiskan pekerjaan yang masih ada dengan program lamanya atau perintah berikut dari folder release yang baru:
+
+```bash
+php artisan queue:work learner-analysis --queue=learner-analysis,default --stop-when-empty --sleep=3 --tries=3 --timeout=1830
+```
+
+Jalankan sekali untuk antrean lama yang memang ada, jangan buat program permanen tambahan. Pertahankan worker backend lain yang masih mempunyai pekerjaan hingga habis; jangan memakai queue:clear/flush atau menghapus jobs. Setelah antrean lama kosong dan worker utama RUNNING, nonaktifkan program duplikat. Tidak ada migrasi antrean otomatis, perubahan .env lokal, dependency, atau installer Python pada penyesuaian ini.
+
+`deploy.sh` menerima worker tanpa argumen koneksi atau dengan koneksi yang cocok .env dan memeriksa working directory. Jika memakai pemeriksaan nama Supervisor, arahkan QUEUE_SUPERVISOR_PROGRAM dan LEARNER_QUEUE_SUPERVISOR_PROGRAM ke group worker yang sama yang dipertahankan. Tidak ada penyuntingan Supervisor production otomatis. Status antrean di admin dibaca dari koneksi aktif, bukan tabel jobs yang lama; kegagalan koneksi menampilkan status tidak tersedia tanpa membocorkan kredensial. Reverb, SSR, dan cron scheduler tetap proses terpisah. Tes memakai database SQLite sebagai backend antrean lokal; koneksi Redis nyata di production perlu diperiksa setelah deploy.

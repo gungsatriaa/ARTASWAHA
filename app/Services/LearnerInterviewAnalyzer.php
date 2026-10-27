@@ -70,13 +70,13 @@ class LearnerInterviewAnalyzer
                 'analysis_completed_at' => $keepResult ? $profile->analysis_completed_at : null,
             ])->save();
 
-            $profile->recordAnalysisEvent($configured ? 'queued' : 'unavailable', $configured ? 'Permintaan masuk antrean learner-analysis.' : 'AI_API_URL atau AI_MODEL belum dikonfigurasi.');
+            $profile->recordAnalysisEvent($configured ? 'queued' : 'unavailable', $configured ? 'Permintaan masuk antrean aplikasi.' : 'AI_API_URL atau AI_MODEL belum dikonfigurasi.');
 
             if ($configured) {
                 DB::afterCommit(function () use ($profile, $hash): void {
                     try {
                         AnalyzeLearnerInterview::dispatch($profile->id, $hash, $profile->analysis_requested_at->toDateTimeString());
-                        Log::info('Learner analysis queued.', ['profile_id' => $profile->id, 'requested_at' => $profile->analysis_requested_at->toIso8601String(), 'connection' => 'learner-analysis', 'queue' => 'learner-analysis']);
+                        Log::info('Learner analysis queued.', ['profile_id' => $profile->id, 'requested_at' => $profile->analysis_requested_at->toIso8601String(), 'connection' => config('queue.default'), 'queue' => config('queue.connections.'.config('queue.default').'.queue', 'default')]);
                     } catch (Throwable $exception) {
                         LearnerProfile::query()->whereKey($profile->id)->where('analysis_hash', $hash)
                             ->update(['analysis_status' => 'failed']);
@@ -279,7 +279,7 @@ class LearnerInterviewAnalyzer
         if ($profile !== null && in_array($status, ['queued', 'processing'], true) && $profile->analysis_requested_at?->lte(now()->subMinutes(10))) {
             $key = 'learner-analysis-delay:'.$profile->id.':'.$profile->analysis_requested_at->timestamp;
             if (Cache::add($key, true, now()->addMinutes(30))) {
-                Log::warning('Learner analysis is taking longer than expected.', ['profile_id' => $profile->id, 'status' => $status, 'requested_at' => $profile->analysis_requested_at->toIso8601String(), 'connection' => 'learner-analysis', 'queue' => 'learner-analysis']);
+                Log::warning('Learner analysis is taking longer than expected.', ['profile_id' => $profile->id, 'status' => $status, 'requested_at' => $profile->analysis_requested_at->toIso8601String(), 'connection' => config('queue.default'), 'queue' => config('queue.connections.'.config('queue.default').'.queue', 'default')]);
             }
             $status = 'delayed';
         }

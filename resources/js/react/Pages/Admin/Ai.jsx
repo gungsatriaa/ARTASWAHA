@@ -15,6 +15,7 @@ export default function Ai({
     aiConfigured,
     ttsConfigured,
     pendingJobs,
+    queueUnavailable,
     audioCounts,
     lastCheck,
     lastWorker,
@@ -273,9 +274,13 @@ export default function Ai({
                         </p>
                     </Card>
                     <Stat
-                        label="Pekerjaan di antrean lokal"
+                        label="Pekerjaan di antrean aplikasi"
                         value={pendingJobs}
-                        note="Jumlah antrean bukan bukti worker sedang aktif."
+                        note={
+                            queueUnavailable
+                                ? 'Antrean tidak dapat dibaca. Periksa QUEUE_CONNECTION dan log Laravel.'
+                                : 'Jumlah antrean bukan bukti worker sedang aktif.'
+                        }
                     />
                     <Card>
                         <h2 className="font-display text-xl font-bold">Audio perlu tindakan</h2>

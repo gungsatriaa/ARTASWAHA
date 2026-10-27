@@ -35,7 +35,8 @@ class AnalyzeLearnerInterview implements ShouldBeUnique, ShouldQueue
     public function __construct(public int $profileId, public string $inputHash, ?string $requestedAt = null)
     {
         $this->requestedAt = $requestedAt;
-        $this->onConnection('learner-analysis')->onQueue('learner-analysis');
+        $connection = config('queue.default');
+        $this->onConnection($connection)->onQueue(config("queue.connections.{$connection}.queue", 'default'));
         $this->deadline = now()->addDay()->getTimestamp();
     }
 
@@ -89,7 +90,7 @@ class AnalyzeLearnerInterview implements ShouldBeUnique, ShouldQueue
         if ($this->profileQuery()->update(['analysis_status' => 'processing']) === 0) {
             return;
         }
-        Log::info('Learner analysis started.', ['profile_id' => $this->profileId, 'connection' => 'learner-analysis', 'queue' => 'learner-analysis']);
+        Log::info('Learner analysis started.', ['profile_id' => $this->profileId, 'connection' => $this->connection, 'queue' => $this->queue]);
         $profile->recordAnalysisEvent('processing', 'Worker mulai meminta analisis ke penyedia AI.');
         $started = hrtime(true);
         try {

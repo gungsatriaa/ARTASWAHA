@@ -21,7 +21,8 @@ class GenerateQuizDraft implements ShouldQueue
 
     public function __construct(public int $draftId)
     {
-        $this->onConnection('learner-analysis')->onQueue('default');
+        $connection = config('queue.default');
+        $this->onConnection($connection)->onQueue(config("queue.connections.{$connection}.queue", 'default'));
     }
 
     public function handle(): void

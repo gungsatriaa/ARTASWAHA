@@ -326,9 +326,9 @@ class LearnerAnalysisTest extends TestCase
         Http::assertNothingSent();
     }
 
-    public function test_real_queue_is_durable_and_deduplicated_even_when_default_connection_is_sync(): void
+    public function test_configured_database_queue_is_durable_and_deduplicated(): void
     {
-        config(['queue.default' => 'sync']);
+        config(['queue.default' => 'database']);
         $path = LearningPath::factory()->create(['is_published' => true]);
         $profile = $this->profile($path);
         $analyzer = app(LearnerInterviewAnalyzer::class);
@@ -337,12 +337,12 @@ class LearnerAnalysisTest extends TestCase
         $analyzer->enqueue($profile->fresh());
 
         $this->assertDatabaseCount('jobs', 1);
-        $this->assertDatabaseHas('jobs', ['queue' => 'learner-analysis']);
+        $this->assertDatabaseHas('jobs', ['queue' => 'default']);
         $this->assertSame('queued', $profile->fresh()->analysis_status);
         Http::assertNothingSent();
 
         Http::fake(['localhost:20128/v1/chat/completions' => Http::response(['choices' => [['message' => ['content' => json_encode($this->analysisResult($path))]]]])]);
-        $this->artisan('queue:work', ['connection' => 'learner-analysis', '--queue' => 'learner-analysis', '--once' => true, '--sleep' => 0])
+        $this->artisan('queue:work', ['connection' => 'database', '--once' => true, '--sleep' => 0])
             ->assertExitCode(0);
         $this->assertDatabaseCount('jobs', 0);
         $this->assertSame('completed', $profile->fresh()->analysis_status);
@@ -387,7 +387,7 @@ class LearnerAnalysisTest extends TestCase
         $legacyJob->failed(new RuntimeException('Legacy attempt failed'));
         Http::assertNothingSent();
         $this->assertSame('queued', $profile->fresh()->analysis_status);
-        $this->artisan('queue:work', ['connection' => 'learner-analysis', '--queue' => 'learner-analysis', '--stop-when-empty' => true, '--sleep' => 0])
+        $this->artisan('queue:work', ['connection' => 'database', '--stop-when-empty' => true, '--sleep' => 0])
             ->assertExitCode(0);
         $this->assertSame('completed', $profile->fresh()->analysis_status);
         Http::assertSentCount(1);
@@ -623,7 +623,7 @@ class LearnerAnalysisTest extends TestCase
                 ->assertOk()->assertJsonPath('analysis.status', 'delayed');
         }
         $this->assertSame('queued', $profile->fresh()->analysis_status);
-        Log::shouldHaveReceived('warning')->with('Learner analysis is taking longer than expected.', \Mockery::on(fn (array $context): bool => $context['profile_id'] === $profile->id && $context['queue'] === 'learner-analysis'))->once();
+        Log::shouldHaveReceived('warning')->with('Learner analysis is taking longer than expected.', \Mockery::on(fn (array $context): bool => $context['profile_id'] === $profile->id && $context['queue'] === 'default' && $context['connection'] === 'database'))->once();
         Http::assertNothingSent();
     }
 

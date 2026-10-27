@@ -62,7 +62,7 @@ check_learner_worker() {
     if [[ -n "$SUPERVISORCTL_BIN" && -n "$LEARNER_QUEUE_PROGRAM" ]]; then
         check_supervisor_program "AI/TTS worker" "$LEARNER_QUEUE_PROGRAM"
     else
-        check_process "AI/TTS worker" '[a]rtisan (queue([[:space:]]|$)|queue:work[[:space:]]+learner-analysis([[:space:]]|$))'
+        check_process "AI/TTS worker" "$QUEUE_WORKER_PATTERN"
     fi
 }
 
@@ -128,6 +128,11 @@ git diff --quiet && git diff --cached --quiet || fail "Ada perubahan file tracke
 [[ "$(dotenv_value APP_ENV)" == "production" ]] || fail "APP_ENV harus production."
 [[ "$(dotenv_value APP_DEBUG)" == "false" ]] || fail "APP_DEBUG harus false."
 
+WORKER_CONNECTION="$(dotenv_value QUEUE_CONNECTION)"
+[[ -n "$WORKER_CONNECTION" ]] || WORKER_CONNECTION=database
+[[ "$WORKER_CONNECTION" =~ ^[a-zA-Z0-9_-]+$ ]] || fail "QUEUE_CONNECTION tidak valid."
+QUEUE_WORKER_PATTERN="[a]rtisan queue:work([[:space:]]+${WORKER_CONNECTION})?([[:space:]]+-|[[:space:]]*$)"
+
 LEARNER_WORKER_REQUIRED=false
 if [[ "$(dotenv_value TTS_ENABLED)" == "true" || ( -n "$(dotenv_value AI_API_URL)" && -n "$(dotenv_value AI_MODEL)" ) ]]; then
     LEARNER_WORKER_REQUIRED=true
@@ -177,7 +182,7 @@ if [[ -n "$SUPERVISORCTL_BIN" ]]; then
     check_supervisor_program "Reverb process" "$REVERB_PROGRAM"
 else
     printf 'Supervisor CLI tidak tersedia; memeriksa proses aktif langsung.\n'
-    check_process "Queue worker" '[a]rtisan queue(:work)?([[:space:]]|$)'
+    check_process "Queue worker" "$QUEUE_WORKER_PATTERN"
     check_process "Reverb process" '[a]rtisan reverb:start'
 fi
 
@@ -207,7 +212,7 @@ if [[ -n "$OCR_API_KEY" ]]; then
     OCR_HEADERS+=(--header "X-API-Key: $OCR_API_KEY")
 fi
 if [[ -n "$OCR_API_URL" ]]; then
-    check_http "OCR API" "${OCR_API_URL%/}/health" "${OCR_HEADERS[@]}"
+    check_http "OCR API" "${OCR_API_URL%/}/health" ${OCR_HEADERS[@]+"${OCR_HEADERS[@]}"}
 else
     printf 'SKIP OCR belum dikonfigurasi; pembuatan soal dari dokumen belum tersedia.\n'
 fi
@@ -217,7 +222,7 @@ if [[ -n "$AI_API_KEY" ]]; then
     AI_HEADERS+=(--header "Authorization: Bearer $AI_API_KEY")
 fi
 if [[ -n "$AI_API_URL" ]]; then
-    check_http "AI API models" "${AI_API_URL%/}/models" "${AI_HEADERS[@]}"
+    check_http "AI API models" "${AI_API_URL%/}/models" ${AI_HEADERS[@]+"${AI_HEADERS[@]}"}
 else
     printf 'SKIP AI kuis belum dikonfigurasi; pembuatan soal dari dokumen belum tersedia.\n'
 fi
