@@ -45,7 +45,7 @@ export default function Profile({
             <PageMeta {...meta} />
             <div className="mx-auto max-w-6xl space-y-7 sm:space-y-8">
                 <header className="overflow-hidden rounded-card bg-surface">
-                    <div className="flex flex-wrap items-center gap-5 p-5 sm:gap-7 sm:p-8">
+                    <div className="flex flex-col items-center gap-4 p-5 sm:flex-row sm:flex-wrap sm:gap-7 sm:p-8">
                         <button
                             type="button"
                             onClick={() => setAvatarOpen(true)}
@@ -57,13 +57,13 @@ export default function Profile({
                                 alt=""
                                 width="112"
                                 height="112"
-                                className="size-20 rounded-full object-cover ring-4 ring-primary/25 sm:size-28"
+                                className="size-22 rounded-full object-cover ring-4 ring-primary/25 sm:size-28"
                             />
                             <span className="absolute -bottom-1 -right-1 grid size-8 place-items-center rounded-full bg-accent text-background ring-4 ring-surface sm:size-10">
                                 <Icon name="book" className="size-4 sm:size-5" />
                             </span>
                         </button>
-                        <div className="min-w-0 flex-1">
+                        <div className="min-w-0 w-full text-center sm:w-auto sm:flex-1 sm:text-left">
                             <p className="text-xs text-foreground/45 sm:text-sm">Profil belajar</p>
                             <h1 className="mt-2 break-words font-display text-2xl font-bold sm:text-3xl">
                                 {viewer.name}
@@ -73,7 +73,7 @@ export default function Profile({
                                     ? 'Akun anonim · hanya di perangkat ini'
                                     : 'Akun terdaftar'}
                             </p>
-                            <p className="mt-2 max-w-lg break-words text-xs leading-6 text-foreground/50 sm:text-sm">
+                            <p className="mx-auto mt-3 max-w-lg break-words text-sm leading-6 text-foreground/50 sm:mx-0">
                                 {viewer.mode === 'anonymous'
                                     ? 'Progres tersimpan di browser ini. Buat akun untuk melanjutkan belajar di perangkat lain.'
                                     : email}
@@ -85,13 +85,16 @@ export default function Profile({
                             <button
                                 type="button"
                                 onClick={() => setAvatarOpen(true)}
-                                className={`${secondaryClass} !bg-primary/15 !px-4 !text-accent`}
+                                className={`${secondaryClass} !bg-primary/15 !px-3 !text-xs !text-accent sm:!px-4 sm:!text-sm`}
                             >
                                 <Icon name="edit" />
                                 Ganti avatar
                             </button>
                             {viewer.mode === 'anonymous' && (
-                                <Link href={nav.register} className={`${buttonClass} !px-4`}>
+                                <Link
+                                    href={nav.register}
+                                    className={`${buttonClass} !px-3 !text-xs sm:!px-4 sm:!text-sm`}
+                                >
                                     Daftar akun
                                 </Link>
                             )}
@@ -99,36 +102,43 @@ export default function Profile({
                     </div>
                     <nav
                         aria-label="Menu profil"
-                        className="flex flex-wrap items-center gap-2 bg-background/20 p-3 sm:px-5 sm:py-4"
+                        className="grid grid-cols-3 items-center gap-1 bg-background/20 p-2 sm:flex sm:flex-wrap sm:gap-2 sm:px-5 sm:py-4"
                     >
                         <Link
                             href={nav.profile}
                             aria-current={!about ? 'page' : undefined}
-                            className={`${secondaryClass} !px-3 !text-xs sm:!px-5 sm:!text-sm ${!about ? '!bg-primary/20 !text-accent' : '!bg-transparent'}`}
+                            className={`${secondaryClass} !flex-col !gap-1 !px-2 !text-xs sm:!flex-row sm:!gap-2 sm:!px-5 sm:!text-sm ${!about ? '!bg-primary/20 !text-accent' : '!bg-transparent'}`}
                         >
                             <Icon name="chart" />
-                            Progres belajar
+                            <span className="sm:hidden">Progres</span>
+                            <span className="hidden sm:inline">Progres belajar</span>
                         </Link>
                         <Link
                             href={links['profile.about']}
                             aria-label="Tentang aplikasi ini"
                             aria-current={about ? 'page' : undefined}
-                            className={`${secondaryClass} !px-3 !text-xs sm:!px-5 sm:!text-sm ${about ? '!bg-primary/20 !text-accent' : '!bg-transparent'}`}
+                            className={`${secondaryClass} !flex-col !gap-1 !px-2 !text-xs sm:!flex-row sm:!gap-2 sm:!px-5 sm:!text-sm ${about ? '!bg-primary/20 !text-accent' : '!bg-transparent'}`}
                         >
                             <Icon name="info" />
                             <span className="sm:hidden">Tentang</span>
                             <span className="hidden sm:inline">Tentang aplikasi ini</span>
                         </Link>
-                        <div className="ml-auto">
+                        <div className="w-full sm:ml-auto sm:w-auto">
                             {viewer.mode === 'anonymous' ? (
-                                <Link href={nav.login} className={`${secondaryClass} !bg-transparent !px-3 sm:!px-4`}>
+                                <Link
+                                    href={nav.login}
+                                    className={`${secondaryClass} w-full !flex-col !gap-1 !bg-transparent !px-2 sm:w-auto sm:!flex-row sm:!gap-2 sm:!px-4`}
+                                >
                                     <Icon name="login" />
-                                    <span className="sr-only sm:not-sr-only">Masuk</span>
+                                    <span className="text-xs sm:text-sm">Masuk</span>
                                 </Link>
                             ) : (
-                                <Action url={nav.logout} className={`${secondaryClass} !bg-transparent !px-3 sm:!px-4`}>
+                                <Action
+                                    url={nav.logout}
+                                    className={`${secondaryClass} w-full !flex-col !gap-1 !bg-transparent !px-2 sm:w-auto sm:!flex-row sm:!gap-2 sm:!px-4`}
+                                >
                                     <Icon name="login" />
-                                    <span className="sr-only sm:not-sr-only">Keluar</span>
+                                    <span className="text-xs sm:text-sm">Keluar</span>
                                 </Action>
                             )}
                         </div>
@@ -138,7 +148,7 @@ export default function Profile({
                     {about ? (
                         <>
                             <Card>
-                                <h2 className="font-display text-3xl font-bold">Tentang ARTASWAHA</h2>
+                                <h2 className="font-display text-2xl font-bold sm:text-3xl">Tentang ARTASWAHA</h2>
                                 <p className="mt-4 text-sm leading-8 text-foreground/65">
                                     ARTASWAHA adalah platform edukasi Bahasa, Sastra, dan Aksara Bali. Pelajari materi
                                     mandiri dan ikuti kuis bersama dalam room.
@@ -187,21 +197,24 @@ export default function Profile({
                                 <h2 id="overview-title" className="mb-4 font-display text-xl font-bold">
                                     Ringkasan belajar
                                 </h2>
-                                <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                                <div className="grid gap-2 sm:grid-cols-3 sm:gap-4">
                                     {[
                                         ['Pelajaran selesai', completedLessons, 'check'],
                                         ['Materi dipelajari', paths.length, 'book'],
                                         ['Hari aktif minggu ini', `${activity?.active_days_7 ?? 0}/7`, 'calendar'],
                                     ].map(([label, value, icon]) => (
-                                        <Card key={label} className="flex flex-col !p-3 sm:!p-6">
+                                        <Card
+                                            key={label}
+                                            className="flex items-center gap-3 !p-4 sm:flex-col sm:items-start sm:gap-0 sm:!p-6"
+                                        >
                                             <Icon
                                                 name={icon}
-                                                className={`mb-4 size-5 sm:size-6 ${icon === 'book' ? 'text-primary' : 'text-accent'}`}
+                                                className={`size-5 shrink-0 sm:mb-4 sm:size-6 ${icon === 'book' ? 'text-primary' : 'text-accent'}`}
                                             />
-                                            <p className="mb-3 flex-1 text-[11px] leading-5 text-foreground/50 sm:text-sm">
+                                            <p className="min-w-0 flex-1 text-sm leading-5 text-foreground/60 sm:mb-3">
                                                 {label}
                                             </p>
-                                            <p className="font-display text-3xl font-bold tabular-nums sm:text-4xl">
+                                            <p className="shrink-0 font-display text-2xl font-bold tabular-nums sm:text-4xl">
                                                 {value}
                                             </p>
                                         </Card>
@@ -222,7 +235,7 @@ export default function Profile({
                                                 Aktivitas belajar dalam tujuh hari terakhir.
                                             </p>
                                             <ol
-                                                className="mt-7 grid grid-cols-7 gap-1 sm:gap-3"
+                                                className="mt-5 grid grid-cols-7 gap-1 sm:mt-7 sm:gap-3"
                                                 aria-label="Aktivitas belajar tujuh hari terakhir"
                                             >
                                                 {activity.daily.slice(-7).map((day) => {
@@ -232,7 +245,7 @@ export default function Profile({
                                                         <li
                                                             key={day.date}
                                                             aria-label={`${day.date}: ${day.lessons_completed} pelajaran selesai, ${day.quiz_answers} jawaban kuis`}
-                                                            className="text-center"
+                                                            className="min-w-0 text-center"
                                                         >
                                                             <span className="text-[10px] text-foreground/45">
                                                                 {date.toLocaleDateString('id-ID', {
