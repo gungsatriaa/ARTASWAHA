@@ -1,0 +1,40 @@
+import { Head, Link } from '@inertiajs/react';
+import * as m from 'motion/react-m';
+import Icon from './Icon';
+
+export const buttonClass = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-accent px-5 py-3 text-sm font-bold text-background transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent';
+
+export function Button({ children, ...props }) {
+    return <m.button whileTap={{ scale: 0.97 }} {...props} className={`${buttonClass} ${props.className ?? ''}`}>{children}</m.button>;
+}
+
+export function PageMeta({ title, description, canonical }) {
+    return <Head title={title}>
+        {description && <meta name="description" content={description} head-key="description" />}
+        {canonical && <link rel="canonical" href={canonical} head-key="canonical" />}
+    </Head>;
+}
+
+export function CategoryIcon({ group, className = 'size-12' }) {
+    return <span className={`grid shrink-0 place-items-center rounded-2xl bg-primary/20 text-accent ${className}`} aria-hidden="true">
+        {group === 'aksara' ? <span lang="ban" className="font-balinese text-2xl leading-none">ᬅ</span> : <Icon name="chat" className="size-6" />}
+    </span>;
+}
+
+export function Pagination({ current_page: current, last_page: last, prev_page_url: previous, next_page_url: next }) {
+    if (last <= 1) return null;
+    return <nav className="mt-7 flex items-center justify-between gap-4" aria-label="Halaman hasil">
+        {previous ? <Link href={previous} aria-label="Sebelumnya" preserveScroll className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-accent"><Icon name="back" /><span className="hidden sm:inline">Sebelumnya</span></Link> : <span />}
+        <span className="text-xs text-foreground/55">{current} / {last}</span>
+        {next ? <Link href={next} aria-label="Berikutnya" preserveScroll className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-accent"><span className="hidden sm:inline">Berikutnya</span><Icon name="arrow" /></Link> : <span />}
+    </nav>;
+}
+
+export function EmptyState({ title, children, action }) {
+    return <div className="rounded-card bg-surface px-6 py-10 text-center">
+        <span className="mx-auto grid size-14 place-items-center rounded-full bg-primary/15 text-accent"><Icon name="book" className="size-7" /></span>
+        <h2 className="mt-5 font-display text-xl font-bold">{title}</h2>
+        <p className="mx-auto mt-2 max-w-md text-sm leading-7 text-foreground/60">{children}</p>
+        {action && <div className="mt-5">{action}</div>}
+    </div>;
+}

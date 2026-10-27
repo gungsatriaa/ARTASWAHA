@@ -1,6 +1,29 @@
 # Panduan migrasi UI ARTASWAHA ke React dan Inertia
 
-Status: rencana implementasi, 27 Oktober 2026. Dokumen ini belum memasang dependency atau mengganti halaman. UI Blade yang sekarang wajib tetap tersedia sebagai referensi dan jalur pemulihan.
+Status: fondasi dan pilot katalog telah diimplementasikan, 27 Oktober 2026. Migrasi seluruh aplikasi belum selesai. UI Blade tetap tersedia sebagai referensi dan jalur pemulihan.
+
+## Implementasi saat ini
+
+- Entry React: `resources/js/react/app.jsx`, root `resources/views/react.blade.php`; entry dan template Blade tetap utuh.
+- React melayani `/belajar` dan `/belajar/{learningPath:slug}` saat renderer aktif. Katalog memiliki pencarian, filter kategori, pagination server, dan partial reload dengan query lazy. Halaman detail jalur menampilkan daftar pelajaran; isi pelajaran masih Blade.
+- Shell persisten memakai token tema yang sama, Motion dengan feature bundle async, dialog native dengan pengembalian fokus, satu toast di atas, serta bottom navigation pill untuk identitas akun/anonim. Heartbeat dibersihkan saat shell dilepas dan tidak berjalan saat tab tersembunyi.
+- `REACT_UI_ENABLED` mengendalikan renderer: tanpa nilai eksplisit, aktif hanya di `APP_ENV=local`. Pada production harus diaktifkan secara eksplisit dan hanya berlaku untuk akun/profil anonim yang sudah selesai interview. Pengunjung publik tetap Blade.
+- Rollback: `REACT_UI_ENABLED=false`, lalu perbarui cache konfigurasi. Preview Blade lokal juga bisa memakai `?ui=blade`. Tidak ada perubahan database untuk pilot ini.
+- SSR dan perekaman Inertia DevTools nonaktif. Chart.js, Echo/Pusher, keyboard aksara, dan skrip Blade tidak masuk entry React.
+
+Dependency terpasang: Laravel adapter Inertia 3.5.2, React/React DOM 19.3.1, adapter React Inertia 3.9.1, Motion 14.6.0, plugin React/Vite 6.1.2; Vitest dan Testing Library digunakan untuk tes lifecycle/interaksi. Lockfile adalah acuan versi hasil instalasi.
+
+Verifikasi pilot:
+
+- 244 tes PHP lulus; termasuk 10 tes baru untuk props, identitas anonim, pagination/filter, materi terbit, kunci jawaban, batas Blade–React, validasi, partial reload, default renderer di luar lokal, dan rollback. Konfigurasi testing menonaktifkan pilot secara eksplisit; tes React mengaktifkannya per kasus.
+- 7 tes React lulus: pencarian/filter, teks aman, dialog/fokus, toast tunggal, navigasi anonim, dan cleanup heartbeat pada Strict Mode.
+- Suite JavaScript lama: 78 dari 81 tes lulus. Tiga tes `tests/install-tts-worker.test.js` gagal karena `install-tts-worker.sh` tidak ada, termasuk pada tree commit awal sebelum migrasi. Installer tersebut tidak diubah atau dibuat ulang dalam pilot React.
+- Browser Chromium: direct visit, refresh, Back, pencarian/filter kosong, dialog/Escape, navigasi React → Blade → Back, serta interview anonim → React bekerja tanpa error konsol saat diperiksa.
+- Katalog diuji untuk overflow horizontal pada 320, 360, 393, 440, 768, 1280 px dan landscape 852 × 393. Ini emulasi viewport; pengujian sentuhan/keyboard virtual pada HP fisik belum dilakukan.
+- Build production: entry React 121,66 KiB gzip; total entry, shared chunk, katalog, dan fitur Motion sekitar 148,3 KiB gzip. CSS bersama 17,70 KiB gzip. Angka ini ukuran hasil build, bukan pengukuran LCP/INP, penggunaan RAM, atau transfer jaringan pada HP.
+- Pengujian browser memakai SQLite sementara di luar repo karena MySQL lokal tidak aktif. Data asli tidak diubah dan provider AI dinonaktifkan pada proses preview.
+
+Tahap berikutnya tetap mengikuti fase 3–7 di bawah: detail pelajaran, profil/dashboard, interview, kuis/room, admin, kemudian halaman publik bila SSR siap. Alur form POST, upload, audio/keyboard, realtime multi-peserta, logout/Back lintas identitas, jaringan terputus/chunk gagal, dan metrik perangkat nyata harus diuji lagi saat area terkait dimigrasikan. Pilot ini tidak menyatakan area tersebut sudah dipindahkan ke React.
 
 Tujuan: UI terasa seperti aplikasi, animasi responsif, navigasi lebih mulus, dan pemuatan tetap ringan pada HP. React mengelola tampilan dan interaksi; Laravel tetap mengelola aturan bisnis, identitas pengguna, penyimpanan, otorisasi, antrean, dan realtime.
 

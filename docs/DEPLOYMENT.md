@@ -397,3 +397,13 @@ Jika salah satu perintah gagal, perbaiki terlebih dahulu dan biarkan TTS_ENABLED
 Gunakan build frontend dan pembaruan cache Laravel pada alur deploy bagian 3. Perubahan ini tidak menambah dependency, migration, environment, atau service.
 
 Setelah deploy, buka beranda dalam sesi tab baru: overlay mengikuti kesiapan aset, tampil minimal 1,2 detik, mencapai 100%, lalu menghilang. Overlay tidak berulang saat reload/navigasi dalam sesi tab yang sama dan tidak dirender pada halaman lain. Uji tombol lewati, sapaan maskot, serta desktop dan mobile. Pengaturan reduced motion melewati jeda pembuka dan animasi. Skeleton dekoratif pada beberapa daftar/ringkasan tampil 400 ms saat masuk layar dan langsung selesai saat isinya disentuh atau difokuskan; data dan timer kuis tidak ditunda.
+
+## Pilot React dan Inertia
+
+Perubahan ini menambah dependency PHP/JS dan entry Vite kedua. Gunakan `composer install` dan `npm ci` dari lockfile, lalu `npm run build` dan pembaruan cache Laravel pada alur deploy bagian 3. Jangan menjalankan `composer update`/`npm update` pada production. Tidak ada migration, seeder, proses Node SSR, atau worker baru untuk pilot React. Gunakan Node 22.12+ yang kompatibel dengan toolchain proyek; baseline pengujian memakai Node 22.22.3 dan PHP 8.4.
+
+Tanpa konfigurasi eksplisit, React hanya aktif di lingkungan `local`. Untuk mengaktifkan pilot bagi akun dan profil anonim yang sudah selesai interview pada production, tambahkan `REACT_UI_ENABLED=true` pada `.env` yang ada dan perbarui cache konfigurasi. Hanya katalog `/belajar` serta detail jalur belajarnya yang dialihkan; isi pelajaran, beranda, profil, interview, kuis, room, dan admin masih Blade. Pengunjung tanpa identitas tetap menerima HTML Blade untuk SEO. SSR dan perekaman Inertia DevTools dinonaktifkan.
+
+Rollback renderer: ubah `REACT_UI_ENABLED=false` lalu jalankan `php artisan config:cache`. Tidak perlu rollback database atau menghapus source React/Blade. Jangan menghapus aset build lama ketika masih ada tab yang terbuka; muat ulang tab setelah deployment versi aset.
+
+QA: buka katalog langsung, refresh, cari/filter dan pindah halaman hasil; buka daftar pelajaran, masuk ke pelajaran Blade, lalu gunakan Back/Forward. Uji akun dan profil anonim di desktop/mobile, navigasi pill tanpa hamburger untuk pengguna mobile, dialog dengan Escape/fokus kembali, serta satu toast sukses di atas. Periksa response props tidak memuat data internal/kunci jawaban. Sebelum aktivasi production, jalankan `php artisan test --compact`, `npm run test:react`, dan `npm run build`. Daftar cakupan serta pengujian yang belum dilakukan tersedia di `docs/REACT.md`.
