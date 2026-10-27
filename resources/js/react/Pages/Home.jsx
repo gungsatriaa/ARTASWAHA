@@ -189,64 +189,116 @@ export default function Home({ paths, selectedIds, recent, analysis, meta }) {
                         </div>
                     </Card>
                 </section>
-                <section id="tentang" className="py-12 sm:py-20">
-                    <h2 className="max-w-2xl font-display text-3xl font-bold sm:text-4xl">
-                        Belajar budaya Bali, dekat dengan keseharian.
-                    </h2>
-                    <p className="mt-4 max-w-2xl text-sm leading-8 text-foreground/60">
-                        ARTASWAHA mengajakmu belajar lewat contoh, cerita, dan latihan singkat. Pilih materi yang kamu
-                        sukai, lalu lanjutkan sesuai waktumu.
-                    </p>
-                    <div className="mt-8 grid gap-4 md:grid-cols-2">
-                        {[
-                            ['Paribasa Bali', 'Temukan makna di balik teka-teki, bunyi, dan ungkapan.', 'paribasa'],
-                            ['Aksara Bali', 'Kenali bentuk huruf, tanda, gantungan, dan angka.', 'aksara'],
-                        ].map(([title, text, group]) => (
-                            <Card key={group} className="flex flex-col">
-                                <div className="flex items-start gap-4">
-                                    <CategoryIcon group={group} />
-                                    <div className="min-w-0">
-                                        <h3 className="font-display text-2xl font-bold">{title}</h3>
-                                        <p className="mt-2 text-sm leading-7 text-foreground/55">{text}</p>
-                                    </div>
-                                </div>
-                                <ul className="my-5 flex-1 space-y-2">
-                                    {paths
-                                        .filter((path) => path.group === group)
-                                        .slice(0, 3)
-                                        .map((path) => (
-                                            <li key={path.id}>
-                                                <Link
-                                                    href={path.url}
-                                                    className="flex min-h-12 items-center justify-between gap-3 rounded-2xl bg-background px-4 py-3 text-sm font-semibold hover:text-accent"
-                                                >
-                                                    <span className="min-w-0 break-words">{path.title}</span>
-                                                    <Icon name="arrow" className="size-4 shrink-0 text-foreground/35" />
-                                                </Link>
-                                            </li>
-                                        ))}
-                                </ul>
-                                <Link
-                                    href={`${nav.learning}?group=${group}`}
-                                    className="inline-flex min-h-11 items-center gap-2 self-start text-sm font-bold text-accent"
-                                >
-                                    Jelajahi {title}
-                                    <Icon name="arrow" className="size-4" />
-                                </Link>
-                            </Card>
-                        ))}
+                <section
+                    id="tentang"
+                    aria-labelledby="about-platform-title"
+                    className="grid items-center gap-8 py-12 sm:py-20 lg:grid-cols-[1.15fr_.85fr] lg:gap-14"
+                >
+                    <div className="max-w-2xl">
+                        <p className="mb-4 text-sm font-semibold text-accent">Tentang ARTASWAHA</p>
+                        <h2
+                            id="about-platform-title"
+                            className="font-display text-3xl font-bold leading-tight sm:text-4xl"
+                        >
+                            Ruang belajar untuk mengenal bahasa dan budaya Bali.
+                        </h2>
+                        <p className="mt-5 text-sm leading-8 text-foreground/65 sm:text-base">
+                            ARTASWAHA adalah platform edukasi bahasa, sastra, dan aksara Bali. Kami menghadirkan
+                            paribasa dan aksara lewat penjelasan, contoh sehari-hari, latihan singkat, serta kuis yang
+                            dapat dimainkan bersama.
+                        </p>
+                        <p className="mt-4 text-sm leading-8 text-foreground/55 sm:text-base">
+                            Untuk murid, guru, pendatang, maupun siapa saja yang ingin mengenal Bali lebih dekat. Mulai
+                            dari rasa ingin tahu, pelajari sesuai waktumu, dan bangun pemahaman sedikit demi sedikit.
+                        </p>
+                        <Link
+                            href={nav.learning}
+                            className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full font-semibold text-accent focus-visible:outline-2 focus-visible:outline-accent"
+                        >
+                            Kenali materi pembelajaran
+                            <Icon name="arrow" className="size-4" />
+                        </Link>
                     </div>
+                    <Card as="aside" className="!bg-primary/10 sm:!p-8" aria-label="Tujuan ARTASWAHA">
+                        <span
+                            lang="ban"
+                            aria-hidden="true"
+                            className="block font-balinese text-6xl leading-relaxed text-accent"
+                        >
+                            ᬅ
+                        </span>
+                        <h3 className="mt-4 max-w-sm font-display text-2xl font-bold leading-snug sm:text-3xl">
+                            Bahasa yang tetap dekat dengan keseharian.
+                        </h3>
+                        <p className="mt-4 text-sm leading-8 text-foreground/55">
+                            Kami ingin membuat proses mengenal warisan bahasa Bali terasa lebih mudah dimulai, relevan,
+                            dan menyenangkan untuk dipelajari bersama.
+                        </p>
+                        <div className="mt-6 flex flex-wrap gap-2">
+                            {['Bahasa', 'Sastra', 'Aksara'].map((label) => (
+                                <span
+                                    key={label}
+                                    className="rounded-full bg-background px-4 py-2 text-xs font-semibold text-foreground/65"
+                                >
+                                    {label} Bali
+                                </span>
+                            ))}
+                        </div>
+                    </Card>
                 </section>
-                <section id="keunggulan" className="py-12">
-                    <h2 className="font-display text-3xl font-bold">Langkah kecil, pemahaman baru.</h2>
-                    <div className="mt-7 grid gap-4 sm:grid-cols-3">
+                <section id="keunggulan" aria-labelledby="platform-benefits-title" className="pb-12 pt-3 sm:pb-20">
+                    <header className="mb-7 flex flex-wrap items-end justify-between gap-4 sm:mb-9">
+                        <div className="max-w-2xl">
+                            <p className="mb-3 text-sm font-semibold text-accent">Kelebihan platform</p>
+                            <h2
+                                id="platform-benefits-title"
+                                className="font-display text-3xl font-bold leading-tight sm:text-4xl"
+                            >
+                                Lebih mudah memulai, lebih banyak cara belajar.
+                            </h2>
+                        </div>
+                        <p className="max-w-sm text-sm leading-7 text-foreground/50">
+                            Dari belajar mandiri sampai bermain bersama, pilih cara yang sesuai dengan kebutuhanmu.
+                        </p>
+                    </header>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {[
-                            ['Sesuai waktumu', 'Materi ringkas yang bisa dipelajari sedikit demi sedikit.'],
-                            ['Langsung berlatih', 'Coba latihan singkat dan keyboard Aksara Bali.'],
-                            ['Progres tercatat', 'Lanjutkan perjalanan belajarmu dari perangkat ini.'],
-                        ].map(([title, text]) => (
+                            [
+                                'user',
+                                'Mulai tanpa membuat akun',
+                                'Cukup gunakan profil anonim untuk mulai belajar. Kamu bisa membuat akun ketika ingin melanjutkan di perangkat lain.',
+                            ],
+                            [
+                                'book',
+                                'Materi dan latihan singkat',
+                                'Pahami penjelasan lewat contoh, lalu coba latihan untuk mengingat kembali hal yang baru dipelajari.',
+                            ],
+                            [
+                                'aksara',
+                                'Keyboard Aksara Bali',
+                                'Coba menulis aksara dasar, pasangan, dan tanda melalui keyboard yang tersedia pada pembelajaran.',
+                            ],
+                            [
+                                'quiz',
+                                'Kuis bersama teman',
+                                'Gabung dengan kode room, atau buat kuis melalui akunmu untuk belajar bersama teman dan murid.',
+                            ],
+                            [
+                                'chart',
+                                'Progres belajar tercatat',
+                                'Lihat pelajaran yang sudah diselesaikan dan riwayat aktivitasmu untuk menentukan langkah berikutnya.',
+                            ],
+                            [
+                                'spark',
+                                'Saran belajar berbantuan AI',
+                                'Dapatkan arahan belajar berdasarkan pilihan materi dan aktivitas yang tercatat, sebagai pendamping perjalanan belajarmu.',
+                            ],
+                        ].map(([icon, title, text]) => (
                             <Card key={title}>
-                                <h3 className="font-display text-xl font-bold">{title}</h3>
+                                <span className="grid size-11 place-items-center rounded-2xl bg-primary/15 text-accent">
+                                    <Icon name={icon} className="size-5" />
+                                </span>
+                                <h3 className="mt-5 font-display text-xl font-bold">{title}</h3>
                                 <p className="mt-3 text-sm leading-7 text-foreground/55">{text}</p>
                             </Card>
                         ))}

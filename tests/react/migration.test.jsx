@@ -198,6 +198,11 @@ it('shows only studied paths in the profile and keeps the quiz join action out o
 it('renders public content, privacy disclosures and testimonials as escaped React text', () => {
     const { unmount } = render(<Home paths={[path]} selectedIds={[]} hasInterview={true} meta={meta} />);
     expect(document.querySelectorAll('blockquote')).toHaveLength(3);
+    expect(screen.getByRole('heading', { name: 'Ruang belajar untuk mengenal bahasa dan budaya Bali.' })).toBeTruthy();
+    expect(
+        screen.getByRole('region', { name: 'Lebih mudah memulai, lebih banyak cara belajar.' }).querySelectorAll('h3'),
+    ).toHaveLength(6);
+    expect(screen.queryByText('Jelajahi Paribasa Bali')).toBeNull();
     expect(screen.getByText(/bukan testimoni pengguna nyata/)).toBeTruthy();
     unmount();
     render(<Privacy meta={meta} />);
