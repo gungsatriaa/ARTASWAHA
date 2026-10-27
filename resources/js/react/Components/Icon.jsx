@@ -1,3 +1,4 @@
+import BalineseIcon from './BalineseIcon';
 const paths = {
     mail: 'M3 5h18v14H3zM3 7l9 6 9-6',
     phone: 'M7 3H4a1 1 0 0 0-1 1c0 9.4 7.6 17 17 17a1 1 0 0 0 1-1v-3l-5-2-2 2a15 15 0 0 1-7-7l2-2z',
@@ -26,16 +27,7 @@ const paths = {
 
 export default function Icon({ name, className = 'size-5', ...props }) {
     if (name === 'aksara') {
-        return (
-            <span
-                lang="ban"
-                aria-hidden="true"
-                className={`inline-grid shrink-0 place-items-center font-balinese leading-none ${className}`}
-                {...props}
-            >
-                ᬳ
-            </span>
-        );
+        return <BalineseIcon className={className}>ᬳ</BalineseIcon>;
     }
     return (
         <svg

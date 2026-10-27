@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import * as m from 'motion/react-m';
 import Icon from './Icon';
+import BalineseIcon from './BalineseIcon';
 
 export const buttonClass =
     'inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-accent px-5 py-3 text-sm font-bold text-background transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent';
@@ -44,7 +45,7 @@ export function CategoryIcon({ group, title = '', className = 'size-12' }) {
         : subject.includes('angka')
           ? '᭑'
           : subject.includes('arda')
-            ? 'ᬳ᭄ᬬ'
+            ? '᭄ᬬ'
             : subject.includes('tengenan')
               ? 'ᬂ'
               : subject.includes('suara')
@@ -55,13 +56,7 @@ export function CategoryIcon({ group, title = '', className = 'size-12' }) {
             className={`grid shrink-0 place-items-center rounded-2xl bg-primary/20 text-accent ${className}`}
             aria-hidden="true"
         >
-            {group === 'aksara' ? (
-                <span lang="ban" className="font-balinese text-2xl leading-relaxed">
-                    {glyph}
-                </span>
-            ) : (
-                <Icon name="chat" className="size-6" />
-            )}
+            {group === 'aksara' ? <BalineseIcon>{glyph}</BalineseIcon> : <Icon name="chat" className="size-6" />}
         </span>
     );
 }

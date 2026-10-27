@@ -34,12 +34,25 @@ vi.mock('motion/react-m', async () => {
 it.each([
     ['Aksara Wreastra & Gantungan', 'ᬳ'],
     ['Pengangge Suara', 'ᬶ'],
-    ['Pengangge Arda Suara', 'ᬳ᭄ᬬ'],
+    ['Pengangge Arda Suara', '᭄ᬬ'],
     ['Pengangge Tengenan', 'ᬂ'],
     ['Angka Aksara Bali', '᭑'],
 ])('uses the requested glyph for %s', (title, glyph) => {
     const { container } = render(<CategoryIcon group="aksara" title={title} />);
     expect(container.querySelector('[lang="ban"]').textContent).toBe(glyph);
+});
+
+it('centers a Balinese icon using the rendered glyph bounds', () => {
+    const getBBox = vi.fn(() => ({ x: -3, y: -30, width: 16, height: 12 }));
+    const previous = SVGElement.prototype.getBBox;
+    SVGElement.prototype.getBBox = getBBox;
+    try {
+        const { container } = render(<CategoryIcon group="aksara" title="Pengangge Tengenan" />);
+        expect(container.querySelector('svg').getAttribute('viewBox')).toBe('-9 -38 28 28');
+    } finally {
+        if (previous) SVGElement.prototype.getBBox = previous;
+        else delete SVGElement.prototype.getBBox;
+    }
 });
 
 beforeEach(() => {
