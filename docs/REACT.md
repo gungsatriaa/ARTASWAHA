@@ -1,6 +1,6 @@
 # Panduan migrasi UI ARTASWAHA ke React dan Inertia
 
-Status: seluruh route antarmuka memakai React/Inertia, 27 Oktober 2026. Tidak ada sakelar renderer atau dua versi UI aktif. Template Blade dan skrip lama tetap disimpan sebagai referensi; Blade aktif hanya menjadi dokumen root, overlay sebelum bootstrap, dan sitemap XML.
+Status: seluruh route antarmuka memakai React/Inertia, 27 Oktober 2026. Tidak ada sakelar renderer atau dua versi UI aktif. UI Blade lama dan initializer DOM yang tidak dipakai telah dihapus atas permintaan pengguna. Blade aktif hanya menjadi dokumen root, overlay sebelum bootstrap, dan sitemap XML. Referensi sebelum migrasi tersedia melalui riwayat Git.
 
 ## Implementasi saat ini
 
@@ -8,7 +8,7 @@ Status: seluruh route antarmuka memakai React/Inertia, 27 Oktober 2026. Tidak ad
 - Beranda, login/register/pemulihan, interview multi-pilihan, katalog/pelajaran, profil/analisis/avatar, kuis/editor/room, privasi, dan seluruh halaman admin sudah React, pada desktop maupun mobile.
 - Laravel tetap memegang validasi, sesi/cookie anonim, otorisasi, antrean AI/TTS, timer, skor, dan penyimpanan. `PagePresenter` mengirim props eksplisit. Room tidak mengirim soal masa depan atau kunci jawaban sebelum diizinkan. Daftar modul admin tidak mengirim isi latihan/kunci yang tidak diperlukan.
 - Shell pengguna/admin persisten: navigasi mobile pill, sidebar admin, dialog native, satu toast atas, heartbeat dengan cleanup. Reload host tidak mengirim aksi keluar; tab yang ditutup mengikuti expiry heartbeat server 90 detik. Keluar melalui navigasi aplikasi mengirim aksi keluar.
-- Chart.js, Echo/Pusher, keyboard, dan crop avatar dimuat sesuai kebutuhan. Helper edit aksara dipisahkan dari initializer DOM lama agar aman pada SSR.
+- Chart.js, Echo/Pusher, keyboard, dan crop avatar dimuat sesuai kebutuhan. Helper edit aksara tetap digunakan keyboard React dan aman pada SSR.
 - SSR aktif secara default dengan entry `resources/js/react/ssr.jsx`, bind loopback `127.0.0.1:13714`, batas request 3 detik. Production perlu proses SSR terpisah; lihat `docs/DEPLOYMENT.md`. History Inertia dienkripsi dan dibersihkan ketika identitas berganti; DevTools recording nonaktif.
 - Overlay muncul pada setiap reload dokumen, bukan pada visit Inertia/partial reload. Bootstrap dimulai sebelum React, menunggu mount dan font dengan batas waktu, mencapai 100%, hold 450 ms, lalu fade. Progress menunjukkan kesiapan tampilan, bukan byte unduhan atau penyelesaian job AI. Ada lewati, fallback, dan reduced motion.
 - Transisi halaman memakai CSS; reveal kartu di bawah layar memakai IntersectionObserver sekali dengan cleanup/fokus/reduced motion. Tidak ada dependency AOS tambahan. Skeleton dipakai untuk navigasi GET lambat, chunk tambahan, dan status analisis; error dan batas polling menghentikan animasi tunggu. Submit jawaban/timer tidak diberi delay dekoratif.
@@ -19,7 +19,7 @@ Verifikasi cutover:
 
 - 247 tes PHP lulus: route/props, validation, otorisasi, identitas/progres anonim, audio, timer, skor, batas waktu total, dan feedback. Assertion markup Blade dipindah ke kontrak Inertia; markup/interaksi React diperiksa pada suite berikut.
 - 57 tes React lulus: multi-select, form/transform, modal login anonim, payload editor/ID soal, rendering admin, teks aman, keyboard editor terkontrol, avatar, countdown, feedback, terminal polling, cleanup Strict Mode, overlay 100%, skeleton GET, chunk gagal, serta SSR tanpa global browser dan metadata/JSON-LD.
-- Suite JavaScript lama: 78 dari 81 lulus. Tiga kegagalan di `tests/install-tts-worker.test.js` berasal dari `install-tts-worker.sh` yang sudah tidak tersedia pada commit sebelum migrasi; installer bukan bagian perubahan ini.
+- Tes khusus initializer DOM Blade telah dihapus bersama implementasi lamanya; lima tes helper edit aksara tetap dipertahankan. Tes installer worker yang target skripnya sudah tidak ada juga dihapus. Tes deployment dan installer TTS yang masih tersedia tetap dipertahankan.
 - HTTP preview dengan SSR aktif: halaman publik dan admin, login dengan rotasi CSRF, interview anonim multi-pilihan, kuis dua peserta, feedback privat, kemajuan peserta independen, dan durasi penuh soal berikutnya lolos. Memakai SQLite sementara dan data uji; data asli serta layanan production tidak diubah.
 - Browser sempat memverifikasi navigasi/katalog/profil desktop dan viewport 393 × 852 tanpa error konsol. Browser lokal kemudian dinonaktifkan di pengaturan Work. Pemeriksaan visual akhir untuk overlay/reveal baru, seluruh breakpoint, upload crop pada browser, serta WebSocket Reverb belum bisa diselesaikan. Pengujian SSR/HTTP/komponen tidak menggantikan pengujian tersebut.
 - Pengujian HP fisik, React Profiler/trace LCP-INP, tab panjang, OAuth nyata, provider AI/TTS production, dan jaringan putus nyata belum dilakukan. Ukuran chunk build bukan klaim performa perangkat nyata.
@@ -53,32 +53,17 @@ Sebelum pemasangan:
 
 Dependency migrasi yang sudah terpasang: `react`, `react-dom`, `@inertiajs/react`, adapter `inertiajs/inertia-laravel`, serta integrasi React/Vite yang sesuai. Tambahkan `motion` ketika komponen animasi mulai dibuat. Tidak perlu Redux, React Query, UI kit penuh, atau wrapper Chart.js pada fase awal.
 
-## 3. UI lama harus tetap utuh
+## 3. Referensi UI setelah pembersihan
 
-Referensi yang harus dibaca sebelum memigrasikan layar:
+UI aktif ada pada `resources/js/react/Pages/`, `resources/js/react/Components/`, dan `resources/js/react/Layouts/`. Tema bersama ada pada `resources/css/app.css`.
 
-| Area | Referensi sekarang |
-| --- | --- |
-| Tema dan motion | `resources/css/app.css`, `resources/js/page-motion.js`, `docs/STYLE.md` |
-| Beranda | `resources/views/welcome.blade.php` |
-| Dashboard mobile | `resources/views/components/mobile-learning-dashboard.blade.php` |
-| Layout dan navigasi | `resources/views/components/layouts/`, `site-nav.blade.php`, `mobile-app-nav.blade.php` |
-| Interview | `resources/views/learning/interview.blade.php` |
-| Materi dan pelajaran | `resources/views/learning/paths/`, `resources/views/learning/lessons/` |
-| Profil dan analisis | `resources/views/profile/`, `resources/views/components/learner-analysis.blade.php` |
-| Kuis dan room | `resources/views/quizzes/`, `resources/views/rooms/show.blade.php` |
-| Admin | `resources/views/admin/` |
+Blade yang masih aktif:
 
-Aturan selama transisi:
+- `resources/views/react.blade.php`: dokumen root Inertia dan metadata awal.
+- `resources/views/components/react-loader.blade.php`: overlay sebelum React siap.
+- `resources/views/sitemap.blade.php`: sitemap XML.
 
-- Jangan menghapus, memindahkan, atau menimpa template dan skrip Blade sebagai cara memasang React.
-- Tambahkan entry React terpisah di dalam `resources/js/` dan root view Inertia terpisah di `resources/views/`. Nama/lokasi final ditetapkan saat fase fondasi; jangan membuat direktori aplikasi baru di luar struktur proyek.
-- Root Blade hanya memuat entry lama; root Inertia hanya memuat entry React dan CSS bersama. Jangan mengimpor `app.js` lama ke bootstrap React.
-- Satu subtree DOM hanya punya satu pemilik. Event listener dan `querySelector` lama tidak boleh mengubah elemen React.
-- Gunakan Inertia `Link` untuk tujuan yang sudah dimigrasikan. Gunakan navigasi dokumen biasa untuk melewati batas React–Blade agar respons Blade tidak dianggap respons Inertia.
-- Preview React sebelum mengganti route utama harus terlindungi atau terbatas di lingkungan pengembangan. Preview bukan endpoint yang melewati otorisasi.
-- Saat route dialihkan, gunakan aturan bisnis yang sama. Jangan menggandakan service hanya untuk renderer baru.
-- Simpan acuan visual desktop/mobile dan matriks fitur. Pemulihan harus bisa mengembalikan renderer sebelumnya tanpa memulihkan database.
+Template dan initializer Blade lama sudah dihapus setelah cutover selesai. Gunakan riwayat Git untuk melihat referensi lama. Jangan mengembalikan entry `resources/js/app.js` atau memasang listener DOM lama pada elemen React. Helper `resources/js/aksara-edit.js` tetap dipakai keyboard React.
 
 ## 4. Tema dan komponen bersama
 
@@ -119,7 +104,7 @@ Layout yang dibutuhkan: publik, pengguna, dan admin. Pada mobile, dashboard apli
 - Data awal halaman harus cukup untuk menampilkan tugas utama. Jangan menunggu grafik atau analisis sebelum menampilkan nama dan materi.
 - Partial reload harus disertai lazy evaluation di server bila ingin menghindari query yang tidak dibutuhkan. Gunakan hanya untuk page component yang sama. [Partial reloads](https://inertiajs.com/docs/v3/data-props/partial-reloads).
 - Deferred props mengambil data setelah respons awal; ini bukan pengganti queue untuk inferensi AI. Kelompokkan data terkait untuk menghindari banyak request kecil. [Deferred props](https://inertiajs.com/docs/v3/data-props/deferred-props).
-- Endpoint status yang sekarang mengembalikan fragmen Blade perlu kontrak props/JSON untuk React. Jangan memasukkan fragmen itu dengan `dangerouslySetInnerHTML`. Pertahankan kontrak legacy selama masih dipakai Blade.
+- Endpoint status yang sekarang mengembalikan fragmen Blade perlu kontrak props/JSON untuk React. Jangan memasukkan fragmen itu dengan `dangerouslySetInnerHTML`. Tidak ada lagi halaman UI Blade yang membutuhkan fragmen HTML legacy.
 - Gunakan session/cookie dan mekanisme CSRF Laravel yang ada. Jangan memindahkan identitas anonim atau sesi login menjadi JWT di localStorage.
 - Jangan pernah memasukkan API key AI, payload internal job, jawaban benar yang belum boleh dibuka, atau data pengguna lain ke props/variabel `VITE_*`.
 - Bersihkan state pribadi, cache props, draft yang sensitif, dan subscription saat logout/pergantian identitas. Uji tombol Back setelah logout.
@@ -275,4 +260,4 @@ Setiap fase harus mencakup:
 - Build production, pemeriksaan ukuran chunk/request, React Profiler, dan trace browser pada perangkat representatif. Catat metode, bukan hanya skor Lighthouse.
 - Diff terarah, formatter, tes relevan, serta commit kecil sesuai `docs/COMMIT.md`. Perbarui `docs/DEPLOYMENT.md` ketika build/runtime/SSR benar-benar berubah.
 
-UI lama tidak dihapus otomatis setelah fase 7. Penghapusan kode referensi memerlukan permintaan terpisah dari pengguna. Risiko sisa yang harus dicatat sebelum rilis: peningkatan bundle, konsumsi memori tab panjang, regresi aksesibilitas, state lintas navigasi, dan operasional SSR bila diaktifkan.
+Penghapusan UI Blade lama telah dilakukan atas permintaan pengguna setelah fase 7; referensi tetap tersedia di riwayat Git. Risiko sisa yang harus dicatat sebelum rilis: peningkatan bundle, konsumsi memori tab panjang, regresi aksesibilitas, state lintas navigasi, dan operasional SSR bila diaktifkan.
