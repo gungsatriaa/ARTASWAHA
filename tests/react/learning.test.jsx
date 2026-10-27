@@ -43,10 +43,12 @@ it.each([
 });
 
 it.each(['Pengangge Suara', 'Pengangge Tengenan', 'Pengangge Arda Suara'])(
-    'places three dots underneath %s and hides the placeholder circle',
+    'keeps %s centered at full icon size without dots or a visible placeholder',
     (title) => {
         const { container } = render(<CategoryIcon group="aksara" title={title} />);
-        expect(screen.getByText('...')).toBeTruthy();
+        expect(screen.queryByText('...')).toBeNull();
+        expect(container.querySelector('svg').classList.contains('h-full')).toBe(true);
+        expect(container.querySelector('svg').classList.contains('w-full')).toBe(true);
         expect(container.querySelector('tspan[fill="transparent"]').textContent).toBe('◌');
         expect(container.querySelector('[lang="ban"]').textContent).not.toContain('᭞');
     },
