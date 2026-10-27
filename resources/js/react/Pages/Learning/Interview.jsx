@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useForm, usePage } from '@inertiajs/react';
-import { Button, CategoryIcon, PageMeta } from '../../Components/ui';
+import { Button, PageMeta } from '../../Components/ui';
+import Icon from '../../Components/Icon';
 import { Card, Field, Errors } from '../../Components/forms';
 export default function Interview({ paths, answers, step, roles, avatar, meta }) {
     const { links, navigation, viewer } = usePage().props;
@@ -171,10 +172,12 @@ export default function Interview({ paths, answers, step, roles, avatar, meta })
                             <div className="grid gap-4 sm:grid-cols-2">
                                 {!viewer && (
                                     <section className="flex flex-col rounded-card bg-background p-5 sm:p-7">
-                                        <CategoryIcon group="paribasa" />
+                                        <span className="grid size-12 place-items-center rounded-2xl bg-primary/20 text-accent">
+                                            <Icon name="user" className="size-6" />
+                                        </span>
                                         <h2 className="mt-5 font-display text-xl font-bold">Lanjut anonim</h2>
                                         <p className="mt-3 flex-1 text-sm leading-7 text-foreground/55">
-                                            Isi nama dan avatar. Profil belajar tersimpan di perangkat ini.
+                                            Isi nama panggilan dan avatar. Profilmu dikenali melalui browser ini.
                                         </p>
                                         <Button
                                             type="button"
@@ -187,7 +190,9 @@ export default function Interview({ paths, answers, step, roles, avatar, meta })
                                     </section>
                                 )}
                                 <section className="flex flex-col rounded-card bg-background p-5 sm:p-7">
-                                    <CategoryIcon group="aksara" />
+                                    <span className="grid size-12 place-items-center rounded-2xl bg-primary/20 text-accent">
+                                        <Icon name="login" className="size-6" />
+                                    </span>
                                     <h2 className="mt-5 font-display text-xl font-bold">
                                         {viewer ? 'Lanjut dengan akunmu' : 'Masuk atau daftar'}
                                     </h2>
