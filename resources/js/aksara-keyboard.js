@@ -1,3 +1,6 @@
+import { editAksara } from './aksara-edit.js';
+export { editAksara, pasanganText } from './aksara-edit.js';
+
 const consonants = [
     ['Ha', 0x1B33], ['Na', 0x1B26], ['Ca', 0x1B18], ['Ra', 0x1B2D], ['Ka', 0x1B13], ['Da', 0x1B24],
     ['Ta', 0x1B22], ['Sa', 0x1B32], ['Wa', 0x1B2F], ['La', 0x1B2E], ['Ma', 0x1B2B], ['Ga', 0x1B15],
@@ -7,48 +10,6 @@ const marks = [
     ['Ulu', 0x1B36], ['Suku', 0x1B38], ['Taling', 0x1B3E], ['Tedung', 0x1B35], ['Taling tedung', 0x1B40],
     ['Pepet', 0x1B42], ['Cecek', 0x1B02], ['Surang', 0x1B03], ['Bisah', 0x1B04], ['Adeg-adeg', 0x1B44],
 ];
-
-export function pasanganText(value, start, character) {
-    const before = value.slice(0, start);
-    if (/[\u1B13-\u1B33]\u1B44$/.test(before)) return character;
-    return /[\u1B13-\u1B33]$/.test(before) ? '\u1B44' + character : null;
-}
-
-function previousCharacter(value, position) {
-    if (position === 0) return 0;
-    const last = value.charCodeAt(position - 1);
-    const previous = value.charCodeAt(position - 2);
-    return position - (last >= 0xDC00 && last <= 0xDFFF && previous >= 0xD800 && previous <= 0xDBFF ? 2 : 1);
-}
-
-export function editAksara(field, { text, pasangan = false, action } = {}) {
-    let start = field.selectionStart;
-    let end = field.selectionEnd;
-    if (action === 'left' || action === 'right') {
-        const position = action === 'left'
-            ? (start === end ? previousCharacter(field.value, start) : start)
-            : (start === end ? Math.min(field.value.length, end + (field.value.codePointAt(end) > 0xFFFF ? 2 : 1)) : end);
-        field.setSelectionRange(position, position);
-        return '';
-    }
-    if (action === 'backspace') {
-        if (start === end) start = previousCharacter(field.value, start);
-        text = '';
-    } else if (action === 'space') text = ' ';
-    else if (action === 'enter') {
-        if (field.tagName !== 'TEXTAREA') return 'Baris baru hanya tersedia di kolom teks panjang.';
-        text = '\n';
-    }
-    if (pasangan) {
-        text = pasanganText(field.value, start, text);
-        if (text === null) return 'Letakkan kursor tepat setelah aksara dasar atau adeg-adeg yang mengikutinya.';
-    }
-    if (typeof text !== 'string') return '';
-    if (field.maxLength >= 0 && field.value.length - (end - start) + text.length > field.maxLength) return 'Batas panjang kolom tercapai.';
-    field.setRangeText(text, start, end, 'end');
-    field.dispatchEvent(new Event('input', { bubbles: true }));
-    return '';
-}
 
 export function initAksaraKeyboard(keyboard) {
     const scope = keyboard.closest('[data-aksara-scope]');

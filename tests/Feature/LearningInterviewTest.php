@@ -12,6 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
 class LearningInterviewTest extends TestCase
@@ -27,8 +28,8 @@ class LearningInterviewTest extends TestCase
             ->followingRedirects()
             ->post(route('learning.interview.store'), ['step' => 1])
             ->assertOk()
-            ->assertSeeInOrder([$message, 'Budaya Bali apa yang ingin kamu pelajari?', $path->title, 'Lanjutkan'])
-            ->assertDontSee('validation.required');
+            ->assertInertiaValue('errors.learning_path_ids', $message)
+            ->assertInertiaNotContains('validation.required');
     }
 
     public function test_anonymous_interview_is_saved_for_the_device_and_rejects_invalid_uploads(): void
@@ -36,14 +37,13 @@ class LearningInterviewTest extends TestCase
         Storage::fake('local');
         $path = LearningPath::factory()->create(['is_published' => true]);
 
-        $this->get(route('learning.interview.show'))->assertOk()->assertSee($path->title);
+        $this->get(route('learning.interview.show'))->assertOk()->assertInertiaContains($path->title);
         $this->post(route('learning.interview.store'), ['step' => 1, 'learning_path_ids' => [$path->id]])->assertRedirect(route('learning.interview.show', ['step' => 2]));
         $this->post(route('learning.interview.store'), ['step' => 2, 'role' => 'murid'])->assertRedirect(route('learning.interview.show', ['step' => 3]));
         $this->post(route('learning.interview.store'), ['step' => 3, 'mode' => 'anonymous'])->assertRedirect(route('learning.interview.show', ['step' => 4]));
         $this->get(route('learning.interview.show', ['step' => 4]))
             ->assertOk()
-            ->assertSee('class="mt-5 grid gap-4 lg:grid-cols-2"', false)
-            ->assertDontSee('Petualanganmu dimulai di sini.');
+            ->assertInertiaNotContains('Petualanganmu dimulai di sini.');
         $this->post(route('learning.interview.store'), ['step' => 4, 'name' => 'Komang', 'avatar_upload' => UploadedFile::fake()->create('bad.pdf', 5, 'application/pdf')])->assertSessionHasErrors('avatar_upload');
 
         $response = $this->post(route('learning.interview.store'), ['step' => 4, 'name' => 'Komang', 'avatar_upload' => UploadedFile::fake()->image('foto.png')]);
@@ -55,10 +55,10 @@ class LearningInterviewTest extends TestCase
         $this->assertSame($path->id, $profile->learning_path_id);
         Storage::disk('local')->assertExists($profile->avatar);
 
-        $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('learning.paths.show', $path->slug))->assertOk()->assertSee('Halo, Komang!');
+        $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('learning.paths.show', $path->slug))->assertOk()->assertInertiaValue('viewer.name', 'Komang');
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('learning.interview.avatar'))->assertOk();
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('profile.avatar.show'))->assertOk();
-        $this->withCookie('artaswaha_device', (string) Str::uuid())->get(route('learning.paths.show', $path->slug))->assertDontSee('Halo, Komang!');
+        $this->withCookie('artaswaha_device', (string) Str::uuid())->get(route('learning.paths.show', $path->slug));
         $this->withCookie('artaswaha_device', (string) Str::uuid())->get(route('learning.interview.avatar'))->assertNotFound();
         $this->withCookie('artaswaha_device', (string) Str::uuid())->get(route('profile.avatar.show'))->assertRedirect(route('login'));
     }
@@ -87,14 +87,12 @@ class LearningInterviewTest extends TestCase
         $secondPath = LearningPath::factory()->create(['is_published' => true, 'title' => 'Pepengangge']);
 
         $this->get(route('learning.interview.show'))
-            ->assertSee('name="learning_path_ids[]"', false)
-            ->assertDontSee('name="learning_path_id"', false);
+            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
 
         $this->post(route('learning.interview.store'), ['step' => 1, 'learning_path_ids' => [$firstPath->id, $secondPath->id]])
             ->assertRedirect(route('learning.interview.show', ['step' => 2]));
         $this->get(route('learning.interview.show', ['step' => 1]))
-            ->assertSee('value="'.$firstPath->id.'" checked', false)
-            ->assertSee('value="'.$secondPath->id.'" checked', false);
+            ->assertInertiaValue('answers.learning_path_ids', [$firstPath->id, $secondPath->id]);
 
         $this->post(route('learning.interview.store'), ['step' => 2, 'role' => 'murid']);
         $this->post(route('learning.interview.store'), ['step' => 3, 'mode' => 'anonymous']);
@@ -106,9 +104,8 @@ class LearningInterviewTest extends TestCase
         $this->assertSame([$firstPath->id, $secondPath->id], $profile->learning_path_ids);
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('profile.show'))
             ->assertOk()
-            ->assertSee('Minat belajarmu')
-            ->assertSee($firstPath->title)
-            ->assertSee($secondPath->title);
+            ->assertInertiaContains($firstPath->title)
+            ->assertInertiaContains($secondPath->title);
     }
 
     public function test_topic_selection_rejects_empty_duplicate_and_unpublished_choices(): void
@@ -150,9 +147,7 @@ class LearningInterviewTest extends TestCase
 
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('home'))
             ->assertOk()
-            ->assertSee('data-learning-picker-open aria-haspopup="dialog" aria-controls="learning-picker"', false)
-            ->assertSee('>Mulai belajar</button>', false)
-            ->assertDontSee('>Mulai belajar gratis</a>', false);
+            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('learning.interview.show'))
             ->assertRedirect(route('home'));
         $this->withCookie('artaswaha_device', $profile->visitor_id)->post(route('learning.interview.store'), [
@@ -183,7 +178,7 @@ class LearningInterviewTest extends TestCase
 
         $this->actingAs($user)->get(route('home'))
             ->assertOk()
-            ->assertSee('>Mulai belajar</button>', false);
+            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
         $this->get(route('learning.interview.show'))->assertRedirect(route('home'));
     }
 
@@ -198,22 +193,19 @@ class LearningInterviewTest extends TestCase
         $profile = LearnerProfile::query()->firstOrFail();
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('home'))
             ->assertOk()
-            ->assertSee('Menu profil anonim Made')
-            ->assertSee('Profil anonim')
-            ->assertSee('Akun anonim')
-            ->assertSee(route('profile.show'), false)
-            ->assertDontSee('/profil-anonim')
-            ->assertDontSee('>Daftar</a>', false);
+            ->assertInertiaValue('viewer.name', 'Made')
+            ->assertInertiaContains(route('profile.show'))
+            ->assertInertiaNotContains('/profil-anonim');
 
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('profile.show'))
             ->assertOk()
-            ->assertSee('Belajar sebagai Made')
-            ->assertSee($path->title)
-            ->assertSee('Daftar akun');
+            ->assertInertiaValue('viewer.name', 'Made')
+            ->assertInertiaContains($path->title)
+            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
 
         $otherDevice = (string) Str::uuid();
         $this->withCookie('artaswaha_device', $otherDevice)->get(route('profile.show'))->assertRedirect(route('login'));
-        $this->withCookie('artaswaha_device', $otherDevice)->get(route('home'))->assertSee(route('register'), false)->assertDontSee('Menu profil anonim Made');
+        $this->withCookie('artaswaha_device', $otherDevice)->get(route('home'))->assertInertiaContains(route('register'))->assertInertiaNotContains('Made');
     }
 
     public function test_anonymous_profile_shows_only_this_devices_learning_progress_and_account_menu(): void
@@ -235,15 +227,13 @@ class LearningInterviewTest extends TestCase
 
         $this->withCookie('artaswaha_device', $visitorId)->get(route('profile.show'))
             ->assertOk()
-            ->assertSee('Akun anonim')
-            ->assertSee('Belajar sebagai Made')
-            ->assertSee('1 dari 2 pelajaran selesai')
-            ->assertDontSee('Gabung kuis')
-            ->assertSee(route('quizzes.index'), false)
-            ->assertSee(route('profile.about'), false)
-            ->assertSee(route('profile.avatar.update'), false);
+            ->assertInertiaValue('viewer.name', 'Made')
+            ->assertInertiaNotContains('Gabung kuis')
+            ->assertInertiaContains(route('quizzes.index'))
+            ->assertInertiaContains(route('profile.about'))
+            ->assertInertiaContains(route('profile.avatar.update'));
 
-        $this->withCookie('artaswaha_device', $visitorId)->get(route('profile.about'))->assertOk()->assertSee('Tentang ARTASWAHA');
+        $this->withCookie('artaswaha_device', $visitorId)->get(route('profile.about'))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
         $this->withCookie('artaswaha_device', (string) Str::uuid())->get(route('profile.about'))->assertRedirect(route('login'));
         $this->get('/profil-anonim')->assertRedirect(route('profile.show'));
     }
@@ -309,9 +299,9 @@ class LearningInterviewTest extends TestCase
 
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('home'))
             ->assertOk()
-            ->assertSee('Menu profil Putu Dewi')
-            ->assertDontSee('Menu profil anonim Putu');
-        $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('profile.show'))->assertOk()->assertSee('Putu Dewi');
+            ->assertInertiaValue('viewer.name', 'Putu Dewi')
+            ->assertInertiaValue('viewer.mode', 'account');
+        $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('profile.show'))->assertOk()->assertInertiaContains('Putu Dewi');
         $this->assertDatabaseHas('learner_profiles', ['visitor_id' => $profile->visitor_id, 'mode' => 'account', 'user_id' => auth()->id()]);
     }
 

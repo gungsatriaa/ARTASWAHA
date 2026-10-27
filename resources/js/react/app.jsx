@@ -1,34 +1,39 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
+import { StrictMode, useEffect } from 'react';
+import { createRoot, hydrateRoot } from 'react-dom/client';
 import { createInertiaApp } from '@inertiajs/react';
-import SiteLayout from './Layouts/SiteLayout';
 import ErrorBoundary from './Components/ErrorBoundary';
 import MotionProvider from './Components/MotionProvider';
-
-const pages = import.meta.glob('./Pages/**/*.jsx');
-
+import { resolve, title } from './resolve';
+import { startBootLoader, markBootReady, failBootLoader } from './boot-loader';
+startBootLoader();
+function BootReady() {
+    useEffect(() => {
+        markBootReady();
+    }, []);
+    return null;
+}
 createInertiaApp({
-    title: title => title.includes('ARTASWAHA') ? title : `${title} — ARTASWAHA`,
-    resolve: async name => {
-        const load = pages[`./Pages/${name}.jsx`];
-        if (!load) throw new Error('Halaman belum tersedia.');
-        const page = await load();
-        page.default.layout ??= page => <SiteLayout>{page}</SiteLayout>;
-        return page;
-    },
+    title,
+    resolve,
     setup({ el, App, props }) {
-        createRoot(el).render(
+        const content = (
             <StrictMode>
                 <ErrorBoundary>
-                    <MotionProvider><App {...props} /></MotionProvider>
+                    <MotionProvider>
+                        <App {...props} />
+                        <BootReady />
+                    </MotionProvider>
                 </ErrorBoundary>
-            </StrictMode>,
+            </StrictMode>
         );
+        if (el.hasChildNodes()) hydrateRoot(el, content);
+        else createRoot(el).render(content);
     },
     progress: { color: '#ffc700', delay: 180, showSpinner: false },
 }).catch(() => {
-    const fallback = document.createElement('p');
-    fallback.className = 'mx-auto max-w-xl p-6 text-center';
-    fallback.textContent = 'Aplikasi belum dapat dimuat. Periksa koneksimu lalu muat ulang halaman.';
-    document.getElementById('app')?.replaceChildren(fallback);
+    failBootLoader();
+    const message = document.createElement('p');
+    message.className = 'p-8 text-center';
+    message.textContent = 'Aplikasi belum dapat dimuat. Periksa koneksi lalu muat ulang halaman.';
+    document.getElementById('app')?.replaceChildren(message);
 });

@@ -17,16 +17,10 @@ class ReactLearningTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        config(['ui.react_enabled' => true]);
-    }
-
-    public function test_public_visitors_keep_server_rendered_blade_content(): void
+    public function test_public_visitors_use_the_react_catalog(): void
     {
         LearningPath::factory()->create(['title' => 'Materi publik']);
-        $this->get(route('learning.paths.index'))->assertOk()->assertSee('Materi publik')->assertDontSee('resources/js/react/app.jsx');
+        $this->get(route('learning.paths.index'))->assertOk()->assertInertia(fn (Assert $page): Assert => $page->component('Learning/Catalog')->where('viewer', null)->where('paths.data.0.title', 'Materi publik'));
     }
 
     public function test_authenticated_catalog_is_paginated_and_has_only_public_fields(): void
@@ -76,27 +70,17 @@ class ReactLearningTest extends TestCase
         $this->get(route('learning.paths.show', $path->slug))->assertNotFound();
     }
 
-    public function test_renderer_switch_keeps_the_original_blade_page_available(): void
+    public function test_legacy_preview_query_does_not_switch_the_renderer(): void
     {
-        config(['ui.react_enabled' => false]);
-        LearningPath::factory()->create(['title' => 'Katalog lama']);
-        $this->actingAs(User::factory()->create())->get(route('learning.paths.index'))
-            ->assertOk()->assertSee('Katalog lama')->assertDontSee('resources/js/react/app.jsx');
+        $this->get(route('learning.paths.index', ['ui' => 'blade']))->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page->component('Learning/Catalog'));
     }
 
-    public function test_react_is_opt_in_outside_the_local_environment(): void
-    {
-        config(['ui.react_enabled' => null]);
-        LearningPath::factory()->create(['title' => 'Materi Blade']);
-        $this->actingAs(User::factory()->create())->get(route('learning.paths.index'))
-            ->assertOk()->assertSee('Materi Blade')->assertDontSee('resources/js/react/app.jsx');
-    }
-
-    public function test_inertia_visit_to_a_legacy_page_requests_a_document_navigation(): void
+    public function test_home_is_an_inertia_page_in_every_environment(): void
     {
         $version = (string) app(HandleInertiaRequests::class)->version(Request::create('/'));
         $this->withHeaders(['X-Inertia' => 'true', 'X-Inertia-Version' => $version])->get(route('home'))
-            ->assertStatus(409)->assertHeader('X-Inertia-Location', route('home'));
+            ->assertOk()->assertJsonPath('component', 'Home');
     }
 
     public function test_partial_reload_omits_other_page_data(): void

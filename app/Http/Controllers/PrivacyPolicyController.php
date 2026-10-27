@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\LearningPath;
-use Illuminate\Contracts\View\View;
+use App\Services\PagePresenter;
+use Inertia\Response as InertiaResponse;
 
 class PrivacyPolicyController extends Controller
 {
-    public function __invoke(): View
+    public function __invoke(): InertiaResponse
     {
         $learningPaths = LearningPath::query()
             ->where('is_published', true)
@@ -15,6 +16,6 @@ class PrivacyPolicyController extends Controller
             ->orderBy('sort_order')
             ->get();
 
-        return view('privacy-policy', compact('learningPaths'));
+        return app(PagePresenter::class)->render('privacy-policy', compact('learningPaths'));
     }
 }

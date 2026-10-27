@@ -1,29 +1,28 @@
 # Panduan migrasi UI ARTASWAHA ke React dan Inertia
 
-Status: fondasi dan pilot katalog telah diimplementasikan, 27 Oktober 2026. Migrasi seluruh aplikasi belum selesai. UI Blade tetap tersedia sebagai referensi dan jalur pemulihan.
+Status: seluruh route antarmuka memakai React/Inertia, 27 Oktober 2026. Tidak ada sakelar renderer atau dua versi UI aktif. Template Blade dan skrip lama tetap disimpan sebagai referensi; Blade aktif hanya menjadi dokumen root, overlay sebelum bootstrap, dan sitemap XML.
 
 ## Implementasi saat ini
 
-- Entry React: `resources/js/react/app.jsx`, root `resources/views/react.blade.php`; entry dan template Blade tetap utuh.
-- React melayani `/belajar` dan `/belajar/{learningPath:slug}` saat renderer aktif. Katalog memiliki pencarian, filter kategori, pagination server, dan partial reload dengan query lazy. Halaman detail jalur menampilkan daftar pelajaran; isi pelajaran masih Blade.
-- Shell persisten memakai token tema yang sama, Motion dengan feature bundle async, dialog native dengan pengembalian fokus, satu toast di atas, serta bottom navigation pill untuk identitas akun/anonim. Heartbeat dibersihkan saat shell dilepas dan tidak berjalan saat tab tersembunyi.
-- `REACT_UI_ENABLED` mengendalikan renderer: tanpa nilai eksplisit, aktif hanya di `APP_ENV=local`. Pada production harus diaktifkan secara eksplisit dan hanya berlaku untuk akun/profil anonim yang sudah selesai interview. Pengunjung publik tetap Blade.
-- Rollback: `REACT_UI_ENABLED=false`, lalu perbarui cache konfigurasi. Preview Blade lokal juga bisa memakai `?ui=blade`. Tidak ada perubahan database untuk pilot ini.
-- SSR dan perekaman Inertia DevTools nonaktif. Chart.js, Echo/Pusher, keyboard aksara, dan skrip Blade tidak masuk entry React.
+- Entry tunggal: `resources/js/react/app.jsx`; root: `resources/views/react.blade.php`. Resolver memisahkan halaman per route. `config/ui.php` dan `REACT_UI_ENABLED` dihapus; `?ui=blade` tidak mengganti renderer.
+- Beranda, login/register/pemulihan, interview multi-pilihan, katalog/pelajaran, profil/analisis/avatar, kuis/editor/room, privasi, dan seluruh halaman admin sudah React, pada desktop maupun mobile.
+- Laravel tetap memegang validasi, sesi/cookie anonim, otorisasi, antrean AI/TTS, timer, skor, dan penyimpanan. `PagePresenter` mengirim props eksplisit. Room tidak mengirim soal masa depan atau kunci jawaban sebelum diizinkan. Daftar modul admin tidak mengirim isi latihan/kunci yang tidak diperlukan.
+- Shell pengguna/admin persisten: navigasi mobile pill, sidebar admin, dialog native, satu toast atas, heartbeat dengan cleanup. Reload host tidak mengirim aksi keluar; tab yang ditutup mengikuti expiry heartbeat server 90 detik. Keluar melalui navigasi aplikasi mengirim aksi keluar.
+- Chart.js, Echo/Pusher, keyboard, dan crop avatar dimuat sesuai kebutuhan. Helper edit aksara dipisahkan dari initializer DOM lama agar aman pada SSR.
+- SSR aktif secara default dengan entry `resources/js/react/ssr.jsx`, bind loopback `127.0.0.1:13714`, batas request 3 detik. Production perlu proses SSR terpisah; lihat `docs/DEPLOYMENT.md`. History Inertia dienkripsi dan dibersihkan ketika identitas berganti; DevTools recording nonaktif.
+- Overlay muncul pada setiap reload dokumen, bukan pada visit Inertia/partial reload. Bootstrap dimulai sebelum React, menunggu mount dan font dengan batas waktu, mencapai 100%, hold 450 ms, lalu fade. Progress menunjukkan kesiapan tampilan, bukan byte unduhan atau penyelesaian job AI. Ada lewati, fallback, dan reduced motion.
+- Transisi halaman memakai CSS; reveal kartu di bawah layar memakai IntersectionObserver sekali dengan cleanup/fokus/reduced motion. Tidak ada dependency AOS tambahan. Skeleton dipakai untuk navigasi GET lambat, chunk tambahan, dan status analisis; error dan batas polling menghentikan animasi tunggu. Submit jawaban/timer tidak diberi delay dekoratif.
 
-Dependency terpasang: Laravel adapter Inertia 3.5.2, React/React DOM 19.3.1, adapter React Inertia 3.9.1, Motion 14.6.0, plugin React/Vite 6.1.2; Vitest dan Testing Library digunakan untuk tes lifecycle/interaksi. Lockfile adalah acuan versi hasil instalasi.
+Dependency terpasang: Laravel adapter Inertia 3.5.2, React/React DOM 19.3.1, adapter React Inertia 3.9.1, Motion 14.6.0, plugin React/Vite 6.1.2. Tidak ada dependency aplikasi baru dalam cutover menyeluruh ini. Build menghasilkan client dan SSR; lockfile tetap acuan versi.
 
-Verifikasi pilot:
+Verifikasi cutover:
 
-- 244 tes PHP lulus; termasuk 10 tes baru untuk props, identitas anonim, pagination/filter, materi terbit, kunci jawaban, batas Blade–React, validasi, partial reload, default renderer di luar lokal, dan rollback. Konfigurasi testing menonaktifkan pilot secara eksplisit; tes React mengaktifkannya per kasus.
-- 7 tes React lulus: pencarian/filter, teks aman, dialog/fokus, toast tunggal, navigasi anonim, dan cleanup heartbeat pada Strict Mode.
-- Suite JavaScript lama: 78 dari 81 tes lulus. Tiga tes `tests/install-tts-worker.test.js` gagal karena `install-tts-worker.sh` tidak ada, termasuk pada tree commit awal sebelum migrasi. Installer tersebut tidak diubah atau dibuat ulang dalam pilot React.
-- Browser Chromium: direct visit, refresh, Back, pencarian/filter kosong, dialog/Escape, navigasi React → Blade → Back, serta interview anonim → React bekerja tanpa error konsol saat diperiksa.
-- Katalog diuji untuk overflow horizontal pada 320, 360, 393, 440, 768, 1280 px dan landscape 852 × 393. Ini emulasi viewport; pengujian sentuhan/keyboard virtual pada HP fisik belum dilakukan.
-- Build production: entry React 121,66 KiB gzip; total entry, shared chunk, katalog, dan fitur Motion sekitar 148,3 KiB gzip. CSS bersama 17,70 KiB gzip. Angka ini ukuran hasil build, bukan pengukuran LCP/INP, penggunaan RAM, atau transfer jaringan pada HP.
-- Pengujian browser memakai SQLite sementara di luar repo karena MySQL lokal tidak aktif. Data asli tidak diubah dan provider AI dinonaktifkan pada proses preview.
-
-Tahap berikutnya tetap mengikuti fase 3–7 di bawah: detail pelajaran, profil/dashboard, interview, kuis/room, admin, kemudian halaman publik bila SSR siap. Alur form POST, upload, audio/keyboard, realtime multi-peserta, logout/Back lintas identitas, jaringan terputus/chunk gagal, dan metrik perangkat nyata harus diuji lagi saat area terkait dimigrasikan. Pilot ini tidak menyatakan area tersebut sudah dipindahkan ke React.
+- 247 tes PHP lulus: route/props, validation, otorisasi, identitas/progres anonim, audio, timer, skor, batas waktu total, dan feedback. Assertion markup Blade dipindah ke kontrak Inertia; markup/interaksi React diperiksa pada suite berikut.
+- 57 tes React lulus: multi-select, form/transform, modal login anonim, payload editor/ID soal, rendering admin, teks aman, keyboard editor terkontrol, avatar, countdown, feedback, terminal polling, cleanup Strict Mode, overlay 100%, skeleton GET, chunk gagal, serta SSR tanpa global browser dan metadata/JSON-LD.
+- Suite JavaScript lama: 78 dari 81 lulus. Tiga kegagalan di `tests/install-tts-worker.test.js` berasal dari `install-tts-worker.sh` yang sudah tidak tersedia pada commit sebelum migrasi; installer bukan bagian perubahan ini.
+- HTTP preview dengan SSR aktif: halaman publik dan admin, login dengan rotasi CSRF, interview anonim multi-pilihan, kuis dua peserta, feedback privat, kemajuan peserta independen, dan durasi penuh soal berikutnya lolos. Memakai SQLite sementara dan data uji; data asli serta layanan production tidak diubah.
+- Browser sempat memverifikasi navigasi/katalog/profil desktop dan viewport 393 × 852 tanpa error konsol. Browser lokal kemudian dinonaktifkan di pengaturan Work. Pemeriksaan visual akhir untuk overlay/reveal baru, seluruh breakpoint, upload crop pada browser, serta WebSocket Reverb belum bisa diselesaikan. Pengujian SSR/HTTP/komponen tidak menggantikan pengujian tersebut.
+- Pengujian HP fisik, React Profiler/trace LCP-INP, tab panjang, OAuth nyata, provider AI/TTS production, dan jaringan putus nyata belum dilakukan. Ukuran chunk build bukan klaim performa perangkat nyata.
 
 Tujuan: UI terasa seperti aplikasi, animasi responsif, navigasi lebih mulus, dan pemuatan tetap ringan pada HP. React mengelola tampilan dan interaksi; Laravel tetap mengelola aturan bisnis, identitas pengguna, penyimpanan, otorisasi, antrean, dan realtime.
 
@@ -41,7 +40,7 @@ Inertia menghubungkan halaman React dengan routing/controller server; bukan peng
 
 ## 2. Kondisi proyek dan pemeriksaan versi
 
-Saat dokumen dibuat, Laravel terpasang pada versi 13.38.0. Proyek memakai Vite 8, Tailwind 4, Chart.js, Laravel Echo, dan Pusher JS. React, adapter Inertia, dan Motion belum tercantum dalam dependency proyek.
+Laravel terpasang pada versi 13.38.0. Proyek memakai Vite 8, Tailwind 4, Chart.js, Laravel Echo, Pusher JS, React, Inertia, dan Motion. Versi aktif tercatat pada bagian implementasi dan lockfile.
 
 Dokumentasi resmi Inertia saat ini mengarah ke v3. Arah pilihan adalah React 19 dan Inertia 3, setelah kompatibilitas pasangan adapter Laravel/React, PHP, Vite, dan Node diverifikasi. Jangan menyalin contoh v2 ke v3 tanpa memeriksa API-nya.
 
@@ -52,7 +51,7 @@ Sebelum pemasangan:
 3. Pasang hanya dependency yang dibutuhkan fase tersebut; commit perubahan manifest dan lockfile bersama.
 4. Pertahankan entry Blade. Jangan memakai starter kit yang menimpa auth, route, atau konfigurasi aplikasi.
 
-Dependency yang direncanakan: `react`, `react-dom`, `@inertiajs/react`, adapter `inertiajs/inertia-laravel`, serta integrasi React/Vite yang sesuai. Tambahkan `motion` ketika komponen animasi mulai dibuat. Tidak perlu Redux, React Query, UI kit penuh, atau wrapper Chart.js pada fase awal.
+Dependency migrasi yang sudah terpasang: `react`, `react-dom`, `@inertiajs/react`, adapter `inertiajs/inertia-laravel`, serta integrasi React/Vite yang sesuai. Tambahkan `motion` ketika komponen animasi mulai dibuat. Tidak perlu Redux, React Query, UI kit penuh, atau wrapper Chart.js pada fase awal.
 
 ## 3. UI lama harus tetap utuh
 
@@ -210,9 +209,9 @@ Mulai dari WebP/SVG/aset yang sudah tersedia: sapaan saat tap, respons setelah m
 ## 8. Loading dan skeleton
 
 - Bedakan loading kode, menunggu data, menunggu queue, dan error. Semua state punya akhir atau fallback yang dapat dipahami.
-- Pertahankan overlay pembuka beranda sekali per sesi tab: minimum sekitar 1,2 detik, penutupan setelah bar 100%, hold sekitar 450 ms, lalu fade sekitar 240 ms. Sediakan lewati dan fail-safe. Reduced motion melewati jeda dekoratif.
+- Sesuai permintaan terbaru, tampilkan overlay setiap reload dokumen pada semua halaman: minimum sekitar 850 ms, penutupan setelah bar 100%, hold sekitar 450 ms, lalu fade sekitar 240 ms. Sediakan lewati dan fail-safe. Reduced motion melewati jeda dekoratif.
 - Bootstrap overlay harus dapat tampil sebelum React siap. Jangan menunggu `useEffect` halaman selesai lalu baru menampilkan overlay.
-- Gunakan satu session marker bersama UI lama/baru; jangan reset saat Inertia visit, partial reload, atau mount ulang komponen. Pemulihan tab browser dapat mempertahankan sessionStorage.
+- Jangan gunakan session marker untuk meniadakan overlay saat reload. Visit Inertia, partial reload, dan mount ulang komponen tidak membuat overlay baru; restore dari back-forward cache tidak memulai bootstrap baru.
 - Overlay pembuka bukan indikator semua request selesai. Jangan menunggu job AI, audio, prefetch, atau gambar lazy untuk menutupnya; jangan mengklaim persentasenya sebagai byte unduhan jaringan.
 - Visit berikutnya memakai progress navigasi tipis bila diperlukan, bukan overlay fullscreen. Jangan menampilkan progress navigasi kedua bersamaan dengan indikator Inertia bawaan.
 - Skeleton mengikuti ruang konten agar layout stabil. Error/gagal analisis harus mengganti skeleton dengan pesan, bukan terus beranimasi.
@@ -247,7 +246,7 @@ Mulai dari WebP/SVG/aset yang sudah tersedia: sapaan saat tap, respons setelah m
 
 Pertahankan title, description, canonical, Open Graph, robots, sitemap, semantic HTML, dan URL yang sudah ada. Setiap halaman punya heading utama yang jelas; gunakan link/button sesuai fungsi.
 
-Halaman publik yang diindeks tetap dilayani Blade sampai strategi HTML awal/SSR React terverifikasi. Jangan menggantinya dengan root kosong yang baru berisi konten setelah JavaScript berjalan. Jika halaman publik dipindahkan penuh ke Inertia React, siapkan dan uji SSR beserta fallback, metadata, hydration, serta proses production yang dibutuhkan. `Head` saja tidak menggantikan pengujian HTML awal. [SSR Inertia](https://inertiajs.com/docs/v3/advanced/server-side-rendering).
+Halaman publik yang diindeks sekarang dilayani React dengan SSR. Pastikan proses SSR tetap sehat setelah deployment. Jangan menggantinya dengan root kosong yang baru berisi konten setelah JavaScript berjalan. Jika halaman publik dipindahkan penuh ke Inertia React, siapkan dan uji SSR beserta fallback, metadata, hydration, serta proses production yang dibutuhkan. `Head` saja tidak menggantikan pengujian HTML awal. [SSR Inertia](https://inertiajs.com/docs/v3/advanced/server-side-rendering).
 
 Kode yang dibaca saat SSR tidak mengakses `window`, `document`, atau sessionStorage di level modul. Inisialisasi fitur browser pada lifecycle client, dengan markup awal yang konsisten untuk mencegah hydration mismatch.
 
@@ -264,7 +263,7 @@ Kode yang dibaca saat SSR tidak mengakses `window`, `document`, atau sessionStor
 | 6 | Beranda dan halaman publik React, bila SSR siap | HTML awal, metadata, SEO, dan deployment SSR lolos |
 | 7 | Cutover per route dan pengukuran ulang | Tidak ada regresi fitur/performa; referensi lama tetap disimpan |
 
-Mulai dengan satu halaman katalog sebagai pilot. Jangan mengganti beranda, auth, room realtime, dan admin sekaligus. Memasang React bukan alasan mengubah skema database atau menulis ulang backend.
+Fase pilot telah selesai. Permintaan terbaru menetapkan cutover seluruh route sekaligus dan menghapus sakelar renderer. Checklist di atas dipakai untuk menilai area migrasi; batas verifikasi nyata tercatat pada bagian awal. Memasang React bukan alasan mengubah skema database atau menulis ulang backend.
 
 Setiap fase harus mencakup:
 

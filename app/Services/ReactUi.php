@@ -7,16 +7,6 @@ use Illuminate\Http\Request;
 
 class ReactUi
 {
-    public function enabled(Request $request): bool
-    {
-        $enabled = config('ui.react_enabled') ?? app()->environment('local');
-        if (! $enabled || (app()->environment('local') && $request->query('ui') === 'blade')) {
-            return false;
-        }
-
-        return app()->environment('local') || $request->user() !== null || $this->profile($request) !== null;
-    }
-
     public function profile(Request $request): ?LearnerProfile
     {
         if (! $request->attributes->has('react.learnerProfile')) {

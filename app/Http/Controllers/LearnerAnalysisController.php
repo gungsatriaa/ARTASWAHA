@@ -18,11 +18,9 @@ class LearnerAnalysisController extends Controller
             ? LearningPath::query()->whereKey($profile->learning_path_ids ?: [$profile->learning_path_id])->where('is_published', true)->get()
             : collect();
         $analysis = $analyzer->presentation($profile, $paths);
-        $terminal = ! in_array($analysis['status'], ['queued', 'processing'], true);
 
         return response()->json([
             'analysis' => $analysis,
-            'html' => $terminal ? view('components.learner-analysis', ['analysis' => $analysis, 'compact' => false])->render() : null,
         ])->header('Cache-Control', 'private, no-store');
     }
 

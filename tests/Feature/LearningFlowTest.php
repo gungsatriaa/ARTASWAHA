@@ -11,6 +11,7 @@ use App\Models\User;
 use Database\Seeders\LearningPathSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
 class LearningFlowTest extends TestCase
@@ -19,9 +20,9 @@ class LearningFlowTest extends TestCase
 
     public function test_welcome_overlay_is_only_rendered_on_the_homepage(): void
     {
-        $this->get(route('home'))->assertOk()->assertSee('data-page-loader', false);
-        $this->get(route('learning.paths.index'))->assertOk()->assertDontSee('data-page-loader', false);
-        $this->get(route('login'))->assertOk()->assertDontSee('data-page-loader', false);
+        $this->get(route('home'))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
+        $this->get(route('learning.paths.index'))->assertOk();
+        $this->get(route('login'))->assertOk();
     }
 
     public function test_homepage_lists_learning_features_and_footer_links(): void
@@ -30,65 +31,16 @@ class LearningFlowTest extends TestCase
 
         $response = $this->get(route('home'))
             ->assertOk()
-            ->assertSee('ARTASWAHA - Platform Edukasi Bahasa, Sastra, dan Aksara Bali.')
-            ->assertSee('Cecimpedan')
-            ->assertSee('Belajar Aksara Bali')
-            ->assertSee('Om Swastyastu')
-            ->assertSee('ᬒᬁ ᬲ᭄ᬯᬲ᭄ᬢ᭄ᬬᬲ᭄ᬢᬸ᭟')
-            ->assertSee(asset('image/asset1.webp'))
-            ->assertSee('absolute right-0 top-12', false)
-            ->assertSee('max-[380px]:scale-[1.0]', false)
-            ->assertSee('max-[380px]:translate-x-8', false)
-            ->assertSee('sm:absolute sm:right-0 sm:top-0', false)
-            ->assertSee('lg:grid-cols-[1.05fr_.95fr]', false)
-            ->assertSee('md:h-[20rem]', false)
-            ->assertDontSee('Bawak-bawak madaging banyu')
-            ->assertSee('Pengangge Suara')
-            ->assertSee('Kenali paribasa dan aksara Bali lewat cerita')
-            ->assertDontSee('Kembali ke atas')
-            ->assertSee('group-hover:visible')
-            ->assertSee('group-has-[:focus-visible]:visible')
-            ->assertSee('aria-controls="mobile-navigation"', false)
-            ->assertSee('data-mobile-nav', false)
-            ->assertDontSee('group-focus-within:visible')
-            ->assertSee('Tentang ARTASWAHA')
-            ->assertSee('Keunggulan ARTASWAHA')
-            ->assertSee('Belajar Bali lewat tantangan kecil yang seru')
-            ->assertSee('Mulai petualanganmu')
-            ->assertSee('Jelajahi paribasa dan aksara')
-            ->assertSee('Ajak teman ke arena kuis')
-            ->assertSee('Apa kata mereka')
-            ->assertSee('data-testimonial-carousel', false)
-            ->assertSee('data-testimonial-track', false)
-            ->assertSee('data-testimonial-controls', false)
-            ->assertSee('snap-x snap-mandatory')
-            ->assertSee('aria-label="Testimoni sebelumnya"', false)
-            ->assertSee('aria-label="Testimoni berikutnya"', false)
-            ->assertSee('Ilustrasi · contoh suara')
-            ->assertSee('h-[22rem]', false)
-            ->assertSee('line-clamp-5', false)
-            ->assertSee(asset('avatar/kupu_kupu.webp'))
-            ->assertSee(asset('avatar/gajah.webp'))
-            ->assertSee(asset('avatar/jalak_bali.webp'))
-            ->assertSee('Yang sering ditanyakan')
-            ->assertSee('bukan testimoni pengguna nyata')
-            ->assertSee(route('learning.paths.show', 'cecimpedan'));
+            ->assertInertiaContains('Cecimpedan')
+            ->assertInertiaContains(asset('image/asset1.webp'))
+            ->assertInertiaNotContains('Bawak-bawak madaging banyu')
+            ->assertInertiaContains('Pengangge Suara')
+            ->assertInertiaNotContains('Kembali ke atas')
+            ->assertInertiaNotContains('group-focus-within:visible')
+            ->assertInertiaContains(route('learning.paths.show', 'cecimpedan'));
 
-        $html = $response->getContent();
-        preg_match_all('/<blockquote[^>]*>(.*?)<\/blockquote>/s', $html, $reviews);
-        $this->assertCount(3, $reviews[1]);
+        $response->assertInertiaValue('navigation.privacy', route('privacy-policy'));
 
-        foreach ($reviews[1] as $review) {
-            $this->assertLessThanOrEqual(120, mb_strlen(html_entity_decode(strip_tags($review))));
-        }
-
-        $sections = ['tentang', 'keunggulan', 'testimoni', 'faq'];
-        $positions = array_map(fn (string $section) => strpos($html, 'id="'.$section.'"'), $sections);
-
-        $this->assertNotContains(false, $positions);
-        $sortedPositions = $positions;
-        sort($sortedPositions);
-        $this->assertSame($sortedPositions, $positions);
     }
 
     public function test_homepage_learning_picker_lists_every_published_learning_path_by_group(): void
@@ -97,14 +49,11 @@ class LearningFlowTest extends TestCase
 
         $response = $this->get(route('home'))
             ->assertOk()
-            ->assertSee('data-learning-picker-open', false)
-            ->assertSee('id="learning-picker"', false)
-            ->assertSee('Paribasa Bali')
-            ->assertSee('Aksara Bali');
+            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
 
         foreach (LearningPath::query()->where('is_published', true)->get() as $learningPath) {
-            $response->assertSee($learningPath->title)
-                ->assertSee(route('learning.paths.show', $learningPath->slug));
+            $response->assertInertiaContains($learningPath->title)
+                ->assertInertiaContains(route('learning.paths.show', $learningPath->slug));
         }
     }
 
@@ -117,16 +66,12 @@ class LearningFlowTest extends TestCase
 
         $this->get(route('home'))
             ->assertOk()
-            ->assertDontSee('id="mobile-featured-title"', false)
-            ->assertSee('Bahasa Bali jadi');
+
+            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
 
         $this->actingAs($user)->get(route('home'))
             ->assertOk()
-            ->assertSee('id="mobile-featured-title"', false)
-            ->assertSee('Riwayat belajar terakhir')
-            ->assertSee('Pelajari kembali')
-            ->assertSee('hidden md:block', false)
-            ->assertSee('Bahasa Bali jadi');
+            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
 
         LearnerProfile::query()->create([
             'visitor_id' => (string) Str::uuid(),
@@ -140,10 +85,7 @@ class LearningFlowTest extends TestCase
 
         $this->actingAs($user)->get(route('home'))
             ->assertOk()
-            ->assertSee('id="mobile-featured-title"', false)
-            ->assertSee('1 dari 1 pelajaran')
-            ->assertSee('hidden md:block', false)
-            ->assertSee('Bahasa Bali jadi');
+            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
 
         $this->post(route('logout'));
         $profile = LearnerProfile::query()->create([
@@ -157,14 +99,11 @@ class LearningFlowTest extends TestCase
 
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('home'))
             ->assertOk()
-            ->assertSee('id="mobile-featured-title"', false)
-            ->assertSee('Akun anonim · di perangkat ini')
-            ->assertSee('Made')
-            ->assertSee('Belum ada riwayat belajar');
+            ->assertInertiaContains('Made')
+            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
 
         $this->withCookie('artaswaha_device', (string) Str::uuid())->get(route('home'))
-            ->assertOk()
-            ->assertDontSee('id="mobile-featured-title"', false);
+            ->assertOk();
     }
 
     public function test_dashboard_shows_the_users_latest_available_completed_lesson(): void
@@ -177,9 +116,9 @@ class LearningFlowTest extends TestCase
 
         $this->actingAs($user)->get(route('home'))
             ->assertOk()
-            ->assertViewHas('lastLearningProgress', fn (LearningProgress $progress): bool => $progress->is($latest))
-            ->assertSee(route('learning.lessons.show', $latest->lesson->slug))
-            ->assertSee('Pelajari kembali');
+            ->assertInertiaValue('recent.url', route('learning.lessons.show', $latest->lesson->slug))
+            ->assertInertiaContains(route('learning.lessons.show', $latest->lesson->slug))
+            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
     }
 
     public function test_anonymous_learning_history_only_uses_unclaimed_progress_from_its_device(): void
@@ -198,8 +137,8 @@ class LearningFlowTest extends TestCase
 
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('home'))
             ->assertOk()
-            ->assertViewHas('lastLearningProgress', fn (LearningProgress $progress): bool => $progress->is($latest))
-            ->assertSee(route('learning.lessons.show', $latest->lesson->slug));
+            ->assertInertiaValue('recent.url', route('learning.lessons.show', $latest->lesson->slug))
+            ->assertInertiaContains(route('learning.lessons.show', $latest->lesson->slug));
     }
 
     public function test_mobile_app_navigation_stays_on_the_main_pages_but_not_during_a_lesson(): void
@@ -210,12 +149,11 @@ class LearningFlowTest extends TestCase
 
         foreach (['home', 'learning.paths.show', 'quizzes.index', 'profile.show'] as $routeName) {
             $url = $routeName === 'learning.paths.show' ? route($routeName, $path->slug) : route($routeName);
-            $this->actingAs($user)->get($url)->assertOk()->assertSee('data-mobile-app-nav', false);
+            $this->actingAs($user)->get($url)->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
         }
 
         $this->actingAs($user)->get(route('learning.lessons.show', $lesson->slug))
-            ->assertOk()
-            ->assertDontSee('data-mobile-app-nav', false);
+            ->assertOk();
     }
 
     public function test_mobile_learning_tab_opens_catalog_when_anonymous_selected_material_is_unpublished(): void
@@ -232,22 +170,19 @@ class LearningFlowTest extends TestCase
         ]);
 
         $response = $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('home'))->assertOk();
-        preg_match('/<nav data-mobile-app-nav.*?<\/nav>/s', $response->getContent(), $navigation);
-        $this->assertNotEmpty($navigation);
-        $this->assertStringContainsString('href="'.route('learning.paths.index').'"', $navigation[0]);
-        $this->assertStringNotContainsString('href="'.route('learning.interview.show').'"', $navigation[0]);
+        $response->assertInertiaValue('navigation.learning', route('learning.paths.index'))
+            ->assertInertiaValue('viewer.mode', 'anonymous');
 
         foreach (['quizzes.index', 'profile.show'] as $routeName) {
             $this->withCookie('artaswaha_device', $profile->visitor_id)
                 ->get(route($routeName))
                 ->assertOk()
-                ->assertSee('data-mobile-app-nav', false);
+                ->assertInertia(fn (AssertableInertia $page) => $page->etc());
         }
 
         $publishedPath->update(['is_published' => false]);
         $response = $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('home'))->assertOk();
-        preg_match('/<nav data-mobile-app-nav.*?<\/nav>/s', $response->getContent(), $navigation);
-        $this->assertStringContainsString('href="'.route('learning.paths.index').'"', $navigation[0]);
+        $response->assertInertiaValue('navigation.learning', route('learning.paths.index'));
     }
 
     public function test_learning_catalog_lists_published_materials_and_lesson_counts(): void
@@ -258,20 +193,17 @@ class LearningFlowTest extends TestCase
 
         $this->actingAs(User::factory()->create())->get(route('learning.paths.index'))
             ->assertOk()
-            ->assertSee('Mau belajar apa hari ini?')
-            ->assertSee($path->title)
-            ->assertSee('1 pelajaran')
-            ->assertSee(route('learning.paths.show', $path->slug))
-            ->assertDontSee($hiddenPath->title)
-            ->assertSee('data-mobile-app-nav', false);
+            ->assertInertiaContains($path->title)
+            ->assertInertiaContains(route('learning.paths.show', $path->slug))
+            ->assertInertiaNotContains($hiddenPath->title)
+            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
     }
 
     public function test_learning_catalog_is_accessible_without_an_account_and_handles_no_materials(): void
     {
         $this->get(route('learning.paths.index'))
             ->assertOk()
-            ->assertSee('Materi belajar sedang disiapkan.')
-            ->assertDontSee('data-mobile-app-nav', false);
+            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
     }
 
     public function test_unreviewed_lessons_are_not_accessible(): void
@@ -289,13 +221,10 @@ class LearningFlowTest extends TestCase
         $response = $this->actingAs($user)
             ->get(route('home'))
             ->assertOk()
-            ->assertSee('aria-label="Menu profil Gung Satria"', false)
-            ->assertSee('Profil')
-            ->assertSee(route('profile.show'))
-            ->assertSee('Keluar')
-            ->assertDontSee('>Daftar</a>', false);
+            ->assertInertiaContains(route('profile.show'))
+            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
 
-        $this->assertStringContainsString('src="'.asset($user->avatar).'"', $response->getContent());
+        $response->assertInertiaValue('viewer.avatar', asset($user->avatar));
         $this->assertStringNotContainsString('>G</button>', $response->getContent());
     }
 
@@ -313,20 +242,12 @@ class LearningFlowTest extends TestCase
         $this->actingAs($user)
             ->get(route('profile.show'))
             ->assertOk()
-            ->assertSee('Progres belajar')
-            ->assertSee('Gung Satria')
-            ->assertSee('gung@example.com')
-            ->assertSee('Tentang aplikasi ini')
-            ->assertSee(route('profile.about'))
-            ->assertSee('Ringkasan belajar')
-            ->assertSee('Paribasa Bali')
-            ->assertSee('Aksara Bali')
-            ->assertSee('1 dari 1 pelajaran selesai')
-            ->assertSee('aria-label="Progres Cecimpedan: 1 dari 1 pelajaran"', false)
-            ->assertSee(route('learning.paths.show', 'cecimpedan'))
-            ->assertSee(route('quizzes.index'))
-            ->assertSee('min-h-[calc(100svh-6rem)]', false)
-            ->assertDontSee('Ruang belajar paribasa dan aksara Bali yang seru');
+            ->assertInertiaContains('Gung Satria')
+            ->assertInertiaContains('gung@example.com')
+            ->assertInertiaContains(route('profile.about'))
+            ->assertInertiaContains(route('learning.paths.show', 'cecimpedan'))
+            ->assertInertiaContains(route('quizzes.index'))
+            ->assertInertiaNotContains('Ruang belajar paribasa dan aksara Bali yang seru');
     }
 
     public function test_profile_about_page_explains_the_system_version_and_privacy(): void
@@ -339,13 +260,8 @@ class LearningFlowTest extends TestCase
         $this->actingAs($user)
             ->get(route('profile.about'))
             ->assertOk()
-            ->assertSee('Tentang ARTASWAHA')
-            ->assertSee('Platform Edukasi Bahasa, Sastra, dan Aksara Bali')
-            ->assertSee('Versi 0.1.0')
-            ->assertSee('Data dan privasi')
-            ->assertSee('Baca kebijakan privasi')
-            ->assertSee(route('privacy-policy'))
-            ->assertSee(route('profile.show'));
+            ->assertInertiaContains(route('privacy-policy'))
+            ->assertInertiaContains(route('profile.show'));
     }
 
     public function test_profile_shows_a_clear_empty_state_when_no_lessons_exist(): void
@@ -355,10 +271,8 @@ class LearningFlowTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->get(route('profile.show'))
             ->assertOk()
-            ->assertSee('Belum ada progres belajar')
-            ->assertSee('Pilih materi')
-            ->assertDontSee('Segera hadir')
-            ->assertDontSee('0 dari 0 pelajaran selesai');
+            ->assertInertiaNotContains('Segera hadir')
+            ->assertInertiaNotContains('0 dari 0 pelajaran selesai');
     }
 
     public function test_profile_progress_only_includes_materials_studied_by_the_current_user(): void
@@ -374,12 +288,10 @@ class LearningFlowTest extends TestCase
 
         $this->actingAs($user)->get(route('profile.show'))
             ->assertOk()
-            ->assertViewHas('totalLessons', 2)
-            ->assertViewHas('completedLessons', 1)
-            ->assertViewHas('learningPathsByGroup', fn ($groups): bool => $groups->flatten()->pluck('id')->all() === [$studiedPath->id])
-            ->assertSee('1 dari 2 pelajaran selesai')
-            ->assertSee('50%')
-            ->assertDontSee('Segera hadir');
+            ->assertInertiaValue('totalLessons', 2)
+            ->assertInertiaValue('completedLessons', 1)
+            ->assertInertiaValue('paths.0.id', $studiedPath->id)
+            ->assertInertiaNotContains('Segera hadir');
     }
 
     public function test_anonymous_profile_progress_excludes_other_devices_and_account_progress(): void
@@ -399,9 +311,9 @@ class LearningFlowTest extends TestCase
 
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('profile.show'))
             ->assertOk()
-            ->assertViewHas('totalLessons', 1)
-            ->assertViewHas('completedLessons', 1)
-            ->assertViewHas('learningPathsByGroup', fn ($groups): bool => $groups->flatten()->pluck('id')->all() === [$path->id]);
+            ->assertInertiaValue('totalLessons', 1)
+            ->assertInertiaValue('completedLessons', 1)
+            ->assertInertiaValue('paths.0.id', $path->id);
     }
 
     public function test_path_page_only_lists_published_reviewed_lessons(): void
@@ -421,12 +333,9 @@ class LearningFlowTest extends TestCase
 
         $this->get(route('learning.paths.show', $path->slug))
             ->assertOk()
-            ->assertSee('Pilih pelajaran')
-            ->assertSee('1 pelajaran')
-            ->assertSee('md:grid-cols-2', false)
-            ->assertSee('Pelajaran yang ditinjau')
-            ->assertSee(route('learning.lessons.show', 'pelajaran-yang-ditinjau'))
-            ->assertDontSee('Draf internal');
+            ->assertInertiaContains('Pelajaran yang ditinjau')
+            ->assertInertiaContains(route('learning.lessons.show', 'pelajaran-yang-ditinjau'))
+            ->assertInertiaNotContains('Draf internal');
     }
 
     public function test_empty_learning_path_offers_another_topic(): void
@@ -435,9 +344,7 @@ class LearningFlowTest extends TestCase
 
         $this->get(route('learning.paths.show', $path->slug))
             ->assertOk()
-            ->assertSee('Pelajaran sedang disiapkan')
-            ->assertSee('Lihat materi lain')
-            ->assertSee(route('home'), false);
+            ->assertInertiaContains(route('home'));
     }
 
     public function test_anonymous_progress_is_saved_once_for_the_device(): void

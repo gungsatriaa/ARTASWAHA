@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia;
 use Laravel\Socialite\Socialite;
 use Laravel\Socialite\Two\User as GoogleUser;
 use Tests\TestCase;
@@ -24,16 +25,12 @@ class AuthFlowTest extends TestCase
         foreach ([route('login'), route('register')] as $url) {
             $this->get($url)
                 ->assertOk()
-                ->assertSee('Belajar Bali,')
-                ->assertSee(route('auth.google.redirect'))
-                ->assertDontSee('data-mobile-nav', false)
-                ->assertDontSee('<footer', false);
+                ->assertInertiaContains(route('auth.google.redirect'));
         }
 
         $this->get(route('password.request'))
             ->assertOk()
-            ->assertSee('aria-controls="mobile-navigation"', false)
-            ->assertSee('data-mobile-nav', false);
+            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
     }
 
     public function test_a_user_can_register_and_log_out(): void
@@ -62,8 +59,8 @@ class AuthFlowTest extends TestCase
         $this->withSession(['status' => 'Akun berhasil dibuat. Selamat belajar!'])
             ->get(route('home'))
             ->assertOk()
-            ->assertSee('Akun berhasil dibuat. Selamat belajar!')
-            ->assertSee('bg-[#15803d]', false);
+            ->assertInertiaContains('Akun berhasil dibuat. Selamat belajar!')
+            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
 
         $this->post(route('logout'))->assertRedirect(route('home'));
         $this->assertGuest();

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-const source = readFileSync(new URL('../resources/js/aksara-keyboard.js', import.meta.url), 'utf8');
+const source = readFileSync(new URL('../resources/js/aksara-edit.js', import.meta.url), 'utf8') + readFileSync(new URL('../resources/js/aksara-keyboard.js', import.meta.url), 'utf8').replace(/^import .*;|^export \{.*;$/gm, '');
 function setup(open = true) {
     const modes = ['dasar', 'pasangan', 'pangangge'].map(mode => ({ dataset: { aksaraMode: mode }, setAttribute() {} }));
     const keys = { children: [], replaceChildren(fragment) { this.children = fragment.children; }, setAttribute() {} };

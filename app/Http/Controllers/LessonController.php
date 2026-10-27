@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Lesson;
 use App\Services\ContentAudioService;
 use App\Services\LearningProgressService;
+use App\Services\PagePresenter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,8 +22,7 @@ class LessonController extends Controller
         $audio = $audioService->forContent($lesson);
         $audio = $audioService->isPlayable($audio) ? $audio : null;
 
-        return response()
-            ->view('learning.lessons.show', compact('lesson', 'progress', 'audio'))
+        return app(PagePresenter::class)->render('learning.lessons.show', compact('lesson', 'progress', 'audio'))->toResponse($request)
             ->withCookie(Cookie::make('artaswaha_device', $deviceId, 60 * 24 * 365, '/', null, $request->isSecure(), true, false, 'lax'));
     }
 }

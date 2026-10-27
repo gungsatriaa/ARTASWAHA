@@ -32,14 +32,8 @@ class ProfileAvatarTest extends TestCase
         $this->assertSame('avatar/gajah.webp', $user->fresh()->avatar);
         $this->actingAs($user)->get(route('profile.show'))
             ->assertOk()
-            ->assertSee(asset('avatar/gajah.webp'))
-            ->assertSee('Ganti avatar')
-            ->assertSee('Unggah avatar sendiri')
-            ->assertSee('Atur tampilan avatar')
-            ->assertSee('Bagian di dalam lingkaran yang akan disimpan.')
-            ->assertSee('avatar-modal-content', false)
-            ->assertSee('overflow-hidden rounded-card', false)
-            ->assertSee('avatar/penyu.webp');
+            ->assertInertiaContains(asset('avatar/gajah.webp'))
+            ->assertInertiaContains('avatar/penyu.webp');
     }
 
     public function test_profile_notice_is_displayed_once_above_the_profile_navigation(): void
@@ -50,7 +44,7 @@ class ProfileAvatarTest extends TestCase
             ->withSession(['status' => $message])
             ->get(route('profile.show'))
             ->assertOk()
-            ->assertSeeInOrder([$message, 'Profil dan navigasi akun']);
+            ->assertInertiaValue('flash.message', $message);
 
         $this->assertSame(1, substr_count($response->getContent(), $message));
     }

@@ -10,8 +10,26 @@ const paths = {
     menu: 'M4 6h16M4 12h16M4 18h16',
     search: 'M21 21l-5-5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0',
     check: 'm5 12 4 4L19 6',
+    chart: 'M4 4v16h16M8 15l4-5 4 2 4-7',
+    spark: 'm12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z',
+    audio: 'M4 10v4h4l5 4V6l-5 4zM17 9a5 5 0 0 1 0 6M20 6a9 9 0 0 1 0 12',
+    route: 'M7 19h6a5 5 0 0 0 5-5V7M4 17h4v4H4zM16 3h4v4h-4z',
 };
 
 export default function Icon({ name, className = 'size-5', ...props }) {
-    return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true" {...props}><path d={paths[name] ?? paths.book} /></svg>;
+    return (
+        <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={className}
+            aria-hidden="true"
+            {...props}
+        >
+            <path d={paths[name] ?? paths.book} />
+        </svg>
+    );
 }

@@ -3,11 +3,8 @@
 namespace App\Http\Middleware;
 
 use App\Services\ReactUi;
-use Closure;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Inertia\Middleware;
-use Symfony\Component\HttpFoundation\Response;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -53,19 +50,15 @@ class HandleInertiaRequests extends Middleware
                 'logout' => route('logout'), 'admin' => route('admin.index'),
                 'privacy' => route('privacy-policy'), 'presence' => route('presence.ping'),
             ],
-            'brand' => fn (): array => ['logo' => asset('image/maskot.webp'), 'mascot' => asset('image/asset1.webp')],
+            'brand' => fn (): array => ['avatarBase' => asset('avatar'), 'logo' => asset('image/maskot.webp'), 'mascot' => asset('image/asset1.webp')],
             'csrfToken' => fn (): string => csrf_token(),
+            'routeName' => fn (): ?string => $request->route()?->getName(),
+            'links' => fn (): array => collect([
+                'learning.interview.show', 'learning.interview.store', 'login.store', 'register.store', 'password.request', 'password.email', 'password.update', 'auth.google.redirect',
+                'profile.about', 'profile.analysis.show', 'profile.avatar.update', 'quizzes.create', 'quizzes.store', 'quizzes.drafts.store', 'rooms.join',
+                'admin.index', 'admin.analytics.index', 'admin.analytics.online', 'admin.learning-paths.index', 'admin.learning-paths.create', 'admin.learning-paths.store',
+                'admin.lessons.index', 'admin.lessons.create', 'admin.lessons.store', 'admin.audio.index', 'admin.ai.index', 'admin.ai.reports.store',
+            ])->mapWithKeys(fn (string $name): array => [$name => route($name)])->all(),
         ];
-    }
-
-    public function handle(Request $request, Closure $next): Response
-    {
-        $response = parent::handle($request, $next);
-        if ($request->header('X-Inertia') && $request->isMethod('GET') && $response->isSuccessful()
-            && ! $response->headers->has('X-Inertia') && str_starts_with((string) $response->headers->get('Content-Type'), 'text/html')) {
-            return Inertia::location($request->fullUrl());
-        }
-
-        return $response;
     }
 }

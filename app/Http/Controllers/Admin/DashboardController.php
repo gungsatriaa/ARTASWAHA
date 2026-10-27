@@ -7,11 +7,12 @@ use App\Models\ContentAudio;
 use App\Models\LearnerProfile;
 use App\Models\LearningPath;
 use App\Models\Lesson;
-use Illuminate\Contracts\View\View;
+use App\Services\PagePresenter;
+use Inertia\Response as InertiaResponse;
 
 class DashboardController extends Controller
 {
-    public function __invoke(): View
+    public function __invoke(): InertiaResponse
     {
         $lessonCounts = Lesson::query()
             ->selectRaw('count(*) as total')
@@ -38,6 +39,6 @@ class DashboardController extends Controller
             'audio_failed' => ContentAudio::whereIn('status', ['failed', 'stale'])->count(),
         ];
 
-        return view('admin.dashboard', compact('lessonCounts', 'learningPaths', 'recentLessons', 'aiTasks'));
+        return app(PagePresenter::class)->render('admin.dashboard', compact('lessonCounts', 'learningPaths', 'recentLessons', 'aiTasks'));
     }
 }

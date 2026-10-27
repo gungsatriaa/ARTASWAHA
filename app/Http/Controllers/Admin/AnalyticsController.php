@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Contracts\View\View;
+use App\Services\PagePresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Inertia\Response as InertiaResponse;
 
 class AnalyticsController extends Controller
 {
-    public function index(): View
+    public function index(): InertiaResponse
     {
         $start = now()->startOfDay()->subDays(13);
         $days = collect(range(0, 13))->map(fn (int $offset): string => $start->copy()->addDays($offset)->toDateString());
@@ -53,7 +54,7 @@ class AnalyticsController extends Controller
             ->limit(5)
             ->get();
 
-        return view('admin.analytics', compact('chart', 'metrics', 'topPaths'));
+        return app(PagePresenter::class)->render('admin.analytics', compact('chart', 'metrics', 'topPaths'));
     }
 
     public function online(): JsonResponse

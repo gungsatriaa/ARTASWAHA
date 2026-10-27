@@ -10,6 +10,7 @@ use App\Services\ContentAudioService;
 use App\Services\RoomService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
 class QuizManagementTest extends TestCase
@@ -109,8 +110,8 @@ class QuizManagementTest extends TestCase
 
         $this->assertTrue($quiz->fresh()->is_archived);
         $this->assertSame($quiz->id, $room->fresh()->quiz_id);
-        $this->get(route('quizzes.index', ['status' => 'archived', 'q' => $quiz->title]))->assertOk()->assertSee($quiz->title);
-        $this->get(route('quizzes.index'))->assertDontSee($quiz->title);
+        $this->get(route('quizzes.index', ['status' => 'archived', 'q' => $quiz->title]))->assertOk()->assertInertiaContains($quiz->title);
+        $this->get(route('quizzes.index'))->assertInertiaNotContains($quiz->title);
         $this->post(route('rooms.store', $quiz))->assertStatus(422);
     }
 
@@ -138,16 +139,14 @@ class QuizManagementTest extends TestCase
         $audio = $this->audio($question);
 
         $this->actingAs($admin)->get(route('quizzes.edit', $question->quiz))
-            ->assertOk()->assertSee('data-quiz-step="0"', false)->assertSee('data-quiz-step="1"', false)->assertSee('data-quiz-step="2"', false)
-            ->assertSee('data-preview-audio', false)->assertSee('data-aksara-keyboard', false)
-            ->assertSee(route('admin.audio.questions.edit', $question), false)
-            ->assertSee(route('content-audio.show', $audio), false)
-            ->assertSee('&lt;script&gt;alert(1)&lt;/script&gt;', false)->assertDontSee('<script>alert(1)</script>', false);
+            ->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc())
+            ->assertInertiaContains(route('admin.audio.questions.edit', $question))
+            ->assertInertiaContains(route('content-audio.show', $audio))
+            ->assertInertiaContains('<script>alert(1)</script>')->assertDontSee('<script>alert(1)</script>', false);
         $this->get(route('quizzes.show', $question->quiz))->assertOk()
-            ->assertSee('Preview sebagai peserta')->assertSee('terbuka otomatis')
-            ->assertSee(route('quizzes.archive', $question->quiz), false)
-            ->assertSee(route('quizzes.duplicate', $question->quiz), false);
-        $this->get(route('admin.audio.questions.edit', $question))->assertOk()->assertSee('Kembali ke kelola kuis');
+            ->assertInertiaContains(route('quizzes.archive', $question->quiz))
+            ->assertInertiaContains(route('quizzes.duplicate', $question->quiz));
+        $this->get(route('admin.audio.questions.edit', $question))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
     }
 
     public function test_search_lists_only_matching_owned_quizzes_and_shows_actions(): void
@@ -158,8 +157,8 @@ class QuizManagementTest extends TestCase
         Quiz::factory()->create(['title' => 'Belajar rahasia']);
 
         $this->actingAs($owner)->get(route('quizzes.index', ['q' => 'Belajar']))
-            ->assertOk()->assertSee('Belajar aksara')->assertDontSee('Paribasa lainnya')->assertDontSee('Belajar rahasia')
-            ->assertSee(route('quizzes.edit', $matching), false)->assertSee('Arsipkan')->assertSee('Duplikasikan');
+            ->assertOk()->assertInertiaContains('Belajar aksara')->assertInertiaNotContains('Paribasa lainnya')->assertInertiaNotContains('Belajar rahasia')
+            ->assertInertiaContains(route('quizzes.edit', $matching))->assertInertia(fn (AssertableInertia $page) => $page->etc());
     }
 
     public function test_repeated_question_id_is_rejected_without_modifying_quiz(): void

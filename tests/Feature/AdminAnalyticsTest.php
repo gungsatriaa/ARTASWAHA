@@ -34,12 +34,12 @@ class AdminAnalyticsTest extends TestCase
 
         $response = $this->actingAs($admin)->get(route('admin.analytics.index'));
 
-        $response->assertOk()->assertSee('Analitik ARTASWAHA')->assertSee('Cecimpedan');
-        $this->assertSame(1, $response->viewData('metrics')['completedLessons']);
-        $this->assertSame(1, $response->viewData('metrics')['learners']);
-        $this->assertCount(14, $response->viewData('chart')['labels']);
-        $this->assertSame(1, $response->viewData('chart')['completions'][13]);
-        $this->assertSame(0, $response->viewData('chart')['completions'][0]);
+        $response->assertOk()->assertInertiaContains('Analitik ARTASWAHA')->assertInertiaContains('Cecimpedan');
+        $this->assertSame(1, $response->viewData('page')['props']['metrics']['completedLessons']);
+        $this->assertSame(1, $response->viewData('page')['props']['metrics']['learners']);
+        $this->assertCount(14, $response->viewData('page')['props']['chart']['labels']);
+        $this->assertSame(1, $response->viewData('page')['props']['chart']['completions'][13]);
+        $this->assertSame(0, $response->viewData('page')['props']['chart']['completions'][0]);
     }
 
     public function test_presence_counts_recent_unique_visitors_without_exposing_identity(): void

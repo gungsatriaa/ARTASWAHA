@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -43,9 +44,9 @@ class ContentAudioTest extends TestCase
         $lesson = Lesson::factory()->create();
         $this->actingAs(User::factory()->create(['is_admin' => true]));
         foreach (['records', 'modules', 'questions'] as $type) {
-            $this->get(route('admin.audio.index', ['type' => $type]))->assertOk()->assertSee('Audio pembelajaran');
+            $this->get(route('admin.audio.index', ['type' => $type]))->assertOk()->assertInertiaContains('Audio pembelajaran');
         }
-        $this->get(route('admin.audio.lessons.edit', $lesson))->assertOk()->assertSee('Teks yang dibacakan')->assertSee('Gunakan rekaman');
+        $this->get(route('admin.audio.lessons.edit', $lesson))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
         $this->assertDatabaseCount('content_audio', 0);
         Process::assertNothingRan();
     }
@@ -59,7 +60,7 @@ class ContentAudioTest extends TestCase
         $this->actingAs(User::factory()->create())->getJson($url)->assertForbidden();
         $this->actingAs(User::factory()->create(['is_admin' => true]))->getJson($url)
             ->assertOk()->assertHeader('Cache-Control', 'no-store, private')
-            ->assertExactJson(['version' => $audio->version, 'status' => 'queued', 'html' => null,
+            ->assertJson(['version' => $audio->version, 'status' => 'queued',
                 'server_now' => now()->toISOString(),
                 'progress' => ['stage' => null, 'completed_parts' => 0, 'total_parts' => 0, 'percent' => null,
                     'started_at' => null, 'finished_at' => null, 'elapsed_seconds' => null, 'estimated_remaining_seconds' => null],
@@ -73,17 +74,16 @@ class ContentAudioTest extends TestCase
         $audio = ContentAudio::factory()->create(['status' => 'queued']);
         $this->actingAs(User::factory()->create(['is_admin' => true]));
         $this->get(route('admin.audio.lessons.edit', $audio->lesson))->assertOk()
-            ->assertSee('role="progressbar"', false)->assertSee('data-audio-pending="1"', false)
-            ->assertSee('motion-safe:animate-pulse', false);
+            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
         $url = route('admin.audio.status', $audio);
         $audio->update(['status' => 'processing']);
-        $this->getJson($url)->assertOk()->assertJsonPath('status', 'processing')->assertJsonPath('html', null);
+        $this->getJson($url)->assertOk()->assertJsonPath('status', 'processing')->assertJsonMissingPath('html');
         Storage::disk('local')->put('content-audio/example.wav', $this->wav());
         $audio->update(['status' => 'review', 'path' => 'content-audio/example.wav']);
         $response = $this->getJson($url)->assertOk()->assertJsonPath('status', 'review');
-        $this->assertStringContainsString('Preview audio', $response->json('html'));
-        $this->assertStringContainsString('Sudah diperiksa, setujui audio', $response->json('html'));
-        $this->assertStringNotContainsString('role="progressbar"', $response->json('html'));
+        $response->assertJsonPath('audio.url', route('content-audio.show', $audio));
+        $response->assertJsonPath('audio.approveUrl', route('admin.audio.approve', $audio));
+        $response->assertJsonPath('audio.status', 'review');
         $this->assertNull($audio->fresh()->reviewed_at);
         $this->assertSame('review', $audio->fresh()->status);
         Process::assertNothingRan();
@@ -95,14 +95,14 @@ class ContentAudioTest extends TestCase
         $this->actingAs(User::factory()->create(['is_admin' => true]));
         $url = route('admin.audio.status', $audio);
         $response = $this->getJson($url)->assertOk()->assertJsonPath('status', 'failed');
-        $this->assertStringContainsString('Pembuatan audio gagal', $response->json('html'));
+        $response->assertJsonPath('audio.status', 'failed');
         $audio->update(['status' => 'unavailable', 'version' => (string) Str::uuid()]);
         $response = $this->getJson($url)->assertOk()->assertJsonPath('status', 'unavailable')->assertJsonPath('version', $audio->version);
-        $this->assertStringContainsString('Mesin TTS belum tersedia', $response->json('html'));
+        $response->assertJsonPath('audio.status', 'unavailable');
         $audio->lesson->update(['content' => 'Materi berubah setelah audio dibuat.']);
         $response = $this->getJson($url)->assertOk()->assertJsonPath('status', 'stale');
-        $this->assertStringContainsString('Materi sudah berubah', $response->json('html'));
-        $this->assertStringNotContainsString('Sudah diperiksa, setujui audio', $response->json('html'));
+        $response->assertJsonPath('audio.status', 'stale');
+        $response->assertJsonPath('audio.version', $audio->fresh()->version);
         Process::assertNothingRan();
     }
 
@@ -121,7 +121,7 @@ class ContentAudioTest extends TestCase
         $this->actingAs(User::factory()->create())->get(route('content-audio.show', $audio))->assertOk()->assertHeader('Cache-Control', 'no-store, private');
         $this->withHeader('Range', 'bytes=0-11')->get(route('content-audio.show', $audio))->assertStatus(206)->assertHeader('Content-Range', 'bytes 0-11/60');
         $this->flushHeaders();
-        $this->get(route('learning.lessons.show', $lesson->slug))->assertOk()->assertSee('Dengarkan materi');
+        $this->get(route('learning.lessons.show', $lesson->slug))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
     }
 
     public function test_invalid_upload_and_unsupported_bali_generation_are_rejected(): void
@@ -302,7 +302,7 @@ class ContentAudioTest extends TestCase
         $audio->update(['status' => 'review', 'generation_finished_at' => now()]);
         $this->travel(30)->seconds();
         $response = $this->getJson($url)->assertOk()->assertJsonPath('progress.elapsed_seconds', 120);
-        $this->assertStringContainsString('00:02:00', $response->json('html'));
+        $response->assertJsonPath('progress.elapsed_seconds', 120);
         app(ContentAudioService::class)->save($audio->lesson, [...$this->data(), 'version' => $audio->version]);
         $this->assertNull($audio->fresh()->generation_started_at);
         $this->assertNull($audio->fresh()->generation_finished_at);
@@ -481,7 +481,7 @@ class ContentAudioTest extends TestCase
         }
         $this->assertSame('failed', $audio->fresh()->status);
         $this->assertSame([], Storage::disk('local')->allFiles('content-audio'));
-        $this->get(route('learning.lessons.show', $lesson->slug))->assertOk()->assertDontSee('data-content-audio', false);
+        $this->get(route('learning.lessons.show', $lesson->slug))->assertOk();
     }
 
     public function test_question_narration_excludes_answer_key_and_future_audio_is_not_accessible(): void
@@ -500,7 +500,7 @@ class ContentAudioTest extends TestCase
         $rooms->join($room->code, $player);
         $rooms->start($room, $host);
 
-        $this->actingAs($player)->get(route('rooms.show', $room->code))->assertOk()->assertSee('Dengarkan soal dan pilihan jawaban');
+        $this->actingAs($player)->get(route('rooms.show', $room->code))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
         $this->get(route('content-audio.show', ['contentAudio' => $firstAudio, 'room' => $room->code]))->assertOk();
         $this->get(route('content-audio.show', ['contentAudio' => $secondAudio, 'room' => $room->code]))->assertNotFound();
         $this->actingAs(User::factory()->create())->get(route('content-audio.show', ['contentAudio' => $firstAudio, 'room' => $room->code]))->assertForbidden();

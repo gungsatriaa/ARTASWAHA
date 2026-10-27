@@ -6,6 +6,7 @@ use App\Models\LearnerProfile;
 use App\Models\LearningPath;
 use App\Services\LearnerInterviewAnalyzer;
 use App\Services\LearningProgressService;
+use App\Services\PagePresenter;
 use App\Services\ProfileAvatarService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
-use Illuminate\View\View;
+use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
@@ -28,7 +29,7 @@ class LearningInterviewController extends Controller
         'masyarakat' => 'Masyarakat umum',
     ];
 
-    public function show(Request $request): View|RedirectResponse
+    public function show(Request $request): InertiaResponse|RedirectResponse
     {
         if (LearnerProfile::completedFor($request->user()?->id, $request->cookie('artaswaha_device')) !== null) {
             return to_route('home');
@@ -39,7 +40,7 @@ class LearningInterviewController extends Controller
         $requestedStep = (int) $request->query('step', 1);
         $availableStep = ! isset($answers['learning_path_ids']) ? 1 : (! isset($answers['role']) ? 2 : (! isset($answers['mode']) ? 3 : 4));
 
-        return view('learning.interview', [
+        return app(PagePresenter::class)->render('learning.interview', [
             'learningPaths' => $learningPaths,
             'answers' => $answers,
             'step' => max(1, min($requestedStep, $availableStep)),
