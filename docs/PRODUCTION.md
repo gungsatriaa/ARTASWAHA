@@ -214,3 +214,8 @@ Jika proses restart terus-menerus, cek path PHP, direktori kerja, user/permissio
 - [Laravel deployment](https://laravel.com/docs/13.x/deployment)
 - [Laravel queues dan Supervisor](https://laravel.com/docs/13.x/queues)
 - [Laravel Reverb production](https://laravel.com/docs/13.x/reverb)
+
+
+## Worker terpusat (pembaruan)
+
+Panduan queue Redis/default di atas adalah konfigurasi lama. Seluruh job aplikasi baru kini memakai koneksi database `learner-analysis`. Program Supervisor yang dipertahankan menjalankan `php artisan queue` dengan directory aplikasi dan PHP binary yang benar. Command memasang batas timeout/reservasi yang sesuai untuk audio panjang; gunakan satu proses pada konfigurasi RAM saat ini. Sebelum menonaktifkan worker Redis/default lama, habiskan pekerjaan yang sudah berada di backend itu. Jangan menghapus antrean. Ikuti bagian **Satu command worker aplikasi** di `docs/DEPLOYMENT.md` untuk perpindahan, parameter Supervisor, dan pemeriksaan. Reverb, SSR, dan scheduler tetap terpisah.
