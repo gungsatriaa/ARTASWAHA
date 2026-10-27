@@ -69,20 +69,33 @@ export default function Profile({
                                 {viewer.name}
                             </h1>
                             <p className="mt-2 text-xs font-semibold text-accent sm:text-sm">
-                                {viewer.mode === 'anonymous' ? 'Akun anonim' : 'Akun terdaftar'}
+                                {viewer.mode === 'anonymous'
+                                    ? 'Akun anonim · hanya di perangkat ini'
+                                    : 'Akun terdaftar'}
                             </p>
-                            <p className="mt-2 break-words text-xs leading-6 text-foreground/45">
-                                {email || 'Progres tersimpan di perangkat ini'}
+                            <p className="mt-2 max-w-lg break-words text-xs leading-6 text-foreground/50 sm:text-sm">
+                                {viewer.mode === 'anonymous'
+                                    ? 'Progres tersimpan di browser ini. Buat akun untuk melanjutkan belajar di perangkat lain.'
+                                    : email}
                             </p>
                         </div>
-                        <button
-                            type="button"
-                            onClick={() => setAvatarOpen(true)}
-                            className={`${secondaryClass} w-full !bg-primary/15 !text-accent sm:ml-auto sm:w-auto`}
+                        <div
+                            className={`grid w-full gap-2 sm:ml-auto sm:w-auto sm:shrink-0 ${viewer.mode === 'anonymous' ? 'grid-cols-2 sm:grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}
                         >
-                            <Icon name="edit" />
-                            Ganti avatar
-                        </button>
+                            <button
+                                type="button"
+                                onClick={() => setAvatarOpen(true)}
+                                className={`${secondaryClass} !bg-primary/15 !px-4 !text-accent`}
+                            >
+                                <Icon name="edit" />
+                                Ganti avatar
+                            </button>
+                            {viewer.mode === 'anonymous' && (
+                                <Link href={nav.register} className={`${buttonClass} !px-4`}>
+                                    Daftar akun
+                                </Link>
+                            )}
+                        </div>
                     </div>
                     <nav
                         aria-label="Menu profil"
@@ -329,23 +342,6 @@ export default function Profile({
                                                     </Link>
                                                 ))}
                                             </div>
-                                        </Card>
-                                    )}
-                                    {viewer.mode === 'anonymous' && (
-                                        <Card className="!bg-primary/10">
-                                            <p className="text-xs font-bold text-accent">
-                                                Akun anonim · hanya di perangkat ini
-                                            </p>
-                                            <h2 className="mt-3 font-display text-xl font-bold">
-                                                Belajar sebagai {viewer.name}
-                                            </h2>
-                                            <p className="mt-3 text-sm leading-7 text-foreground/55">
-                                                Progres tersimpan di browser ini. Hubungkan ke akun agar bisa
-                                                melanjutkan di perangkat lain.
-                                            </p>
-                                            <Link href={nav.register} className={`${buttonClass} mt-5`}>
-                                                Daftar akun
-                                            </Link>
                                         </Card>
                                     )}
                                 </div>

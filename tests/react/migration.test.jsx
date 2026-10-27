@@ -188,7 +188,11 @@ it('shows only studied paths in the profile and keeps the quiz join action out o
     render(<Profile paths={[path]} interests={[]} completedLessons={1} totalLessons={2} avatars={[]} meta={meta} />);
     expect(screen.getByText('50%')).toBeTruthy();
     expect(screen.queryByText('Gabung kuis')).toBeNull();
-    expect(screen.getByText('Akun anonim · hanya di perangkat ini')).toBeTruthy();
+    const header = screen.getByRole('heading', { name: 'Made', level: 1 }).closest('header');
+    expect(header.contains(screen.getByText('Akun anonim · hanya di perangkat ini'))).toBe(true);
+    expect(header.contains(screen.getByRole('link', { name: 'Daftar akun', exact: true }))).toBe(true);
+    expect(screen.getAllByRole('link', { name: 'Daftar akun', exact: true })).toHaveLength(1);
+    expect(screen.queryByText('Belajar sebagai Made')).toBeNull();
 });
 
 it('renders public content, privacy disclosures and testimonials as escaped React text', () => {
@@ -475,4 +479,23 @@ it('offers a document reload when a page chunk cannot be resolved', async () => 
     page.url = '/tujuan';
     render(<FailedPage />);
     expect(screen.getByRole('link', { name: 'Muat ulang halaman' }).getAttribute('href')).toBe('/tujuan');
+});
+
+it('keeps account profiles free of anonymous registration prompts', () => {
+    page.props.viewer = { ...page.props.viewer, mode: 'account' };
+    render(
+        <Profile
+            paths={[]}
+            interests={[]}
+            completedLessons={0}
+            totalLessons={0}
+            avatars={[]}
+            email="made@example.test"
+            meta={meta}
+        />,
+    );
+    expect(screen.getByText('Akun terdaftar')).toBeTruthy();
+    expect(screen.getByText('made@example.test')).toBeTruthy();
+    expect(screen.queryByRole('link', { name: 'Daftar akun', exact: true })).toBeNull();
+    expect(screen.queryByText('Akun anonim · hanya di perangkat ini')).toBeNull();
 });
