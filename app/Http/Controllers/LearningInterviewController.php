@@ -60,7 +60,7 @@ class LearningInterviewController extends Controller
         if ($step === 1) {
             $data = $request->validate(['mode' => ['required', Rule::in(['account', 'anonymous'])]]);
             $request->session()->put('learning_interview', ['mode' => $data['mode']]);
-            $request->session()->forget('learning_interview_destination');
+            $request->session()->forget(['learning_interview_destination', 'google_registration']);
 
             return to_route('learning.interview.show', ['step' => 2]);
         }
@@ -105,7 +105,7 @@ class LearningInterviewController extends Controller
             $request->session()->forget('learning_interview');
             $request->session()->put('learning_interview_destination', $profile->learning_path_id);
 
-            return to_route('login')->withCookie($this->deviceCookie($request, $profile->visitor_id));
+            return to_route('register')->withCookie($this->deviceCookie($request, $profile->visitor_id));
         }
 
         if (! isset($answers['role'])) {

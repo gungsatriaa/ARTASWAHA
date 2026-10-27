@@ -6,7 +6,9 @@ use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\ResetPasswordRequest;
 use App\Http\Requests\SendPasswordResetLinkRequest;
+use App\Models\LearnerProfile;
 use App\Models\LearningPath;
+use App\Models\User;
 use App\Services\AuthService;
 use App\Services\LearningProgressService;
 use App\Services\PagePresenter;
@@ -16,6 +18,7 @@ use Illuminate\Support\Facades\Password;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Laravel\Socialite\Socialite;
+use Laravel\Socialite\Two\User as GoogleUser;
 use Throwable;
 
 class AuthController extends Controller
@@ -25,8 +28,21 @@ class AuthController extends Controller
         return app(PagePresenter::class)->render('auth.login');
     }
 
-    public function createRegistration(): InertiaResponse
+    public function createRegistration(Request $request, AuthService $authService, LearningProgressService $progressService): InertiaResponse|RedirectResponse
     {
+        $pending = $request->session()->pull('google_registration');
+        if (is_array($pending)) {
+            if (($pending['expires_at'] ?? 0) <= now()->timestamp) {
+                return to_route('login')->withErrors(['google' => 'Konfirmasi Google kedaluwarsa. Silakan masuk dengan Google kembali.']);
+            }
+            $googleUser = (new GoogleUser)->map($pending)->setRaw(['verified_email' => true]);
+            if (! $authService->loginWithGoogle($googleUser, $request, $progressService)) {
+                return to_route('login')->withErrors(['google' => 'Akun Google tidak dapat ditautkan. Silakan masuk kembali.']);
+            }
+
+            return $this->learningDestination($request)->with('status', 'Akun Google berhasil dibuat. Selamat belajar!');
+        }
+
         return app(PagePresenter::class)->render('auth.register');
     }
 
@@ -63,6 +79,24 @@ class AuthController extends Controller
             report($exception);
 
             return to_route('login')->withErrors(['google' => 'Login Google gagal. Silakan coba lagi.']);
+        }
+
+        $email = $googleUser->getEmail();
+        $googleId = $googleUser->getId();
+        $verified = is_string($email) && filter_var($email, FILTER_VALIDATE_EMAIL)
+            && is_string($googleId) && $googleId !== '' && ($googleUser->user['verified_email'] ?? false) === true;
+        $existingAccount = $verified && User::query()->where('google_id', $googleId)->orWhere('email', $email)->exists();
+        $deviceId = $request->cookie('artaswaha_device');
+        $hasInterview = is_string($deviceId) && LearnerProfile::query()->where('visitor_id', $deviceId)
+            ->whereNull('user_id')->whereIn('mode', ['account', 'anonymous'])->exists();
+        if ($verified && ! $existingAccount && ! $hasInterview) {
+            $request->session()->put('google_registration', [
+                'id' => $googleId, 'email' => $email, 'name' => $googleUser->getName(), 'expires_at' => now()->addHour()->timestamp,
+            ]);
+            $answers = $request->session()->get('learning_interview', []);
+            $request->session()->put('learning_interview', ['mode' => 'account', ...array_intersect_key($answers, array_flip(['learning_path_ids', 'role']))]);
+
+            return to_route('learning.interview.show', ['step' => 2]);
         }
 
         if (! $authService->loginWithGoogle($googleUser, $request, $progressService)) {

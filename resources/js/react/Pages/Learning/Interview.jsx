@@ -194,20 +194,32 @@ export default function Interview({ paths, answers, step, roles, avatar, meta })
                                         <Icon name="login" className="size-6" />
                                     </span>
                                     <h2 className="mt-5 font-display text-xl font-bold">
-                                        {viewer ? 'Lanjut dengan akunmu' : 'Masuk atau daftar'}
+                                        {viewer ? 'Lanjut dengan akunmu' : 'Sudah punya akun?'}
                                     </h2>
                                     <p className="mt-3 flex-1 text-sm leading-7 text-foreground/55">
-                                        Isi pilihan belajar berikutnya, lalu masuk atau daftar. Akun memudahkanmu
-                                        melanjutkan di perangkat lain.
+                                        Masuk untuk melanjutkan belajarmu. Jika belum punya akun, isi perkenalan singkat
+                                        sebelum mendaftar.
                                     </p>
+                                    <Link
+                                        href={navigation.login}
+                                        className="mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-bold text-white hover:bg-primary/85"
+                                    >
+                                        Masuk
+                                    </Link>
                                     <Button
                                         type="button"
                                         disabled={form.processing}
                                         onClick={() => mode('account')}
-                                        className="mt-6 w-full !bg-primary !text-white"
+                                        className="mt-3 w-full !bg-white/5 !text-foreground"
                                     >
-                                        {viewer ? 'Lanjutkan' : 'Masuk / daftar'}
+                                        Daftar akun baru
                                     </Button>
+                                    <a
+                                        href={links['auth.google.redirect']}
+                                        className="mt-3 inline-flex min-h-11 items-center justify-center rounded-full px-4 py-3 text-sm font-semibold text-accent hover:bg-white/5"
+                                    >
+                                        Lanjutkan dengan Google
+                                    </a>
                                 </section>
                             </div>
                         )}

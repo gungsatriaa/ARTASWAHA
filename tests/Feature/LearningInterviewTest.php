@@ -72,7 +72,7 @@ class LearningInterviewTest extends TestCase
 
         $this->post(route('learning.interview.store'), ['step' => 1, 'mode' => 'account']);
         $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$path->id, $otherPath->id]]);
-        $this->post(route('learning.interview.store'), ['step' => 3, 'role' => 'guru'])->assertRedirect(route('login'))->assertCookie('artaswaha_device');
+        $this->post(route('learning.interview.store'), ['step' => 3, 'role' => 'guru'])->assertRedirect(route('register'))->assertCookie('artaswaha_device');
 
         $profile = LearnerProfile::query()->firstOrFail();
         $this->withCookie('artaswaha_device', $profile->visitor_id)->post(route('login.store'), ['email' => $user->email, 'password' => 'safe-password'])
@@ -278,7 +278,7 @@ class LearningInterviewTest extends TestCase
 
         $this->post(route('learning.interview.store'), ['step' => 1, 'mode' => 'account']);
         $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$path->id]]);
-        $this->post(route('learning.interview.store'), ['step' => 3, 'role' => 'pendatang'])->assertRedirect(route('login'));
+        $this->post(route('learning.interview.store'), ['step' => 3, 'role' => 'pendatang'])->assertRedirect(route('register'));
         $profile = LearnerProfile::query()->firstOrFail();
 
         $this->withCookie('artaswaha_device', $profile->visitor_id)->post(route('register.store'), [

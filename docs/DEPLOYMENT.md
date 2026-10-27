@@ -434,7 +434,7 @@ Interview awal kini wajib bagi pengunjung tanpa akun login/profil anonim. Kunjun
 
 Login email, Google, dan setelah registrasi kini selalu memakai cookie remember Laravel, tanpa checkbox. Sesi singkat tetap memakai konfigurasi yang ada; tidak perlu memperbesar `SESSION_LIFETIME`. Cookie remember bawaan sekitar 400 hari, tetap dapat berakhir karena logout/reset sandi/penghapusan akun atau pembersihan browser. Pengguna yang masuk sebelum perubahan perlu login ulang sekali untuk menerima cookie remember baru. Uji pemulihan akun setelah sesi hilang dan pastikan middleware interview mengenalinya; tombol Keluar harus tetap membatalkan token.
 
-Urutan perkenalan: pilihan anonim/akun → materi (bisa banyak) → peran → nama/avatar untuk anonim. Mode akun diarahkan ke login/daftar setelah materi dan peran tersimpan. Mengganti mode mengosongkan jawaban langkah berikutnya. Profil yang sudah selesai tetap tidak mengulang interview.
+Urutan perkenalan: pilihan anonim/akun → materi (bisa banyak) → peran → nama/avatar untuk anonim. Pilihan Masuk langsung membuka login. Pilihan Daftar melewati materi dan peran terlebih dahulu, kemudian membuka formulir pendaftaran. Mengganti mode mengosongkan jawaban langkah berikutnya. Profil yang sudah selesai tetap tidak mengulang interview.
 
 ## Materi awal Aksara Bali
 
@@ -524,3 +524,12 @@ Pesan kegagalan menyebut koneksi yang dibutuhkan, jumlah kandidat, jumlah proses
 ```
 
 Sesuaikan lokasi binary PHP dengan instalasi sebenarnya. Skrip tidak otomatis membuat, menjalankan, atau restart worker. Jika deploy lama terhenti sebelum menarik source karena preflight worker, perbarui source/deploy.sh di server terlebih dahulu sebelum menjalankannya lagi; menjalankan ulang file lama tidak memuat perbaikan. Tidak perlu migration, build frontend, atau installer untuk perubahan pengecekan Bash ini. Tes deploy menggunakan proses/aaPanel tiruan, bukan akses ke Supervisor production.
+
+
+## Interview: pisahkan Masuk, Daftar, dan Google
+
+Langkah awal menyediakan aksi terpisah. **Masuk** langsung membuka formulir login tanpa menanyakan ulang materi/peran; akun email dan Google yang sudah ada tetap langsung masuk meskipun tidak memiliki profil interview lama. **Daftar akun baru** memulai pertanyaan materi dan peran, lalu diarahkan ke `/daftar`, bukan `/masuk`. Tautan daftar dari halaman login juga memakai alur ini. Profil anonim tetap menyelesaikan materi/peran/nama-avatar; profil yang sudah selesai tidak mengulang interview saat ditautkan ke akun.
+
+Google mengidentifikasi akun melalui callback Socialite dengan verifikasi state dan email yang sudah ada. Akun Google/email yang sudah terdaftar langsung masuk. Untuk identitas Google baru tanpa profil interview perangkat, server menyimpan ID, nama, dan email terverifikasi dalam sesi pendaftaran sementara (maksimal satu jam), tanpa menyalin access/refresh token. Belum ada akun dibuat pada tahap ini. Setelah materi/peran selesai, server menyelesaikan pendaftaran Google dan menautkan jawaban interview melalui cookie perangkat. Konfirmasi yang kedaluwarsa meminta Google kembali; jawaban yang sudah disimpan tidak perlu diisi ulang. Masuk/daftar yang berhasil membersihkan sesi interview/Google tertunda. Memilih ulang mode awal juga membersihkan konfirmasi Google sebelumnya.
+
+Tidak ada migration, dependency, environment, atau worker baru. Deploy source, build client/SSR, dan restart SSR sesuai alur React sebelumnya. Uji login email, login Google akun lama, daftar email dari interview maupun tautan login, Google baru dari halaman awal/login, Google setelah interview, state/email tidak valid, konfirmasi kedaluwarsa, serta pemulihan halaman tujuan. Tes lokal memakai Socialite fake; popup/redirect dan callback Google sebenarnya tetap perlu diperiksa pada domain production dengan konfigurasi OAuth yang benar.

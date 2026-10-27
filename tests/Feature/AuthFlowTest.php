@@ -158,7 +158,15 @@ class AuthFlowTest extends TestCase
         ]));
 
         $this->get(route('auth.google.redirect'))->assertRedirect();
-        $response = $this->get(route('auth.google.callback'))->assertRedirect(route('home'));
+        $this->get(route('auth.google.callback'))->assertRedirectToRoute('learning.interview.show', ['step' => 2]);
+        $this->assertGuest();
+        $this->assertDatabaseCount('users', 0);
+        $path = LearningPath::factory()->create(['is_published' => true]);
+        $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$path->id]]);
+        $this->post(route('learning.interview.store'), ['step' => 3, 'role' => 'murid'])->assertRedirectToRoute('register');
+        $profile = LearnerProfile::query()->sole();
+        $response = $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('register'))
+            ->assertRedirect(route('learning.paths.show', $path->slug));
         $cookieName = Auth::guard()->getRecallerName();
         $response->assertCookie($cookieName);
 
@@ -174,6 +182,46 @@ class AuthFlowTest extends TestCase
         $this->withCookie($cookieName, $response->getCookie($cookieName)->getValue())->get(route('home'))
             ->assertOk()->assertInertiaValue('viewer.name', 'Putu Bali');
         $this->assertTrue(Auth::viaRemember());
+    }
+
+    public function test_existing_email_account_can_login_without_answering_interview(): void
+    {
+        $user = User::factory()->create(['password' => 'safe-password']);
+        $this->withSession(['learning_interview' => ['mode' => 'account']])->get(route('login'))->assertOk();
+        $this->post(route('login.store'), ['email' => $user->email, 'password' => 'safe-password'])
+            ->assertRedirectToRoute('home')->assertSessionMissing('learning_interview');
+        $this->assertAuthenticatedAs($user);
+        $this->assertDatabaseCount('learner_profiles', 0);
+        $this->get(route('home'))->assertOk();
+    }
+
+    public function test_registration_link_starts_questions_and_then_opens_registration_form(): void
+    {
+        $path = LearningPath::factory()->create(['is_published' => true]);
+        $this->get(route('register'))->assertRedirectToRoute('learning.interview.show', ['step' => 2]);
+        $this->get(route('learning.interview.show', ['step' => 2]))->assertInertiaValue('step', 2);
+        $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$path->id]]);
+        $this->post(route('learning.interview.store'), ['step' => 3, 'role' => 'guru'])->assertRedirectToRoute('register');
+        $profile = LearnerProfile::query()->sole();
+        $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('register'))->assertOk();
+        $this->assertGuest();
+    }
+
+    public function test_expired_google_registration_requires_google_again_without_repeating_answers(): void
+    {
+        Socialite::fake('google', GoogleUser::fake(['id' => 'new-google', 'email' => 'new@gmail.com', 'verified_email' => true]));
+        $this->get(route('auth.google.callback'))->assertRedirectToRoute('learning.interview.show', ['step' => 2]);
+        $this->travel(61)->minutes();
+        $path = LearningPath::factory()->create(['is_published' => true]);
+        $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$path->id]]);
+        $this->post(route('learning.interview.store'), ['step' => 3, 'role' => 'murid']);
+        $profile = LearnerProfile::query()->sole();
+        $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('register'))
+            ->assertRedirectToRoute('login')->assertSessionHasErrors('google');
+        $this->assertDatabaseCount('users', 0);
+        $this->get(route('auth.google.callback'))->assertRedirect(route('learning.paths.show', $path->slug));
+        $this->assertAuthenticated();
+        $this->assertSame([$path->id], $profile->fresh()->learning_path_ids);
     }
 
     public function test_google_oauth_links_a_verified_email_to_an_existing_account(): void

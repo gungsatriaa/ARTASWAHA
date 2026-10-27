@@ -33,12 +33,12 @@ class RequiredLearningInterviewTest extends TestCase
     {
         $lesson = Lesson::factory()->create();
         foreach ([route('home'), route('learning.paths.index'), route('learning.paths.show', $lesson->learningPath->slug),
-            route('learning.lessons.show', $lesson->slug), route('quizzes.index'), route('profile.show'), route('register')] as $url) {
+            route('learning.lessons.show', $lesson->slug), route('quizzes.index'), route('profile.show')] as $url) {
             $this->get($url)->assertRedirectToRoute('learning.interview.show');
         }
         $this->post(route('learning.progress.store', $lesson->slug))->assertRedirectToRoute('learning.interview.show');
         $this->post(route('register.store'), ['name' => 'Made', 'email' => 'made@example.com', 'password' => 'password123', 'password_confirmation' => 'password123'])
-            ->assertRedirectToRoute('learning.interview.show');
+            ->assertRedirectToRoute('learning.interview.show', ['step' => 2]);
         $this->assertDatabaseCount('users', 0);
         $this->assertDatabaseCount('learning_progress', 0);
     }
@@ -74,10 +74,10 @@ class RequiredLearningInterviewTest extends TestCase
         $this->get(route('quizzes.index'))->assertRedirectToRoute('learning.interview.show');
         $this->post(route('learning.interview.store'), ['step' => 1, 'mode' => 'account']);
         $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$path->id]]);
-        $this->post(route('learning.interview.store'), ['step' => 3, 'role' => 'guru'])->assertRedirectToRoute('login');
+        $this->post(route('learning.interview.store'), ['step' => 3, 'role' => 'guru'])->assertRedirectToRoute('register');
         $profile = LearnerProfile::query()->sole();
-        $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('home'))->assertRedirectToRoute('login');
-        $this->get(route('learning.interview.show'))->assertRedirectToRoute('login');
+        $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('home'))->assertRedirectToRoute('register');
+        $this->get(route('learning.interview.show'))->assertRedirectToRoute('register');
         $this->get(route('register'))->assertOk();
         $this->post(route('register.store'), ['name' => 'Made', 'email' => 'made@example.com', 'password' => 'password123', 'password_confirmation' => 'password123'])
             ->assertRedirectToRoute('quizzes.index');

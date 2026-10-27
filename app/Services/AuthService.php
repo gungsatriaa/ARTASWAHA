@@ -18,6 +18,7 @@ class AuthService
         $user = User::query()->create($data);
         Auth::login($user, true);
         $request->session()->regenerate();
+        $request->session()->forget(['google_registration', 'learning_interview']);
         $progressService->claimDeviceProgress($request, $user);
 
         return $user;
@@ -31,6 +32,7 @@ class AuthService
         }
 
         $request->session()->regenerate();
+        $request->session()->forget(['google_registration', 'learning_interview']);
         $progressService->claimDeviceProgress($request, Auth::user());
 
         return true;
@@ -69,6 +71,7 @@ class AuthService
 
         Auth::login($user, true);
         $request->session()->regenerate();
+        $request->session()->forget(['google_registration', 'learning_interview']);
         $progressService->claimDeviceProgress($request, $user);
 
         return true;
