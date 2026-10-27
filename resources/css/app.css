@@ -90,6 +90,11 @@ dialog[open] {
 }
 .page-loading .page-loader.is-leaving { opacity: 0; pointer-events: none; }
 .page-loader-content { width: min(21rem, 100%); text-align: center; }
+[data-loader-percent] {
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 400;
+    font-variant-numeric: lining-nums tabular-nums;
+}
 .page-loader-content > * {
     animation: loader-reveal 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
