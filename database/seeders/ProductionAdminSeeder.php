@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class ProductionAdminSeeder extends Seeder
 {
@@ -14,9 +15,9 @@ class ProductionAdminSeeder extends Seeder
     public function run(): void
     {
         $data = Validator::make([
-            'name' => config('admin.name'),
-            'email' => config('admin.email'),
-            'password' => config('admin.password'),
+            'name' => 'Admin ARTASWAHA',
+            'email' => 'admin@artaswaha.com',
+            'password' => Str::password(24),
         ], [
             'name' => ['required', 'string', 'max:60'],
             'email' => ['required', 'email', 'max:255'],
@@ -25,10 +26,16 @@ class ProductionAdminSeeder extends Seeder
 
         $user = User::query()->firstOrNew(['email' => $data['email']]);
 
-        if (! $user->exists) {
+        $created = ! $user->exists;
+        if ($created) {
             $user->fill(['name' => $data['name'], 'password' => $data['password']]);
         }
 
         $user->forceFill(['is_admin' => true])->save();
+
+        if ($created) {
+            $this->command?->info('Email admin: '.$user->email);
+            $this->command?->info('Kata sandi awal admin: '.$data['password']);
+        }
     }
 }

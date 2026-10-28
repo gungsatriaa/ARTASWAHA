@@ -5,7 +5,9 @@ namespace Tests\Feature;
 use App\Models\User;
 use Database\Seeders\AdminUserSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
+use Symfony\Component\Console\Output\BufferedOutput;
 use Tests\TestCase;
 
 class AdminUserSeederTest extends TestCase
@@ -14,23 +16,23 @@ class AdminUserSeederTest extends TestCase
 
     public function test_seeded_admin_can_log_in_and_access_the_dashboard(): void
     {
-        config(['admin.email' => 'admin@example.test', 'admin.password' => 'LocalTest!2026']);
+        $output = new BufferedOutput;
+        Artisan::call('db:seed', ['--class' => AdminUserSeeder::class, '--no-interaction' => true], $output);
+        preg_match('/Kata sandi awal admin: ([^\r\n]+)/', $output->fetch(), $matches);
+        $password = $matches[1];
 
-        $this->seed(AdminUserSeeder::class);
-
-        $user = User::query()->where('email', 'admin@example.test')->firstOrFail();
+        $user = User::query()->where('email', 'admin@artaswaha.com')->firstOrFail();
         $this->assertTrue($user->is_admin);
-        $this->assertTrue(Hash::check('LocalTest!2026', $user->password));
-        $this->post(route('login.store'), ['email' => $user->email, 'password' => 'LocalTest!2026'])->assertRedirect();
+        $this->assertTrue(Hash::check($password, $user->password));
+        $this->post(route('login.store'), ['email' => $user->email, 'password' => $password])->assertRedirect();
         $this->assertAuthenticatedAs($user);
         $this->get(route('admin.index'))->assertOk();
     }
 
     public function test_reseeding_preserves_an_existing_accounts_password_and_name(): void
     {
-        $user = User::factory()->create(['email' => 'admin@example.test', 'name' => 'Admin Lokal']);
+        $user = User::factory()->create(['email' => 'admin@artaswaha.com', 'name' => 'Admin Lokal']);
         $originalPassword = $user->password;
-        config(['admin.email' => $user->email, 'admin.password' => 'DifferentPassword!2026']);
 
         $this->seed(AdminUserSeeder::class);
         $this->seed(AdminUserSeeder::class);
@@ -44,19 +46,16 @@ class AdminUserSeederTest extends TestCase
     public function test_admin_is_not_seeded_in_production(): void
     {
         $this->app->instance('env', 'production');
-        config(['admin.password' => 'LocalTest!2026']);
 
         $this->artisan('db:seed', ['--class' => AdminUserSeeder::class, '--force' => true])->assertSuccessful();
 
         $this->assertDatabaseCount('users', 0);
     }
 
-    public function test_an_empty_password_does_not_create_an_admin(): void
+    public function test_seeding_does_not_depend_on_admin_configuration(): void
     {
-        config(['admin.password' => '']);
-
+        config(['admin.name' => '', 'admin.email' => '', 'admin.password' => '']);
         $this->seed(AdminUserSeeder::class);
-
-        $this->assertDatabaseCount('users', 0);
+        $this->assertDatabaseHas('users', ['email' => 'admin@artaswaha.com', 'is_admin' => true]);
     }
 }
