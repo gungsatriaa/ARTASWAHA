@@ -61,7 +61,10 @@ class QuestionTypesTest extends TestCase
                 ->where('room.question.id', $question->id)
                 ->missing('room.question.correct_options')->missing('room.question.accepted_answers')
                 ->where('room.correctText', null));
-            $payload = ['question_id' => $question->id, ...$answer];
+            $payload = ['question_id' => $question->id, 'answer_index' => '', 'answer_indexes' => [], 'answer_text' => '', ...$answer];
+            if ($index === 1) {
+                $this->post(route('rooms.answer', $room->code), [...$payload, 'answer_indexes' => []])->assertSessionHasErrors('answer_indexes');
+            }
             $this->post(route('rooms.answer', $room->code), $payload)->assertSessionHasNoErrors()->assertRedirect();
             $record = RoomAnswer::query()->where('quiz_question_id', $question->id)->sole();
             $this->assertTrue($record->is_correct);
@@ -174,7 +177,7 @@ class QuestionTypesTest extends TestCase
                 ? ['answer_indexes' => [0]] : ['answer_text' => 'Salah'])->assertSessionHasNoErrors()->assertRedirect();
             $this->assertDatabaseMissing('learning_progress', ['lesson_id' => $lesson->id]);
             $this->post(route('learning.exercises.answer', $lesson), $type === 'multiple'
-                ? ['answer_indexes' => [2, 0]] : ['answer_text' => 'ᬓᭀ'])->assertSessionHasNoErrors()->assertRedirect();
+                ? ['answer_index' => '', 'answer_indexes' => [2, 0], 'answer_text' => ''] : ['answer_index' => '', 'answer_indexes' => [], 'answer_text' => 'ᬓᭀ'])->assertSessionHasNoErrors()->assertRedirect();
             $this->assertDatabaseHas('learning_progress', ['lesson_id' => $lesson->id, 'user_id' => $learner->id, 'points' => 10]);
         }
         $this->assertSame(2, LearningProgress::count());

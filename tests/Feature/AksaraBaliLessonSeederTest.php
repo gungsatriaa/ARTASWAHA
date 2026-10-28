@@ -80,7 +80,7 @@ class AksaraBaliLessonSeederTest extends TestCase
                     default => ['answer_index' => $exercise['correct_option']],
                 };
                 $this->travel(5)->seconds();
-                $this->post(route('learning.exercises.answer', $lesson), ['question_index' => $index, ...$answer])
+                $this->post(route('learning.exercises.answer', $lesson), ['question_index' => $index, 'answer_index' => '', 'answer_indexes' => [], 'answer_text' => '', ...$answer])
                     ->assertRedirectToRoute('learning.lessons.show', $lesson);
             }
             $this->assertDatabaseHas('learning_progress', ['lesson_id' => $lesson->id, 'points' => 10]);
