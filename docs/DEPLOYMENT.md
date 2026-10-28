@@ -573,3 +573,18 @@ Form jawaban mengirim seluruh field, termasuk `answer_indexes: []` saat menjawab
 ### Navigasi modul berikutnya
 
 Setelah modul selesai, halaman pelajaran menyediakan tombol **Modul berikutnya** beserta judulnya bila masih ada modul terbit dan sudah ditinjau dalam kategori yang sama. Urutan mengikuti `sort_order` lalu ID, sama dengan daftar dan penguncian modul. Tombol tidak muncul sebelum selesai atau pada modul terakhir. Berlaku untuk latihan tunggal lama maupun bank soal baru. Deploy source, build client/SSR, lalu restart SSR sesuai panduan; tidak ada migration, seed ulang, atau env baru.
+
+## Seeder modul Paribasa Bali
+
+`ParibasaLessonSeeder` menambahkan 6 modul untuk setiap jalur `cecimpedan`, `peparikan`, dan `sesonggakan`: total 18 modul dan 180 soal. Setiap modul memiliki 8 pilihan tunggal, 1 esai jawaban singkat, dan 1 pilihan banyak. Sepuluh modul menyediakan materi dan delapan modul berupa latihan langsung. Modul tanpa materi tetap menyimpan bagian sumber; halaman React langsung menampilkan soal pertama tanpa bacaan kosong atau tombol kembali ke materi yang tidak ada. Esai Paribasa menggunakan teks Latin dan tidak otomatis membuka keyboard aksara.
+
+Rujukan awal adalah tiga dokumen Scribd dari pengguna: `Paribasa-Basa-Bali` (294471338), `Bahasa-Bali` (399384717), dan `CECIMPEDAN` (645712970), dengan pembanding *Kasusastran Bali miwah Basita Paribasa Bali* oleh I Nyoman Suwija pada repositori Mahadewa (2025). URL rujukan tersedia pada tiap modul. Petunjuk, skenario, dan pembahasan ditulis ulang; bank ini bukan salinan keseluruhan dokumen. Perbedaan ejaan/jawaban tradisi lisan dijelaskan pada sumber. Nama menu Sesonggakan tetap dipertahankan, sementara materi membedakan istilah sesonggan dan sesenggakan. Penjelasan memakai Bahasa Indonesia dengan istilah/contoh Bali. Penelaahan kebahasaan oleh pengajar tetap disarankan sebelum digunakan sebagai asesmen resmi.
+
+Setelah source diperbarui dan migration bank latihan sebelumnya sudah dijalankan:
+
+```bash
+php artisan db:seed --class=ParibasaLessonSeeder --force
+npm run build
+```
+
+Restart SSR sesuai prosedur React sebelumnya. Tidak ada migration, env, dependency, worker, atau installer Python baru untuk perubahan ini. Seeder dijalankan terpisah dari `DatabaseSeeder`, sehingga tidak otomatis mengubah deployment yang hanya memerlukan jalur belajar/admin. `firstOrCreate` menjaga modul, metadata jalur, status terbit, suntingan admin, dan progres yang sudah ada; menjalankan ulang tidak menggandakan data. Modul lama tidak dihapus. Penguncian dan tombol modul berikutnya mengikuti urutan terbit pada masing-masing jalur. Tes mencakup validasi bank, seluruh 180 jawaban melalui HTTP, pengulangan seeder, perlindungan kunci jawaban, progres penyelesaian, serta tampilan kuis langsung React. Tampilan pada perangkat dan browser nyata perlu diperiksa setelah deploy.

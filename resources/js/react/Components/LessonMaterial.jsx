@@ -1,6 +1,7 @@
 import { Fragment } from 'react';
 
 export function lessonSections(content = '') {
+    if (!content.trim()) return [];
     if (!/^## /m.test(content)) return [{ title: 'Materi pelajaran', body: content }];
     return content
         .split(/^## /m)

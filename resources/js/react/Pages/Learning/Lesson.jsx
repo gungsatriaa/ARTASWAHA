@@ -45,9 +45,9 @@ export default function Lesson({ lesson, progress, audio, quiz, nextLesson, meta
     const sections = lessonSections(lesson.content);
     const source = sections.find((section) => section.title === 'Sumber belajar');
     const material = sections.filter((section) => section !== source);
-    const currentSection = Math.min(material.length - 1, quiz?.question?.section ?? 0);
+    const currentSection = Math.max(0, Math.min(material.length - 1, quiz?.question?.section ?? 0));
     const [selected, setSelected] = useState(currentSection);
-    const [practice, setPractice] = useState(false);
+    const [practice, setPractice] = useState(material.length === 0 && Boolean(quiz));
     const [dismissedFeedback, setDismissedFeedback] = useState(null);
     const feedback = quiz?.feedback;
     const feedbackKey = feedback ? `${feedback.question_index}:${quiz.index}:${feedback.correct}` : null;
@@ -90,44 +90,52 @@ export default function Lesson({ lesson, progress, audio, quiz, nextLesson, meta
                     </div>
                 )}
             </header>
-            <div className="grid items-start gap-5 lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-8">
-                <aside className="min-w-0 lg:sticky lg:top-28">
-                    <nav aria-label="Bagian pelajaran" className="flex gap-2 overflow-x-auto pb-2 lg:flex-col">
-                        {material.map((section, index) => (
-                            <button
-                                key={index}
-                                type="button"
-                                onClick={() => choose(index)}
-                                aria-current={!practice && selected === index ? 'step' : undefined}
-                                className={`flex min-h-12 shrink-0 items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-accent lg:shrink ${!practice && selected === index ? 'bg-primary/20 text-accent' : 'bg-surface text-foreground/65 hover:text-foreground'}`}
-                            >
-                                <span className="grid size-7 shrink-0 place-items-center rounded-full bg-background text-xs">
-                                    {index + 1}
-                                </span>
-                                <span className="max-w-[12rem] lg:max-w-none">{section.title}</span>
-                            </button>
-                        ))}
-                        {quiz && (
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setSelected(currentSection);
-                                    setPractice(true);
-                                }}
-                                className={`${secondaryClass} shrink-0 lg:mt-3`}
-                            >
-                                <Icon name="quiz" className="size-4" />
-                                {completed
-                                    ? 'Hasil latihan'
-                                    : `Latihan ${quiz.index + 1 > quiz.total ? quiz.total : quiz.index + 1}/${quiz.total}`}
-                            </button>
-                        )}
-                    </nav>
-                    <p className="mt-3 hidden text-xs leading-6 text-foreground/50 lg:block">
-                        Baca satu bagian, amati contohnya, lalu coba latihan. Kamu bisa membuka kembali materi kapan
-                        saja.
-                    </p>
-                </aside>
+            <div
+                className={
+                    material.length
+                        ? 'grid items-start gap-5 lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-8'
+                        : 'mx-auto w-full max-w-3xl'
+                }
+            >
+                {material.length > 0 && (
+                    <aside className="min-w-0 lg:sticky lg:top-28">
+                        <nav aria-label="Bagian pelajaran" className="flex gap-2 overflow-x-auto pb-2 lg:flex-col">
+                            {material.map((section, index) => (
+                                <button
+                                    key={index}
+                                    type="button"
+                                    onClick={() => choose(index)}
+                                    aria-current={!practice && selected === index ? 'step' : undefined}
+                                    className={`flex min-h-12 shrink-0 items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-accent lg:shrink ${!practice && selected === index ? 'bg-primary/20 text-accent' : 'bg-surface text-foreground/65 hover:text-foreground'}`}
+                                >
+                                    <span className="grid size-7 shrink-0 place-items-center rounded-full bg-background text-xs">
+                                        {index + 1}
+                                    </span>
+                                    <span className="max-w-[12rem] lg:max-w-none">{section.title}</span>
+                                </button>
+                            ))}
+                            {quiz && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSelected(currentSection);
+                                        setPractice(true);
+                                    }}
+                                    className={`${secondaryClass} shrink-0 lg:mt-3`}
+                                >
+                                    <Icon name="quiz" className="size-4" />
+                                    {completed
+                                        ? 'Hasil latihan'
+                                        : `Latihan ${quiz.index + 1 > quiz.total ? quiz.total : quiz.index + 1}/${quiz.total}`}
+                                </button>
+                            )}
+                        </nav>
+                        <p className="mt-3 hidden text-xs leading-6 text-foreground/50 lg:block">
+                            Baca satu bagian, amati contohnya, lalu coba latihan. Kamu bisa membuka kembali materi kapan
+                            saja.
+                        </p>
+                    </aside>
+                )}
                 <div className="min-w-0 space-y-5">
                     {practice && quiz ? (
                         <Card key={`quiz-${quiz.index}`} className="sm:!p-8">
@@ -177,13 +185,15 @@ export default function Lesson({ lesson, progress, audio, quiz, nextLesson, meta
                                                     : 'Soal berikutnya'
                                                 : 'Coba lagi'}
                                         </Button>
-                                        <button
-                                            type="button"
-                                            className={secondaryClass}
-                                            onClick={() => choose(currentSection)}
-                                        >
-                                            Baca materi
-                                        </button>
+                                        {material.length > 0 && (
+                                            <button
+                                                type="button"
+                                                className={secondaryClass}
+                                                onClick={() => choose(currentSection)}
+                                            >
+                                                Baca materi
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             ) : quiz.question ? (
@@ -192,13 +202,15 @@ export default function Lesson({ lesson, progress, audio, quiz, nextLesson, meta
                                         <span className="font-semibold text-accent">
                                             Soal {quiz.index + 1} dari {quiz.total}
                                         </span>
-                                        <button
-                                            type="button"
-                                            className="text-foreground/65 underline underline-offset-4"
-                                            onClick={() => choose(currentSection)}
-                                        >
-                                            Lihat materi
-                                        </button>
+                                        {material.length > 0 && (
+                                            <button
+                                                type="button"
+                                                className="text-foreground/65 underline underline-offset-4"
+                                                onClick={() => choose(currentSection)}
+                                            >
+                                                Lihat materi
+                                            </button>
+                                        )}
                                     </div>
                                     <Exercise
                                         key={quiz.index}

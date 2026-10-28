@@ -1070,3 +1070,50 @@ it('links to the next module only after completion when a successor exists', () 
     rerender(<Lesson lesson={lesson} progress={{ completed_at: '2026-10-28', points: 10 }} meta={meta} />);
     expect(screen.queryByRole('link', { name: 'Modul berikutnya' })).toBeNull();
 });
+
+it('starts a quiz-only module at its first question without an empty material screen', () => {
+    const lesson = {
+        id: 90,
+        title: 'Tebak benda',
+        path,
+        content: '## Sumber belajar\nhttps://id.scribd.com/document/645712970/CECIMPEDAN',
+        answerUrl: '/latihan/90',
+    };
+    const quiz = {
+        total: 10,
+        index: 0,
+        question: {
+            section: 0,
+            question_type: 'single',
+            exercise_prompt: 'Benda untuk menjahit?',
+            exercise_options: ['Jaum', 'Galeng'],
+        },
+    };
+    const { rerender } = render(<Lesson lesson={lesson} quiz={quiz} meta={meta} />);
+    expect(screen.getByRole('radio', { name: 'Jaum' })).toBeTruthy();
+    expect(screen.queryByRole('navigation', { name: 'Bagian pelajaran' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Lihat materi' })).toBeNull();
+    expect(screen.getByText('Sumber materi dan latihan')).toBeTruthy();
+    fireEvent.click(screen.getByRole('radio', { name: 'Jaum' }));
+    fireEvent.submit(screen.getByRole('button', { name: 'Periksa jawaban' }).closest('form'));
+    expect(send.mock.calls[0][2]).toMatchObject({ question_index: 0, answer_index: 0 });
+    rerender(
+        <Lesson
+            lesson={lesson}
+            quiz={{
+                ...quiz,
+                index: 1,
+                feedback: {
+                    correct: true,
+                    question_index: 0,
+                    explanation: 'Jaum dipakai menjahit.',
+                    correct_answer: 'Jaum',
+                },
+            }}
+            meta={meta}
+        />,
+    );
+    expect(screen.queryByRole('button', { name: 'Baca materi' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Soal berikutnya' }));
+    expect(screen.getByRole('radio', { name: 'Jaum' })).toBeTruthy();
+});
