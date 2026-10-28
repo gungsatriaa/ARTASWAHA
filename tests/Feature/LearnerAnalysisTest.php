@@ -146,7 +146,10 @@ class LearnerAnalysisTest extends TestCase
                 && $request['max_tokens'] === 1000
                 && str_contains($request['messages'][2]['content'], 'learning_path_id')
                 && ! str_contains(json_encode($input), 'Private name')
-                && str_contains($request['messages'][0]['content'], 'Jangan menebak');
+                && str_contains($request['messages'][0]['content'], 'Jangan menebak')
+                && str_contains($request['messages'][0]['content'], 'Tulis summary dan setiap reason sebagai percakapan langsung dengan pelajar')
+                && str_contains($request['messages'][0]['content'], 'Sapa dengan kata "kamu" secara konsisten')
+                && str_contains($request['messages'][0]['content'], 'Belum ada aktivitas belajarmu yang tercatat');
         });
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('profile.show'))
             ->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc())->assertInertiaContains('Mulai dari materi pilihanmu.');
