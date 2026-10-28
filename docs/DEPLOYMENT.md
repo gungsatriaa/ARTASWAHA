@@ -607,3 +607,13 @@ Analisis pelajar kini memasukkan jawaban room **dan modul**, jumlah percobaan se
 ### Sapaan langsung dalam analisis AI
 
 Prompt ringkasan dan alasan rekomendasi kini menyapa pelajar langsung dengan “kamu”, memberi saran sesuai minat/aktivitas, dan menghindari gaya laporan tentang pengguna. Ketiadaan catatan aktivitas tidak dianggap sebagai bukti belum pernah belajar. Deploy source lalu jalankan `php artisan queue:restart` agar worker memuat prompt baru. Tidak ada migration, build frontend, atau env baru. Hasil yang sudah tersimpan tetap tampil sampai analisis berikutnya; gunakan tes analisis di admin untuk memperbaruinya langsung. Tes memeriksa instruksi yang dikirim, sedangkan gaya keluaran provider nyata perlu ditinjau dari hasil analisis setelah deploy.
+
+## Menjalankan seluruh seeder sekaligus
+
+`DatabaseSeeder` kini memanggil semua seeder: jalur belajar, admin lokal, admin production, modul demo, modul Aksara Bali, modul Paribasa, metadata audio, dan laporan AI. Jalur dibuat sebelum modul; metadata audio dibuat setelah semua modul tersedia. Perintah ini juga membuat/mempromosikan admin production sesuai `ADMIN_NAME`, `ADMIN_EMAIL`, dan `ADMIN_PASSWORD` dari `.env`, sehingga konfigurasi admin yang valid wajib tersedia.
+
+```bash
+php artisan db:seed --force
+```
+
+Pada database kosong, hasilnya 8 jalur, 29 modul (termasuk 1 demo), dan 29 metadata audio. Seed ulang mempertahankan data yang sudah ada. Metadata audio hanya disimpan sebagai draf, bukan langsung membangkitkan suara. `AiReportSeeder` tetap mengikuti perilaku yang sudah ada: membuat snapshot berstatus unavailable saat AI belum dikonfigurasi, dan melewati pembuatan laporan bila AI sudah dikonfigurasi; tidak menghubungi provider AI. Tidak ada migration, build frontend, dependency, atau restart worker baru untuk penggabungan seeder ini. Panduan lama yang menyebut seeder modul/admin harus dipanggil terpisah kini bersifat opsional: masing-masing class masih dapat dijalankan sendiri.

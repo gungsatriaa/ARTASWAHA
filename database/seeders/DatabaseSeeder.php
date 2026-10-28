@@ -17,6 +17,12 @@ class DatabaseSeeder extends Seeder
         $this->call([
             LearningPathSeeder::class,
             AdminUserSeeder::class,
+            ProductionAdminSeeder::class,
+            DemoLessonSeeder::class,
+            AksaraBaliLessonSeeder::class,
+            ParibasaLessonSeeder::class,
+            ContentAudioSeeder::class,
+            AiReportSeeder::class,
         ]);
     }
 }

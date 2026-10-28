@@ -6,6 +6,7 @@ use App\Models\User;
 use Database\Seeders\ProductionAdminSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -45,14 +46,23 @@ class ProductionAdminSeederTest extends TestCase
         $this->assertSame($originalPassword, $user->fresh()->password);
     }
 
-    public function test_default_seeding_does_not_create_a_production_admin(): void
+    public function test_default_seeding_runs_all_seeders_without_duplicates_or_external_requests(): void
     {
         $this->app->instance('env', 'production');
         config(['admin.email' => 'admin@example.test', 'admin.password' => 'ProductionTest!2026']);
+        config(['services.ai.url' => '', 'services.ai.model' => '']);
+        Http::preventStrayRequests();
 
         $this->artisan('db:seed', ['--force' => true])->assertSuccessful();
+        $this->artisan('db:seed', ['--force' => true])->assertSuccessful();
 
-        $this->assertDatabaseCount('users', 0);
+        $this->assertDatabaseCount('users', 1);
+        $this->assertDatabaseHas('users', ['email' => 'admin@example.test', 'is_admin' => true]);
+        $this->assertDatabaseCount('learning_paths', 8);
+        $this->assertDatabaseCount('lessons', 29);
+        $this->assertDatabaseCount('content_audio', 29);
+        $this->assertDatabaseCount('ai_reports', 1);
+        Http::assertNothingSent();
     }
 
     #[DataProvider('invalidCredentials')]
