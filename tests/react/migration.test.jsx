@@ -60,6 +60,11 @@ vi.mock('@inertiajs/react', async () => {
 });
 vi.mock('motion/react-m', () => ({
     button: ({ children, whileTap, ...props }) => <button {...props}>{children}</button>,
+    div: ({ children, initial, animate, exit, transition, ...props }) => <div {...props}>{children}</div>,
+}));
+vi.mock('motion/react', async (importOriginal) => ({
+    ...await importOriginal(),
+    AnimatePresence: ({ children }) => <>{children}</>,
 }));
 const meta = { title: 'ARTASWAHA' };
 const path = {
@@ -280,6 +285,35 @@ it('keeps essay keys in the editor and never requires an answer to save its prev
     expect(send.mock.calls[0][2].questions[0]).toEqual(
         expect.objectContaining({ question_type: 'essay', accepted_answers: ['Krana', 'Karena'] }),
     );
+});
+
+it('edits one question at a time and copies its content without reusing its saved ID', () => {
+    render(<Editor quiz={{ title: 'Latihan', questions: [{ ...blankQuestion(0), id: 15, prompt: 'Pilih Ha', options: ['Ha', 'Na'], correct_option: 0 }] }} meta={meta} />);
+    fireEvent.click(screen.getByRole('button', { name: /Kelola soal/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Duplikasikan soal/ }));
+    expect(screen.getAllByRole('textbox', { name: 'Teks pertanyaan' }).filter((field) => field.closest('details').open)).toHaveLength(1);
+    expect(screen.getAllByRole('textbox', { name: 'Teks pertanyaan' }).find((field) => field.closest('details').open).value).toBe('Pilih Ha');
+    fireEvent.click(screen.getByRole('button', { name: /Preview & simpan/ }));
+    fireEvent.submit(screen.getByRole('button', { name: 'Simpan perubahan' }).closest('form'));
+    expect(send.mock.calls[0][2].questions).toHaveLength(2);
+    expect(send.mock.calls[0][2].questions[0].id).toBe(15);
+    expect(send.mock.calls[0][2].questions[1]).not.toHaveProperty('id');
+    expect(send.mock.calls[0][2].questions[1].correct_option).toBe(0);
+    act(() => send.mock.calls[0][3].onError({ 'questions.0.prompt': 'Periksa soal pertama.' }));
+    expect(screen.getAllByRole('textbox', { name: 'Teks pertanyaan' }).find((field) => field.closest('details').open).value).toBe('Pilih Ha');
+});
+
+it('keeps AI upload optional in the question step and opens a newly added question', () => {
+    render(<Editor quiz={null} meta={meta} />);
+    expect(screen.queryByLabelText('Dokumen sumber')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Kelola soal/ }));
+    expect(screen.getByLabelText('Dokumen sumber').closest('details').open).toBe(false);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Teks pertanyaan' }), { target: { value: 'Soal pertama' } });
+    fireEvent.click(screen.getByRole('button', { name: /Tambah pertanyaan/ }));
+    expect(screen.getAllByRole('textbox', { name: 'Teks pertanyaan' }).filter((field) => field.closest('details').open)).toHaveLength(1);
+    expect(screen.getAllByRole('textbox', { name: 'Teks pertanyaan' }).find((field) => field.closest('details').open).value).toBe('');
+    fireEvent.click(screen.getAllByRole('button', { name: /Hapus soal/ }).find((button) => button.closest('details').open));
+    expect(screen.getByRole('textbox', { name: 'Teks pertanyaan' }).value).toBe('Soal pertama');
 });
 
 it('shows only studied paths in the profile and keeps the quiz join action out of its menu', () => {
@@ -1108,8 +1142,10 @@ it('shows end-of-quiz review and starts a fresh attempt without exposing old res
     const quiz = { id: 71, total: 1, index: 1, completed: true, correct: 0, results, history: [] };
     const { rerender } = render(<Lesson lesson={lesson} quiz={quiz} meta={meta} />);
     expect(screen.getByRole('region', { name: 'Hasil jawaban' })).toBeTruthy();
+    expect(screen.queryByText('Penjelasan Ha.')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /1\. Salah\s*Pilih Ha/ }));
     expect(screen.getByText('Penjelasan Ha.')).toBeTruthy();
-    expect(screen.getByText('1. Belum tepat').className).toContain('text-danger');
+    expect(screen.getByText('1. Salah').className).toContain('text-danger');
     fireEvent.click(screen.getByRole('button', { name: 'Ulangi kuis' }));
     expect(send.mock.calls[0].slice(0, 3)).toEqual(['post', '/ulang', { attempt_id: 71 }]);
     rerender(<Lesson lesson={lesson} quiz={{ id: 72, total: 1, index: 0, completed: false, results: [], question: { question_type: 'single', exercise_prompt: 'Pilih Ha', exercise_options: ['Ha', 'Na'] } }} meta={meta} />);
@@ -1168,6 +1204,43 @@ it('never plays answer effects when shared quiz feedback is disabled', () => {
     act(() => vi.advanceTimersByTime(0));
     expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled();
     expect(screen.queryByText('Suara aktif')).toBeNull();
+});
+
+it('plays shared quiz feedback once when enabled and does not replay it on a room refresh', () => {
+    vi.useFakeTimers();
+    const feedbackRoom = { ...room, feedback: true, correctOption: 1, answer: { answer_index: 1, is_correct: true } };
+    const { rerender } = render(<Room room={feedbackRoom} meta={meta} />);
+    act(() => vi.advanceTimersByTime(0));
+    expect(screen.getByRole('status').textContent).toBe('Jawaban benar!');
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1);
+    expect(HTMLMediaElement.prototype.play.mock.instances[0].src).toContain('/audio/benar.mp3');
+    rerender(<Room room={{ ...feedbackRoom, serverNow: '2026-10-27T00:00:01Z' }} meta={meta} />);
+    act(() => vi.advanceTimersByTime(0));
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1);
+});
+
+it('reveals animated shared quiz review only after finishing and plays the opened answer sound', () => {
+    vi.useFakeTimers();
+    const results = [
+        { prompt: 'Pilih Ha', selected: 'Na', correct: 'Ha', isCorrect: false },
+        { prompt: 'Pilih Na', selected: 'Na', correct: 'Na', isCorrect: true },
+    ];
+    const { rerender } = render(<Room room={{ ...room, results }} meta={meta} />);
+    expect(screen.queryByRole('region', { name: 'Hasil jawaban' })).toBeNull();
+    rerender(<Room room={{ ...room, status: 'finished', question: null, results }} meta={meta} />);
+    expect(screen.getByLabelText('50% jawaban benar')).toBeTruthy();
+    expect(screen.getByText('1 benar')).toBeTruthy();
+    expect(screen.getByText('1 salah')).toBeTruthy();
+    act(() => vi.advanceTimersByTime(0));
+    expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /1\. Salah\s*Pilih Ha/ }));
+    act(() => vi.advanceTimersByTime(0));
+    expect(HTMLMediaElement.prototype.play.mock.instances.at(-1).src).toContain('/audio/salah.mp3');
+    fireEvent.click(screen.getByRole('button', { name: /2\. Benar\s*Pilih Na/ }));
+    act(() => vi.advanceTimersByTime(0));
+    expect(HTMLMediaElement.prototype.play.mock.instances.at(-1).src).toContain('/audio/benar.mp3');
+    expect(screen.getByRole('status').textContent).toBe('Jawaban benar!');
+    expect(send).not.toHaveBeenCalled();
 });
 
 it('still reveals the final result when the browser blocks feedback audio', async () => {

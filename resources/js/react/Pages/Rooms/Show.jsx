@@ -5,6 +5,8 @@ import { Action, Card, Errors, secondaryClass } from '../../Components/forms';
 import Dialog from '../../Components/Dialog';
 import AudioPlayer from '../../Components/AudioPlayer';
 import AnswerFeedback from '../../Components/AnswerFeedback';
+import QuizTransition from '../../Components/QuizTransition';
+import QuizResults from '../../Components/QuizResults';
 import AnswerInput, { hasAnswer } from '../../Components/AnswerInput';
 import useRoom from '../../Hooks/useRoom';
 
@@ -314,6 +316,7 @@ export default function Room({ room, meta }) {
                             />
                         </div>
                     )}
+                    <QuizTransition stateKey={`${room.question?.id}-${room.feedback}-${room.status}`}>
                     {room.question && (room.status === 'active' || room.feedback) ? (
                         <Question key={`${room.question.id}-${room.feedback}`} room={room} onExpire={reload} />
                     ) : (
@@ -333,37 +336,12 @@ export default function Room({ room, meta }) {
                             <Link href={nav.quizzes} className={`${buttonClass} mt-6`}>
                                 Lihat kuis lain
                             </Link>
-                            {room.status === 'finished' && (
-                                <section className="mt-8">
-                                    <h3 className="font-display text-xl font-bold">Hasil jawabanmu</h3>
-                                    <ol className="mt-5 space-y-3">
-                                        {room.results.map((result, index) => (
-                                            <li key={index} className="rounded-2xl bg-background p-4">
-                                                <p className="font-semibold">
-                                                    {index + 1}. {result.prompt}
-                                                </p>
-                                                <p
-                                                    className={`mt-3 text-sm ${result.isCorrect ? 'text-success' : 'text-danger'}`}
-                                                >
-                                                    {result.selected
-                                                        ? result.isCorrect
-                                                            ? 'Benar'
-                                                            : 'Salah'
-                                                        : 'Tidak dijawab'}{' '}
-                                                    — Jawabanmu: {result.selected ?? '—'}
-                                                </p>
-                                                {!result.isCorrect && (
-                                                    <p className="mt-2 text-sm text-success">
-                                                        Jawaban benar: {result.correct}
-                                                    </p>
-                                                )}
-                                            </li>
-                                        ))}
-                                    </ol>
-                                </section>
+                            {room.status === 'finished' && room.results?.length > 0 && (
+                                <div className="mt-8"><QuizResults results={room.results} /></div>
                             )}
                         </Card>
                     )}
+                    </QuizTransition>
                 </>
             )}
             <Dialog

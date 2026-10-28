@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { PageMeta, Button } from '../../Components/ui';
 import { Card, Heading, Back, Field, Check, Errors, secondaryClass } from '../../Components/forms';
@@ -7,6 +7,7 @@ import AnswerInput from '../../Components/AnswerInput';
 import Keyboard from '../../Components/LazyKeyboard';
 import AudioPlayer from '../../Components/AudioPlayer';
 import usePolling from '../../Hooks/usePolling';
+import Icon from '../../Components/Icon';
 
 export const blankQuestion = (key) => ({
     _key: key,
@@ -58,6 +59,7 @@ export default function Editor({ quiz, hasRooms, preview, meta }) {
     const { links, navigation: nav, csrfToken } = usePage().props;
     const [step, setStep] = useState(preview ? 2 : 0),
         [position, setPosition] = useState(0),
+        [expanded, setExpanded] = useState(0),
         [chosen, setChosen] = useState(null),
         [file, setFile] = useState(null),
         [draftUrl, setDraftUrl] = useState(null),
@@ -65,6 +67,7 @@ export default function Editor({ quiz, hasRooms, preview, meta }) {
         [uploading, setUploading] = useState(false),
         [source, setSource] = useState(''),
         [uploadError, setUploadError] = useState('');
+    const uploadId = useId();
     const nextKey = useRef(quiz?.questions.length ?? 1),
         target = useRef(null),
         upload = useRef(null);
@@ -109,6 +112,9 @@ export default function Editor({ quiz, hasRooms, preview, meta }) {
                     time_limit_seconds: '',
                 })),
             );
+            setExpanded(nextKey.current - (draft.questions ?? []).length);
+            setPosition(0);
+            setChosen(null);
             setSource(draft.source_text ?? '');
             setImporting(false);
             setStep(1);
@@ -197,9 +203,26 @@ export default function Editor({ quiz, hasRooms, preview, meta }) {
         form.transform((data) => ({ ...data, questions: payloadQuestions(data.questions) }));
         form[quiz ? 'put' : 'post'](quiz?.action ?? links['quizzes.store'], {
             onError: (errors) => {
-                setStep(Object.keys(errors).some((key) => key.startsWith('questions')) ? 1 : 0);
+                const invalid = Object.keys(errors).find((key) => key.startsWith('questions'));
+                setStep(invalid ? 1 : 0);
+                if (invalid) setExpanded(form.data.questions[Number(invalid.split('.')[1]) || 0]?._key);
             },
         });
+    };
+    const addQuestion = () => {
+        const question = blankQuestion(nextKey.current++);
+        form.setData('questions', [...form.data.questions, question]);
+        setExpanded(question._key);
+    };
+    const duplicate = (index) => {
+        const copy = { ...form.data.questions[index], id: undefined, audio: null, audioEditUrl: null, _key: nextKey.current++ };
+        form.setData('questions', [...form.data.questions.slice(0, index + 1), copy, ...form.data.questions.slice(index + 1)]);
+        setExpanded(copy._key);
+    };
+    const remove = (index) => {
+        const questions = form.data.questions.filter((_, position) => position !== index);
+        form.setData('questions', questions);
+        setExpanded(questions[Math.min(index, questions.length - 1)]?._key);
     };
     const question = form.data.questions[Math.min(position, form.data.questions.length - 1)];
     const original = quiz?.questions.find((item) => item.id === question?.id);
@@ -210,7 +233,7 @@ export default function Editor({ quiz, hasRooms, preview, meta }) {
             ? original.audio
             : null;
     return (
-        <div className="mx-auto max-w-4xl">
+        <div className="quiz-editor mx-auto max-w-6xl">
             <PageMeta {...meta} />
             <Back href={quiz?.url ?? nav.quizzes}>Kembali ke kuis</Back>
             <Heading title={quiz ? 'Edit kuis' : 'Buat kuis'}>
@@ -222,19 +245,46 @@ export default function Editor({ quiz, hasRooms, preview, meta }) {
                     aman.
                 </p>
             )}
-            {!quiz && (
-                <Card className="mb-6">
-                    <h2 className="font-display text-xl font-bold">Buat draf dengan AI</h2>
+            <div className="grid items-start gap-5 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-8">
+                <aside className="min-w-0 lg:sticky lg:top-28">
+                    <nav aria-label="Tahap membuat kuis" className="grid grid-cols-3 gap-2 rounded-card bg-surface p-2 lg:grid-cols-1 lg:p-3">
+                        {[
+                            ['Pengaturan', 'Judul dan cara bermain'],
+                            ['Kelola soal', 'Pertanyaan dan jawaban'],
+                            ['Preview & simpan', 'Periksa sebelum dibagikan'],
+                        ].map(([label, description], index) => (
+                            <button type="button" key={label} aria-current={index === step ? 'step' : undefined} onClick={() => setStep(index)}
+                                className={`flex min-h-20 flex-col items-center gap-2 rounded-2xl px-2 py-3 text-center transition-colors focus-visible:outline-2 focus-visible:outline-accent lg:min-h-0 lg:flex-row lg:gap-3 lg:px-3 lg:py-4 lg:text-left ${index === step ? 'bg-primary/20 text-accent' : 'text-foreground/55 hover:bg-white/5 hover:text-foreground'}`}>
+                                <span className={`grid size-8 shrink-0 place-items-center rounded-full text-sm font-bold ${index === step ? 'bg-accent text-background' : 'bg-background'}`}>{index + 1}</span>
+                                <span className="min-w-0 text-xs font-bold leading-5 sm:text-sm">{label}<span className="mt-1 hidden text-xs font-normal text-foreground/45 lg:block">{description}</span></span>
+                            </button>
+                        ))}
+                    </nav>
+                    <div className="mt-5 hidden rounded-card bg-surface p-5 lg:block">
+                        <p className="text-xs text-foreground/50">Kuis yang sedang disusun</p>
+                        <p className="mt-2 break-words font-display font-bold">{form.data.title.trim() || 'Kuis barumu'}</p>
+                        <p className="mt-4 text-sm text-foreground/65">{form.data.questions.length} soal · maksimal 20</p>
+                        <p className="mt-2 text-xs leading-6 text-foreground/45">Perubahan tersimpan setelah kamu memilih Simpan kuis.</p>
+                    </div>
+                </aside>
+                <div className="min-w-0 space-y-5">
+            {!quiz && step === 1 && (
+                <details className="group rounded-card bg-surface p-5 sm:p-6" open={Boolean(importing || uploadError || source)}>
+                    <summary className="flex min-h-11 cursor-pointer list-none items-center gap-3 focus-visible:outline-2 focus-visible:outline-accent">
+                        <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary/15 text-accent"><Icon name="spark" /></span>
+                        <span className="min-w-0 flex-1"><span className="block font-display text-lg font-bold">Bantu susun soal dengan AI</span><span className="mt-1 block text-xs text-foreground/55">Opsional · mulai dari dokumen atau gambar</span></span>
+                        <Icon name="chevron" className="size-5 shrink-0 text-foreground/50 transition-transform group-open:rotate-180" />
+                    </summary>
+                    <div className="mt-5 space-y-4">
                     <p className="mt-2 text-sm leading-7 text-foreground/55">
                         Unggah JPG, PNG, WEBP, PDF, DOC, atau DOCX; maksimal 10 MB. Periksa soal dan teks hasil
                         ekstraksi sebelum menyimpan.
                     </p>
-                    <Field
-                        label="Dokumen sumber"
-                        type="file"
-                        accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx"
-                        onChange={(e) => setFile(e.target.files[0] ?? null)}
-                    />
+                    <label htmlFor={uploadId} className="flex min-h-24 cursor-pointer items-center gap-4 rounded-2xl bg-background p-4 transition-colors hover:bg-primary/15 focus-within:ring-2 focus-within:ring-accent">
+                        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary/15 text-accent"><Icon name="book" /></span>
+                        <span className="min-w-0"><span className="block break-all text-sm font-semibold">{file?.name ?? 'Pilih dokumen sumber'}</span><span className="mt-1 block text-xs text-foreground/50">Klik untuk memilih file · maksimal 10 MB</span></span>
+                        <input id={uploadId} aria-label="Dokumen sumber" className="sr-only" type="file" accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx" onChange={(e) => setFile(e.target.files[0] ?? null)} />
+                    </label>
                     <Button
                         type="button"
                         onClick={generate}
@@ -261,21 +311,9 @@ export default function Editor({ quiz, hasRooms, preview, meta }) {
                             </pre>
                         </details>
                     )}
-                </Card>
+                    </div>
+                </details>
             )}
-            <nav aria-label="Tahap membuat kuis" className="mb-6 flex flex-wrap gap-2">
-                {['Pengaturan', 'Kelola soal', 'Preview & simpan'].map((label, index) => (
-                    <button
-                        type="button"
-                        key={label}
-                        aria-current={index === step ? 'step' : undefined}
-                        onClick={() => setStep(index)}
-                        className={`${secondaryClass} ${index === step ? '!bg-accent !text-background' : ''}`}
-                    >
-                        {index + 1}. {label}
-                    </button>
-                ))}
-            </nav>
             <form
                 onSubmit={submit}
                 onFocusCapture={(e) => {
@@ -285,11 +323,12 @@ export default function Editor({ quiz, hasRooms, preview, meta }) {
                 <Errors errors={form.errors} />
                 {step === 0 && (
                     <Card className="space-y-5">
-                        <h2 className="font-display text-xl font-bold">Pengaturan kuis</h2>
+                        <div><h2 className="font-display text-xl font-bold">Pengaturan kuis</h2><p className="mt-2 text-sm leading-7 text-foreground/55">Beri judul yang mudah dikenali. Waktu dan cara menampilkan hasil bisa kamu sesuaikan.</p></div>
                         <Field
                             label="Judul kuis"
                             required
                             maxLength={120}
+                            placeholder="Misalnya, Tebak-tebakan bahasa Bali"
                             value={form.data.title}
                             onChange={(e) => form.setData('title', e.target.value)}
                             error={form.errors.title}
@@ -297,13 +336,14 @@ export default function Editor({ quiz, hasRooms, preview, meta }) {
                         <Field
                             label="Deskripsi (opsional)"
                             as="textarea"
-                            rows={3}
+                            rows={2}
+                            placeholder="Ceritakan singkat apa yang akan dipelajari peserta."
                             maxLength={500}
                             value={form.data.description}
                             onChange={(e) => form.setData('description', e.target.value)}
                             error={form.errors.description}
                         />
-                        <div className="grid gap-5 sm:grid-cols-2">
+                        <div className="rounded-2xl bg-background p-4 sm:p-5"><p className="mb-4 flex items-center gap-2 text-sm font-semibold text-accent"><Icon name="calendar" className="size-4" /> Atur waktu bermain</p><div className="grid gap-5 sm:grid-cols-2">
                             <Field
                                 label="Waktu bawaan per soal (detik)"
                                 type="number"
@@ -326,7 +366,7 @@ export default function Editor({ quiz, hasRooms, preview, meta }) {
                                 hint="Berlaku sejak host memulai kuis; opsional."
                                 error={form.errors.time_limit_minutes}
                             />
-                        </div>
+                        </div></div>
                         <Check
                             checked={form.data.show_answers_immediately}
                             onChange={(e) => form.setData('show_answers_immediately', e.target.checked)}
@@ -340,27 +380,23 @@ export default function Editor({ quiz, hasRooms, preview, meta }) {
                 {step === 1 && (
                     <section className="space-y-4">
                         <div className="flex flex-wrap justify-between gap-3">
-                            <h2 className="font-display text-2xl font-bold">Pertanyaan</h2>
+                            <div><h2 className="font-display text-2xl font-bold">Pertanyaan</h2><p className="mt-2 text-sm text-foreground/55">{form.data.questions.length} dari 20 soal · buka satu soal untuk mengedit.</p></div>
                             <button
                                 type="button"
                                 disabled={form.data.questions.length >= 20}
                                 className={secondaryClass}
-                                onClick={() =>
-                                    form.setData('questions', [
-                                        ...form.data.questions,
-                                        blankQuestion(nextKey.current++),
-                                    ])
-                                }
+                                onClick={addQuestion}
                             >
                                 ＋ Tambah pertanyaan
                             </button>
                         </div>
                         {form.data.questions.map((q, index) => (
-                            <Card key={q._key}>
-                                <details open>
-                                    <summary className="min-h-11 cursor-pointer font-display text-lg font-bold">
-                                        Pertanyaan {index + 1}
-                                        {q.prompt ? ` · ${q.prompt.slice(0, 65)}` : ''}
+                            <Card key={q._key} className="!p-4 sm:!p-6">
+                                <details open={expanded === q._key}>
+                                    <summary onClick={(event) => { event.preventDefault(); setExpanded(expanded === q._key ? null : q._key); }} className="flex min-h-12 cursor-pointer list-none items-center gap-3 focus-visible:outline-2 focus-visible:outline-accent">
+                                        <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary/15 font-bold text-accent">{index + 1}</span>
+                                        <span className="min-w-0 flex-1"><span className="block font-display font-bold">Pertanyaan {index + 1}</span><span className="mt-1 block truncate text-sm text-foreground/55">{q.prompt || 'Tulis pertanyaan dan tentukan jawaban benarnya'}</span></span>
+                                        <Icon name="chevron" className={`size-5 shrink-0 text-foreground/50 transition-transform ${expanded === q._key ? 'rotate-180' : ''}`} />
                                     </summary>
                                     <div className="mt-4 space-y-4">
                                         <Field
@@ -528,19 +564,7 @@ export default function Editor({ quiz, hasRooms, preview, meta }) {
                                                 type="button"
                                                 className={secondaryClass}
                                                 disabled={form.data.questions.length >= 20}
-                                                onClick={() =>
-                                                    form.setData('questions', [
-                                                        ...form.data.questions.slice(0, index + 1),
-                                                        {
-                                                            ...q,
-                                                            id: undefined,
-                                                            audio: null,
-                                                            audioEditUrl: null,
-                                                            _key: nextKey.current++,
-                                                        },
-                                                        ...form.data.questions.slice(index + 1),
-                                                    ])
-                                                }
+                                                onClick={() => duplicate(index)}
                                             >
                                                 Duplikasikan soal
                                             </button>
@@ -548,12 +572,7 @@ export default function Editor({ quiz, hasRooms, preview, meta }) {
                                                 type="button"
                                                 className={`${secondaryClass} text-danger`}
                                                 disabled={form.data.questions.length <= 1}
-                                                onClick={() =>
-                                                    form.setData(
-                                                        'questions',
-                                                        form.data.questions.filter((_, position) => position !== index),
-                                                    )
-                                                }
+                                                onClick={() => remove(index)}
                                             >
                                                 Hapus soal
                                             </button>
@@ -567,6 +586,7 @@ export default function Editor({ quiz, hasRooms, preview, meta }) {
                 )}
                 {step === 2 && (
                     <Card>
+                        <p className="mb-2 text-sm font-semibold text-accent">{form.data.title || 'Kuis tanpa judul'}</p>
                         <h2 className="font-display text-2xl font-bold">Preview sebagai peserta</h2>
                         <p className="mt-2 text-sm leading-7 text-foreground/55">
                             Preview tidak mengirim jawaban atau menjalankan timer.
@@ -626,7 +646,9 @@ export default function Editor({ quiz, hasRooms, preview, meta }) {
                         </div>
                     </Card>
                 )}
-                <div className="mt-6 flex flex-wrap justify-between gap-3">
+                <div className="sticky bottom-24 z-20 mt-6 flex items-center justify-between gap-3 rounded-3xl bg-surface p-4 shadow-xl shadow-black/30 md:bottom-4">
+                    <span className="hidden text-xs text-foreground/55 sm:block">Langkah {step + 1} dari 3</span>
+                    <div className="flex flex-1 items-center justify-end gap-3">
                     {step > 0 && (
                         <button type="button" className={secondaryClass} onClick={() => setStep(step - 1)}>
                             Kembali
@@ -641,8 +663,11 @@ export default function Editor({ quiz, hasRooms, preview, meta }) {
                             {form.processing ? 'Menyimpan…' : quiz ? 'Simpan perubahan' : 'Simpan kuis'}
                         </Button>
                     )}
+                    </div>
                 </div>
             </form>
+                </div>
+            </div>
         </div>
     );
 }

@@ -5,6 +5,8 @@ import { Back, Card, Errors, Action, secondaryClass } from '../../Components/for
 import AnswerInput, { hasAnswer } from '../../Components/AnswerInput';
 import AudioPlayer from '../../Components/AudioPlayer';
 import AnswerFeedback from '../../Components/AnswerFeedback';
+import QuizTransition from '../../Components/QuizTransition';
+import QuizResults from '../../Components/QuizResults';
 import Icon from '../../Components/Icon';
 import LessonMaterial, { lessonSections, AksaraText } from '../../Components/LessonMaterial';
 
@@ -157,6 +159,7 @@ export default function Lesson({ lesson, progress, audio, quiz, nextLesson, meta
                     </aside>
                 )}
                 <div className="min-w-0 space-y-5">
+                    <QuizTransition stateKey={answerFeedback ? `feedback-${quiz.id}-${answerFeedback.index}` : `${quiz?.id}-${quiz?.index}-${practice}-${selected}`}>
                     {answerFeedback ? (
                         <AnswerFeedback key={`${quiz.id}-${answerFeedback.index}`} correct={answerFeedback.is_correct}
                             selected={answerFeedback.selected} answer={answerFeedback.correct} explanation={answerFeedback.explanation}
@@ -261,34 +264,7 @@ export default function Lesson({ lesson, progress, audio, quiz, nextLesson, meta
                         </Card>
                     )}
                     {!answerFeedback && completed && quiz?.results?.length > 0 && (
-                        <section aria-label="Hasil jawaban" className="space-y-3">
-                            <h2 className="font-display text-xl font-bold">Pembahasan jawaban</h2>
-                            {quiz.results.map((result, index) => (
-                                <details key={index} className="rounded-3xl bg-surface p-5">
-                                    <summary className="cursor-pointer font-semibold leading-7">
-                                        <span className={result.is_correct ? 'text-success' : 'text-danger'}>
-                                            {index + 1}. {result.is_correct ? 'Benar' : 'Belum tepat'}
-                                        </span>
-                                        <span className="mt-2 block">
-                                            <AksaraText>{result.prompt}</AksaraText>
-                                        </span>
-                                    </summary>
-                                    <div className="mt-4 space-y-3 text-sm leading-8">
-                                        <p className={result.is_correct ? 'text-success' : 'text-danger'}>
-                                            Jawabanmu: <AksaraText>{result.selected}</AksaraText>
-                                        </p>
-                                        {!result.is_correct && (
-                                            <p className="text-success">
-                                                Jawaban benar: <AksaraText>{result.correct}</AksaraText>
-                                            </p>
-                                        )}
-                                        <p className="text-foreground/70">
-                                            <AksaraText>{result.explanation}</AksaraText>
-                                        </p>
-                                    </div>
-                                </details>
-                            ))}
-                        </section>
+                        <QuizResults results={quiz.results.map((result) => ({ ...result, isCorrect: result.is_correct }))} />
                     )}
                     {!answerFeedback && completed && quiz?.history?.length > 0 && (
                         <Card>
@@ -341,6 +317,7 @@ export default function Lesson({ lesson, progress, audio, quiz, nextLesson, meta
                             </Link>
                         </nav>
                     )}
+                    </QuizTransition>
                     {source && (
                         <details className="rounded-3xl bg-surface p-5 text-sm sm:p-6">
                             <summary className="cursor-pointer font-semibold text-foreground/65">
