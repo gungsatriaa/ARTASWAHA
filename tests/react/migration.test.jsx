@@ -20,6 +20,7 @@ import Analysis from '../../resources/js/react/Components/Analysis';
 import Keyboard from '../../resources/js/react/Components/Keyboard';
 import AvatarCrop from '../../resources/js/react/Components/AvatarCrop';
 import AudioPlayer from '../../resources/js/react/Components/AudioPlayer';
+import AnswerFeedback from '../../resources/js/react/Components/AnswerFeedback';
 import usePolling from '../../resources/js/react/Hooks/usePolling';
 import useRoom from '../../resources/js/react/Hooks/useRoom';
 
@@ -127,6 +128,8 @@ beforeEach(() => {
         },
     });
     vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+    localStorage.removeItem('artaswaha-answer-muted');
 });
 afterEach(() => {
     cleanup();
@@ -1082,16 +1085,19 @@ it('starts a quiz-only module at its first question without an empty material sc
                 ...quiz,
                 index: 1,
                 feedback: {
-                    correct: true,
-                    question_index: 0,
+                    is_correct: true,
+                    index: 0,
                     explanation: 'Jaum dipakai menjahit.',
-                    correct_answer: 'Jaum',
+                    correct: 'Jaum',
+                    selected: 'Jaum',
                 },
             }}
             meta={meta}
         />,
     );
     expect(screen.queryByRole('button', { name: 'Baca materi' })).toBeNull();
+    expect(screen.getByRole('status').textContent).toBe('Jawaban benar!');
+    fireEvent.click(screen.getByRole('button', { name: 'Lanjutkan' }));
     expect(screen.getByRole('radio', { name: 'Jaum' })).toBeTruthy();
 });
 
@@ -1110,4 +1116,70 @@ it('shows end-of-quiz review and starts a fresh attempt without exposing old res
     expect(screen.queryByText('Penjelasan Ha.')).toBeNull();
     expect(screen.queryByRole('region', { name: 'Hasil jawaban' })).toBeNull();
     expect(screen.getByRole('radio', { name: 'Ha' })).toBeTruthy();
+});
+
+
+it('locks a wrong module answer, plays its sound once, and automatically advances after feedback', () => {
+    vi.useFakeTimers();
+    const lesson = { id: 45, title: 'Uji', path, content: '', answerUrl: '/jawab' };
+    const first = { section: 0, question_type: 'single', exercise_prompt: 'Pilih Ha', exercise_options: ['Ha', 'Na'] };
+    const quiz = { id: 3, total: 2, index: 0, completed: false, question: first };
+    const { rerender, unmount } = render(<StrictMode><Lesson lesson={lesson} quiz={quiz} meta={meta} /></StrictMode>);
+    fireEvent.click(screen.getByRole('radio', { name: 'Na' }));
+    fireEvent.submit(screen.getByRole('button', { name: 'Kirim jawaban' }).closest('form'));
+    const answered = { ...quiz, index: 1, question: { ...first, exercise_prompt: 'Soal kedua' }, feedback: { index: 0, is_correct: false, selected: 'Na', correct: 'Ha', explanation: 'Kenali Ha.' } };
+    rerender(<StrictMode><Lesson lesson={lesson} quiz={answered} meta={meta} /></StrictMode>);
+    expect(screen.getByRole('status').textContent).toContain('Belum tepat');
+    expect(screen.queryByRole('radio')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Coba lagi' })).toBeNull();
+    act(() => vi.advanceTimersByTime(0));
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1);
+    expect(HTMLMediaElement.prototype.play.mock.instances[0].src).toContain('/audio/salah.mp3');
+    act(() => vi.advanceTimersByTime(3000));
+    expect(screen.getByRole('heading', { name: 'Soal kedua' })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'Ha' })).toBeTruthy();
+    unmount();
+    expect(send).toHaveBeenCalledTimes(1);
+});
+
+it('plays success audio and remembers the mute preference without duplicating playback', () => {
+    vi.useFakeTimers();
+    const next = vi.fn();
+    const { unmount, rerender } = render(<AnswerFeedback correct onContinue={next} />);
+    act(() => vi.advanceTimersByTime(0));
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1);
+    expect(HTMLMediaElement.prototype.play.mock.instances[0].src).toContain('/audio/benar.mp3');
+    rerender(<AnswerFeedback correct onContinue={next} />);
+    act(() => vi.advanceTimersByTime(0));
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Suara aktif' }));
+    expect(localStorage.getItem('artaswaha-answer-muted')).toBe('true');
+    unmount();
+    act(() => vi.advanceTimersByTime(4000));
+    expect(next).not.toHaveBeenCalled();
+    render(<AnswerFeedback correct={false} />);
+    act(() => vi.advanceTimersByTime(0));
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1);
+});
+
+it('never plays answer effects when shared quiz feedback is disabled', () => {
+    vi.useFakeTimers();
+    render(<Room room={room} meta={meta} />);
+    act(() => vi.advanceTimersByTime(0));
+    expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled();
+    expect(screen.queryByText('Suara aktif')).toBeNull();
+});
+
+it('still reveals the final result when the browser blocks feedback audio', async () => {
+    vi.useFakeTimers();
+    vi.mocked(HTMLMediaElement.prototype.play).mockRejectedValue(new Error('Autoplay blocked'));
+    const lesson = { id: 49, title: 'Uji', path, content: '', answerUrl: '/jawab', retryUrl: '/ulang' };
+    const quiz = { id: 8, total: 1, index: 0, completed: false, question: { question_type: 'essay', exercise_prompt: 'Tulis Ha', exercise_options: [] } };
+    const { rerender } = render(<Lesson lesson={lesson} quiz={quiz} meta={meta} />);
+    const feedback = { index: 0, is_correct: true, selected: 'ᬳ', correct: 'ᬳ' };
+    rerender(<Lesson lesson={lesson} quiz={{ ...quiz, index: 1, completed: true, correct: 1, question: null, feedback, results: [feedback] }} meta={meta} />);
+    expect(screen.getByRole('status').textContent).toBe('Jawaban benar!');
+    await act(async () => vi.advanceTimersByTime(3000));
+    expect(screen.getByRole('heading', { name: 'Modul selesai!' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Ulangi kuis' })).toBeTruthy();
 });

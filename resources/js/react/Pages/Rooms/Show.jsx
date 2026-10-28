@@ -4,6 +4,7 @@ import { Button, PageMeta, buttonClass } from '../../Components/ui';
 import { Action, Card, Errors, secondaryClass } from '../../Components/forms';
 import Dialog from '../../Components/Dialog';
 import AudioPlayer from '../../Components/AudioPlayer';
+import AnswerFeedback from '../../Components/AnswerFeedback';
 import AnswerInput, { hasAnswer } from '../../Components/AnswerInput';
 import useRoom from '../../Hooks/useRoom';
 
@@ -107,14 +108,7 @@ function Question({ room, onExpire }) {
             />
             {room.feedback ? (
                 <>
-                    <p
-                        role="status"
-                        className={`my-4 rounded-2xl p-4 text-sm font-bold ${room.answer?.is_correct ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}
-                    >
-                        {room.answer?.is_correct
-                            ? 'Jawaban benar!'
-                            : 'Jawaban belum tepat. Lihat jawaban yang benar di bawah.'}
-                    </p>
+                    <div className="my-4"><AnswerFeedback correct={Boolean(room.answer?.is_correct)} /></div>
                     {room.question.question_type === 'essay' && (
                         <div className="space-y-3 rounded-2xl bg-background p-4 text-sm leading-7">
                             <p className="whitespace-pre-wrap break-words">

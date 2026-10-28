@@ -4,6 +4,7 @@ import { PageMeta, Button, buttonClass } from '../../Components/ui';
 import { Back, Card, Errors, Action, secondaryClass } from '../../Components/forms';
 import AnswerInput, { hasAnswer } from '../../Components/AnswerInput';
 import AudioPlayer from '../../Components/AudioPlayer';
+import AnswerFeedback from '../../Components/AnswerFeedback';
 import Icon from '../../Components/Icon';
 import LessonMaterial, { lessonSections, AksaraText } from '../../Components/LessonMaterial';
 
@@ -53,11 +54,17 @@ export default function Lesson({ lesson, progress, audio, quiz, nextLesson, meta
     const currentSection = Math.max(0, Math.min(material.length - 1, quiz?.question?.section ?? 0));
     const [selected, setSelected] = useState(currentSection);
     const [practice, setPractice] = useState(Boolean(quiz) && (material.length === 0 || quiz.completed));
+    const [answerFeedback, setAnswerFeedback] = useState(null);
     const completed = quiz ? Boolean(quiz.completed) : Boolean(progress?.completed_at);
     const previous = useRef({ id: quiz?.id, index: quiz?.index, section: currentSection });
     useEffect(() => {
         const before = previous.current;
         if (before.index !== quiz?.index || before.id !== quiz?.id) {
+            if (quiz?.index > (before.index ?? 0) && (before.id == null || before.id === quiz?.id) && quiz?.feedback) {
+                setAnswerFeedback(quiz.feedback);
+            } else {
+                setAnswerFeedback(null);
+            }
             setSelected(currentSection);
             const restarted = quiz?.index === 0 && before.index > 0;
             setPractice(
@@ -150,7 +157,11 @@ export default function Lesson({ lesson, progress, audio, quiz, nextLesson, meta
                     </aside>
                 )}
                 <div className="min-w-0 space-y-5">
-                    {practice && quiz ? (
+                    {answerFeedback ? (
+                        <AnswerFeedback key={`${quiz.id}-${answerFeedback.index}`} correct={answerFeedback.is_correct}
+                            selected={answerFeedback.selected} answer={answerFeedback.correct} explanation={answerFeedback.explanation}
+                            onContinue={() => setAnswerFeedback(null)} />
+                    ) : practice && quiz ? (
                         <Card key={`quiz-${quiz.index}`} className="sm:!p-8">
                             {completed ? (
                                 <div className="py-5 text-center">
@@ -249,7 +260,7 @@ export default function Lesson({ lesson, progress, audio, quiz, nextLesson, meta
                             </div>
                         </Card>
                     )}
-                    {completed && quiz?.results?.length > 0 && (
+                    {!answerFeedback && completed && quiz?.results?.length > 0 && (
                         <section aria-label="Hasil jawaban" className="space-y-3">
                             <h2 className="font-display text-xl font-bold">Pembahasan jawaban</h2>
                             {quiz.results.map((result, index) => (
@@ -279,7 +290,7 @@ export default function Lesson({ lesson, progress, audio, quiz, nextLesson, meta
                             ))}
                         </section>
                     )}
-                    {completed && quiz?.history?.length > 0 && (
+                    {!answerFeedback && completed && quiz?.history?.length > 0 && (
                         <Card>
                             <h2 className="font-display text-xl font-bold">Riwayat percobaan</h2>
                             <ul className="mt-4 space-y-3 text-sm">
@@ -316,7 +327,7 @@ export default function Lesson({ lesson, progress, audio, quiz, nextLesson, meta
                                 <Action url={lesson.completeUrl}>Tandai pelajaran selesai</Action>
                             </div>
                         ))}
-                    {completed && nextLesson && (
+                    {!answerFeedback && completed && nextLesson && (
                         <nav
                             aria-label="Modul lanjutan"
                             className="flex flex-col gap-4 rounded-card bg-surface p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"

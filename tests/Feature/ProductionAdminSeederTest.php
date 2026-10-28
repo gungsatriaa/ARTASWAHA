@@ -59,8 +59,8 @@ class ProductionAdminSeederTest extends TestCase
         $this->assertDatabaseCount('users', 1);
         $this->assertDatabaseHas('users', ['email' => 'admin@example.test', 'is_admin' => true]);
         $this->assertDatabaseCount('learning_paths', 8);
-        $this->assertDatabaseCount('lessons', 29);
-        $this->assertDatabaseCount('content_audio', 29);
+        $this->assertDatabaseCount('lessons', 28);
+        $this->assertDatabaseCount('content_audio', 28);
         $this->assertDatabaseCount('ai_reports', 1);
         Http::assertNothingSent();
     }

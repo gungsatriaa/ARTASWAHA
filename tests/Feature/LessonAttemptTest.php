@@ -31,15 +31,15 @@ class LessonAttemptTest extends TestCase
         ]]);
     }
 
-    public function test_wrong_answers_advance_all_types_and_results_are_only_revealed_at_the_end(): void
+    public function test_wrong_answers_advance_with_feedback_but_full_review_is_only_revealed_at_the_end(): void
     {
         $lesson = $this->lesson();
         $this->actingAs(User::factory()->create())->withCookie('artaswaha_device', (string) Str::uuid());
-        $this->post(route('learning.exercises.answer', $lesson), ['question_index' => 0, 'answer_index' => 1])->assertRedirect()->assertSessionMissing('lesson_feedback');
+        $this->post(route('learning.exercises.answer', $lesson), ['question_index' => 0, 'answer_index' => 1])->assertRedirect()->assertSessionMissing('lesson_feedback')->assertSessionMissing('status');
         $attempt = LessonAttempt::sole();
         $this->assertFalse($attempt->answers[0]['is_correct']);
         $this->get(route('learning.lessons.show', $lesson))->assertInertia(fn (Assert $page): Assert => $page
-            ->where('quiz.index', 1)->where('quiz.results', [])->where('quiz.correct', null)->where('quiz.completed', false)
+            ->where('quiz.index', 1)->where('quiz.feedback.index', 0)->where('quiz.feedback.is_correct', false)->where('quiz.feedback.correct', 'Ha')->where('quiz.results', [])->where('quiz.correct', null)->where('quiz.completed', false)
             ->missing('quiz.question.correct_options')->missing('lesson.exercises')->missing('lesson.exercise_explanation'));
         $this->post(route('learning.exercises.answer', $lesson), ['attempt_id' => $attempt->id, 'question_index' => 1, 'answer_indexes' => []])->assertSessionHasErrors('answer_indexes');
         $this->assertCount(1, $attempt->fresh()->answers);

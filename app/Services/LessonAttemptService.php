@@ -34,6 +34,7 @@ class LessonAttemptService
         return ['id' => $attempt?->id, 'total' => count($questions), 'index' => $index, 'completed' => $completed,
             'question' => $completed || $current === null ? null : array_intersect_key($current, array_flip(['exercise_prompt', 'exercise_options', 'question_type', 'keyboard_auto_open', 'section'])),
             'results' => $completed ? ($attempt?->answers ?? []) : [],
+            'feedback' => $index > 0 && $attempt !== null ? ['index' => $index - 1, ...$attempt->answers[$index - 1]] : null,
             'correct' => $completed ? collect($attempt?->answers ?? [])->where('is_correct', true)->count() : null,
             'history' => $history->map(fn (LessonAttempt $item): array => ['id' => $item->id, 'completedAt' => $item->completed_at->toIso8601String(),
                 'total' => count($item->questions), 'correct' => collect($item->answers)->where('is_correct', true)->count()])->all()];

@@ -592,7 +592,7 @@ Restart SSR sesuai prosedur React sebelumnya. Tidak ada migration, env, dependen
 
 ## Percobaan kuis modul dan analisis jawaban
 
-Seluruh latihan modul (termasuk latihan tunggal lama) menerima jawaban valid yang salah dan langsung maju. Kunci jawaban, status benar/salah, dan pembahasan baru dikirim setelah soal terakhir. Pilih **Ulangi kuis** untuk membuat baris `lesson_attempts` baru; percobaan sebelumnya, salinan bank soal, jawaban, ketepatan, dan waktu menjawab tetap disimpan. Pengulangan tidak menggandakan 10 poin atau penyelesaian modul. Riwayat menampilkan lima percobaan selesai terakhir; data sebelumnya tetap tersedia untuk analisis. Esai tetap dinilai dengan jawaban acuan, bukan AI.
+Seluruh latihan modul (termasuk latihan tunggal lama) menerima jawaban valid yang salah dan langsung maju. Status benar/salah dan pembahasan jawaban yang baru dikirim ditampilkan langsung, sedangkan rincian seluruh percobaan tersedia setelah soal terakhir. Pilih **Ulangi kuis** untuk membuat baris `lesson_attempts` baru; percobaan sebelumnya, salinan bank soal, jawaban, ketepatan, dan waktu menjawab tetap disimpan. Pengulangan tidak menggandakan 10 poin atau penyelesaian modul. Riwayat menampilkan lima percobaan selesai terakhir; data sebelumnya tetap tersedia untuk analisis. Esai tetap dinilai dengan jawaban acuan, bukan AI.
 
 ```bash
 php artisan migrate --force
@@ -610,10 +610,19 @@ Prompt ringkasan dan alasan rekomendasi kini menyapa pelajar langsung dengan “
 
 ## Menjalankan seluruh seeder sekaligus
 
-`DatabaseSeeder` kini memanggil semua seeder: jalur belajar, admin lokal, admin production, modul demo, modul Aksara Bali, modul Paribasa, metadata audio, dan laporan AI. Jalur dibuat sebelum modul; metadata audio dibuat setelah semua modul tersedia. Perintah ini juga membuat/mempromosikan admin production sesuai `ADMIN_NAME`, `ADMIN_EMAIL`, dan `ADMIN_PASSWORD` dari `.env`, sehingga konfigurasi admin yang valid wajib tersedia.
+`DatabaseSeeder` kini memanggil semua seeder: jalur belajar, admin lokal, admin production, modul Aksara Bali, modul Paribasa, metadata audio, dan laporan AI. Jalur dibuat sebelum modul; metadata audio dibuat setelah semua modul tersedia. Perintah ini juga membuat/mempromosikan admin production sesuai `ADMIN_NAME`, `ADMIN_EMAIL`, dan `ADMIN_PASSWORD` dari `.env`, sehingga konfigurasi admin yang valid wajib tersedia.
 
 ```bash
 php artisan db:seed --force
 ```
 
-Pada database kosong, hasilnya 8 jalur, 29 modul (termasuk 1 demo), dan 29 metadata audio. Seed ulang mempertahankan data yang sudah ada. Metadata audio hanya disimpan sebagai draf, bukan langsung membangkitkan suara. `AiReportSeeder` tetap mengikuti perilaku yang sudah ada: membuat snapshot berstatus unavailable saat AI belum dikonfigurasi, dan melewati pembuatan laporan bila AI sudah dikonfigurasi; tidak menghubungi provider AI. Tidak ada migration, build frontend, dependency, atau restart worker baru untuk penggabungan seeder ini. Panduan lama yang menyebut seeder modul/admin harus dipanggil terpisah kini bersifat opsional: masing-masing class masih dapat dijalankan sendiri.
+Pada database kosong, hasilnya 8 jalur, 28 modul, dan 28 metadata audio. Seed ulang mempertahankan data yang sudah ada. Metadata audio hanya disimpan sebagai draf, bukan langsung membangkitkan suara. `AiReportSeeder` tetap mengikuti perilaku yang sudah ada: membuat snapshot berstatus unavailable saat AI belum dikonfigurasi, dan melewati pembuatan laporan bila AI sudah dikonfigurasi; tidak menghubungi provider AI. Tidak ada migration, build frontend, dependency, atau restart worker baru untuk penggabungan seeder ini. Panduan lama yang menyebut seeder modul/admin harus dipanggil terpisah kini bersifat opsional: masing-masing class masih dapat dijalankan sendiri.
+
+
+## Umpan balik jawaban dengan animasi dan efek suara
+
+Seluruh kuis modul menampilkan panel hijau/merah untuk jawaban yang baru dikirim, termasuk pembahasan dan jawaban acuan bila salah. Panel otomatis lanjut setelah 3 detik atau melalui tombol Lanjutkan; jawaban tersimpan dan tidak dapat diganti. Beralih bagian tetap membuka bacaan bagian berikutnya, bukan melewatinya. Muat ulang halaman tidak memutar ulang panel jawaban sebelumnya. Riwayat percobaan dan poin tetap mengikuti mekanisme sebelumnya.
+
+Kuis room memakai panel animasi/audio hanya ketika server mengizinkan feedback sesuai `show_answers_immediately`. Pengaturan off tetap menyembunyikan hasil selama permainan; tidak ada suara benar/salah yang membocorkannya. Timer dan kelanjutan room tetap mengikuti server. Tidak ada toast tambahan untuk jawaban benar: umpan balik muncul di area soal.
+
+Efek memakai aset `public/audio/benar.mp3` dan `public/audio/salah.mp3` yang disediakan pengguna. Tombol suara menyimpan pilihan di `localStorage` dengan key `artaswaha-answer-muted`; pemblokiran audio oleh browser tidak menghalangi pengiriman jawaban. Animasi menghormati reduced motion. Deploy source dan kedua aset, jalankan `npm run build`, lalu restart SSR sesuai prosedur. Tidak ada migration, seeder, dependency, atau konfigurasi worker baru. Tes memeriksa pengiriman, penguncian jawaban salah, suara benar/salah, mute, kelanjutan otomatis, dan feedback room off. Pemutaran suara pada Safari/iOS dan speaker perangkat nyata perlu dicek setelah deploy.
