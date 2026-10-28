@@ -1,5 +1,7 @@
 import { useId, useRef } from 'react';
 import Keyboard from './LazyKeyboard';
+import Icon from './Icon';
+import { AksaraText } from './LessonMaterial';
 
 export function hasAnswer(question, answer) {
     if (question.question_type === 'essay') return Boolean(answer.answer_text?.trim());
@@ -44,7 +46,7 @@ export default function AnswerInput({ question, answer, onChange, required = tru
                 return (
                     <label
                         key={index}
-                        className={`flex min-h-16 cursor-pointer items-center gap-3 rounded-2xl bg-background p-4 ring-1 ${checked ? 'ring-accent bg-accent/10' : 'ring-white/10'}`}
+                        className={`group relative flex min-h-20 cursor-pointer items-center gap-3 rounded-2xl p-4 ring-1 transition-[background-color,box-shadow,transform] duration-150 motion-safe:hover:-translate-y-0.5 focus-within:ring-2 focus-within:ring-accent motion-reduce:transition-none ${checked ? 'bg-accent/10 ring-accent' : 'bg-background ring-white/10 hover:bg-primary/10 hover:ring-primary/50'}`}
                     >
                         <input
                             type={multiple ? 'checkbox' : 'radio'}
@@ -61,9 +63,15 @@ export default function AnswerInput({ question, answer, onChange, required = tru
                                         : index,
                                 )
                             }
-                            className="size-5 shrink-0 accent-[var(--color-accent)]"
+                            className="peer sr-only"
                         />
-                        <span className="min-w-0 break-words text-sm font-semibold">{option}</span>
+                        <span aria-hidden="true" className={`grid size-9 shrink-0 place-items-center rounded-xl text-sm font-bold ${checked ? 'bg-accent text-background' : 'bg-white/5 text-foreground/50'}`}>
+                            {String.fromCharCode(65 + index)}
+                        </span>
+                        <span className="min-w-0 flex-1 break-words text-sm font-semibold leading-7"><AksaraText>{option}</AksaraText></span>
+                        <span aria-hidden="true" className={`grid size-5 shrink-0 place-items-center ring-1 ${multiple ? 'rounded-md' : 'rounded-full'} ${checked ? 'bg-accent text-background ring-accent' : 'ring-white/25'}`}>
+                            {checked && <Icon name="check" className="size-3.5" />}
+                        </span>
                     </label>
                 );
             })}

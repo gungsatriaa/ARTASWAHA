@@ -9,6 +9,8 @@ import QuizTransition from '../../Components/QuizTransition';
 import QuizResults from '../../Components/QuizResults';
 import AnswerInput, { hasAnswer } from '../../Components/AnswerInput';
 import useRoom from '../../Hooks/useRoom';
+import Icon from '../../Components/Icon';
+import { AksaraText } from '../../Components/LessonMaterial';
 
 export function Countdown({ deadline, serverNow, seconds, onExpire, label }) {
     const initial = Math.max(0, Math.ceil((Date.parse(deadline) - Date.parse(serverNow)) / 1000));
@@ -42,14 +44,14 @@ export function Countdown({ deadline, serverNow, seconds, onExpire, label }) {
         };
     }, [deadline, serverNow]);
     return (
-        <div className="flex items-center gap-3 text-sm">
+        <div className="flex items-center gap-3 rounded-2xl bg-background p-3 text-sm sm:px-4">
             <span className="shrink-0 text-foreground/55">{label}</span>
             {seconds && (
                 <progress
                     aria-label={label}
                     max={seconds}
                     value={Math.min(seconds, remaining)}
-                    className="h-2 min-w-0 flex-1 accent-[var(--color-primary)]"
+                    className={`h-2 min-w-0 flex-1 ${remaining <= 5 ? 'accent-[var(--color-danger)]' : 'accent-[var(--color-primary)]'}`}
                 />
             )}
             <span
@@ -64,25 +66,29 @@ export function Countdown({ deadline, serverNow, seconds, onExpire, label }) {
 }
 function Question({ room, onExpire }) {
     const form = useForm({ question_id: room.question.id, answer_index: '', answer_indexes: [], answer_text: '' });
+    const answered = room.position - (room.feedback ? 0 : 1);
     return (
-        <Card className="!p-4 sm:!p-6">
+        <Card className="!p-5 sm:!p-8">
             <div className="flex items-center justify-between gap-4">
-                <h2 className="font-display text-lg font-bold">
-                    Soal {room.position} <span className="text-foreground/40">dari {room.count}</span>
-                </h2>
-                <span className="grid size-11 place-items-center rounded-full bg-accent/10 text-xs font-bold text-accent">
+                <div className="min-w-0">
+                    <p className="truncate text-xs text-foreground/50">{room.title}</p>
+                    <h2 className="mt-1 font-display text-lg font-bold">
+                        Soal {room.position} <span className="text-foreground/40">dari {room.count}</span>
+                    </h2>
+                </div>
+                <span className="grid size-11 shrink-0 place-items-center rounded-full bg-accent/10 font-sans text-xs font-bold text-accent">
                     {room.position}/{room.count}
                 </span>
             </div>
             <progress
                 aria-label="Progres kuis"
                 max={room.count}
-                value={room.position}
-                className="mt-4 h-2 w-full accent-[var(--color-accent)]"
+                value={answered}
+                className="mt-5 h-2 w-full accent-[var(--color-accent)]"
             />
-            <div className="mt-4 grid min-h-28 place-items-center rounded-card bg-primary/15 p-5 sm:min-h-32">
-                <h3 className="break-words text-center font-display text-xl font-bold leading-snug sm:text-2xl">
-                    {room.question.prompt}
+            <div className="py-6 sm:py-8">
+                <h3 className="break-words font-display text-xl font-bold leading-relaxed sm:text-2xl sm:leading-relaxed">
+                    <AksaraText>{room.question.prompt}</AksaraText>
                 </h3>
             </div>
             {room.deadline && !room.feedback ? (
@@ -97,8 +103,8 @@ function Question({ room, onExpire }) {
                 </div>
             ) : (
                 !room.feedback && (
-                    <p className="mt-4 text-xs leading-6 text-foreground/50">
-                        Tanpa batas waktu soal. Kamu langsung lanjut setelah menjawab.
+                    <p className="flex items-center gap-2 text-xs leading-6 text-foreground/50">
+                        <Icon name="info" className="size-4 shrink-0" /> Tanpa batas waktu soal. Kamu langsung lanjut setelah menjawab.
                     </p>
                 )
             )}
@@ -122,34 +128,34 @@ function Question({ room, onExpire }) {
                             </p>
                         </div>
                     )}
-                    <ol className="mt-4 space-y-2">
+                    <ol className="mt-4 grid gap-3 sm:grid-cols-2">
                         {room.question.options.map((option, index) => (
                             <li
                                 key={index}
-                                className={`flex min-h-14 items-center gap-3 rounded-2xl p-4 ring-1 ${(room.question.question_type === 'multiple' ? (room.correctOptions ?? []).includes(index) : index === room.correctOption) ? 'bg-success/10 text-success ring-success/50' : (room.question.question_type === 'multiple' ? (room.answer?.answer_indexes ?? []).includes(index) : index === room.answer?.answer_index) ? 'bg-danger/10 text-danger ring-danger/50' : 'bg-background ring-white/5'}`}
+                                className={`flex min-h-20 items-center gap-3 rounded-2xl p-4 ring-1 ${(room.question.question_type === 'multiple' ? (room.correctOptions ?? []).includes(index) : index === room.correctOption) ? 'bg-success/10 text-success ring-success/50' : (room.question.question_type === 'multiple' ? (room.answer?.answer_indexes ?? []).includes(index) : index === room.answer?.answer_index) ? 'bg-danger/10 text-danger ring-danger/50' : 'bg-background ring-white/5'}`}
                             >
-                                <span className="font-bold">{String.fromCharCode(65 + index)}</span>
-                                <span className="min-w-0 flex-1 break-words text-sm font-semibold">{option}</span>
+                                <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-xl bg-background/50 text-sm font-bold">{String.fromCharCode(65 + index)}</span>
+                                <span className="min-w-0 flex-1 break-words text-sm font-semibold leading-7"><AksaraText>{option}</AksaraText></span>
                                 {(
                                     room.question.question_type === 'multiple'
                                         ? (room.correctOptions ?? []).includes(index)
                                         : index === room.correctOption
                                 ) ? (
-                                    <span className="text-xs font-bold">Jawaban benar</span>
+                                    <span className="max-w-16 text-right text-xs font-bold">Jawaban benar</span>
                                 ) : (
                                       room.question.question_type === 'multiple'
                                           ? (room.answer?.answer_indexes ?? []).includes(index)
                                           : index === room.answer?.answer_index
                                   ) ? (
-                                    <span className="text-xs font-bold">Jawabanmu</span>
+                                    <span className="max-w-16 text-right text-xs font-bold">Jawabanmu</span>
                                 ) : null}
                             </li>
                         ))}
                     </ol>
-                    <p className="mt-4 text-xs text-foreground/50">Soal berikutnya muncul sebentar lagi.</p>
-                    <Link href={room.urls.show} replace className={`${secondaryClass} mt-3`}>
-                        Lanjut
-                    </Link>
+                    <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-xs text-foreground/50">Soal berikutnya muncul sebentar lagi.</p>
+                        <Link href={room.urls.show} replace className={secondaryClass}>Lanjut <Icon name="arrow" className="size-4" /></Link>
+                    </div>
                 </>
             ) : (
                 <form
@@ -164,13 +170,16 @@ function Question({ room, onExpire }) {
                         answer={form.data}
                         onChange={(key, value) => form.setData(key, value)}
                     />
-                    <Button
-                        type="submit"
-                        disabled={form.processing || !hasAnswer(room.question, form.data)}
-                        className="mt-4 w-full"
-                    >
-                        {form.processing ? 'Mengirim…' : 'Kirim jawaban'}
-                    </Button>
+                    <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="flex items-center gap-2 text-xs leading-6 text-foreground/50"><Icon name="lock" className="size-4 shrink-0" />Jawaban tidak dapat diubah setelah dikirim.</p>
+                        <Button
+                            type="submit"
+                            disabled={form.processing || !hasAnswer(room.question, form.data)}
+                            className="w-full shrink-0 sm:w-auto"
+                        >
+                            {form.processing ? 'Mengirim…' : 'Kirim jawaban'}
+                        </Button>
+                    </div>
                 </form>
             )}
         </Card>
@@ -211,7 +220,7 @@ export default function Room({ room, meta }) {
             )}
             {room.status === 'waiting' ? (
                 <>
-                    <section className="grid overflow-hidden rounded-card bg-surface lg:grid-cols-[minmax(0,1fr)_19rem]">
+                    <section className="grid overflow-hidden rounded-card bg-surface lg:grid-cols-[minmax(0,1fr)_21rem]">
                         <div className="p-6 sm:p-9">
                             <span className="inline-flex rounded-full bg-primary/20 px-4 py-2 text-sm font-bold text-accent">
                                 Menunggu pemain
@@ -221,20 +230,25 @@ export default function Room({ room, meta }) {
                             <p className="mt-4 max-w-lg text-sm leading-8 text-foreground/55">
                                 Bagikan kode ke temanmu. Host bisa memulai kapan saja setelah semua siap.
                             </p>
+                            <div className="mt-5 flex flex-wrap gap-2 text-xs font-semibold text-foreground/65">
+                                <span className="inline-flex items-center gap-2 rounded-full bg-background px-3 py-2"><Icon name="quiz" className="size-4 text-accent" />{room.count} soal</span>
+                                <span className="inline-flex items-center gap-2 rounded-full bg-background px-3 py-2"><Icon name="user" className="size-4 text-accent" />{room.participants.length} pemain</span>
+                            </div>
                             <p className="mt-4 text-xs text-foreground/40" role="status">
                                 {connection}
                             </p>
                         </div>
-                        <div className="bg-accent p-6 text-background sm:p-8">
-                            <p className="text-sm font-bold text-background/60">Kode room</p>
-                            <p className="mt-3 break-all font-display text-5xl font-extrabold tracking-[.1em]">
+                        <div className="flex flex-col justify-center bg-primary/10 p-6 sm:p-8">
+                            <p className="text-sm font-semibold text-foreground/60">Kode room</p>
+                            <p className="mt-3 break-all font-sans text-4xl font-bold tracking-[.1em] text-accent sm:text-5xl">
                                 {room.code}
                             </p>
-                            <p className="mt-4 text-sm leading-7 text-background/60">
+                            <p className="mt-4 text-sm leading-7 text-foreground/60">
                                 Temanmu dapat memasukkan kode ini di halaman kuis.
                             </p>
                             <button
-                                className="mt-6 min-h-12 w-full rounded-full bg-background px-5 text-sm font-bold text-foreground"
+                                type="button"
+                                className={`${secondaryClass} mt-6 w-full`}
                                 onClick={async () => {
                                     try {
                                         await navigator.clipboard.writeText(room.invite);
@@ -246,7 +260,7 @@ export default function Room({ room, meta }) {
                             >
                                 Salin tautan undangan
                             </button>
-                            <p role="status" className="mt-2 text-xs font-semibold">
+                            <p role="status" className="mt-2 text-xs font-semibold text-accent">
                                 {copied}
                             </p>
                         </div>
@@ -263,7 +277,7 @@ export default function Room({ room, meta }) {
                         </header>
                         <ul className="mt-5 grid gap-3 sm:grid-cols-2">
                             {room.participants.map((member) => (
-                                <li key={member.id} className="flex items-center gap-3 rounded-2xl bg-background p-4">
+                                <li key={member.id} className="flex items-center gap-3 rounded-2xl bg-background p-4 transition-colors hover:bg-primary/10">
                                     <img
                                         src={member.avatar}
                                         alt=""
@@ -282,8 +296,8 @@ export default function Room({ room, meta }) {
                         </ul>
                         {room.isHost ? (
                             <div className="mt-6">
-                                <Action url={room.urls.start} className={buttonClass}>
-                                    Mulai kuis
+                                <Action url={room.urls.start} className={`${buttonClass} w-full sm:w-auto`}>
+                                    Mulai kuis <Icon name="arrow" className="size-4" />
                                 </Action>
                             </div>
                         ) : (
@@ -321,21 +335,26 @@ export default function Room({ room, meta }) {
                         <Question key={`${room.question.id}-${room.feedback}`} room={room} onExpire={reload} />
                     ) : (
                         <Card>
-                            <p className="text-sm font-bold text-accent">
-                                {room.status === 'finished' ? 'Kuis selesai' : 'Jawaban terkirim'}
-                            </p>
-                            <h2 className="mt-4 font-display text-3xl font-bold">
-                                {room.status === 'finished' ? 'Kuis selesai!' : 'Kamu sudah menjawab semua soal!'}
-                            </h2>
-                            <p className="mt-4 text-sm leading-7 text-foreground/60">
-                                {room.status === 'finished'
-                                    ? 'Terima kasih sudah bermain. Siap mencoba kuis lainnya?'
-                                    : 'Pemain lain masih menjawab. Tunggu sampai kuis selesai.'}
-                            </p>
-                            <p className="mt-3 font-bold text-accent">{room.score} poin terkumpul</p>
-                            <Link href={nav.quizzes} className={`${buttonClass} mt-6`}>
-                                Lihat kuis lain
-                            </Link>
+                            <div className="flex flex-col items-center py-4 text-center sm:py-6">
+                                <span className={`grid size-16 place-items-center rounded-full ${room.status === 'finished' ? 'bg-success/15 text-success' : 'bg-primary/15 text-accent'}`}>
+                                    <Icon name={room.status === 'finished' ? 'check' : 'user'} className="size-8" />
+                                </span>
+                                <p className="mt-4 text-sm font-bold text-accent">
+                                    {room.status === 'finished' ? 'Kuis selesai' : 'Jawaban terkirim'}
+                                </p>
+                                <h2 className="mt-4 font-display text-3xl font-bold">
+                                    {room.status === 'finished' ? 'Kuis selesai!' : 'Kamu sudah menjawab semua soal!'}
+                                </h2>
+                                <p className="mt-4 text-sm leading-7 text-foreground/60">
+                                    {room.status === 'finished'
+                                        ? 'Terima kasih sudah bermain. Siap mencoba kuis lainnya?'
+                                        : 'Pemain lain masih menjawab. Tunggu sampai kuis selesai.'}
+                                </p>
+                                <p className="mt-4 rounded-full bg-accent/10 px-5 py-2 font-sans font-bold text-accent">{room.score} poin terkumpul</p>
+                                <Link href={nav.quizzes} className={`${buttonClass} mt-6`}>
+                                    Lihat kuis lain
+                                </Link>
+                            </div>
                             {room.status === 'finished' && room.results?.length > 0 && (
                                 <div className="mt-8"><QuizResults results={room.results} /></div>
                             )}

@@ -559,6 +559,28 @@ it('never marks a correct choice before the server permits feedback', () => {
     expect(send.mock.calls[0][2]).toEqual({ question_id: 1, answer_index: 1, answer_indexes: [], answer_text: '' });
 });
 
+it('counts submitted answers in room progress and keeps letter badges out of answer names', () => {
+    const { rerender } = render(<Room room={room} meta={meta} />);
+    expect(screen.getByRole('progressbar', { name: 'Progres kuis' }).value).toBe(0);
+    const answer = screen.getByRole('radio', { name: 'Benar', exact: true });
+    fireEvent.click(answer);
+    expect(answer.checked).toBe(true);
+    expect(screen.getByRole('button', { name: 'Kirim jawaban' }).disabled).toBe(false);
+    rerender(<Room room={{ ...room, feedback: true, correctOption: 1, answer: { answer_index: 1, is_correct: true } }} meta={meta} />);
+    expect(screen.getByRole('progressbar', { name: 'Progres kuis' }).value).toBe(1);
+    expect(screen.queryByRole('radio')).toBeNull();
+});
+
+it('shows the six-digit invitation and real participant identities only in the lobby', () => {
+    render(<Room room={{ ...room, status: 'waiting', code: '012345', invite: '/kuis?code=012345', isHost: false, participants: [{ id: 1, name: 'Made', avatar: '/made.webp', host: true }] }} meta={meta} />);
+    expect(screen.getByText('012345')).toBeTruthy();
+    expect(screen.getByText('2 soal')).toBeTruthy();
+    expect(screen.getByRole('list').textContent).toContain('Made');
+    expect(screen.getByRole('list').textContent).toContain('Host');
+    expect(screen.getByRole('button', { name: 'Salin tautan undangan' })).toBeTruthy();
+    expect(screen.queryByRole('radio')).toBeNull();
+});
+
 it('does not show a skeleton for an analysis that is only queued', async () => {
     vi.stubGlobal(
         'fetch',
