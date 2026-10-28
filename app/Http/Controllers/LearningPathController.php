@@ -104,9 +104,12 @@ class LearningPathController extends Controller
                 ->whereNotNull('completed_at'))->pluck('id')
             : collect();
         $totalLessons = $learningPath->lessons()->count();
+        $orderedIds = $learningPath->lessons()->pluck('id');
+        $firstIncomplete = $orderedIds->search(fn (int $id): bool => ! $completedIds->contains($id));
+        $lockedIds = $firstIncomplete === false ? collect() : $orderedIds->slice($firstIncomplete + 1);
         $progress = $totalLessons > 0 ? (int) round($completedIds->count() / $totalLessons * 100) : 0;
         $lessons = fn () => $learningPath->lessons()->select(['id', 'title', 'slug', 'summary'])->paginate(12)
-            ->through(fn (Lesson $lesson): array => ['id' => $lesson->id, 'title' => $lesson->title, 'summary' => $lesson->summary, 'url' => route('learning.lessons.show', $lesson->slug), 'progress' => $completedIds->contains($lesson->id) ? 100 : 0]);
+            ->through(fn (Lesson $lesson): array => ['id' => $lesson->id, 'title' => $lesson->title, 'summary' => $lesson->summary, 'locked' => $lockedIds->contains($lesson->id), 'url' => $lockedIds->contains($lesson->id) ? null : route('learning.lessons.show', $lesson->slug), 'progress' => $completedIds->contains($lesson->id) ? 100 : 0]);
         $analysis = $analyzer->presentation($profile, collect([$learningPath]));
 
         return Inertia::render('Learning/Path', [

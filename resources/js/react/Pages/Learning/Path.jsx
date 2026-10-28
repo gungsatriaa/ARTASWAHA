@@ -73,49 +73,61 @@ export default function Path({ path, lessons, recommendation, meta }) {
                     </p>
                     {lessons.data.length ? (
                         <ol className="mt-5 grid gap-3 sm:gap-4">
-                            {lessons.data.map((lesson, index) => (
-                                <li key={lesson.id}>
-                                    <Link
-                                        href={lesson.url}
-                                        className="group flex h-full min-h-24 items-center gap-3 rounded-3xl bg-background p-4 transition-colors hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:gap-5 sm:p-6"
-                                    >
-                                        <span
-                                            aria-hidden="true"
-                                            className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary/15 font-display text-sm font-bold text-accent"
+                            {lessons.data.map((lesson, index) => {
+                                const Entry = lesson.locked ? 'div' : Link;
+                                return (
+                                    <li key={lesson.id}>
+                                        <Entry
+                                            href={lesson.locked ? undefined : lesson.url}
+                                            aria-disabled={lesson.locked || undefined}
+                                            className={`group flex h-full min-h-24 items-center gap-3 rounded-3xl bg-background p-4 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:gap-5 sm:p-6 ${lesson.locked ? 'opacity-60' : 'hover:bg-primary/10'}`}
                                         >
-                                            {String(lessons.from + index).padStart(2, '0')}
-                                        </span>
-                                        <span className="min-w-0 flex-1">
-                                            <span className="block break-words font-display text-base font-bold leading-snug group-hover:text-accent sm:text-xl">
-                                                {lesson.title}
+                                            <span
+                                                aria-hidden="true"
+                                                className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary/15 font-display text-sm font-bold text-accent"
+                                            >
+                                                {lesson.locked ? (
+                                                    <Icon name="lock" className="size-5" />
+                                                ) : (
+                                                    String(lessons.from + index).padStart(2, '0')
+                                                )}
                                             </span>
-                                            {lesson.summary && (
-                                                <span className="mt-2 block text-sm leading-6 text-foreground/55">
-                                                    {lesson.summary}
+                                            <span className="min-w-0 flex-1">
+                                                <span className="block break-words font-display text-base font-bold leading-snug group-hover:text-accent sm:text-xl">
+                                                    {lesson.title}
                                                 </span>
-                                            )}
-                                            <span className="mt-4 flex items-center justify-between gap-3 text-xs">
-                                                <span className="text-foreground/50">
-                                                    {lesson.progress === 100 ? 'Selesai' : 'Belum selesai'}
+                                                {lesson.summary && (
+                                                    <span className="mt-2 block text-sm leading-6 text-foreground/55">
+                                                        {lesson.summary}
+                                                    </span>
+                                                )}
+                                                <span className="mt-4 flex items-center justify-between gap-3 text-xs">
+                                                    <span className="text-foreground/50">
+                                                        {lesson.locked
+                                                            ? 'Terkunci · selesaikan modul sebelumnya'
+                                                            : lesson.progress === 100
+                                                              ? 'Selesai'
+                                                              : 'Belum selesai'}
+                                                    </span>
+                                                    <span className="font-bold tabular-nums text-accent">
+                                                        {lesson.progress ?? 0}%
+                                                    </span>
                                                 </span>
-                                                <span className="font-bold tabular-nums text-accent">
-                                                    {lesson.progress ?? 0}%
-                                                </span>
+                                                <progress
+                                                    aria-label={`Progres modul ${lesson.title}`}
+                                                    value={lesson.progress ?? 0}
+                                                    max={100}
+                                                    className="mt-2 block h-1.5 w-full overflow-hidden rounded-full accent-[var(--color-primary)]"
+                                                />
                                             </span>
-                                            <progress
-                                                aria-label={`Progres modul ${lesson.title}`}
-                                                value={lesson.progress ?? 0}
-                                                max={100}
-                                                className="mt-2 block h-1.5 w-full overflow-hidden rounded-full accent-[var(--color-primary)]"
+                                            <Icon
+                                                name={lesson.locked ? 'lock' : 'arrow'}
+                                                className="size-5 shrink-0 text-foreground/35 group-hover:text-accent"
                                             />
-                                        </span>
-                                        <Icon
-                                            name="arrow"
-                                            className="size-5 shrink-0 text-foreground/35 group-hover:text-accent"
-                                        />
-                                    </Link>
-                                </li>
-                            ))}
+                                        </Entry>
+                                    </li>
+                                );
+                            })}
                         </ol>
                     ) : (
                         <div className="mt-7 rounded-3xl bg-background p-5 sm:p-7">

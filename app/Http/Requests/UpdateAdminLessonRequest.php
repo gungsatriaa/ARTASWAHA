@@ -41,13 +41,13 @@ class UpdateAdminLessonRequest extends FormRequest
             'sort_order' => ['required', 'integer', 'between:0,65535'],
             'has_exercise' => ['sometimes', 'boolean'],
             'keyboard_auto_open' => ['sometimes', 'boolean'],
-            'exercise_prompt' => $this->boolean('has_exercise') ? ['required', 'string', 'max:500'] : ['exclude'],
-            'exercise_explanation' => $this->boolean('has_exercise') ? ['nullable', 'string', 'max:500'] : ['exclude'],
+            'exercise_prompt' => ($this->boolean('has_exercise') && empty($this->input('exercises'))) ? ['required', 'string', 'max:500'] : ['exclude'],
+            'exercise_explanation' => ($this->boolean('has_exercise') && empty($this->input('exercises'))) ? ['nullable', 'string', 'max:500'] : ['exclude'],
         ];
         foreach (app(QuestionAnswerService::class)->definitionRules($this->all(), 'exercise_options', 4, 4) as $field => $ruleset) {
-            $rules[$field] = $this->boolean('has_exercise') ? $ruleset : ['exclude'];
+            $rules[$field] = ($this->boolean('has_exercise') && empty($this->input('exercises'))) ? $ruleset : ['exclude'];
         }
 
-        return $rules;
+        return [...$rules, ...app(QuestionAnswerService::class)->lessonExerciseRules($this->all())];
     }
 }

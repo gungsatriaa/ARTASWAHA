@@ -75,9 +75,9 @@ export default function Keyboard({ autoOpen = false, targetRef }) {
                     <div
                         role="group"
                         aria-label="Kategori aksara"
-                        className="grid grid-cols-3 gap-1 rounded-full bg-background p-1"
+                        className="grid grid-cols-4 gap-1 rounded-full bg-background p-1"
                     >
-                        {['dasar', 'pangangge', 'pasangan'].map((value) => (
+                        {['dasar', 'pangangge', 'pasangan', 'angka'].map((value) => (
                             <button
                                 type="button"
                                 key={value}
@@ -106,7 +106,16 @@ export default function Keyboard({ autoOpen = false, targetRef }) {
                         </label>
                     )}
                     <div className="mt-5 grid grid-cols-5 gap-1.5 sm:grid-cols-9 sm:gap-2">
-                        {(mode === 'pangangge' ? marks : bases).map(([name, code]) => (
+                        {(mode === 'angka'
+                            ? [
+                                  ...Array.from({ length: 10 }, (_, index) => [String(index), 0x1b50 + index]),
+                                  ['Carik siki', 0x1b5e],
+                                  ['Carik pareren', 0x1b5f],
+                              ]
+                            : mode === 'pangangge'
+                              ? marks
+                              : bases
+                        ).map(([name, code]) => (
                             <button
                                 type="button"
                                 key={name}

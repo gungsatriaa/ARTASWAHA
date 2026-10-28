@@ -71,6 +71,11 @@ class AdminLearningContentService
         $hasExercise = (bool) ($data['has_exercise'] ?? false);
         unset($data['has_exercise']);
         $data['keyboard_auto_open'] = (bool) ($data['keyboard_auto_open'] ?? false);
+        if (! empty($data['exercises'])) {
+            $data['exercises'] = array_map(fn (array $exercise): array => app(QuestionAnswerService::class)->attributes($exercise, 'exercise_options'), $data['exercises']);
+
+            return [...$data, 'exercise_prompt' => null, 'exercise_options' => null, 'correct_option' => null, 'exercise_explanation' => null, 'question_type' => 'single', 'correct_options' => null, 'accepted_answers' => null];
+        }
 
         if (! $hasExercise) {
             return [...$data, 'exercise_prompt' => null, 'exercise_options' => null, 'correct_option' => null, 'exercise_explanation' => null, 'question_type' => 'single', 'correct_options' => null, 'accepted_answers' => null];

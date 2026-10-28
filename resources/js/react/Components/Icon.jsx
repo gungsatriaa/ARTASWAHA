@@ -1,6 +1,8 @@
 import BalineseIcon from './BalineseIcon';
 const paths = {
-    question: 'M9.5 9.5a2.5 2.5 0 1 1 4.1 1.92C12.65 12.2 12 12.6 12 14M12 17.5h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0',
+    lock: 'M6 10h12v11H6zM8 10V7a4 4 0 0 1 8 0v3M12 14v3',
+    question:
+        'M9.5 9.5a2.5 2.5 0 1 1 4.1 1.92C12.65 12.2 12 12.6 12 14M12 17.5h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0',
     conversation: 'M14 12H8l-4 3V5h13v4M9 16v2h7l4 3V9H9z',
     leaf: 'M20 3c0 9-1 16-8 16a7 7 0 0 1-7-7C5 5 12 4 20 3ZM4 21 15 10M9 16v-5M9 16h5',
     mail: 'M3 5h18v14H3zM3 7l9 6 9-6',

@@ -6,6 +6,7 @@ use App\Models\ContentAudio;
 use App\Models\LearnerProfile;
 use App\Models\Room;
 use App\Services\ContentAudioService;
+use App\Services\LearningProgressService;
 use App\Services\RoomService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -23,6 +24,8 @@ class ContentAudioController extends Controller
             if ($contentAudio->lesson !== null) {
                 $lesson = $contentAudio->lesson;
                 abort_unless($lesson->is_published && $lesson->reviewed_at !== null && $lesson->learningPath->is_published, 404);
+                $progress = app(LearningProgressService::class);
+                abort_if($progress->prerequisite($lesson, $progress->deviceId($request), $request->user()) !== null, 403, 'Selesaikan modul sebelumnya terlebih dahulu.');
             } else {
                 $question = $contentAudio->question;
                 abort_if($question === null, 404);

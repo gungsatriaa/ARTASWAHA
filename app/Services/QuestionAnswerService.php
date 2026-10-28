@@ -10,6 +10,25 @@ use Normalizer;
 class QuestionAnswerService
 {
     /** @return array<string, list<string>> */
+    public function lessonExerciseRules(array $data): array
+    {
+        $rules = ['exercises' => ['sometimes', 'nullable', 'array', 'list', 'max:50']];
+        foreach (is_array($data['exercises'] ?? null) ? $data['exercises'] : [] as $index => $exercise) {
+            $prefix = 'exercises.'.$index;
+            $rules[$prefix] = ['required', 'array:section,question_type,exercise_prompt,exercise_options,correct_option,correct_options,accepted_answers,exercise_explanation,keyboard_auto_open'];
+            $rules[$prefix.'.section'] = ['required', 'integer', 'between:0,20'];
+            $rules[$prefix.'.exercise_prompt'] = ['required', 'string', 'max:500'];
+            $rules[$prefix.'.exercise_explanation'] = ['nullable', 'string', 'max:1000'];
+            $rules[$prefix.'.keyboard_auto_open'] = ['sometimes', 'boolean'];
+            foreach ($this->definitionRules(is_array($exercise) ? $exercise : [], 'exercise_options') as $field => $rule) {
+                $rules[$prefix.'.'.$field] = $rule;
+            }
+        }
+
+        return $rules;
+    }
+
+    /** @return array<string, list<string>> */
     public function definitionRules(array $data, string $optionsKey = 'options', int $minimum = 2, int $maximum = 5): array
     {
         $type = $data['question_type'] ?? 'single';

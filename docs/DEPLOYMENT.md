@@ -545,3 +545,23 @@ Deploy source lalu restart worker melalui `php artisan queue:restart` dan pastik
 Hash analisis sekarang mengurutkan key object JSON secara rekursif sebelum hashing, tanpa mengubah urutan list (materi pilihan dan aktivitas harian). MySQL dapat mengubah urutan key saat menyimpan JSON; sebelumnya ini membuat input yang sama dianggap `outdated`, job selesai cepat tanpa meminta AI dan tanpa failed job. Kondisi outdated sekarang juga dicatat di log Laravel, dengan tahap `before_request` atau `after_response` tanpa isi data pribadi.
 
 Tidak ada migration atau build frontend. Setelah deploy, jalankan `php artisan queue:restart`, pastikan worker dimulai kembali oleh Supervisor, lalu gunakan **Tes semua pelajar** di admin untuk membentuk ulang hash lama dan mengantrekan analisis. Hasil yang memakai hash lama mungkin dianggap usang dan dibuat ulang; jawaban interview serta progres tetap dipertahankan. Tes regresi menyimulasikan perubahan urutan JSON di database; MySQL production dan koneksi AI nyata tetap perlu diperiksa melalui hasil tes admin.
+
+## Modul Aksara Bali bertahap dan penguncian urutan
+
+Materi pelajaran React kini dibagi menjadi bagian bacaan dan contoh aksara berukuran besar, diselingi latihan per bagian. Bank latihan disimpan pada kolom JSON `lessons.exercises`; editor dan preview admin mendukung pilihan tunggal, pilihan banyak, serta esai dengan daftar jawaban yang diterima. Kunci jawaban soal berikutnya tidak dikirim ke pelajar. Esai dinilai dengan normalisasi dan pencocokan jawaban yang ditetapkan pengelola, bukan penilaian prosa oleh AI. Keyboard esai juga menyediakan angka Bali dan tanda carik.
+
+Jalankan setelah source diperbarui, memakai binary PHP dan direktori aplikasi production yang benar:
+
+```bash
+php artisan migrate --force
+php artisan db:seed --class=AksaraBaliLessonSeeder --force
+npm run build
+```
+
+Restart SSR mengikuti panduan React di atas. Tidak ada dependency, env, worker, atau installer Python baru. Migration menambahkan kolom bank latihan; rollback migration menghapus bank latihan tersebut, sehingga backup database tetap diperlukan.
+
+Seeder menyediakan **10 modul baru dengan 125 soal**: lima modul berisi 10 soal dan lima modul berisi 15 soal. Modul meliputi Wreastra, pengangge suara, tengenan, gantungan/gempelan, ardasuara, dan angka Bali. Materi dan latihan ditulis ulang berdasarkan rujukan Dinas Kebudayaan Buleleng, Unicode, dan contoh bentuk asesmen penelitian Undiksha; sumber dicantumkan pada masing-masing modul. Seeder memakai `firstOrCreate`, sehingga tidak menimpa materi suntingan admin, menghapus modul lama, atau mereset progres. Pada database lama, sepuluh modul ini ditambahkan ke modul yang sudah ada; jumlah total dapat lebih dari sepuluh. Jangan memakai `migrate:fresh` untuk memperbarui production. Modul lama yang tidak lagi ingin ditampilkan dapat diarsipkan melalui admin.
+
+Urutan modul dalam setiap kategori mengikuti `sort_order`, lalu ID bila urutannya sama. Semua modul terbit yang sudah ditinjau sebelumnya harus selesai sebelum modul berikutnya terbuka. Draf tidak menghalangi urutan, dan kategori lain tetap dapat dimulai secara mandiri. Modul terkunci ditampilkan tanpa tautan; server juga memeriksa halaman langsung, pengiriman jawaban, penyelesaian modul, serta audio pelajaran. Progres akun dikenali berdasarkan akun lintas perangkat, sedangkan anonim dikenali berdasarkan cookie perangkat. Perubahan urutan atau penerbitan modul sebelumnya dapat membuat prasyarat baru bagi modul setelahnya.
+
+Progres soal sementara disimpan dalam sesi dan diulang bila sesi kedaluwarsa atau isi bank soal berubah. Penyelesaian modul dan 10 poin baru disimpan permanen setelah semua soal terjawab benar. Progres selesai yang sudah ada tetap dipertahankan. Uji bacaan, jawaban salah/ulang, esai dengan keyboard, pilihan banyak, penyelesaian soal terakhir, dan pembukaan modul berikutnya pada desktop serta mobile. Tes otomatis mencakup bank soal, akses terkunci, editor admin, dan komponen React; tampilan browser/perangkat nyata tetap perlu diperiksa setelah deploy.

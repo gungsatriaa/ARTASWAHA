@@ -10,6 +10,7 @@ import Quizzes from '../../resources/js/react/Pages/Quizzes/Index';
 import Editor, { blankQuestion, payloadQuestions, withoutOption } from '../../resources/js/react/Pages/Quizzes/Editor';
 import Room, { Countdown } from '../../resources/js/react/Pages/Rooms/Show';
 import Lesson from '../../resources/js/react/Pages/Learning/Lesson';
+import LearningPath from '../../resources/js/react/Pages/Learning/Path';
 import Auth from '../../resources/js/react/Pages/Auth/Form';
 import AudioEdit from '../../resources/js/react/Pages/Admin/AudioEdit';
 import Privacy from '../../resources/js/react/Pages/Privacy';
@@ -955,4 +956,98 @@ it('uses one account entry to login before choosing registration or Google', () 
     expect(screen.queryByRole('link', { name: 'Lanjutkan dengan Google' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Daftar akun baru' })).toBeNull();
     expect(send).not.toHaveBeenCalled();
+});
+
+it('shows material examples before a module quiz and submits only the current question index', () => {
+    const lesson = {
+        id: 11,
+        title: 'Ha sampai Wa',
+        path,
+        content:
+            '## Kenali aksara\nAmati bentuknya.\n\n| Bacaan | Aksara | Perhatikan |\n| Ha | ᬳ | Vokal a. |\n\n## Coba kata\nBaca kata pendek.\n\n## Sumber belajar\nhttps://www.unicode.org/charts/PDF/U1B00.pdf',
+        answerUrl: '/pelajaran/uji/latihan',
+    };
+    const quiz = {
+        total: 10,
+        index: 0,
+        question: { section: 0, question_type: 'single', exercise_prompt: 'Pilih Ha', exercise_options: ['ᬳ', 'ᬦ'] },
+    };
+    render(<Lesson lesson={lesson} quiz={quiz} meta={meta} />);
+    expect(screen.getByRole('navigation', { name: 'Bagian pelajaran' })).toBeTruthy();
+    expect(screen.getByRole('figure')).toBeTruthy();
+    expect(screen.queryByRole('radio')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Coba latihan bagian ini' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'ᬳ' }));
+    fireEvent.submit(screen.getByRole('button', { name: 'Periksa jawaban' }).closest('form'));
+    expect(send.mock.calls[0][1]).toBe(lesson.answerUrl);
+    expect(send.mock.calls[0][2]).toMatchObject({ answer_index: 0, question_index: 0 });
+    fireEvent.click(screen.getByRole('button', { name: 'Lihat materi' }));
+    expect(screen.queryByRole('radio')).toBeNull();
+});
+
+it('pauses between sections for reading and allows retry feedback to appear again', () => {
+    const lesson = {
+        id: 11,
+        title: 'Latihan',
+        path,
+        content: '## Pertama\nIsi satu.\n\n## Kedua\nIsi dua.',
+        answerUrl: '/latihan',
+    };
+    const first = {
+        section: 0,
+        question_type: 'single',
+        exercise_prompt: 'Pilih satu',
+        exercise_options: ['Ha', 'Na'],
+    };
+    const quiz = { total: 10, index: 0, question: first };
+    const { rerender } = render(<Lesson lesson={lesson} quiz={quiz} meta={meta} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Coba latihan bagian ini' }));
+    const wrong = { correct: false, question_index: 0, explanation: 'Perhatikan Ha.', correct_answer: 'Ha' };
+    rerender(<Lesson lesson={lesson} quiz={{ ...quiz, feedback: wrong }} meta={meta} />);
+    expect(screen.getByText('Perhatikan Ha.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Coba lagi' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Na' }));
+    fireEvent.submit(screen.getByRole('button', { name: 'Periksa jawaban' }).closest('form'));
+    expect(screen.getByText('Perhatikan Ha.')).toBeTruthy();
+    const correct = { correct: true, question_index: 0, explanation: 'Benar Ha.', correct_answer: 'Ha' };
+    rerender(
+        <Lesson
+            lesson={lesson}
+            quiz={{ ...quiz, index: 1, question: { ...first, section: 1 }, feedback: correct }}
+            meta={meta}
+        />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Baca bagian berikutnya' }));
+    expect(screen.getByRole('heading', { name: 'Kedua' })).toBeTruthy();
+    expect(screen.queryByRole('radio')).toBeNull();
+});
+
+it('provides Bali digits and punctuation in the keyboard without losing the essay text', () => {
+    render(<Keyboard autoOpen />);
+    fireEvent.click(screen.getByRole('button', { name: 'angka', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: 'Carik siki', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: '3', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: 'Carik siki', exact: true }));
+    expect(screen.getByRole('textbox').value).toBe('᭞᭓᭞');
+});
+
+it('shows locked modules without a navigable link', () => {
+    render(
+        <LearningPath
+            path={{ title: 'Wreastra', group: 'aksara', progress: 0 }}
+            lessons={{
+                total: 2,
+                from: 1,
+                data: [
+                    { id: 1, title: 'Modul pertama', url: '/pelajaran/pertama', progress: 0, locked: false },
+                    { id: 2, title: 'Modul kedua', url: null, progress: 0, locked: true },
+                ],
+                links: [],
+            }}
+        />,
+    );
+    expect(screen.getByRole('link', { name: /Modul pertama/ }).getAttribute('href')).toBe('/pelajaran/pertama');
+    expect(screen.queryByRole('link', { name: /Modul kedua/ })).toBeNull();
+    expect(screen.getByText('Terkunci · selesaikan modul sebelumnya')).toBeTruthy();
+    expect(screen.getByText('Modul kedua').closest('[aria-disabled="true"]')).toBeTruthy();
 });

@@ -18,7 +18,15 @@ class LessonController extends Controller
         abort_unless($lesson->is_published && $lesson->reviewed_at !== null && $lesson->learningPath->is_published, 404);
 
         $deviceId = $progressService->deviceId($request);
-        $progress = $lesson->progress()->where('visitor_id', $deviceId)->first();
+        $prerequisite = $progressService->prerequisite($lesson, $deviceId, $request->user());
+        if ($prerequisite !== null) {
+            return to_route('learning.paths.show', $lesson->learningPath->slug)
+                ->with('status', 'Selesaikan modul “'.$prerequisite->title.'” terlebih dahulu untuk membuka modul ini.')
+                ->with('status_tone', 'info');
+        }
+        $progress = $lesson->progress()
+            ->when($request->user() !== null, fn ($query) => $query->where('user_id', $request->user()->id))
+            ->when($request->user() === null, fn ($query) => $query->where('visitor_id', $deviceId)->whereNull('user_id'))->whereNotNull('completed_at')->first();
         $audio = $audioService->forContent($lesson);
         $audio = $audioService->isPlayable($audio) ? $audio : null;
 

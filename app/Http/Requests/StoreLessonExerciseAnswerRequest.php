@@ -23,6 +23,7 @@ class StoreLessonExerciseAnswerRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'question_index' => ['sometimes', 'integer', 'min:0', 'max:49'],
             'answer_index' => ['nullable', 'integer', 'between:0,4'],
             'answer_indexes' => ['nullable', 'array', 'list', 'min:1', 'max:5'],
             'answer_indexes.*' => ['integer', 'distinct', 'between:0,4'],

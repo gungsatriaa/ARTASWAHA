@@ -66,7 +66,7 @@ class PagePresenter
     {
         $result = [...$lesson->only(['id', 'slug', 'title', 'summary', 'content', 'exercise_prompt', 'exercise_options', 'question_type', 'keyboard_auto_open']), 'url' => $lesson->slug ? route('learning.lessons.show', $lesson->slug) : null];
         if ($author) {
-            $result += [...$lesson->only(['learning_path_id', 'sort_order', 'is_published', 'reviewed_at', 'correct_option', 'correct_options', 'accepted_answers', 'exercise_explanation']), 'action' => $lesson->exists ? route('admin.lessons.update', $lesson) : route('admin.lessons.store')];
+            $result += [...$lesson->only(['learning_path_id', 'sort_order', 'is_published', 'reviewed_at', 'correct_option', 'correct_options', 'accepted_answers', 'exercise_explanation', 'exercises']), 'action' => $lesson->exists ? route('admin.lessons.update', $lesson) : route('admin.lessons.store')];
             foreach (['edit', 'preview', 'publish', 'archive'] as $action) {
                 $result[$action.'Url'] = $lesson->exists ? route('admin.lessons.'.$action, $lesson) : null;
             }
@@ -74,7 +74,7 @@ class PagePresenter
         }
 
         if (! $detail) {
-            unset($result['content'], $result['exercise_prompt'], $result['exercise_options'], $result['correct_option'], $result['exercise_explanation']);
+            unset($result['exercises'], $result['content'], $result['exercise_prompt'], $result['exercise_options'], $result['correct_option'], $result['exercise_explanation']);
         }
 
         return $result;
@@ -84,8 +84,16 @@ class PagePresenter
     {
         $lesson = $data['lesson'];
         $progress = $data['progress'];
+        $exercises = $lesson->exercises ?? [];
+        $index = min(count($exercises), (int) request()->session()->get($lesson->exerciseSessionKey(), 0));
+        $current = $exercises[$index] ?? null;
+        $quiz = $exercises === [] ? null : [
+            'total' => count($exercises), 'index' => $index,
+            'question' => $current === null || $progress?->completed_at ? null : array_intersect_key($current, array_flip(['exercise_prompt', 'exercise_options', 'question_type', 'keyboard_auto_open', 'section'])),
+            'feedback' => request()->session()->get('lesson_feedback'),
+        ];
 
-        return ['lesson' => [...$this->lesson($lesson), 'path' => $this->path($lesson->learningPath), 'answerUrl' => route('learning.exercises.answer', $lesson->slug), 'completeUrl' => route('learning.progress.store', $lesson->slug), 'explanation' => $progress?->completed_at ? $lesson->exercise_explanation : null], 'progress' => $progress?->only(['points', 'completed_at']), 'audio' => isset($data['audio']) ? ['url' => route('content-audio.show', $data['audio'])] : null];
+        return ['quiz' => $quiz, 'lesson' => [...$this->lesson($lesson), 'path' => $this->path($lesson->learningPath), 'answerUrl' => route('learning.exercises.answer', $lesson->slug), 'completeUrl' => route('learning.progress.store', $lesson->slug), 'explanation' => $progress?->completed_at ? $lesson->exercise_explanation : null], 'progress' => $progress?->only(['points', 'completed_at']), 'audio' => isset($data['audio']) ? ['url' => route('content-audio.show', $data['audio'])] : null];
     }
 
     private function home(array $data): array

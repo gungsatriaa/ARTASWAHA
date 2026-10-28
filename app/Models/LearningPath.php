@@ -21,7 +21,7 @@ class LearningPath extends Model
 
     public function lessons(): HasMany
     {
-        return $this->hasMany(Lesson::class)->where('is_published', true)->whereNotNull('reviewed_at')->orderBy('sort_order');
+        return $this->hasMany(Lesson::class)->where('is_published', true)->whereNotNull('reviewed_at')->orderBy('sort_order')->orderBy('id');
     }
 
     public function allLessons(): HasMany

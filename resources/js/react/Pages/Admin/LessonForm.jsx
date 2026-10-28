@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { Button, PageMeta, buttonClass } from '../../Components/ui';
 import { Card, Back, Heading, Field, Check, Errors, secondaryClass } from '../../Components/forms';
+import LessonExerciseFields from '../../Components/LessonExerciseFields';
 import QuestionFields from '../../Components/QuestionFields';
 import Keyboard from '../../Components/LazyKeyboard';
 export default function LessonForm({ lesson, paths, meta }) {
@@ -16,6 +17,7 @@ export default function LessonForm({ lesson, paths, meta }) {
         sort_order: lesson.sort_order ?? 0,
         keyboard_auto_open: lesson.keyboard_auto_open ?? false,
         has_exercise: Boolean(lesson.exercise_prompt),
+        exercises: lesson.exercises ?? [],
         exercise_prompt: lesson.exercise_prompt ?? '',
         exercise_options: lesson.exercise_options?.length ? lesson.exercise_options : ['', '', '', ''],
         question_type: lesson.question_type ?? 'single',
@@ -107,13 +109,20 @@ export default function LessonForm({ lesson, paths, meta }) {
                             error={form.errors.sort_order}
                         />
 
-                        <Check
-                            checked={form.data.has_exercise}
-                            onChange={(e) => form.setData('has_exercise', e.target.checked)}
-                        >
-                            Tambahkan latihan setelah materi
-                        </Check>
-                        {form.data.has_exercise && (
+                        <LessonExerciseFields
+                            exercises={form.data.exercises}
+                            onChange={(value) => form.setData('exercises', value)}
+                            errors={form.errors}
+                        />
+                        {!form.data.exercises.length && (
+                            <Check
+                                checked={form.data.has_exercise}
+                                onChange={(e) => form.setData('has_exercise', e.target.checked)}
+                            >
+                                Tambahkan latihan setelah materi
+                            </Check>
+                        )}
+                        {!form.data.exercises.length && form.data.has_exercise && (
                             <fieldset className="space-y-4">
                                 <legend className="mb-3 font-display text-xl font-bold">Latihan setelah materi</legend>
                                 <Field

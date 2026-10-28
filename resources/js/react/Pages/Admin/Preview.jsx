@@ -1,3 +1,4 @@
+import LessonMaterial, { lessonSections } from '../../Components/LessonMaterial';
 import { Link, usePage } from '@inertiajs/react';
 import { PageMeta, buttonClass } from '../../Components/ui';
 import { Card, Back, Heading, Action, Status, secondaryClass } from '../../Components/forms';
@@ -23,10 +24,34 @@ export default function Preview({ lesson, audio, meta }) {
                 />
                 <h2 className="mt-5 break-words font-display text-3xl font-bold">{lesson.title}</h2>
                 <p className="mt-3 text-sm leading-7 text-foreground/55">{lesson.summary}</p>
-                <div className="mt-6 whitespace-pre-line break-words text-base leading-8 text-foreground/80">
-                    {lesson.content}
+                <div className="mt-6 space-y-8">
+                    {lessonSections(lesson.content).map((section, index) => (
+                        <section key={index}>
+                            <h2 className="mb-5 font-display text-xl font-bold">{section.title}</h2>
+                            <LessonMaterial content={section.body} />
+                        </section>
+                    ))}
                 </div>
                 <AudioPlayer audio={audio} label="Preview audio materi" />
+                {(lesson.exercises ?? []).map((exercise, index) => (
+                    <section key={index} className="my-5 rounded-2xl bg-background p-5">
+                        <h2 className="font-bold">
+                            Soal {index + 1} · bagian {exercise.section + 1} · {exercise.question_type}
+                        </h2>
+                        <p className="mt-3 leading-8">{exercise.exercise_prompt}</p>
+                        <p className="mt-3 text-success">
+                            Jawaban:{' '}
+                            {exercise.question_type === 'essay'
+                                ? exercise.accepted_answers?.join(' / ')
+                                : exercise.question_type === 'multiple'
+                                  ? exercise.correct_options
+                                        ?.map((value) => exercise.exercise_options[value])
+                                        .join(', ')
+                                  : exercise.exercise_options[exercise.correct_option]}
+                        </p>
+                        <p className="mt-3 text-sm leading-7">{exercise.exercise_explanation}</p>
+                    </section>
+                ))}
                 {lesson.exercise_prompt && (
                     <section className="mt-7 rounded-2xl bg-background p-5">
                         <h3 className="font-display text-xl font-bold">{lesson.exercise_prompt}</h3>

@@ -155,6 +155,7 @@ class QuestionTypesTest extends TestCase
         $admin = User::factory()->create(['is_admin' => true]);
         $this->seed(LearningPathSeeder::class);
         $path = LearningPath::query()->where('slug', 'pengangge-suara')->sole();
+        $learner = User::factory()->create();
         foreach (['multiple', 'essay'] as $type) {
             $this->actingAs($admin)->post(route('admin.lessons.store'), [
                 'learning_path_id' => $path->id, 'title' => 'Latihan '.$type, 'slug' => 'latihan-'.$type,
@@ -166,8 +167,7 @@ class QuestionTypesTest extends TestCase
             $lesson = Lesson::where('slug', 'latihan-'.$type)->sole();
             $this->assertSame('Jawab soal', $lesson->exercise_prompt);
             $lesson->update(['reviewed_at' => now(), 'is_published' => true]);
-            $user = User::factory()->create();
-            $this->actingAs($user)->withCookie('artaswaha_device', (string) Str::uuid());
+            $this->actingAs($learner)->withCookie('artaswaha_device', (string) Str::uuid());
             $this->get(route('learning.lessons.show', $lesson))->assertOk()->assertInertia(fn (Assert $page): Assert => $page
                 ->where('lesson.question_type', $type)->missing('lesson.accepted_answers')->missing('lesson.correct_options'));
             $this->post(route('learning.exercises.answer', $lesson), $type === 'multiple'
@@ -175,7 +175,7 @@ class QuestionTypesTest extends TestCase
             $this->assertDatabaseMissing('learning_progress', ['lesson_id' => $lesson->id]);
             $this->post(route('learning.exercises.answer', $lesson), $type === 'multiple'
                 ? ['answer_indexes' => [2, 0]] : ['answer_text' => 'ᬓᭀ'])->assertSessionHasNoErrors()->assertRedirect();
-            $this->assertDatabaseHas('learning_progress', ['lesson_id' => $lesson->id, 'user_id' => $user->id, 'points' => 10]);
+            $this->assertDatabaseHas('learning_progress', ['lesson_id' => $lesson->id, 'user_id' => $learner->id, 'points' => 10]);
         }
         $this->assertSame(2, LearningProgress::count());
     }

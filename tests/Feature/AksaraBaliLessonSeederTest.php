@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\LearningPath;
 use App\Models\LearningProgress;
 use App\Models\Lesson;
 use App\Models\User;
@@ -16,86 +15,92 @@ class AksaraBaliLessonSeederTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_seeder_creates_five_available_modules_with_material_and_exercises_without_duplicates(): void
+    public function test_seeder_creates_ten_available_modules_and_125_mixed_questions_without_duplicates(): void
     {
         $this->seed(AksaraBaliLessonSeeder::class);
-        $originalLessons = Lesson::query()->get()->toArray();
-
+        $original = Lesson::query()->get()->map->getAttributes()->all();
         $this->seed(AksaraBaliLessonSeeder::class);
-
+        $this->assertSame($original, Lesson::query()->get()->map->getAttributes()->all());
         $this->assertDatabaseCount('learning_paths', 5);
-        $this->assertDatabaseCount('lessons', 5);
-        $this->assertSame($originalLessons, Lesson::query()->get()->toArray());
+        $this->assertDatabaseCount('lessons', 10);
         $this->assertDatabaseCount('quizzes', 0);
-
-        foreach (LearningPath::query()->get() as $path) {
-            $this->assertSame('aksara', $path->group);
-            $this->assertCount(1, $path->lessons);
-            $lesson = $path->lessons->first();
-            $this->assertNotEmpty($lesson->content);
-            $this->assertNotEmpty($lesson->exercise_prompt);
-            $this->assertCount(4, $lesson->exercise_options);
-            $this->assertArrayHasKey($lesson->correct_option, $lesson->exercise_options);
-            $this->assertNotEmpty($lesson->exercise_explanation);
+        $total = 0;
+        foreach (Lesson::all() as $lesson) {
+            $this->assertTrue($lesson->is_published);
+            $this->assertNotNull($lesson->reviewed_at);
+            $this->assertStringContainsString('## Sumber belajar', $lesson->content);
+            $this->assertStringContainsString('repo.undiksha.ac.id', $lesson->content);
+            $this->assertContains(count($lesson->exercises), [10, 15]);
+            $this->assertEqualsCanonicalizing(['single', 'multiple', 'essay'], array_values(array_unique(array_column($lesson->exercises, 'question_type'))));
+            $this->assertArrayNotHasKey('exercises', $lesson->toArray());
+            foreach ($lesson->exercises as $exercise) {
+                $this->assertNotEmpty($exercise['exercise_explanation']);
+                $this->assertContains($exercise['section'], [0, 1, 2]);
+                if ($exercise['question_type'] === 'essay') {
+                    $this->assertTrue($exercise['keyboard_auto_open']);
+                    $this->assertMatchesRegularExpression('/[\x{1B00}-\x{1B7F}]/u', $exercise['accepted_answers'][0]);
+                    $this->assertStringNotContainsString('◌', $exercise['accepted_answers'][0]);
+                }
+            }
+            $total += count($lesson->exercises);
         }
-
-        $vowels = Lesson::query()->where('slug', 'pengangge-suara-dasar-andap')->firstOrFail();
-        $this->assertStringContainsString('ᬳᬾᬤᬦ᭄', $vowels->content);
-        $this->assertStringContainsString('ᬢᭀᬓᭀ', $vowels->content);
-        $this->assertStringContainsString('ᬳᭂᬜᭂᬃ', $vowels->content);
-        $numbers = Lesson::query()->where('slug', 'angka-aksara-bali-dasar-andap')->firstOrFail();
-        $this->assertStringContainsString('0 → ᭐', $numbers->content);
-        $this->assertSame('᭞᭓᭐᭞', $numbers->exercise_options[$numbers->correct_option]);
+        $this->assertSame(125, $total);
     }
 
-    public function test_seeder_preserves_existing_editorial_changes_and_visibility(): void
+    public function test_seeder_preserves_editorial_changes_old_modules_and_existing_progress(): void
     {
-        $path = LearningPath::factory()->create([
-            'slug' => 'pengangge-suara', 'title' => 'Judul dari admin', 'is_published' => false,
-        ]);
-        $lesson = Lesson::factory()->for($path)->create([
-            'slug' => 'pengangge-suara-dasar-andap', 'content' => 'Materi hasil suntingan admin',
-            'is_published' => false, 'reviewed_at' => null,
-        ]);
-        $originalAttributes = $lesson->refresh()->getAttributes();
-
         $this->seed(AksaraBaliLessonSeeder::class);
-
-        $this->assertSame($originalAttributes, $lesson->fresh()->getAttributes());
-        $this->assertSame('Judul dari admin', $path->fresh()->title);
-        $this->assertFalse($path->fresh()->is_published);
-        $this->assertDatabaseCount('learning_paths', 5);
-        $this->assertDatabaseCount('lessons', 5);
+        $lesson = Lesson::firstOrFail();
+        $lesson->update(['content' => 'Materi suntingan admin', 'is_published' => false, 'reviewed_at' => null]);
+        $progress = LearningProgress::factory()->for($lesson)->create();
+        $old = Lesson::factory()->create(['slug' => 'wreastra-gantungan-dasar-andap']);
+        $original = $lesson->fresh()->getAttributes();
+        $this->seed(AksaraBaliLessonSeeder::class);
+        $this->assertSame($original, $lesson->fresh()->getAttributes());
+        $this->assertNotNull($old->fresh());
+        $this->assertNotNull($progress->fresh());
+        $this->assertDatabaseCount('lessons', 11);
     }
 
-    public function test_seeded_modules_show_material_and_grade_the_embedded_exercise(): void
+    public function test_every_seeded_question_is_answerable_without_leaking_future_answers_or_granting_early_points(): void
     {
         $this->seed(AksaraBaliLessonSeeder::class);
-        $user = User::factory()->create();
-        $deviceId = (string) Str::uuid();
-        $this->actingAs($user)->withCookie('artaswaha_device', $deviceId);
-
-        foreach (Lesson::query()->get() as $lesson) {
+        $this->actingAs(User::factory()->create())->withCookie('artaswaha_device', (string) Str::uuid());
+        foreach (Lesson::all() as $lesson) {
             $this->get(route('learning.lessons.show', $lesson))->assertOk()
                 ->assertInertia(fn (Assert $page): Assert => $page->component('Learning/Lesson')
-                    ->where('lesson.content', $lesson->content)
-                    ->where('lesson.exercise_prompt', $lesson->exercise_prompt)
-                    ->has('lesson.exercise_options', 4)
-                    ->missing('lesson.correct_option'));
-
-            $this->post(route('learning.exercises.answer', $lesson), [
-                'answer_index' => ($lesson->correct_option + 1) % 4,
-            ])->assertRedirectToRoute('learning.lessons.show', $lesson);
-            $this->assertDatabaseMissing('learning_progress', ['lesson_id' => $lesson->id]);
-
-            $this->post(route('learning.exercises.answer', $lesson), [
-                'answer_index' => $lesson->correct_option,
-            ])->assertRedirectToRoute('learning.lessons.show', $lesson);
-            $this->assertDatabaseHas('learning_progress', [
-                'lesson_id' => $lesson->id, 'visitor_id' => $deviceId, 'user_id' => $user->id, 'points' => 10,
-            ]);
+                    ->where('quiz.total', count($lesson->exercises))->where('quiz.index', 0)
+                    ->missing('quiz.question.correct_option')->missing('quiz.question.accepted_answers')->missing('lesson.exercises'));
+            $this->post(route('learning.progress.store', $lesson))->assertForbidden();
+            foreach ($lesson->exercises as $index => $exercise) {
+                $this->assertDatabaseMissing('learning_progress', ['lesson_id' => $lesson->id]);
+                $answer = match ($exercise['question_type']) {
+                    'essay' => ['answer_text' => $exercise['accepted_answers'][0]],
+                    'multiple' => ['answer_indexes' => $exercise['correct_options']],
+                    default => ['answer_index' => $exercise['correct_option']],
+                };
+                $this->travel(5)->seconds();
+                $this->post(route('learning.exercises.answer', $lesson), ['question_index' => $index, ...$answer])
+                    ->assertRedirectToRoute('learning.lessons.show', $lesson);
+            }
+            $this->assertDatabaseHas('learning_progress', ['lesson_id' => $lesson->id, 'points' => 10]);
+            $this->get(route('learning.lessons.show', $lesson))->assertInertia(fn (Assert $page): Assert => $page->where('quiz.question', null)->where('progress.points', 10));
         }
+        $this->assertDatabaseCount('learning_progress', 10);
+    }
 
-        $this->assertSame(5, LearningProgress::query()->whereNotNull('completed_at')->count());
+    public function test_wrong_answer_retries_and_stale_or_skipped_question_is_rejected(): void
+    {
+        $this->seed(AksaraBaliLessonSeeder::class);
+        $lesson = Lesson::firstOrFail();
+        $this->actingAs(User::factory()->create())->withCookie('artaswaha_device', (string) Str::uuid());
+        $answer = $lesson->exercises[0]['correct_option'];
+        $this->post(route('learning.exercises.answer', $lesson), ['question_index' => 0, 'answer_index' => ($answer + 1) % 4])
+            ->assertSessionHas('lesson_feedback.correct', false);
+        $this->get(route('learning.lessons.show', $lesson))->assertInertia(fn (Assert $page): Assert => $page->where('quiz.index', 0));
+        $this->post(route('learning.exercises.answer', $lesson), ['question_index' => 1, 'answer_index' => $answer])->assertConflict();
+        $this->post(route('learning.exercises.answer', $lesson), ['question_index' => 0, 'answer_index' => $answer])->assertSessionHas('lesson_feedback.correct', true);
+        $this->post(route('learning.exercises.answer', $lesson), ['question_index' => 0, 'answer_index' => $answer])->assertConflict();
+        $this->assertDatabaseCount('learning_progress', 0);
     }
 }
