@@ -18,7 +18,6 @@ class DatabaseSeeder extends Seeder
             LearningPathSeeder::class,
             AdminUserSeeder::class,
             ProductionAdminSeeder::class,
-            DemoLessonSeeder::class,
             AksaraBaliLessonSeeder::class,
             ParibasaLessonSeeder::class,
             ContentAudioSeeder::class,
