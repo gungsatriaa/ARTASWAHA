@@ -85,16 +85,13 @@ class PagePresenter
         $lesson = $data['lesson'];
         $progress = $data['progress'];
         $nextLesson = $data['nextLesson'] ?? null;
-        $exercises = $lesson->exercises ?? [];
-        $index = min(count($exercises), (int) request()->session()->get($lesson->exerciseSessionKey(), 0));
-        $current = $exercises[$index] ?? null;
-        $quiz = $exercises === [] ? null : [
-            'total' => count($exercises), 'index' => $index,
-            'question' => $current === null || $progress?->completed_at ? null : array_intersect_key($current, array_flip(['exercise_prompt', 'exercise_options', 'question_type', 'keyboard_auto_open', 'section'])),
-            'feedback' => request()->session()->get('lesson_feedback'),
-        ];
+        $quiz = app(LessonAttemptService::class)->presentation($lesson, $progress, app(LearningProgressService::class)->deviceId(request()), request()->user());
 
-        return ['nextLesson' => $nextLesson ? ['title' => $nextLesson->title, 'url' => route('learning.lessons.show', $nextLesson->slug)] : null, 'quiz' => $quiz, 'lesson' => [...$this->lesson($lesson), 'path' => $this->path($lesson->learningPath), 'answerUrl' => route('learning.exercises.answer', $lesson->slug), 'completeUrl' => route('learning.progress.store', $lesson->slug), 'explanation' => $progress?->completed_at ? $lesson->exercise_explanation : null], 'progress' => $progress?->only(['points', 'completed_at']), 'audio' => isset($data['audio']) ? ['url' => route('content-audio.show', $data['audio'])] : null];
+        return ['nextLesson' => $nextLesson ? ['title' => $nextLesson->title, 'url' => route('learning.lessons.show', $nextLesson->slug)] : null,
+            'quiz' => $quiz, 'lesson' => [...$this->lesson($lesson), 'path' => $this->path($lesson->learningPath),
+                'answerUrl' => route('learning.exercises.answer', $lesson->slug), 'retryUrl' => route('learning.exercises.retry', $lesson->slug),
+                'completeUrl' => route('learning.progress.store', $lesson->slug), 'explanation' => null],
+            'progress' => $progress?->only(['points', 'completed_at']), 'audio' => isset($data['audio']) ? ['url' => route('content-audio.show', $data['audio'])] : null];
     }
 
     private function home(array $data): array

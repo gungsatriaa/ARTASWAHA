@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\LearningPath;
 use App\Models\Lesson;
+use App\Models\LessonAttempt;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -79,16 +80,14 @@ class AdminLearningContentTest extends TestCase
 
         $visitorId = (string) Str::uuid();
         $answerRoute = route('learning.exercises.answer', $lesson->slug);
-        $this->withCookie('artaswaha_device', $visitorId)->post($answerRoute, ['answer_index' => 1])->assertRedirect()->assertSessionHas('status', 'Belum tepat. Coba ingat lagi materi di atas, lalu pilih jawaban lain.')->assertSessionHas('status_tone', 'info');
-        $this->withSession(['status' => 'Belum tepat. Coba lagi.', 'status_tone' => 'info'])
-            ->get(route('learning.lessons.show', $lesson->slug))
-            ->assertOk()
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
-        $this->assertDatabaseCount('learning_progress', 0);
+        $this->withCookie('artaswaha_device', $visitorId)->post($answerRoute, ['answer_index' => 1])->assertRedirect()->assertSessionMissing('lesson_feedback');
+        $this->assertDatabaseCount('learning_progress', 1);
         $this->withCookie('artaswaha_device', $visitorId)->post(route('learning.progress.store', $lesson->slug))->assertForbidden();
-        $this->assertDatabaseCount('learning_progress', 0);
+        $attempt = LessonAttempt::sole();
+        $this->withCookie('artaswaha_device', $visitorId)->post(route('learning.exercises.retry', $lesson), ['attempt_id' => $attempt->id])->assertRedirect();
         $this->withCookie('artaswaha_device', $visitorId)->post($answerRoute, ['answer_index' => 0])->assertRedirect();
         $this->assertDatabaseHas('learning_progress', ['visitor_id' => $visitorId, 'lesson_id' => $lesson->id, 'points' => 10]);
+        $this->assertDatabaseCount('lesson_attempts', 2);
         $this->withCookie('artaswaha_device', $visitorId)->get(route('learning.lessons.show', $lesson->slug))->assertOk()->assertInertiaContains('Rahajeng semeng berarti selamat pagi.');
 
         $learningPath->update(['is_published' => false]);

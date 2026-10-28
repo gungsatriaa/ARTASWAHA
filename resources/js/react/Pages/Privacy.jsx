@@ -31,7 +31,7 @@ const dataUses = [
         'book',
         'Pelajaran & progres',
         'Pelajaran selesai, latihan, dan riwayat',
-        'Kami menyimpan hubungan akun atau ID browser dengan pelajaran, status penyelesaian, jawaban latihan, ketepatan jawaban, dan waktu aktivitas yang tercatat. Data ini menampilkan progres, riwayat terakhir, serta ringkasan hari aktif. Sistem belum mengukur durasi membaca atau seluruh waktu belajar. Untuk diagnosis layanan, pengelola dapat melihat 20 kejadian analisis terakhir per profil, termasuk waktu, status, jenis error/HTTP, dan hasil AI yang berhasil divalidasi. Riwayat ini ikut terhapus bersama profil; respons mentah dan API key tidak disalin ke riwayat.',
+        'Kami menyimpan hubungan akun atau ID browser dengan pelajaran, status penyelesaian, setiap percobaan kuis modul, salinan soal, jawaban terpilih atau teks esai, ketepatan, serta waktu menjawab dan menyelesaikan latihan. Mengulang kuis membuat catatan baru tanpa menimpa percobaan sebelumnya. Hasil benar/salah dan pembahasan ditampilkan setelah seluruh soal terjawab. Poin penyelesaian modul diberikan sekali. Data ini menampilkan progres, riwayat terakhir, serta ringkasan hari aktif. Sistem belum mengukur durasi membaca atau seluruh waktu belajar. Untuk diagnosis layanan, pengelola dapat melihat 20 kejadian analisis terakhir per profil, termasuk waktu, status, jenis error/HTTP, dan hasil AI yang berhasil divalidasi. Riwayat ini ikut terhapus bersama profil; respons mentah dan API key tidak disalin ke riwayat.',
     ],
     [
         'quiz',
@@ -58,7 +58,7 @@ const retention = [
         '365 hari sejak terakhir dikirim ulang; pengaturan browser dapat menghapusnya lebih awal. Masa cookie bukan batas penyimpanan profil di server.',
     ],
     [
-        'Akun, profil, progres & hasil AI',
+        'Akun, profil, progres, percobaan kuis & hasil AI',
         'Belum ada jadwal penghapusan otomatis umum. Data tersimpan sampai dihapus melalui fitur yang tersedia atau ditangani pengelola.',
     ],
     [
@@ -126,7 +126,7 @@ export default function Privacy({ meta }) {
                     menggunakan AI, beserta pilihan untuk mengelolanya.
                 </p>
                 <p className="mt-4 text-xs text-foreground/45">
-                    Diperbarui <time dateTime="2026-10-27">27 Oktober 2026</time> · Berlaku untuk situs ARTASWAHA
+                    Diperbarui <time dateTime="2026-10-28">28 Oktober 2026</time> · Berlaku untuk situs ARTASWAHA
                 </p>
             </header>
 
@@ -233,7 +233,7 @@ export default function Privacy({ meta }) {
                                 profil digunakan, sesuai kondisi antrean dan konfigurasi AI. Data yang dikirim: peran,
                                 judul/deskripsi materi pilihan, usia profil dalam hari, serta ringkasan aktivitas 14
                                 hari berisi tanggal, pelajaran selesai, jumlah dan ketepatan jawaban kuis, dan
-                                perbandingan dua periode tujuh hari. Nama, email, avatar, dan ID akun/browser tidak
+                                perbandingan dua periode tujuh hari. Ringkasan mencakup jawaban room dan modul, jumlah pengulangan, judul modul, serta ketepatan percobaan pertama dan terakhir dalam 14 hari. Teks jawaban esai dan rincian jawaban mentah tidak dikirim untuk analisis belajar. Nama, email, avatar, dan ID akun/browser tidak
                                 dimasukkan dalam permintaan analisis ini.
                             </p>
                         </div>

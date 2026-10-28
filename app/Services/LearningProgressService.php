@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\LearnerProfile;
 use App\Models\LearningProgress;
 use App\Models\Lesson;
+use App\Models\LessonAttempt;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -43,25 +44,17 @@ class LearningProgressService
 
     public function completeLesson(string $deviceId, Lesson $lesson, ?User $user = null): LearningProgress
     {
-        return DB::transaction(fn (): LearningProgress => LearningProgress::query()->firstOrCreate(
-            ['visitor_id' => $deviceId, 'lesson_id' => $lesson->id],
-            ['user_id' => $user?->id, 'points' => 10, 'completed_at' => now()],
-        ));
-    }
+        return DB::transaction(function () use ($deviceId, $lesson, $user): LearningProgress {
+            Lesson::query()->whereKey($lesson->id)->lockForUpdate()->firstOrFail();
+            $existing = LearningProgress::query()->forLearner($deviceId, $user?->id)->where('lesson_id', $lesson->id)->first();
+            if ($existing !== null) {
+                return $existing;
+            }
+            $progressDevice = LearningProgress::query()->where('visitor_id', $deviceId)->where('lesson_id', $lesson->id)->exists() ? (string) Str::uuid() : $deviceId;
 
-    public function answerExercise(string $deviceId, Lesson $lesson, int|array $answerIndex, ?User $user = null): bool
-    {
-        if (LearningProgress::query()->where('visitor_id', $deviceId)->where('lesson_id', $lesson->id)->exists()) {
-            return true;
-        }
-
-        if (! app(QuestionAnswerService::class)->isCorrect($lesson, is_array($answerIndex) ? $answerIndex : ['answer_index' => $answerIndex])) {
-            return false;
-        }
-
-        $this->completeLesson($deviceId, $lesson, $user);
-
-        return true;
+            return LearningProgress::create(['visitor_id' => $progressDevice, 'lesson_id' => $lesson->id,
+                'user_id' => $user?->id, 'points' => 10, 'completed_at' => now()]);
+        });
     }
 
     public function claimDeviceProgress(Request $request, User $user): void
@@ -71,6 +64,8 @@ class LearningProgressService
         if (! is_string($deviceId) || ! Str::isUuid($deviceId)) {
             return;
         }
+
+        LessonAttempt::query()->where('visitor_id', $deviceId)->whereNull('user_id')->update(['user_id' => $user->id]);
 
         LearningProgress::query()
             ->where('visitor_id', $deviceId)

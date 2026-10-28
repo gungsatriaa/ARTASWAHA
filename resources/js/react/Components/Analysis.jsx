@@ -115,7 +115,7 @@ export default function Analysis({ analysis: initial, compact = false, poll = tr
                             Tentang analisis ini
                         </summary>
                         <p className="text-xs leading-6 text-foreground/45">
-                            Diperbarui otomatis sekitar setiap 6 jam berdasarkan progres dan jawaban kuis yang tercatat.
+                            Diperbarui otomatis sekitar setiap 6 jam berdasarkan progres, jawaban kuis room dan modul, serta hasil pengulangan yang tercatat.
                             Analisis ini bukan penilaian kemampuan. Aktivitas membaca dan durasi belajar belum tercatat.
                         </p>
                     </details>

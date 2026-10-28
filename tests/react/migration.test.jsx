@@ -408,10 +408,10 @@ it('submits all selected checkbox answers without a Balinese answer keyboard', (
         keyboard_auto_open: true,
     };
     render(<Lesson lesson={lesson} meta={meta} />);
-    expect(screen.getByRole('button', { name: 'Periksa jawaban' }).disabled).toBe(true);
+    expect(screen.getByRole('button', { name: 'Kirim jawaban' }).disabled).toBe(true);
     fireEvent.click(screen.getByRole('checkbox', { name: 'Ha' }));
     fireEvent.click(screen.getByRole('checkbox', { name: 'Ka' }));
-    fireEvent.submit(screen.getByRole('button', { name: 'Periksa jawaban' }).closest('form'));
+    fireEvent.submit(screen.getByRole('button', { name: 'Kirim jawaban' }).closest('form'));
     expect(send.mock.calls[0][2].answer_indexes).toEqual([0, 2]);
     expect(screen.queryByText('Keyboard aksara Bali')).toBeNull();
 });
@@ -433,7 +433,7 @@ it('uses the Balinese keyboard to edit the submitted essay answer instead of a s
     fireEvent.click(key);
     expect(answer.value).toBe('ᬓ');
     expect(screen.queryByRole('textbox', { name: 'Coretan latihan aksara' })).toBeNull();
-    fireEvent.submit(screen.getByRole('button', { name: 'Periksa jawaban' }).closest('form'));
+    fireEvent.submit(screen.getByRole('button', { name: 'Kirim jawaban' }).closest('form'));
     expect(send.mock.calls[0][2].answer_text).toBe('ᬓ');
 });
 
@@ -978,48 +978,26 @@ it('shows material examples before a module quiz and submits only the current qu
     expect(screen.queryByRole('radio')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Coba latihan bagian ini' }));
     fireEvent.click(screen.getByRole('radio', { name: 'ᬳ' }));
-    fireEvent.submit(screen.getByRole('button', { name: 'Periksa jawaban' }).closest('form'));
+    fireEvent.submit(screen.getByRole('button', { name: 'Kirim jawaban' }).closest('form'));
     expect(send.mock.calls[0][1]).toBe(lesson.answerUrl);
     expect(send.mock.calls[0][2]).toMatchObject({ answer_index: 0, question_index: 0 });
     fireEvent.click(screen.getByRole('button', { name: 'Lihat materi' }));
     expect(screen.queryByRole('radio')).toBeNull();
 });
 
-it('pauses between sections for reading and allows retry feedback to appear again', () => {
-    const lesson = {
-        id: 11,
-        title: 'Latihan',
-        path,
-        content: '## Pertama\nIsi satu.\n\n## Kedua\nIsi dua.',
-        answerUrl: '/latihan',
-    };
-    const first = {
-        section: 0,
-        question_type: 'single',
-        exercise_prompt: 'Pilih satu',
-        exercise_options: ['Ha', 'Na'],
-    };
-    const quiz = { total: 10, index: 0, question: first };
+it('advances to the next reading section without showing correctness before the final result', () => {
+    const lesson = { id: 11, title: 'Latihan', path, content: '## Pertama\nIsi satu.\n\n## Kedua\nIsi dua.', answerUrl: '/latihan' };
+    const first = { section: 0, question_type: 'single', exercise_prompt: 'Pilih satu', exercise_options: ['Ha', 'Na'] };
+    const quiz = { id: 1, total: 2, index: 0, question: first, completed: false, results: [] };
     const { rerender } = render(<Lesson lesson={lesson} quiz={quiz} meta={meta} />);
     fireEvent.click(screen.getByRole('button', { name: 'Coba latihan bagian ini' }));
-    const wrong = { correct: false, question_index: 0, explanation: 'Perhatikan Ha.', correct_answer: 'Ha' };
-    rerender(<Lesson lesson={lesson} quiz={{ ...quiz, feedback: wrong }} meta={meta} />);
-    expect(screen.getByText('Perhatikan Ha.')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Coba lagi' }));
     fireEvent.click(screen.getByRole('radio', { name: 'Na' }));
-    fireEvent.submit(screen.getByRole('button', { name: 'Periksa jawaban' }).closest('form'));
-    expect(screen.getByText('Perhatikan Ha.')).toBeTruthy();
-    const correct = { correct: true, question_index: 0, explanation: 'Benar Ha.', correct_answer: 'Ha' };
-    rerender(
-        <Lesson
-            lesson={lesson}
-            quiz={{ ...quiz, index: 1, question: { ...first, section: 1 }, feedback: correct }}
-            meta={meta}
-        />,
-    );
-    fireEvent.click(screen.getByRole('button', { name: 'Baca bagian berikutnya' }));
+    fireEvent.submit(screen.getByRole('button', { name: 'Kirim jawaban' }).closest('form'));
+    expect(send.mock.calls[0][2]).toMatchObject({ attempt_id: 1, question_index: 0, answer_index: 1 });
+    rerender(<Lesson lesson={lesson} quiz={{ ...quiz, index: 1, question: { ...first, section: 1 } }} meta={meta} />);
     expect(screen.getByRole('heading', { name: 'Kedua' })).toBeTruthy();
     expect(screen.queryByRole('radio')).toBeNull();
+    expect(screen.queryByText('Jawaban benar')).toBeNull();
 });
 
 it('provides Bali digits and punctuation in the keyboard without losing the essay text', () => {
@@ -1095,7 +1073,7 @@ it('starts a quiz-only module at its first question without an empty material sc
     expect(screen.queryByRole('button', { name: 'Lihat materi' })).toBeNull();
     expect(screen.getByText('Sumber materi dan latihan')).toBeTruthy();
     fireEvent.click(screen.getByRole('radio', { name: 'Jaum' }));
-    fireEvent.submit(screen.getByRole('button', { name: 'Periksa jawaban' }).closest('form'));
+    fireEvent.submit(screen.getByRole('button', { name: 'Kirim jawaban' }).closest('form'));
     expect(send.mock.calls[0][2]).toMatchObject({ question_index: 0, answer_index: 0 });
     rerender(
         <Lesson
@@ -1114,6 +1092,22 @@ it('starts a quiz-only module at its first question without an empty material sc
         />,
     );
     expect(screen.queryByRole('button', { name: 'Baca materi' })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Soal berikutnya' }));
     expect(screen.getByRole('radio', { name: 'Jaum' })).toBeTruthy();
+});
+
+
+it('shows end-of-quiz review and starts a fresh attempt without exposing old results', () => {
+    const lesson = { id: 41, title: 'Uji akhir', path, content: '', answerUrl: '/jawab', retryUrl: '/ulang' };
+    const results = [{ prompt: 'Pilih Ha', selected: 'Na', correct: 'Ha', is_correct: false, explanation: 'Penjelasan Ha.' }];
+    const quiz = { id: 71, total: 1, index: 1, completed: true, correct: 0, results, history: [] };
+    const { rerender } = render(<Lesson lesson={lesson} quiz={quiz} meta={meta} />);
+    expect(screen.getByRole('region', { name: 'Hasil jawaban' })).toBeTruthy();
+    expect(screen.getByText('Penjelasan Ha.')).toBeTruthy();
+    expect(screen.getByText('1. Belum tepat').className).toContain('text-danger');
+    fireEvent.click(screen.getByRole('button', { name: 'Ulangi kuis' }));
+    expect(send.mock.calls[0].slice(0, 3)).toEqual(['post', '/ulang', { attempt_id: 71 }]);
+    rerender(<Lesson lesson={lesson} quiz={{ id: 72, total: 1, index: 0, completed: false, results: [], question: { question_type: 'single', exercise_prompt: 'Pilih Ha', exercise_options: ['Ha', 'Na'] } }} meta={meta} />);
+    expect(screen.queryByText('Penjelasan Ha.')).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Hasil jawaban' })).toBeNull();
+    expect(screen.getByRole('radio', { name: 'Ha' })).toBeTruthy();
 });

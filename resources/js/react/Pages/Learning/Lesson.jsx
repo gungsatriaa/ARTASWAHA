@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm, Link } from '@inertiajs/react';
 import { PageMeta, Button, buttonClass } from '../../Components/ui';
 import { Back, Card, Errors, Action, secondaryClass } from '../../Components/forms';
@@ -7,14 +7,19 @@ import AudioPlayer from '../../Components/AudioPlayer';
 import Icon from '../../Components/Icon';
 import LessonMaterial, { lessonSections, AksaraText } from '../../Components/LessonMaterial';
 
-function Exercise({ question, index, url, onSubmit }) {
-    const form = useForm({ answer_index: '', answer_indexes: [], answer_text: '', question_index: index });
+function Exercise({ question, index, attemptId, url }) {
+    const form = useForm({
+        answer_index: '',
+        answer_indexes: [],
+        answer_text: '',
+        question_index: index,
+        attempt_id: attemptId ?? null,
+    });
     return (
         <form
             onSubmit={(event) => {
                 event.preventDefault();
                 if (!form.processing) {
-                    onSubmit?.();
                     form.post(url, { preserveScroll: true });
                 }
             }}
@@ -34,7 +39,7 @@ function Exercise({ question, index, url, onSubmit }) {
                     className="w-full sm:w-auto"
                     disabled={form.processing || !hasAnswer(question, form.data)}
                 >
-                    Periksa jawaban
+                    Kirim jawaban
                 </Button>
             </div>
         </form>
@@ -47,12 +52,20 @@ export default function Lesson({ lesson, progress, audio, quiz, nextLesson, meta
     const material = sections.filter((section) => section !== source);
     const currentSection = Math.max(0, Math.min(material.length - 1, quiz?.question?.section ?? 0));
     const [selected, setSelected] = useState(currentSection);
-    const [practice, setPractice] = useState(material.length === 0 && Boolean(quiz));
-    const [dismissedFeedback, setDismissedFeedback] = useState(null);
-    const feedback = quiz?.feedback;
-    const feedbackKey = feedback ? `${feedback.question_index}:${quiz.index}:${feedback.correct}` : null;
-    const showFeedback = feedback && feedbackKey !== dismissedFeedback;
-    const completed = Boolean(progress?.completed_at);
+    const [practice, setPractice] = useState(Boolean(quiz) && (material.length === 0 || quiz.completed));
+    const completed = quiz ? Boolean(quiz.completed) : Boolean(progress?.completed_at);
+    const previous = useRef({ id: quiz?.id, index: quiz?.index, section: currentSection });
+    useEffect(() => {
+        const before = previous.current;
+        if (before.index !== quiz?.index || before.id !== quiz?.id) {
+            setSelected(currentSection);
+            const restarted = quiz?.index === 0 && before.index > 0;
+            setPractice(
+                material.length === 0 || Boolean(quiz?.completed) || (!restarted && before.section === currentSection),
+            );
+        }
+        previous.current = { id: quiz?.id, index: quiz?.index, section: currentSection };
+    }, [quiz?.id, quiz?.index, quiz?.completed, currentSection, material.length]);
     const answered = completed ? (quiz?.total ?? 0) : (quiz?.index ?? 0);
     const percent = quiz?.total ? Math.round((answered / quiz.total) * 100) : completed ? 100 : 0;
     const choose = (index) => {
@@ -146,54 +159,25 @@ export default function Lesson({ lesson, progress, audio, quiz, nextLesson, meta
                                     </span>
                                     <h2 className="mt-5 font-display text-2xl font-bold">Modul selesai!</h2>
                                     <p className="mt-3 text-sm leading-7 text-foreground/65">
-                                        Seluruh {quiz.total} soal sudah dituntaskan. {progress.points} poin tersimpan di
-                                        progres belajarmu.
+                                        {quiz.results?.length
+                                            ? `${quiz.correct} benar dari ${quiz.total} soal · ${Math.round((quiz.correct / quiz.total) * 100)}%`
+                                            : 'Modul ini sudah selesai. Rincian jawaban lama belum tercatat.'}
                                     </p>
-                                    <Link className={`${buttonClass} mt-6`} href={lesson.path.url}>
-                                        Pilih modul berikutnya
-                                    </Link>
-                                </div>
-                            ) : showFeedback ? (
-                                <div role="status" className="space-y-5">
-                                    <h2
-                                        className={`font-display text-xl font-bold ${feedback.correct ? 'text-success' : 'text-danger'}`}
-                                    >
-                                        {feedback.correct
-                                            ? 'Benar, lanjutkan!'
-                                            : 'Belum tepat, pelajari lagi contohnya.'}
-                                    </h2>
-                                    <p className="text-base leading-8 text-foreground/80">
-                                        <AksaraText>{feedback.explanation}</AksaraText>
+                                    <p className="mt-2 text-xs text-foreground/50">
+                                        Poin penyelesaian diberikan sekali. Pengulangan tersimpan sebagai percobaan
+                                        baru.
                                     </p>
-                                    <p className="rounded-2xl bg-background p-4 text-sm leading-8">
-                                        Jawaban acuan: <AksaraText>{feedback.correct_answer}</AksaraText>
-                                    </p>
-                                    <div className="flex flex-wrap gap-3">
-                                        <Button
-                                            type="button"
-                                            onClick={() => {
-                                                setDismissedFeedback(feedbackKey);
-                                                if (feedback.correct && currentSection !== selected) {
-                                                    setSelected(currentSection);
-                                                    setPractice(false);
-                                                }
-                                            }}
+                                    <div className="mt-6 flex flex-wrap justify-center gap-3">
+                                        <Action
+                                            url={lesson.retryUrl}
+                                            data={{ attempt_id: quiz.id ?? null }}
+                                            className={buttonClass}
                                         >
-                                            {feedback.correct
-                                                ? currentSection !== selected
-                                                    ? 'Baca bagian berikutnya'
-                                                    : 'Soal berikutnya'
-                                                : 'Coba lagi'}
-                                        </Button>
-                                        {material.length > 0 && (
-                                            <button
-                                                type="button"
-                                                className={secondaryClass}
-                                                onClick={() => choose(currentSection)}
-                                            >
-                                                Baca materi
-                                            </button>
-                                        )}
+                                            Ulangi kuis
+                                        </Action>
+                                        <Link className={secondaryClass} href={lesson.path.url}>
+                                            Daftar modul
+                                        </Link>
                                     </div>
                                 </div>
                             ) : quiz.question ? (
@@ -217,7 +201,7 @@ export default function Lesson({ lesson, progress, audio, quiz, nextLesson, meta
                                         question={quiz.question}
                                         index={quiz.index}
                                         url={lesson.answerUrl}
-                                        onSubmit={() => setDismissedFeedback(null)}
+                                        attemptId={quiz.id}
                                     />
                                 </>
                             ) : null}
@@ -263,6 +247,53 @@ export default function Lesson({ lesson, progress, audio, quiz, nextLesson, meta
                                     </Button>
                                 ) : null}
                             </div>
+                        </Card>
+                    )}
+                    {completed && quiz?.results?.length > 0 && (
+                        <section aria-label="Hasil jawaban" className="space-y-3">
+                            <h2 className="font-display text-xl font-bold">Pembahasan jawaban</h2>
+                            {quiz.results.map((result, index) => (
+                                <details key={index} className="rounded-3xl bg-surface p-5">
+                                    <summary className="cursor-pointer font-semibold leading-7">
+                                        <span className={result.is_correct ? 'text-success' : 'text-danger'}>
+                                            {index + 1}. {result.is_correct ? 'Benar' : 'Belum tepat'}
+                                        </span>
+                                        <span className="mt-2 block">
+                                            <AksaraText>{result.prompt}</AksaraText>
+                                        </span>
+                                    </summary>
+                                    <div className="mt-4 space-y-3 text-sm leading-8">
+                                        <p className={result.is_correct ? 'text-success' : 'text-danger'}>
+                                            Jawabanmu: <AksaraText>{result.selected}</AksaraText>
+                                        </p>
+                                        {!result.is_correct && (
+                                            <p className="text-success">
+                                                Jawaban benar: <AksaraText>{result.correct}</AksaraText>
+                                            </p>
+                                        )}
+                                        <p className="text-foreground/70">
+                                            <AksaraText>{result.explanation}</AksaraText>
+                                        </p>
+                                    </div>
+                                </details>
+                            ))}
+                        </section>
+                    )}
+                    {completed && quiz?.history?.length > 0 && (
+                        <Card>
+                            <h2 className="font-display text-xl font-bold">Riwayat percobaan</h2>
+                            <ul className="mt-4 space-y-3 text-sm">
+                                {quiz.history.map((item) => (
+                                    <li key={item.id} className="flex flex-wrap justify-between gap-2">
+                                        <span className="text-foreground/60">
+                                            {new Date(item.completedAt).toLocaleString('id-ID')}
+                                        </span>
+                                        <strong className="text-accent">
+                                            {item.correct}/{item.total} benar
+                                        </strong>
+                                    </li>
+                                ))}
+                            </ul>
                         </Card>
                     )}
                     {!practice && <AudioPlayer audio={audio} />}

@@ -25,9 +25,19 @@ class Lesson extends Model
         return ['exercises' => 'array', 'correct_options' => 'array', 'accepted_answers' => 'array', 'is_published' => 'boolean', 'reviewed_at' => 'datetime', 'exercise_options' => 'array', 'correct_option' => 'integer', 'keyboard_auto_open' => 'boolean'];
     }
 
-    public function exerciseSessionKey(): string
+    /** @return list<array<string, mixed>> */
+    public function exerciseQuestions(): array
     {
-        return 'lesson_exercises.'.$this->id.'.'.hash('sha256', json_encode($this->exercises, JSON_THROW_ON_ERROR));
+        if (! empty($this->exercises)) {
+            return $this->exercises;
+        }
+
+        return $this->exercise_prompt === null ? [] : [[...$this->only(['exercise_prompt', 'exercise_options', 'question_type', 'correct_option', 'correct_options', 'accepted_answers', 'exercise_explanation', 'keyboard_auto_open']), 'section' => 0]];
+    }
+
+    public function exerciseVersion(): string
+    {
+        return hash('sha256', json_encode($this->exerciseQuestions(), JSON_THROW_ON_ERROR));
     }
 
     public function learningPath(): BelongsTo

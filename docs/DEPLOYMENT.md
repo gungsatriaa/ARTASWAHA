@@ -564,7 +564,7 @@ Seeder menyediakan **10 modul baru dengan 125 soal**: lima modul berisi 10 soal 
 
 Urutan modul dalam setiap kategori mengikuti `sort_order`, lalu ID bila urutannya sama. Semua modul terbit yang sudah ditinjau sebelumnya harus selesai sebelum modul berikutnya terbuka. Draf tidak menghalangi urutan, dan kategori lain tetap dapat dimulai secara mandiri. Modul terkunci ditampilkan tanpa tautan; server juga memeriksa halaman langsung, pengiriman jawaban, penyelesaian modul, serta audio pelajaran. Progres akun dikenali berdasarkan akun lintas perangkat, sedangkan anonim dikenali berdasarkan cookie perangkat. Perubahan urutan atau penerbitan modul sebelumnya dapat membuat prasyarat baru bagi modul setelahnya.
 
-Progres soal sementara disimpan dalam sesi dan diulang bila sesi kedaluwarsa atau isi bank soal berubah. Penyelesaian modul dan 10 poin baru disimpan permanen setelah semua soal terjawab benar. Progres selesai yang sudah ada tetap dipertahankan. Uji bacaan, jawaban salah/ulang, esai dengan keyboard, pilihan banyak, penyelesaian soal terakhir, dan pembukaan modul berikutnya pada desktop serta mobile. Tes otomatis mencakup bank soal, akses terkunci, editor admin, dan komponen React; tampilan browser/perangkat nyata tetap perlu diperiksa setelah deploy.
+Progres soal kini disimpan di tabel percobaan, sesuai pembaruan berikut. Penyelesaian modul dan 10 poin disimpan setelah semua soal dijawab, termasuk jawaban salah. Progres selesai yang sudah ada tetap dipertahankan. Uji bacaan, jawaban salah/ulang, esai dengan keyboard, pilihan banyak, penyelesaian soal terakhir, dan pembukaan modul berikutnya pada desktop serta mobile. Tes otomatis mencakup bank soal, akses terkunci, editor admin, dan komponen React; tampilan browser/perangkat nyata tetap perlu diperiksa setelah deploy.
 
 ### Perbaikan validasi jawaban dari form React
 
@@ -588,3 +588,18 @@ npm run build
 ```
 
 Restart SSR sesuai prosedur React sebelumnya. Tidak ada migration, env, dependency, worker, atau installer Python baru untuk perubahan ini. Seeder dijalankan terpisah dari `DatabaseSeeder`, sehingga tidak otomatis mengubah deployment yang hanya memerlukan jalur belajar/admin. `firstOrCreate` menjaga modul, metadata jalur, status terbit, suntingan admin, dan progres yang sudah ada; menjalankan ulang tidak menggandakan data. Modul lama tidak dihapus. Penguncian dan tombol modul berikutnya mengikuti urutan terbit pada masing-masing jalur. Tes mencakup validasi bank, seluruh 180 jawaban melalui HTTP, pengulangan seeder, perlindungan kunci jawaban, progres penyelesaian, serta tampilan kuis langsung React. Tampilan pada perangkat dan browser nyata perlu diperiksa setelah deploy.
+
+
+## Percobaan kuis modul dan analisis jawaban
+
+Seluruh latihan modul (termasuk latihan tunggal lama) menerima jawaban valid yang salah dan langsung maju. Kunci jawaban, status benar/salah, dan pembahasan baru dikirim setelah soal terakhir. Pilih **Ulangi kuis** untuk membuat baris `lesson_attempts` baru; percobaan sebelumnya, salinan bank soal, jawaban, ketepatan, dan waktu menjawab tetap disimpan. Pengulangan tidak menggandakan 10 poin atau penyelesaian modul. Riwayat menampilkan lima percobaan selesai terakhir; data sebelumnya tetap tersedia untuk analisis. Esai tetap dinilai dengan jawaban acuan, bukan AI.
+
+```bash
+php artisan migrate --force
+npm run build
+php artisan queue:restart
+```
+
+Restart SSR sesuai prosedur sebelumnya dan pastikan Supervisor memulai kembali worker. Tidak perlu seed ulang, dependency, env, atau installer Python. Migration menambah satu tabel tanpa mengubah progres selesai lama. Data jawaban dari sebelum perubahan ini tidak dapat dibuat ulang; percobaan sesi yang belum selesai dimulai dari soal pertama. Perubahan bank soal memulai versi percobaan baru dan tetap menyimpan jawaban versi sebelumnya. Akun melanjutkan percobaan lintas perangkat; anonim menggunakan cookie browser. Riwayat anonim ikut ditautkan saat masuk dan ikut dihapus melalui penghapusan akun/profil. Rollback migration menghapus riwayat percobaan, sehingga cadangkan database terlebih dahulu.
+
+Analisis pelajar kini memasukkan jawaban room **dan modul**, jumlah percobaan selesai, serta ketepatan percobaan pertama/terakhir per modul dalam jendela 14 hari. Teks esai mentah tidak dikirim ke AI. Jadwal sekitar enam jam tetap berlaku; gunakan tes analisis di admin bila ingin pembaruan langsung. Tes otomatis memeriksa payload AI dengan HTTP palsu, bukan provider production. Setelah deploy, cek satu latihan salah sampai selesai, hasil akhir, pengulangan tanpa poin ganda, percobaan anonim/login, dan hasil tes admin. Kebijakan privasi diperbarui untuk penyimpanan percobaan dan penggunaan agregat jawaban ini.

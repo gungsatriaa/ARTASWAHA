@@ -89,17 +89,16 @@ class AksaraBaliLessonSeederTest extends TestCase
         $this->assertDatabaseCount('learning_progress', 10);
     }
 
-    public function test_wrong_answer_retries_and_stale_or_skipped_question_is_rejected(): void
+    public function test_wrong_answer_advances_and_stale_or_skipped_question_is_rejected(): void
     {
         $this->seed(AksaraBaliLessonSeeder::class);
         $lesson = Lesson::firstOrFail();
         $this->actingAs(User::factory()->create())->withCookie('artaswaha_device', (string) Str::uuid());
         $answer = $lesson->exercises[0]['correct_option'];
         $this->post(route('learning.exercises.answer', $lesson), ['question_index' => 0, 'answer_index' => ($answer + 1) % 4])
-            ->assertSessionHas('lesson_feedback.correct', false);
-        $this->get(route('learning.lessons.show', $lesson))->assertInertia(fn (Assert $page): Assert => $page->where('quiz.index', 0));
-        $this->post(route('learning.exercises.answer', $lesson), ['question_index' => 1, 'answer_index' => $answer])->assertConflict();
-        $this->post(route('learning.exercises.answer', $lesson), ['question_index' => 0, 'answer_index' => $answer])->assertSessionHas('lesson_feedback.correct', true);
+            ->assertSessionMissing('lesson_feedback');
+        $this->get(route('learning.lessons.show', $lesson))->assertInertia(fn (Assert $page): Assert => $page->where('quiz.index', 1)->where('quiz.results', []));
+        $this->post(route('learning.exercises.answer', $lesson), ['question_index' => 2, 'answer_index' => $answer])->assertConflict();
         $this->post(route('learning.exercises.answer', $lesson), ['question_index' => 0, 'answer_index' => $answer])->assertConflict();
         $this->assertDatabaseCount('learning_progress', 0);
     }

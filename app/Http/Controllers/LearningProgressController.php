@@ -6,8 +6,9 @@ use App\Http\Requests\StoreLearningProgressRequest;
 use App\Http\Requests\StoreLessonExerciseAnswerRequest;
 use App\Models\Lesson;
 use App\Services\LearningProgressService;
-use App\Services\QuestionAnswerService;
+use App\Services\LessonAttemptService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 
 class LearningProgressController extends Controller
@@ -33,27 +34,22 @@ class LearningProgressController extends Controller
 
         $deviceId = $progressService->deviceId($request);
         abort_if($progressService->prerequisite($lesson, $deviceId, $request->user()) !== null, 403, 'Selesaikan modul sebelumnya terlebih dahulu.');
-        if (! empty($lesson->exercises)) {
-            $index = (int) $request->session()->get($lesson->exerciseSessionKey(), 0);
-            abort_unless($request->integer('question_index', -1) === $index && isset($lesson->exercises[$index]), 409, 'Soal sudah berubah. Muat ulang halaman sebelum menjawab.');
-            $exercise = new Lesson($lesson->exercises[$index]);
-            $isCorrect = app(QuestionAnswerService::class)->isCorrect($exercise, $request->validated());
-            if ($isCorrect) {
-                $request->session()->put($lesson->exerciseSessionKey(), ++$index);
-                if ($index === count($lesson->exercises)) {
-                    $progressService->completeLesson($deviceId, $lesson, $request->user());
-                }
-            }
-
-            return to_route('learning.lessons.show', $lesson)
-                ->with('lesson_feedback', ['correct' => $isCorrect, 'question_index' => $index - ($isCorrect ? 1 : 0), 'explanation' => $exercise->exercise_explanation, 'correct_answer' => app(QuestionAnswerService::class)->correctText($exercise)])
-                ->withCookie(Cookie::make('artaswaha_device', $deviceId, 60 * 24 * 365, '/', null, $request->isSecure(), true, false, 'lax'));
-        }
-        $isCorrect = $progressService->answerExercise($deviceId, $lesson, $request->validated(), $request->user());
+        app(LessonAttemptService::class)->answer($lesson, $deviceId, $request->user(), $request->validated());
 
         return to_route('learning.lessons.show', $lesson)
-            ->with('status', $isCorrect ? 'Benar! Pelajaran selesai dan 10 poin tersimpan.' : 'Belum tepat. Coba ingat lagi materi di atas, lalu pilih jawaban lain.')
-            ->with('status_tone', $isCorrect ? 'success' : 'info')
+            ->withCookie(Cookie::make('artaswaha_device', $deviceId, 60 * 24 * 365, '/', null, $request->isSecure(), true, false, 'lax'));
+    }
+
+    public function retry(Request $request, Lesson $lesson, LearningProgressService $progressService, LessonAttemptService $attempts): RedirectResponse
+    {
+        $this->ensureAvailable($lesson);
+        abort_if($lesson->exerciseQuestions() === [], 404);
+        $deviceId = $progressService->deviceId($request);
+        abort_if($progressService->prerequisite($lesson, $deviceId, $request->user()) !== null, 403);
+        $data = $request->validate(['attempt_id' => ['nullable', 'integer', 'min:1']]);
+        $attempts->retry($lesson, $deviceId, $request->user(), isset($data['attempt_id']) ? (int) $data['attempt_id'] : null);
+
+        return to_route('learning.lessons.show', $lesson)
             ->withCookie(Cookie::make('artaswaha_device', $deviceId, 60 * 24 * 365, '/', null, $request->isSecure(), true, false, 'lax'));
     }
 

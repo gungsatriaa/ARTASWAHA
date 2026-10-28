@@ -80,7 +80,7 @@ class ParibasaLessonSeederTest extends TestCase
                 };
                 $this->travel(5)->seconds();
                 $this->post(route('learning.exercises.answer', $lesson), ['question_index' => $index, 'answer_index' => '', 'answer_indexes' => [], 'answer_text' => '', ...$answer])
-                    ->assertSessionHasNoErrors()->assertSessionHas('lesson_feedback.correct', true)->assertRedirect();
+                    ->assertSessionHasNoErrors()->assertSessionMissing('lesson_feedback')->assertRedirect();
                 if ($index < 9) {
                     $this->assertDatabaseMissing('learning_progress', ['lesson_id' => $lesson->id]);
                 }

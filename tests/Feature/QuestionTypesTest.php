@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\LearningPath;
 use App\Models\LearningProgress;
 use App\Models\Lesson;
+use App\Models\LessonAttempt;
 use App\Models\RoomAnswer;
 use App\Models\User;
 use App\Services\QuizService;
@@ -153,7 +154,7 @@ class QuestionTypesTest extends TestCase
         $this->assertDatabaseCount('quizzes', 0);
     }
 
-    public function test_lesson_admin_can_create_both_new_types_and_learner_must_answer_correctly(): void
+    public function test_lesson_admin_can_create_both_new_types_and_learner_can_retry_after_finishing(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);
         $this->seed(LearningPathSeeder::class);
@@ -175,7 +176,10 @@ class QuestionTypesTest extends TestCase
                 ->where('lesson.question_type', $type)->missing('lesson.accepted_answers')->missing('lesson.correct_options'));
             $this->post(route('learning.exercises.answer', $lesson), $type === 'multiple'
                 ? ['answer_indexes' => [0]] : ['answer_text' => 'Salah'])->assertSessionHasNoErrors()->assertRedirect();
-            $this->assertDatabaseMissing('learning_progress', ['lesson_id' => $lesson->id]);
+            $this->assertDatabaseHas('learning_progress', ['lesson_id' => $lesson->id]);
+            $attempt = LessonAttempt::query()->where('lesson_id', $lesson->id)->sole();
+            $this->assertFalse($attempt->answers[0]['is_correct']);
+            $this->post(route('learning.exercises.retry', $lesson), ['attempt_id' => $attempt->id])->assertRedirect();
             $this->post(route('learning.exercises.answer', $lesson), $type === 'multiple'
                 ? ['answer_index' => '', 'answer_indexes' => [2, 0], 'answer_text' => ''] : ['answer_index' => '', 'answer_indexes' => [], 'answer_text' => 'ᬓᭀ'])->assertSessionHasNoErrors()->assertRedirect();
             $this->assertDatabaseHas('learning_progress', ['lesson_id' => $lesson->id, 'user_id' => $learner->id, 'points' => 10]);
