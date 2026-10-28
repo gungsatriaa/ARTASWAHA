@@ -29,8 +29,12 @@ class LessonController extends Controller
             ->when($request->user() === null, fn ($query) => $query->where('visitor_id', $deviceId)->whereNull('user_id'))->whereNotNull('completed_at')->first();
         $audio = $audioService->forContent($lesson);
         $audio = $audioService->isPlayable($audio) ? $audio : null;
+        $nextLesson = $progress === null ? null : $lesson->learningPath->lessons()
+            ->where(fn ($query) => $query->where('sort_order', '>', $lesson->sort_order)
+                ->orWhere(fn ($query) => $query->where('sort_order', $lesson->sort_order)->where('id', '>', $lesson->id)))
+            ->first(['id', 'slug', 'title']);
 
-        return app(PagePresenter::class)->render('learning.lessons.show', compact('lesson', 'progress', 'audio'))->toResponse($request)
+        return app(PagePresenter::class)->render('learning.lessons.show', compact('lesson', 'progress', 'audio', 'nextLesson'))->toResponse($request)
             ->withCookie(Cookie::make('artaswaha_device', $deviceId, 60 * 24 * 365, '/', null, $request->isSecure(), true, false, 'lax'));
     }
 }

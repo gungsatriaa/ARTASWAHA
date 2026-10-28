@@ -569,3 +569,7 @@ Progres soal sementara disimpan dalam sesi dan diulang bila sesi kedaluwarsa ata
 ### Perbaikan validasi jawaban dari form React
 
 Form jawaban mengirim seluruh field, termasuk `answer_indexes: []` saat menjawab pilihan tunggal atau esai. Validasi awal pelajaran dan room kini menerima daftar kosong tersebut; `QuestionAnswerService` tetap memvalidasi field yang wajib sesuai tipe soal, termasuk minimal satu pilihan untuk soal pilihan banyak. Perbaikan ini mencakup latihan lama dan bank latihan baru. Deploy source PHP saja; tidak perlu migration, seeder, build frontend, atau perubahan env. Tes regresi mengirim payload lengkap seperti form React untuk ketiga tipe soal.
+
+### Navigasi modul berikutnya
+
+Setelah modul selesai, halaman pelajaran menyediakan tombol **Modul berikutnya** beserta judulnya bila masih ada modul terbit dan sudah ditinjau dalam kategori yang sama. Urutan mengikuti `sort_order` lalu ID, sama dengan daftar dan penguncian modul. Tombol tidak muncul sebelum selesai atau pada modul terakhir. Berlaku untuk latihan tunggal lama maupun bank soal baru. Deploy source, build client/SSR, lalu restart SSR sesuai panduan; tidak ada migration, seed ulang, atau env baru.

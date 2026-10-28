@@ -1051,3 +1051,22 @@ it('shows locked modules without a navigable link', () => {
     expect(screen.getByText('Terkunci · selesaikan modul sebelumnya')).toBeTruthy();
     expect(screen.getByText('Modul kedua').closest('[aria-disabled="true"]')).toBeTruthy();
 });
+
+it('links to the next module only after completion when a successor exists', () => {
+    const lesson = { id: 4, title: 'Modul awal', path, content: 'Materi awal.' };
+    const nextLesson = { title: 'Modul lanjutan', url: '/pelajaran/lanjutan' };
+    const { rerender } = render(<Lesson lesson={lesson} nextLesson={nextLesson} meta={meta} />);
+    expect(screen.queryByRole('link', { name: 'Modul berikutnya' })).toBeNull();
+    rerender(
+        <Lesson
+            lesson={lesson}
+            nextLesson={nextLesson}
+            progress={{ completed_at: '2026-10-28', points: 10 }}
+            meta={meta}
+        />,
+    );
+    expect(screen.getByRole('link', { name: 'Modul berikutnya' }).getAttribute('href')).toBe(nextLesson.url);
+    expect(screen.getByText('Modul lanjutan')).toBeTruthy();
+    rerender(<Lesson lesson={lesson} progress={{ completed_at: '2026-10-28', points: 10 }} meta={meta} />);
+    expect(screen.queryByRole('link', { name: 'Modul berikutnya' })).toBeNull();
+});

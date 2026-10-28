@@ -28,7 +28,7 @@ class LessonUnlockTest extends TestCase
         $this->actingAs($user)->withCookie('artaswaha_device', (string) Str::uuid());
         $this->get(route('learning.paths.show', $path))->assertInertia(fn (Assert $page): Assert => $page
             ->where('lessons.data.0.locked', false)->where('lessons.data.1.locked', true)->where('lessons.data.2.url', null));
-        $this->get(route('learning.lessons.show', $first))->assertOk();
+        $this->get(route('learning.lessons.show', $first))->assertOk()->assertInertia(fn (Assert $page): Assert => $page->where('nextLesson', null));
         $this->get(route('learning.lessons.show', $second))->assertRedirectToRoute('learning.paths.show', $path);
         $this->post(route('learning.progress.store', $second))->assertForbidden();
         $this->post(route('learning.exercises.answer', $third), ['answer_index' => 0])->assertForbidden();
@@ -40,6 +40,8 @@ class LessonUnlockTest extends TestCase
         $this->get(route('content-audio.show', $audio))->assertForbidden();
         $this->assertDatabaseCount('learning_progress', 0);
         $this->post(route('learning.progress.store', $first))->assertRedirect();
+        $this->get(route('learning.lessons.show', $first))->assertInertia(fn (Assert $page): Assert => $page
+            ->where('nextLesson.title', $second->title)->where('nextLesson.url', route('learning.lessons.show', $second)));
         $this->get(route('learning.paths.show', $path))->assertInertia(fn (Assert $page): Assert => $page
             ->where('lessons.data.1.locked', false)->where('lessons.data.2.locked', true));
         $this->get(route('learning.lessons.show', $second))->assertOk();
@@ -47,6 +49,7 @@ class LessonUnlockTest extends TestCase
         $this->post(route('learning.progress.store', $second))->assertRedirect();
         $this->get(route('learning.lessons.show', $third))->assertOk();
         $this->post(route('learning.exercises.answer', $third), ['answer_index' => 0])->assertRedirect();
+        $this->get(route('learning.lessons.show', $third))->assertInertia(fn (Assert $page): Assert => $page->where('nextLesson', null));
         $this->assertDatabaseCount('learning_progress', 3);
     }
 

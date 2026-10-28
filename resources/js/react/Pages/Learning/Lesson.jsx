@@ -41,7 +41,7 @@ function Exercise({ question, index, url, onSubmit }) {
     );
 }
 
-export default function Lesson({ lesson, progress, audio, quiz, meta }) {
+export default function Lesson({ lesson, progress, audio, quiz, nextLesson, meta }) {
     const sections = lessonSections(lesson.content);
     const source = sections.find((section) => section.title === 'Sumber belajar');
     const material = sections.filter((section) => section !== source);
@@ -273,6 +273,20 @@ export default function Lesson({ lesson, progress, audio, quiz, meta }) {
                                 <Action url={lesson.completeUrl}>Tandai pelajaran selesai</Action>
                             </div>
                         ))}
+                    {completed && nextLesson && (
+                        <nav
+                            aria-label="Modul lanjutan"
+                            className="flex flex-col gap-4 rounded-card bg-surface p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"
+                        >
+                            <div className="min-w-0">
+                                <p className="text-xs font-semibold text-accent">Lanjutkan belajarmu</p>
+                                <p className="mt-2 break-words font-display text-lg font-bold">{nextLesson.title}</p>
+                            </div>
+                            <Link href={nextLesson.url} className={`${buttonClass} shrink-0 gap-2`}>
+                                Modul berikutnya <Icon name="arrow" className="size-4" />
+                            </Link>
+                        </nav>
+                    )}
                     {source && (
                         <details className="rounded-3xl bg-surface p-5 text-sm sm:p-6">
                             <summary className="cursor-pointer font-semibold text-foreground/65">
