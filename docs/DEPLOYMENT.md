@@ -607,15 +607,3 @@ Analisis pelajar kini memasukkan jawaban room **dan modul**, jumlah percobaan se
 ### Sapaan langsung dalam analisis AI
 
 Prompt ringkasan dan alasan rekomendasi kini menyapa pelajar langsung dengan “kamu”, memberi saran sesuai minat/aktivitas, dan menghindari gaya laporan tentang pengguna. Ketiadaan catatan aktivitas tidak dianggap sebagai bukti belum pernah belajar. Deploy source lalu jalankan `php artisan queue:restart` agar worker memuat prompt baru. Tidak ada migration, build frontend, atau env baru. Hasil yang sudah tersimpan tetap tampil sampai analisis berikutnya; gunakan tes analisis di admin untuk memperbaruinya langsung. Tes memeriksa instruksi yang dikirim, sedangkan gaya keluaran provider nyata perlu ditinjau dari hasil analisis setelah deploy.
-
-
-## Seeder admin tanpa konfigurasi environment
-
-Identitas admin dan pembuatan kata sandi awal kini berada langsung pada `database/seeders/ProductionAdminSeeder.php`; `config/admin.php` serta contoh `ADMIN_NAME`, `ADMIN_EMAIL`, dan `ADMIN_PASSWORD` dihapus. Nilai `ADMIN_*` lama di `.env` tidak lagi digunakan dan boleh dihapus. Seeder lokal memanggil seeder yang sama; seed default tetap tidak membuat admin di production. Untuk membuat atau mempromosikan akun admin secara eksplisit:
-
-```bash
-php artisan config:clear
-php artisan db:seed --class=ProductionAdminSeeder --force
-```
-
-Email bawaan adalah `admin@artaswaha.com`. Kata sandi acak 24 karakter dibuat di seeder dan ditampilkan sekali pada terminal saat akun baru berhasil dibuat. Simpan keluaran itu dengan aman; kata sandi tidak disimpan sebagai teks biasa di repository atau database. Nama/email dapat diubah langsung di seeder. Seed ulang mempertahankan nama dan hash kata sandi akun yang sudah ada, hanya memberikan akses admin; seed ulang tidak menampilkan atau mereset kata sandi akun lama. Tidak perlu migration, build frontend, atau restart worker. Verifikasi login dan akses dashboard setelah seed.

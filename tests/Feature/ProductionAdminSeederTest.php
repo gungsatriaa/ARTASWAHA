@@ -5,9 +5,9 @@ namespace Tests\Feature;
 use App\Models\User;
 use Database\Seeders\ProductionAdminSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
-use Symfony\Component\Console\Output\BufferedOutput;
+use Illuminate\Validation\ValidationException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class ProductionAdminSeederTest extends TestCase
@@ -17,25 +17,24 @@ class ProductionAdminSeederTest extends TestCase
     public function test_explicit_seeder_creates_an_admin_that_can_log_in_in_production(): void
     {
         $this->app->instance('env', 'production');
+        config(['admin.name' => 'Admin Production', 'admin.email' => 'admin@example.test', 'admin.password' => 'ProductionTest!2026']);
 
-        $output = new BufferedOutput;
-        Artisan::call('db:seed', ['--class' => ProductionAdminSeeder::class, '--force' => true, '--no-interaction' => true], $output);
-        preg_match('/Kata sandi awal admin: ([^\r\n]+)/', $output->fetch(), $matches);
-        $password = $matches[1];
+        $this->artisan('db:seed', ['--class' => ProductionAdminSeeder::class, '--force' => true])->assertSuccessful();
 
-        $user = User::query()->where('email', 'admin@artaswaha.com')->firstOrFail();
+        $user = User::query()->where('email', 'admin@example.test')->firstOrFail();
         $this->assertTrue($user->is_admin);
-        $this->assertTrue(Hash::check($password, $user->password));
+        $this->assertTrue(Hash::check('ProductionTest!2026', $user->password));
         $this->withSession(['_token' => 'admin-seeder-test-token'])
-            ->post(route('login.store'), ['_token' => 'admin-seeder-test-token', 'email' => $user->email, 'password' => $password])->assertRedirect();
+            ->post(route('login.store'), ['_token' => 'admin-seeder-test-token', 'email' => $user->email, 'password' => 'ProductionTest!2026'])->assertRedirect();
         $this->assertAuthenticatedAs($user);
         $this->get(route('admin.index'))->assertOk();
     }
 
     public function test_reseeding_promotes_one_existing_account_and_preserves_its_name_and_password(): void
     {
-        $user = User::factory()->create(['name' => 'Nama Awal', 'email' => 'admin@artaswaha.com']);
+        $user = User::factory()->create(['name' => 'Nama Awal', 'email' => 'admin@example.test']);
         $originalPassword = $user->password;
+        config(['admin.name' => 'Nama Baru', 'admin.email' => $user->email, 'admin.password' => 'DifferentPassword!2026']);
 
         $this->seed(ProductionAdminSeeder::class);
         $this->seed(ProductionAdminSeeder::class);
@@ -49,17 +48,36 @@ class ProductionAdminSeederTest extends TestCase
     public function test_default_seeding_does_not_create_a_production_admin(): void
     {
         $this->app->instance('env', 'production');
+        config(['admin.email' => 'admin@example.test', 'admin.password' => 'ProductionTest!2026']);
 
         $this->artisan('db:seed', ['--force' => true])->assertSuccessful();
 
         $this->assertDatabaseCount('users', 0);
     }
 
-    public function test_credentials_come_from_the_seeder_instead_of_environment_configuration(): void
+    #[DataProvider('invalidCredentials')]
+    public function test_invalid_credentials_do_not_create_an_account(string $email, string $password, string $field): void
     {
-        config(['admin.name' => 'Ignored', 'admin.email' => 'ignored@example.test', 'admin.password' => 'IgnoredPassword!2026']);
-        $this->seed(ProductionAdminSeeder::class);
-        $this->assertDatabaseCount('users', 1);
-        $this->assertDatabaseHas('users', ['name' => 'Admin ARTASWAHA', 'email' => 'admin@artaswaha.com', 'is_admin' => true]);
+        config(['admin.name' => 'Admin Production', 'admin.email' => $email, 'admin.password' => $password]);
+
+        try {
+            (new ProductionAdminSeeder)->run();
+            $this->fail('Invalid admin credentials must be rejected.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey($field, $exception->errors());
+        }
+
+        $this->assertDatabaseCount('users', 0);
+    }
+
+    /** @return array<string, array{string, string, string}> */
+    public static function invalidCredentials(): array
+    {
+        return [
+            'missing email' => ['', 'ProductionTest!2026', 'email'],
+            'invalid email' => ['not-an-email', 'ProductionTest!2026', 'email'],
+            'missing password' => ['admin@example.test', '', 'password'],
+            'short password' => ['admin@example.test', 'short', 'password'],
+        ];
     }
 }
