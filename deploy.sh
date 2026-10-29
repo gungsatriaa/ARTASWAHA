@@ -31,6 +31,36 @@ check_http() {
     printf 'OK  %-18s HTTP %s\n' "$label" "$status"
 }
 
+check_ssr() {
+    php -r '
+        require "vendor/autoload.php";
+        $app = require "bootstrap/app.php";
+        $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+        if (!config("react.ssr.enabled")) {
+            echo "SKIP SSR dinonaktifkan melalui konfigurasi Laravel.\n";
+            exit(0);
+        }
+        try {
+            $url = config("react.ssr.url");
+            $parts = parse_url($url);
+            if (!in_array($parts["host"] ?? "", ["127.0.0.1", "localhost", "[::1]"], true) ||
+                !in_array($parts["scheme"] ?? "", ["http", "https"], true)) {
+                throw new RuntimeException("Invalid SSR endpoint");
+            }
+            $health = $parts["scheme"]."://".$parts["host"].(isset($parts["port"]) ? ":".$parts["port"] : "")."/health";
+            $response = Illuminate\Support\Facades\Http::connectTimeout(3)->timeout(5)
+                ->withoutRedirecting()->get($health)->throw();
+            if ($response->json("status") !== "ok") {
+                throw new RuntimeException("Invalid SSR health response");
+            }
+            echo "OK  React SSR tersambung; health status ok.\n";
+        } catch (Throwable $exception) {
+            fwrite(STDERR, "SSR tidak tersambung atau respons health tidak valid.\n");
+            exit(1);
+        }
+    ' react-ssr-health || fail "Periksa REACT_SSR_URL dan proses artaswaha-ssr di Supervisor. Aplikasi sudah keluar dari maintenance; jalankan SSR atau restart SSR setelah build, lalu ulangi pengecekan."
+}
+
 check_supervisor_program() {
     local label="$1"
     local program="$2"
@@ -260,7 +290,8 @@ if [[ "$LEARNER_WORKER_REQUIRED" == "true" ]]; then
     check_learner_worker
 fi
 
-printf '\n[12/13] Menjalankan health check Laravel, OCR, AI, dan WebSocket...\n'
+printf '\n[12/13] Menjalankan health check Laravel, SSR, OCR, AI, dan WebSocket...\n'
+check_ssr
 APP_URL="$(dotenv_value APP_URL)"
 OCR_API_URL="$(dotenv_value OCR_API_URL)"
 OCR_API_KEY="$(dotenv_value OCR_API_KEY)"

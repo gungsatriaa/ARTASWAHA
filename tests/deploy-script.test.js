@@ -8,7 +8,7 @@ import { spawnSync } from 'node:child_process';
 const bash = process.platform === 'win32' ? 'C:/Program Files/Git/bin/bash.exe' : 'bash';
 const available = spawnSync(bash, ['--version']).status === 0;
 
-function runDeploy({ tts = false, analysis = false, missing = false, failAfterDeploy = false, workerProgram = 'artaswaha-learner:*', wrongDirectory = false, mixedDirectories = false, queueConnection = '', absoluteArtisan = false, processConnection = '', flagsFirst = false, unreadable = false } = {}) {
+function runDeploy({ tts = false, analysis = false, missing = false, failAfterDeploy = false, workerProgram = 'artaswaha-learner:*', wrongDirectory = false, mixedDirectories = false, queueConnection = '', absoluteArtisan = false, processConnection = '', flagsFirst = false, unreadable = false, ssr = 'ok' } = {}) {
     const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'artaswaha-deploy-test-'));
     try {
         const bin = path.join(folder, 'fake-bin');
@@ -33,6 +33,10 @@ function runDeploy({ tts = false, analysis = false, missing = false, failAfterDe
 if [[ "$1" == -r ]]; then
     [[ $# -ge 3 ]] || exit 0
     case "$3" in
+        react-ssr-health)
+            printf 'SSR_CHECK\\n' >> "$TEST_LOG"
+            if [[ "$TEST_SSR" == failed ]]; then exit 1; fi
+            if [[ "$TEST_SSR" == disabled ]]; then printf 'SKIP SSR dinonaktifkan\\n'; else printf 'OK React SSR tersambung\\n'; fi;;
         QUEUE_CONNECTION) printf '%s' "$TEST_QUEUE_CONNECTION";;
         APP_ENV) printf production;;
         APP_DEBUG) printf false;;
@@ -92,7 +96,7 @@ fi
                 DEPLOY_BRANCH: 'main', TEST_LOG: log.replaceAll('\\', '/'),
                 TEST_MAINTENANCE: maintenance.replaceAll('\\', '/'),
                 TEST_UPDATED: path.join(folder, 'updated').replaceAll('\\', '/'),
-                TEST_TTS: String(tts), TEST_ANALYSIS: String(analysis),
+                TEST_SSR: ssr, TEST_TTS: String(tts), TEST_ANALYSIS: String(analysis),
                 TEST_MISSING: missing ? '1' : '0', TEST_LATE_FAILURE: failAfterDeploy ? '1' : '0' },
             encoding: 'utf8', timeout: 15000,
         });
@@ -205,4 +209,25 @@ test('unreadable process arguments do not silently pass worker validation', { sk
     assert.equal(result.status, 1, result.stdout + result.stderr);
     assert.match(result.stderr, /tidak dapat dibaca/);
     assert(!result.actions.includes('down'));
+});
+
+test('checks SSR health before reporting deployment success', { skip: !available }, () => {
+    const result = runDeploy();
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert(result.actions.includes('SSR_CHECK'));
+    assert.match(result.stdout, /React SSR tersambung/);
+});
+
+test('unreachable SSR fails deployment without leaving maintenance active', { skip: !available }, () => {
+    const result = runDeploy({ ssr: 'failed' });
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.equal(result.maintenance, false);
+    assert.match(result.stderr, /Periksa REACT_SSR_URL/);
+    assert.doesNotMatch(result.stdout, /Deployment ARTASWAHA berhasil/);
+});
+
+test('explicitly disabled SSR can complete deployment', { skip: !available }, () => {
+    const result = runDeploy({ ssr: 'disabled' });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.match(result.stdout, /SKIP SSR dinonaktifkan/);
 });
