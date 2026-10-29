@@ -56,7 +56,7 @@ afterEach(() => {
 function loader() {
     document.documentElement.classList.add('page-loading');
     document.body.innerHTML =
-        '<div id="app"><main tabindex="-1"></main></div><div data-react-loader><span data-loader-spinner></span><p data-loader-message>Loading Data</p><button data-loader-skip>Lewati</button></div>';
+        '<div id="app"><main tabindex="-1"></main></div><div data-react-loader><span data-loader-spinner></span><p data-loader-message>Loading Data</p></div>';
     stop = startBootLoader();
 }
 it('starts every document reload with a spinner and waits for React readiness before exiting', async () => {

@@ -16,7 +16,6 @@
             <span data-loader-spinner class="page-loader-spinner" aria-hidden="true"></span>
             <p data-loader-message class="text-left leading-6">Loading Data</p>
         </div>
-        <button type="button" data-loader-skip class="mt-6 min-h-11 rounded-full bg-white/5 px-6 text-xs font-semibold text-foreground/60 transition hover:bg-primary/20 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent" onclick="document.documentElement.classList.remove('page-loading')">Langsung masuk</button>
     </div>
 </div>
 <noscript><style>.page-loader { display: none !important; } .page-loading { overflow: auto; }</style></noscript>

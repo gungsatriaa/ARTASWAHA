@@ -10,7 +10,6 @@ export function startBootLoader() {
     const root = document.documentElement;
     const app = document.getElementById('app');
     app?.setAttribute('inert', '');
-    const skip = loader.querySelector('[data-loader-skip]');
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const timers = new Set();
     let disposed = false,
@@ -26,7 +25,6 @@ export function startBootLoader() {
         disposed = true;
         timers.forEach(clearTimeout);
         timers.clear();
-        skip?.removeEventListener('click', dispose);
         window.removeEventListener('pagehide', dispose);
         root.classList.remove('page-loading');
         app?.removeAttribute('inert');
@@ -60,11 +58,9 @@ export function startBootLoader() {
         const message = loader.querySelector('[data-loader-message]');
         if (message) message.textContent = 'Tampilan belum dapat dimuat. Periksa koneksi lalu muat ulang.';
         loader.querySelector('[data-loader-spinner]')?.setAttribute('hidden', '');
-        if (skip) skip.textContent = 'Tutup pemberitahuan';
         later(dispose, 5000);
     };
     later(fail, 8000);
-    skip?.addEventListener('click', dispose, { once: true });
     window.addEventListener('pagehide', dispose, { once: true });
     return dispose;
 }

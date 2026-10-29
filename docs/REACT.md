@@ -41,7 +41,7 @@ Deploy client dan SSR bersama lalu restart program SSR. Perintah Supervisor Node
 
 Pertahankan token tema: background `#0A0A0A`, surface `#101113`, primary `#007C80`, accent `#FFC700`, foreground `#F5F3EE`; kartu tanpa border dekoratif, tombol pill, avatar bulat. Font Outfit/Plus Jakarta Sans dan glyph Vimala tetap mengikuti UI aktif.
 
-Overlay hanya pada reload dokumen: bootstrap/font siap, pill spinner “Loading Data”, hold/fade, tombol lewati, fallback, reduced motion. Navigasi internal tanpa overlay atau bar progres atas. Halaman lama terlihat sambil loader menyiapkan data/chunk tujuan; status aksesibel diumumkan jika lambat. Jangan menambahkan jeda dekoratif pada fetch atau submit.
+Overlay hanya pada reload dokumen: bootstrap/font siap, pill spinner “Loading Data”, hold/fade, fallback, reduced motion. Navigasi internal tanpa overlay atau bar progres atas. Halaman lama terlihat sambil loader menyiapkan data/chunk tujuan; status aksesibel diumumkan jika lambat. Jangan menambahkan jeda dekoratif pada fetch atau submit.
 
 Reveal konten bawah layar memakai IntersectionObserver dengan cleanup dan dukungan fokus/reduced motion. Efek jawaban/suara dan hasil tetap mengikuti pengaturan kuis. Mobile pengguna memakai bottom navigation pill, admin memakai sidebar sendiri. Interview wajib hanya bagi identitas yang belum lengkap, dengan halaman langkah penuh setelah overlay.
 
