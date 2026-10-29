@@ -649,6 +649,10 @@ Halaman lama tetap terlihat selama request Inertia, tanpa skeleton navigasi atau
 
 Deploy source, `npm run build`, lalu restart SSR. Tidak ada migration, env, dependency, atau perubahan worker. Periksa navigasi pertama/ulang, Back, jaringan lambat, fokus keyboard, dan mobile. Tes mencakup pemanasan chunk, kegagalan preload, Save-Data/2G, serta konten/state yang bertahan selama navigasi menunggu. Ukuran build dan tes komponen tidak menggantikan pengukuran TTFB/INP di production.
 
+### Heartbeat presence tunggal
+
+Heartbeat kini dipasang sekali pada bootstrap React, bukan pada masing-masing layout. Berganti halaman pengguna/admin/auth tidak memulai ping baru. Ping tetap setiap 30 detik, dilewati saat tab tersembunyi atau request sebelumnya belum selesai, dan perubahan visibility dibatasi dengan cadence yang sama. Timeout tetap 10 detik; cleanup membatalkan timer/request. Deploy client dengan `npm run build`, restart SSR sesuai prosedur, lalu muat ulang tab lama. Tidak ada migration, env, dependency, atau perubahan proses worker. Tes Strict Mode memeriksa tidak ada ping ganda dan timer dibersihkan. Jumlah pengunjung tetap memakai expiry server dua menit; latency presence production perlu diukur terpisah.
+
 ### Navigasi mobile pada pelajaran
 
 Halaman pelajaran memakai navigasi bawah pill yang sama dengan halaman aplikasi lain untuk akun terdaftar dan anonim, dengan menu Belajar aktif dan ruang bawah konten agar tombol tidak tertutup. Hamburger tidak tampil pada kedua identitas tersebut. Tamu tetap memakai menu tamu; kuis room aktif tetap menyembunyikan navigasi aplikasi. Jalankan `npm run build` lalu restart SSR setelah deploy. Tidak ada perubahan env atau dependency. Tes komponen mencakup kedua identitas, menu aktif, ruang konten, dan pengecualian room aktif; tampilan HP fisik belum diverifikasi.

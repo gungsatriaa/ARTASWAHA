@@ -5,7 +5,7 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import Dialog from '../Components/Dialog';
 import Icon from '../Components/Icon';
 import { Action, secondaryClass } from '../Components/forms';
-import { FlashNotice, usePresence } from './SiteLayout';
+import { FlashNotice } from './SiteLayout';
 
 const groups = [
     [
@@ -34,7 +34,6 @@ export default function AdminLayout({ children }) {
     const { props, component, url } = usePage();
     const { viewer, brand, links, navigation, flash, csrfToken } = props;
     const [open, setOpen] = useState(false);
-    usePresence(navigation.presence);
     useEffect(() => setOpen(false), [url]);
     const active = (prefix) =>
         component.startsWith(prefix) || (prefix === 'Admin/Lesson' && component === 'Admin/Preview');

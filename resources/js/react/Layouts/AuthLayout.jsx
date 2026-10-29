@@ -1,11 +1,10 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import PageEffects from '../Components/PageEffects';
 import Icon from '../Components/Icon';
-import { FlashNotice, usePresence } from './SiteLayout';
+import { FlashNotice } from './SiteLayout';
 
 export default function AuthLayout({ children, onboarding = false }) {
     const { brand, navigation, flash, csrfToken } = usePage().props;
-    usePresence(navigation.presence);
     return (
         <div className="min-h-svh">
             <Head>

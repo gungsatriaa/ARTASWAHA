@@ -14,40 +14,6 @@ const navigationPages = {
     user: 'Profile/Show', info: 'Profile/About', chart: 'Admin/Dashboard',
 };
 
-export function usePresence(url) {
-    useEffect(() => {
-        if (!url) return;
-        let controller;
-        const ping = () => {
-            if (document.visibilityState !== 'visible' || controller) return;
-            controller = new AbortController();
-            const current = controller;
-            const timeout = setTimeout(() => current.abort(), 10000);
-            fetch(url, {
-                method: 'POST',
-                credentials: 'same-origin',
-                signal: current.signal,
-                headers: {
-                    Accept: 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
-                },
-            })
-                .catch(() => {})
-                .finally(() => {
-                    clearTimeout(timeout);
-                    if (controller === current) controller = undefined;
-                });
-        };
-        ping();
-        const timer = window.setInterval(ping, 30000);
-        document.addEventListener('visibilitychange', ping);
-        return () => {
-            window.clearInterval(timer);
-            document.removeEventListener('visibilitychange', ping);
-            controller?.abort();
-        };
-    }, [url]);
-}
 function FlashNotice({ flash }) {
     const [visible, setVisible] = useState(Boolean(flash?.message));
     useEffect(() => {
@@ -90,7 +56,6 @@ export default function SiteLayout({ children }) {
               : /Quizzes|Rooms/.test(component)
                 ? 'quiz'
                 : 'book';
-    usePresence(nav.presence);
     useEffect(() => {
         setMenu(false);
     }, [component]);

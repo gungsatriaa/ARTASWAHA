@@ -1,9 +1,10 @@
 import { StrictMode, useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import usePresence from '../../resources/js/react/Hooks/usePresence';
 import Catalog from '../../resources/js/react/Pages/Learning/Catalog';
 import Path from '../../resources/js/react/Pages/Learning/Path';
-import SiteLayout, { usePresence } from '../../resources/js/react/Layouts/SiteLayout';
+import SiteLayout from '../../resources/js/react/Layouts/SiteLayout';
 import Dialog from '../../resources/js/react/Components/Dialog';
 import { CategoryIcon } from '../../resources/js/react/Components/ui';
 import Icon from '../../resources/js/react/Components/Icon';
@@ -11,7 +12,7 @@ import Icon from '../../resources/js/react/Components/Icon';
 const { page, get } = vi.hoisted(() => ({ page: { props: {} }, get: vi.fn() }));
 vi.mock('@inertiajs/react', () => ({
     usePage: () => ({ ...page, component: page.component ?? 'Learning/Catalog' }),
-    Link: ({ children, preserveScroll, ...props }) => <a {...props}>{children}</a>,
+    Link: ({ children, preserveScroll, preserveState, only, prefetch, cacheFor, ...props }) => <a {...props}>{children}</a>,
     Head: () => null,
     router: { get, on: () => () => {} },
 }));
@@ -366,14 +367,25 @@ describe('shared shell', () => {
                 <Presence />
             </StrictMode>,
         );
-        await act(async () => {});
-        expect(fetcher.mock.calls[0][1].signal.aborted).toBe(true);
+        expect(fetcher).not.toHaveBeenCalled();
+        await act(async () => vi.advanceTimersByTime(0));
+        expect(fetcher).toHaveBeenCalledOnce();
+        fireEvent(document, new Event('visibilitychange'));
+        expect(fetcher).toHaveBeenCalledOnce();
         expect(vi.getTimerCount()).toBe(1);
         Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
         const calls = fetcher.mock.calls.length;
         await act(async () => vi.advanceTimersByTime(30000));
         expect(fetcher).toHaveBeenCalledTimes(calls);
+        fetcher.mockImplementationOnce((_url, { signal }) => new Promise((_resolve, reject) => {
+            signal.addEventListener('abort', () => reject(new DOMException('Cancelled', 'AbortError')));
+        }));
+        Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
+        fireEvent(document, new Event('visibilitychange'));
+        expect(fetcher).toHaveBeenCalledTimes(calls + 1);
         mounted.unmount();
+        expect(fetcher.mock.lastCall[1].signal.aborted).toBe(true);
+        await act(async () => {});
         expect(vi.getTimerCount()).toBe(0);
     });
 });

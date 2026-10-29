@@ -2,11 +2,13 @@ import { StrictMode, useEffect } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 import { createInertiaApp } from '@inertiajs/react';
 import ErrorBoundary from './Components/ErrorBoundary';
+import usePresence from './Hooks/usePresence';
 import MotionProvider from './Components/MotionProvider';
 import { resolve, title } from './resolve';
 import { startBootLoader, markBootReady, failBootLoader } from './boot-loader';
 startBootLoader();
-function BootReady() {
+function BootReady({ presenceUrl }) {
+    usePresence(presenceUrl);
     useEffect(() => {
         markBootReady();
     }, []);
@@ -21,7 +23,7 @@ createInertiaApp({
                 <ErrorBoundary>
                     <MotionProvider>
                         <App {...props} />
-                        <BootReady />
+                        <BootReady presenceUrl={props.initialPage.props.navigation.presence} />
                     </MotionProvider>
                 </ErrorBoundary>
             </StrictMode>
