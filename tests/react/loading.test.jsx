@@ -56,24 +56,25 @@ afterEach(() => {
 function loader() {
     document.documentElement.classList.add('page-loading');
     document.body.innerHTML =
-        '<div id="app"><main tabindex="-1"></main></div><div data-react-loader><p data-loader-message></p><div data-loader-progress aria-valuenow="0"><span data-loader-bar></span></div><span data-loader-percent>0%</span><button data-loader-skip>Lewati</button></div>';
+        '<div id="app"><main tabindex="-1"></main></div><div data-react-loader><span data-loader-spinner></span><p data-loader-message>Loading Data</p><button data-loader-skip>Lewati</button></div>';
     stop = startBootLoader();
 }
-it('starts every document reload, waits for React readiness and visibly reaches 100% before exiting', async () => {
+it('starts every document reload with a spinner and waits for React readiness before exiting', async () => {
     loader();
     await vi.advanceTimersByTimeAsync(1000);
     expect(document.getElementById('app')?.hasAttribute('inert')).toBe(true);
-    expect(Number(document.querySelector('[data-loader-progress]').getAttribute('aria-valuenow'))).toBeLessThan(100);
+    expect(document.querySelector('[data-loader-message]').textContent).toBe('Loading Data');
+    expect(document.querySelector('[data-loader-progress]')).toBeNull();
     expect(document.documentElement.classList.contains('page-loading')).toBe(true);
     markBootReady();
     await vi.advanceTimersByTimeAsync(1);
-    expect(document.querySelector('[data-loader-percent]').textContent).toBe('100%');
+    expect(document.querySelector('[data-loader-spinner]').hasAttribute('hidden')).toBe(false);
     expect(document.documentElement.classList.contains('page-loading')).toBe(true);
     await vi.advanceTimersByTimeAsync(700);
     expect(document.documentElement.classList.contains('page-loading')).toBe(false);
     expect(document.getElementById('app')?.hasAttribute('inert')).toBe(false);
     loader();
-    expect(document.querySelector('[data-loader-percent]').textContent).toBe('0%');
+    expect(document.querySelector('[data-loader-message]').textContent).toBe('Loading Data');
     stop();
     expect(vi.getTimerCount()).toBe(0);
 });
@@ -81,7 +82,7 @@ it('does not pretend that a broken page loaded successfully and releases the ove
     loader();
     failBootLoader();
     expect(document.querySelector('[data-loader-message]').textContent).toContain('belum dapat dimuat');
-    expect(document.querySelector('[data-loader-percent]').textContent).not.toBe('100%');
+    expect(document.querySelector('[data-loader-spinner]').hasAttribute('hidden')).toBe(true);
     await vi.advanceTimersByTimeAsync(5100);
     expect(document.documentElement.classList.contains('page-loading')).toBe(false);
 });
@@ -172,12 +173,12 @@ it('keeps content immediately visible for reduced motion', () => {
     expect(screen.getByText('Materi').classList.contains('reveal-pending')).toBe(false);
 });
 
-it('does not replace a successful 100% completion with a timeout during its closing animation', async () => {
+it('does not replace a successful completion with a timeout during its closing animation', async () => {
     loader();
     await vi.advanceTimersByTimeAsync(7900);
     markBootReady();
     await vi.advanceTimersByTimeAsync(200);
-    expect(document.querySelector('[data-loader-percent]').textContent).toBe('100%');
+    expect(document.querySelector('[data-loader-spinner]').hasAttribute('hidden')).toBe(false);
     expect(document.querySelector('[data-loader-message]').textContent).not.toContain('belum dapat dimuat');
     await vi.advanceTimersByTimeAsync(600);
     expect(document.documentElement.classList.contains('page-loading')).toBe(false);

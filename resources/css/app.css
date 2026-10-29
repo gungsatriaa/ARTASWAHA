@@ -91,12 +91,6 @@ dialog[open] {
 }
 .page-loading .page-loader.is-leaving { opacity: 0; pointer-events: none; }
 .page-loader-content { width: min(21rem, 100%); text-align: center; }
-[data-loader-percent] {
-    font-family: var(--font-sans);
-    font-size: 1rem;
-    font-weight: 700;
-    font-variant-numeric: lining-nums tabular-nums;
-}
 .page-loader-content > * {
     animation: loader-reveal 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -120,22 +114,17 @@ dialog[open] {
     object-fit: contain;
     animation: loader-float 3s ease-in-out infinite;
 }
-.page-loader-track {
-    height: 0.625rem;
-    margin-top: 0.75rem;
-    overflow: hidden;
-    border-radius: 9999px;
-    background: rgb(255 255 255 / 0.08);
+.page-loader-spinner {
+    flex: none;
+    width: 1.125rem;
+    height: 1.125rem;
+    border: 2px solid rgb(255 199 0 / .2);
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: loader-spin 800ms linear infinite;
 }
-.page-loader-track > span {
-    display: block;
-    height: 100%;
-    border-radius: inherit;
-    background: var(--color-accent);
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
-}
+.page-loader-spinner[hidden] { display: none; }
+@keyframes loader-spin { to { transform: rotate(360deg); } }
 @keyframes loader-reveal {
     from { opacity: 0; translate: 0 12px; }
     to { opacity: 1; translate: 0 0; }
@@ -157,9 +146,9 @@ button:active:not(:disabled),
 a.rounded-full:active { scale: 0.98; }
 @media (prefers-reduced-motion: reduce) {
     dialog,
-    .page-loader,
-    .page-loader-track > span { transition: none; }
+    .page-loader { transition: none; }
     .page-loader-mascot,
+    .page-loader-spinner,
     .page-loader-content > *,
     .skeleton-line { animation: none !important; }
     button:active:not(:disabled),

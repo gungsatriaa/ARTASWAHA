@@ -10,14 +10,10 @@ export function startBootLoader() {
     const root = document.documentElement;
     const app = document.getElementById('app');
     app?.setAttribute('inert', '');
-    const bar = loader.querySelector('[data-loader-bar]');
-    const progress = loader.querySelector('[data-loader-progress]');
-    const percent = loader.querySelector('[data-loader-percent]');
     const skip = loader.querySelector('[data-loader-skip]');
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const timers = new Set();
-    let value = 0,
-        disposed = false,
+    let disposed = false,
         completing = false;
     const later = (callback, delay) => {
         const id = setTimeout(() => {
@@ -25,12 +21,6 @@ export function startBootLoader() {
             callback();
         }, delay);
         timers.add(id);
-    };
-    const update = (next) => {
-        value = next;
-        progress?.setAttribute('aria-valuenow', String(next));
-        if (percent) percent.textContent = `${next}%`;
-        if (bar) bar.style.transform = `scaleX(${next / 100})`;
     };
     const dispose = () => {
         disposed = true;
@@ -44,11 +34,6 @@ export function startBootLoader() {
         ready = undefined;
         fail = undefined;
     };
-    const advance = () => {
-        if (disposed || completing) return;
-        update(Math.min(94, value + Math.max(1, Math.round((95 - value) / 5))));
-        later(advance, 90);
-    };
     const minimum = new Promise((resolve) => later(resolve, reduced ? 0 : 850));
     const fonts = Promise.race([
         document.fonts?.ready ?? Promise.resolve(),
@@ -58,7 +43,6 @@ export function startBootLoader() {
         Promise.all([minimum, fonts]).then(() => {
             if (disposed || completing) return;
             completing = true;
-            update(100);
             later(
                 () => {
                     loader.classList.add('is-leaving');
@@ -75,10 +59,10 @@ export function startBootLoader() {
         timers.clear();
         const message = loader.querySelector('[data-loader-message]');
         if (message) message.textContent = 'Tampilan belum dapat dimuat. Periksa koneksi lalu muat ulang.';
+        loader.querySelector('[data-loader-spinner]')?.setAttribute('hidden', '');
         if (skip) skip.textContent = 'Tutup pemberitahuan';
         later(dispose, 5000);
     };
-    later(advance, 50);
     later(fail, 8000);
     skip?.addEventListener('click', dispose, { once: true });
     window.addEventListener('pagehide', dispose, { once: true });
