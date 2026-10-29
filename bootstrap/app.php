@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\HandleReactRequests;
+use App\Http\Middleware\MeasureRequestTiming;
 use App\Http\Middleware\RequireLearningInterview;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -16,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->prepend(MeasureRequestTiming::class);
         $middleware->alias(['admin' => EnsureAdmin::class]);
         $middleware->trimStrings(except: [fn (Request $request): bool => $request->isMethod('DELETE') && $request->is('profil')]);
         $middleware->web(append: [HandleReactRequests::class, RequireLearningInterview::class]);

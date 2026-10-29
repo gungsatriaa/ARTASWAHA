@@ -11,6 +11,12 @@ Inertia sudah dihapus dari dependency PHP dan JavaScript. Deploy source Laravel,
 
 React Router memakai loader yang meminta JSON dengan `X-React-Page: true`; Laravel tetap mengotorisasi setiap request. Respons pribadi `no-store`; isi halaman tidak disalin ke browser history/localStorage. Status form, penguncian modul, hasil kuis, CSRF, dan sesi tetap berasal dari server. Pergantian router bukan jaminan penurunan latensi server production.
 
+### Memeriksa jeda navigasi
+
+Setelah deploy source dan `php artisan optimize`, buka DevTools → Network → request Fetch/XHR → Timing atau Headers. Respons Laravel menyertakan `Server-Timing`: `app` mengukur rangkaian middleware global hingga respons siap (termasuk session dan controller); `db` mengukur eksekusi SQL selama rentang tersebut. `db` adalah bagian dari `app`, bukan durasi tambahan. SQL, parameter, dan data pengguna tidak disertakan dan query log tidak diaktifkan.
+
+Bandingkan dengan Waiting for server response. Selisihnya dapat mencakup jaringan/proxy, antrean PHP-FPM, bootstrap PHP/Laravel sebelum middleware, dan pembentukan koneksi database; jangan menyebut seluruh selisih itu sebagai waktu jaringan. Pengukuran ini tidak mencakup render React, streaming respons, atau pekerjaan setelah respons dikirim. Endpoint/aset yang tidak melewati Laravel tidak memiliki header ini. Tidak perlu mengaktifkan APP_DEBUG atau mengubah konfigurasi SSR.
+
 ---
 
 # Pembaruan production: Chatterbox CLI dalam folder ARTASWAHA
