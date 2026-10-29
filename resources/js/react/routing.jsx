@@ -76,9 +76,12 @@ export async function pageLoader({ request }) {
             stagedPage = null;
         } else {
             const cached = catalogCache.get(url);
-            page = cached && cached.expires > Date.now() && cached.identity === identityOf(currentPage)
-                ? cached.page
-                : await requestPage(url, { signal: request.signal, only: options.only });
+            if (cached && cached.expires > Date.now() && cached.identity === identityOf(currentPage)) {
+                page = cached.page ?? await cached.promise.catch(() => null);
+                if (catalogCache.get(url) !== cached || cached.identity !== identityOf(currentPage)) page = null;
+            }
+            request.signal.throwIfAborted();
+            page ??= await requestPage(url, { signal: request.signal, only: options.only });
             catalogCache.delete(url);
         }
         if (request.signal.aborted) throw new DOMException('Aborted', 'AbortError');
@@ -149,12 +152,25 @@ export const router = {
 
 export async function prefetchPage(url) {
     const key = pathOf(localUrl(url));
-    if (catalogCache.get(key)?.expires > Date.now()) return;
     const identity = identityOf(currentPage);
-    const page = await requestPage(key);
-    if (page.component !== 'Learning/Catalog' || identityOf(page) !== identity || identity !== identityOf(currentPage)) return;
+    const cached = catalogCache.get(key);
+    if (cached?.expires > Date.now() && cached.identity === identity) return cached.promise;
     if (catalogCache.size >= 8) catalogCache.delete(catalogCache.keys().next().value);
-    catalogCache.set(key, { page, identity, expires: Date.now() + 15000 });
+    const entry = { identity, expires: Date.now() + 15000 };
+    catalogCache.set(key, entry);
+    entry.promise = requestPage(key, { signal: AbortSignal.timeout(5000) }).then((page) => {
+        if (page.component !== 'Learning/Catalog' || identityOf(page) !== identity || identity !== identityOf(currentPage) || catalogCache.get(key) !== entry) {
+            if (catalogCache.get(key) === entry) catalogCache.delete(key);
+            return null;
+        }
+        entry.page = page;
+        entry.expires = Date.now() + 15000;
+        return page;
+    }).catch((error) => {
+        if (catalogCache.get(key) === entry) catalogCache.delete(key);
+        throw error;
+    });
+    return entry.promise;
 }
 
 export function Link({ href, children, replace, preserveScroll, preserveState, only, prefetch, cacheFor, onClick, ...props }) {

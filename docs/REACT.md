@@ -22,7 +22,7 @@ Editor memakai `useBlocker` untuk navigasi termasuk Back/Forward dan `beforeunlo
 ## Performa dan privasi
 
 - Page chunk, keyboard, crop, grafik Chart.js, Motion features, dan Echo/Pusher dimuat sesuai kebutuhan. Jangan memuat seluruh halaman secara eager atau menambah library animasi yang tumpang tindih.
-- Tautan menghangatkan page chunk pada hover/fokus/touch. Prefetch respons hanya katalog untuk identitas yang dikenal, TTL 15 detik, maksimal 8 entri memori. Save-Data/2G tidak prefetch. Jangan prefetch room, progres, profil, atau halaman yang dapat menjadwalkan analisis.
+- Tautan menghangatkan page chunk pada hover/fokus/touch. Prefetch respons hanya katalog untuk identitas yang dikenal, TTL 15 detik, maksimal 8 entri memori. Hover/fokus dan navigasi berbagi request katalog yang masih berjalan; prefetch dibatasi 5 detik. Kegagalan prefetch tidak disimpan dan navigasi mencoba request biasa. Hasil yang terlambat setelah invalidasi atau pergantian identitas tidak dipakai. Save-Data/2G tidak prefetch. Jangan prefetch room, progres, profil, atau halaman yang dapat menjadwalkan analisis.
 - Cache katalog dibersihkan pada mutation/pergantian identitas. Payload pribadi tidak disimpan di history state atau localStorage. Back/Forward mengambil data lagi; otorisasi server tetap berlaku.
 - Respons halaman memakai `Cache-Control: no-store, private` dan Vary berdasarkan header JSON/partial. Jangan mengaktifkan cache CDN untuk halaman berisi identitas atau jawaban.
 - Presence dipasang sekali pada bootstrap klien, ping 30 detik, tanpa overlap, cleanup timer dan tanpa ping tab tersembunyi.

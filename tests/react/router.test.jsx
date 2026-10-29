@@ -523,3 +523,38 @@ it('fetches a complete page instead of merging private props after a session cha
     expect(screen.getByRole('heading').textContent).toBe('New session');
     expect(navigation.state.loaderData.page.props.privateNote).toBeUndefined();
 });
+
+it('shares an in-flight catalog prefetch between hover, focus, and navigation', async () => {
+    mount();
+    const request = pending();
+    fetcher.mockReturnValueOnce(request.promise);
+    const hover = prefetchPage('/belajar');
+    const focus = prefetchPage('/belajar');
+    let visit;
+    await act(async () => {
+        visit = router.visit('/belajar');
+    });
+    expect(fetcher).toHaveBeenCalledOnce();
+    await act(async () => {
+        request.resolve(response(payload('/belajar', { heading: 'Katalog' }, 'Learning/Catalog')));
+        await Promise.all([hover, focus, visit]);
+    });
+    expect(screen.getByRole('heading').textContent).toBe('Katalog');
+    expect(fetcher).toHaveBeenCalledOnce();
+});
+
+it('retries navigation normally when a shared prefetch fails', async () => {
+    mount();
+    const request = pending();
+    fetcher.mockReturnValueOnce(request.promise)
+        .mockResolvedValueOnce(response(payload('/belajar', { heading: 'Pulih' }, 'Learning/Catalog')));
+    const hover = prefetchPage('/belajar').catch(() => null);
+    let visit;
+    await act(async () => { visit = router.visit('/belajar'); });
+    await act(async () => {
+        request.resolve(response({}, 503));
+        await Promise.all([hover, visit]);
+    });
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole('heading').textContent).toBe('Pulih');
+});
