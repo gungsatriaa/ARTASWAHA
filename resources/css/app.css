@@ -166,10 +166,9 @@ a.rounded-full:active { scale: 0.98; }
     a.rounded-full:active { scale: none; }
 }
 
-/* React owns page content; only below-fold cards opt into scroll reveals. */
+/* PageEffects orchestrates card entrances without delaying navigation. */
 .react-page-enter { animation: react-page-enter 280ms ease-out both; }
-[data-reveal] { transition: opacity 420ms ease-out, translate 420ms ease-out; }
-.reveal-pending { opacity: 0; translate: 0 14px; }
+.reveal-pending { opacity: 0; }
 @keyframes react-page-enter { from { opacity: .45; translate: 0 6px; } to { opacity: 1; translate: 0 0; } }
 @media (prefers-reduced-motion: reduce) {
     .react-page-enter { animation: none; }

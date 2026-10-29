@@ -38,6 +38,7 @@ it('keeps the current screen mounted while navigation waits and avoids restartin
 });
 beforeEach(() => {
     vi.useFakeTimers();
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{}]);
     navigation.state = 'idle';
     navigation.formMethod = undefined;
     Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
@@ -180,4 +181,31 @@ it('does not replace a successful 100% completion with a timeout during its clos
     expect(document.querySelector('[data-loader-message]').textContent).not.toContain('belum dapat dimuat');
     await vi.advanceTimersByTimeAsync(600);
     expect(document.documentElement.classList.contains('page-loading')).toBe(false);
+});
+
+it('animates visible cards on navigation, observes new content, and cancels on unmount', async () => {
+    const animation = { cancel: vi.fn(), finish: vi.fn() };
+    const animate = vi.fn(() => animation);
+    vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+    vi.stubGlobal('IntersectionObserver', class {
+        constructor() {}
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+    });
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 20 });
+    Object.defineProperty(HTMLElement.prototype, 'animate', { configurable: true, value: animate });
+    const { rerender, unmount } = render(<PageEffects><section className="rounded-card">Materi<button>Mulai</button></section></PageEffects>);
+    expect(animate).toHaveBeenCalledTimes(1);
+    expect(animate.mock.calls[0][1]).toMatchObject({ duration: 460, delay: 0 });
+    const original = page.url;
+    page.url = '/materi-baru';
+    rerender(<PageEffects><section className="rounded-card">Materi baru<button>Mulai</button></section><article>Modul</article></PageEffects>);
+    expect(animate).toHaveBeenCalledTimes(3);
+    await act(async () => { rerender(<PageEffects><section className="rounded-card">Materi baru</section><article>Modul</article><section>Hasil baru</section></PageEffects>); });
+    expect(animate).toHaveBeenCalledTimes(4);
+    unmount();
+    expect(animation.cancel).toHaveBeenCalled();
+    page.url = original;
+    delete HTMLElement.prototype.animate;
 });
