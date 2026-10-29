@@ -649,6 +649,10 @@ Halaman lama tetap terlihat selama request Inertia, tanpa skeleton navigasi atau
 
 Deploy source, `npm run build`, lalu restart SSR. Tidak ada migration, env, dependency, atau perubahan worker. Periksa navigasi pertama/ulang, Back, jaringan lambat, fokus keyboard, dan mobile. Tes mencakup pemanasan chunk, kegagalan preload, Save-Data/2G, serta konten/state yang bertahan selama navigasi menunggu. Ukuran build dan tes komponen tidak menggantikan pengukuran TTFB/INP di production.
 
+### Navigasi mobile pada pelajaran
+
+Halaman pelajaran memakai navigasi bawah pill yang sama dengan halaman aplikasi lain untuk akun terdaftar dan anonim, dengan menu Belajar aktif dan ruang bawah konten agar tombol tidak tertutup. Hamburger tidak tampil pada kedua identitas tersebut. Tamu tetap memakai menu tamu; kuis room aktif tetap menyembunyikan navigasi aplikasi. Jalankan `npm run build` lalu restart SSR setelah deploy. Tidak ada perubahan env atau dependency. Tes komponen mencakup kedua identitas, menu aktif, ruang konten, dan pengecualian room aktif; tampilan HP fisik belum diverifikasi.
+
 ### URL Sesonggan dan tautan lama
 
 Migration lanjutan `2026_10_29_234310_rename_sesonggakan_slugs_to_sesonggan.php` menggantikan keputusan mempertahankan URL lama di bagian berikut: slug jalur dan modul sekarang memakai `sesonggan`. ID, progres, dan riwayat jawaban tetap utuh. URL lama dialihkan ke URL baru (GET 301, POST 307 agar isian tetap dikirim). Jika slug tujuan sudah dipakai baris lain, seluruh transaksi dibatalkan tanpa menggabungkan atau menghapus data; periksa duplikat sebelum menjalankan ulang.

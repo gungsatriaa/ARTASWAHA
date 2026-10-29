@@ -256,6 +256,32 @@ describe('shared shell', () => {
         expect(document.activeElement).toBe(trigger);
     });
 
+    it.each(['anonymous', 'account'])('keeps the mobile lesson navigation for an %s identity', (mode) => {
+        page.component = 'Learning/Lesson';
+        page.props.viewer.mode = mode;
+        render(
+            <SiteLayout>
+                <h1>Pelajaran</h1>
+            </SiteLayout>,
+        );
+        const navigation = screen.getByRole('navigation', { name: 'Navigasi utama mobile' });
+        expect(within(navigation).getByRole('link', { name: 'Belajar' }).getAttribute('aria-current')).toBe('page');
+        expect(within(navigation).getAllByRole('link')).toHaveLength(4);
+        expect(screen.queryByRole('button', { name: 'Buka menu' })).toBeNull();
+        expect(document.getElementById('main-content').classList.contains('pb-32')).toBe(true);
+    });
+
+    it('keeps app navigation hidden during an active room', () => {
+        page.component = 'Rooms/Show';
+        page.props.room = { status: 'active' };
+        render(
+            <SiteLayout>
+                <h1>Kuis</h1>
+            </SiteLayout>,
+        );
+        expect(screen.queryByRole('navigation', { name: 'Navigasi utama mobile' })).toBeNull();
+    });
+
     it('shows one flash and removes it after its bounded lifetime', () => {
         vi.useFakeTimers();
         page.props.flash = { message: 'Progres tersimpan.', tone: 'success' };

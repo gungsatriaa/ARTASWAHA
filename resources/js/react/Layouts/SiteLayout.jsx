@@ -80,8 +80,7 @@ export default function SiteLayout({ children }) {
     const { props, component } = usePage();
     const { viewer, navigation: nav, brand, flash, csrfToken, links, materials = {} } = props;
     const [menu, setMenu] = useState(false);
-    const appMobile =
-        viewer && !['Learning/Interview', 'Learning/Lesson'].includes(component) && !component.startsWith('Auth/');
+    const appMobile = viewer && component !== 'Learning/Interview' && !component.startsWith('Auth/');
     const playing = component === 'Rooms/Show' && (props.room?.status === 'active' || props.room?.feedback);
     const active =
         component === 'Home'
