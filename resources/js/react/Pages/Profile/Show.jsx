@@ -159,7 +159,7 @@ export default function Profile({
                                     <div className="rounded-2xl bg-background p-5">
                                         <h3 className="font-bold">Paribasa Bali</h3>
                                         <p className="mt-3 text-sm leading-7 text-foreground/55">
-                                            Cecimpedan, peparikan, dan sesonggakan.
+                                            Cecimpedan, peparikan, dan sesonggan.
                                         </p>
                                     </div>
                                     <div className="rounded-2xl bg-background p-5">

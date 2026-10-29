@@ -15,7 +15,7 @@ class LearningPathSeeder extends Seeder
         $paths = [
             ['group' => 'paribasa', 'title' => 'Cecimpedan', 'slug' => 'cecimpedan', 'description' => 'Teka-teki tradisional untuk mengasah rasa ingin tahu.', 'sort_order' => 1],
             ['group' => 'paribasa', 'title' => 'Peparikan', 'slug' => 'peparikan', 'description' => 'Belajar parikan dan permainan bunyi dalam Bahasa Bali.', 'sort_order' => 2],
-            ['group' => 'paribasa', 'title' => 'Sesonggakan', 'slug' => 'sesonggakan', 'description' => 'Mengenal ungkapan dan perbandingan dalam tradisi Bali.', 'sort_order' => 3],
+            ['group' => 'paribasa', 'title' => 'Sesonggan', 'slug' => 'sesonggan', 'description' => 'Mengenal ungkapan dan perbandingan dalam tradisi Bali.', 'sort_order' => 3],
             ['group' => 'aksara', 'title' => 'Aksara Wreastra & Gantungan', 'slug' => 'wreastra-gantungan', 'description' => 'Mengenal aksara dasar dan bentuk gantungannya.', 'sort_order' => 1],
             ['group' => 'aksara', 'title' => 'Pengangge Suara', 'slug' => 'pengangge-suara', 'description' => 'Mengenal tanda vokal pada Aksara Bali.', 'sort_order' => 2],
             ['group' => 'aksara', 'title' => 'Pengangge Tengenan', 'slug' => 'pengangge-tengenan', 'description' => 'Mengenal tanda konsonan akhir dalam Aksara Bali.', 'sort_order' => 3],
@@ -24,7 +24,10 @@ class LearningPathSeeder extends Seeder
         ];
 
         foreach ($paths as $path) {
-            LearningPath::query()->updateOrCreate(['slug' => $path['slug']], [...$path, 'is_published' => true]);
+            $slug = $path['slug'] === 'sesonggan'
+                ? (LearningPath::query()->where('slug', 'sesonggakan')->value('slug') ?? $path['slug'])
+                : $path['slug'];
+            LearningPath::query()->updateOrCreate(['slug' => $slug], [...$path, 'slug' => $slug, 'is_published' => true]);
         }
     }
 }

@@ -576,9 +576,9 @@ Setelah modul selesai, halaman pelajaran menyediakan tombol **Modul berikutnya**
 
 ## Seeder modul Paribasa Bali
 
-`ParibasaLessonSeeder` menambahkan 6 modul untuk setiap jalur `cecimpedan`, `peparikan`, dan `sesonggakan`: total 18 modul dan 180 soal. Setiap modul memiliki 8 pilihan tunggal, 1 esai jawaban singkat, dan 1 pilihan banyak. Sepuluh modul menyediakan materi dan delapan modul berupa latihan langsung. Modul tanpa materi tetap menyimpan bagian sumber; halaman React langsung menampilkan soal pertama tanpa bacaan kosong atau tombol kembali ke materi yang tidak ada. Esai Paribasa menggunakan teks Latin dan tidak otomatis membuka keyboard aksara.
+`ParibasaLessonSeeder` menambahkan 6 modul untuk setiap jalur `cecimpedan`, `peparikan`, dan `sesonggan`: total 18 modul dan 180 soal. Setiap modul memiliki 8 pilihan tunggal, 1 esai jawaban singkat, dan 1 pilihan banyak. Sepuluh modul menyediakan materi dan delapan modul berupa latihan langsung. Modul tanpa materi tetap menyimpan bagian sumber; halaman React langsung menampilkan soal pertama tanpa bacaan kosong atau tombol kembali ke materi yang tidak ada. Esai Paribasa menggunakan teks Latin dan tidak otomatis membuka keyboard aksara.
 
-Rujukan awal adalah tiga dokumen Scribd dari pengguna: `Paribasa-Basa-Bali` (294471338), `Bahasa-Bali` (399384717), dan `CECIMPEDAN` (645712970), dengan pembanding *Kasusastran Bali miwah Basita Paribasa Bali* oleh I Nyoman Suwija pada repositori Mahadewa (2025). URL rujukan tersedia pada tiap modul. Petunjuk, skenario, dan pembahasan ditulis ulang; bank ini bukan salinan keseluruhan dokumen. Perbedaan ejaan/jawaban tradisi lisan dijelaskan pada sumber. Nama menu Sesonggakan tetap dipertahankan, sementara materi membedakan istilah sesonggan dan sesenggakan. Penjelasan memakai Bahasa Indonesia dengan istilah/contoh Bali. Penelaahan kebahasaan oleh pengajar tetap disarankan sebelum digunakan sebagai asesmen resmi.
+Rujukan awal adalah tiga dokumen Scribd dari pengguna: `Paribasa-Basa-Bali` (294471338), `Bahasa-Bali` (399384717), dan `CECIMPEDAN` (645712970), dengan pembanding *Kasusastran Bali miwah Basita Paribasa Bali* oleh I Nyoman Suwija pada repositori Mahadewa (2025). URL rujukan tersedia pada tiap modul. Petunjuk, skenario, dan pembahasan ditulis ulang; bank ini bukan salinan keseluruhan dokumen. Perbedaan ejaan/jawaban tradisi lisan dijelaskan pada sumber. Nama menu menggunakan Sesonggan; materi tetap membedakan istilah sesonggan dan sesenggakan. Penjelasan memakai Bahasa Indonesia dengan istilah/contoh Bali. Penelaahan kebahasaan oleh pengajar tetap disarankan sebelum digunakan sebagai asesmen resmi.
 
 Setelah source diperbarui dan migration bank latihan sebelumnya sudah dijalankan:
 
@@ -648,3 +648,18 @@ Menu utama desktop/mobile, dropdown materi/profil, dan sidebar admin menyiapkan 
 Halaman lama tetap terlihat selama request Inertia, tanpa skeleton navigasi atau remount paksa pembungkus halaman. Animasi reveal konten bawah layar tetap tersedia. Progress bar bawaan Inertia berwarna tema, setinggi 3px, muncul setelah 80ms; tidak ada progress bar kedua. Overlay pembuka tetap hanya berjalan saat dokumen dimuat ulang. Request data server tetap diperlukan sehingga ini bukan jaminan seluruh navigasi instan atau perbaikan latensi production yang belum diukur.
 
 Deploy source, `npm run build`, lalu restart SSR. Tidak ada migration, env, dependency, atau perubahan worker. Periksa navigasi pertama/ulang, Back, jaringan lambat, fokus keyboard, dan mobile. Tes mencakup pemanasan chunk, kegagalan preload, Save-Data/2G, serta konten/state yang bertahan selama navigasi menunggu. Ukuran build dan tes komponen tidak menggantikan pengukuran TTFB/INP di production.
+
+### Koreksi nama Sesonggan tanpa menghapus data production
+
+Nama tampil lama diperbaiki menjadi **Sesonggan** pada FAQ/profil, seeder, nama/deskripsi jalur, teks materi modul, judul/deskripsi kuis, serta prompt/pembahasan soal kuis. Migration `2026_10_29_214459_rename_sesonggakan_display_text_to_sesonggan.php` hanya memperbarui teks yang cocok dalam transaksi, membaca per 100 baris. Tidak ada tabel/baris yang dihapus atau dibuat ulang, dan ID, foreign key, slug/URL lama, timestamps, progres, skor, opsi/kunci jawaban, JSON bank soal, serta snapshot/riwayat percobaan tetap dipertahankan. Riwayat dan keluaran AI yang sudah tersimpan tidak ditulis ulang; analisis berikutnya memakai nama jalur yang sudah diperbaiki.
+
+Seeder database baru memakai slug `sesonggan`. Bila production sudah memiliki slug lama, kedua seeder tetap memakai ID/slug tersebut dan modul di bawahnya, sehingga menjalankan seed lagi tidak menggandakan jalur atau modul. Bila kedua slug sudah ada sebelum deploy, data keduanya tetap dipertahankan; perubahan ini tidak menggabungkan jalur otomatis. Kemunculan istilah lama pada kode kompatibilitas dan fixture tes disengaja.
+
+Setelah cadangan database tersedia, deploy source lalu jalankan:
+
+```bash
+php artisan migrate --force
+npm run build
+```
+
+Restart SSR sesuai prosedur sebelumnya. Tidak perlu menjalankan seeder atau mengubah env. Gunakan `migrate`, bukan `migrate:fresh`, `migrate:refresh`, atau reset database. Tidak ada perubahan worker atau dependency. Rollback migration sengaja tidak membalikkan koreksi teks karena tidak bisa membedakan istilah yang sejak awal sudah benar. Gunakan cadangan jika perlu memulihkan teks persis seperti sebelumnya. Tes memeriksa koreksi, eksekusi ulang, riwayat jawaban/progres yang utuh, seed database baru, dan seed ulang data dengan URL lama. Migrasi production belum dijalankan oleh Codex.

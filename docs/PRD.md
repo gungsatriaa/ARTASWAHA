@@ -23,7 +23,7 @@ ARTASWAHA adalah platform edukasi bahasa, sastra, dan aksara Bali untuk anak-ana
 ### Belajar mandiri
 
 - Dua jalur utama dengan unit pelajaran berurutan dan bertahap:
-  - **Paribasa Bali:** Cecimpedan, Peparikan, dan Sesonggakan.
+  - **Paribasa Bali:** Cecimpedan, Peparikan, dan Sesonggan.
   - **Aksara Bali:** Aksara Wreastra beserta gantungannya, Pengangge Suara, Pengangge Tengenan, Pengangge Arda Suara, dan angka dalam Aksara Bali.
 - Bentuk latihan: pilihan jawaban, cocokkan bentuk dan arti, dengarkan lalu pilih, susun aksara, lengkapi kata, serta tebak makna paribasa.
 - **Keyboard Aksara Bali di layar:** membantu pengguna memasukkan Aksara Bali saat membuat soal/kuis dan saat menjawab latihan atau kuis yang menerima jawaban aksara. Keyboard menampilkan karakter dan tanda yang relevan, bekerja pada perangkat sentuh maupun komputer, serta menyediakan input alternatif bila layout perangkat tidak mendukung Aksara Bali.

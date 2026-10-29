@@ -7,7 +7,7 @@ const questions = [
     ],
     [
         'Apa saja yang bisa dipelajari?',
-        'Jelajahi Paribasa Bali, seperti cecimpedan, peparikan, dan sesonggakan, serta Aksara Bali melalui modul yang telah ditinjau.',
+        'Jelajahi Paribasa Bali, seperti cecimpedan, peparikan, dan sesonggan, serta Aksara Bali melalui modul yang telah ditinjau.',
     ],
     [
         'Apakah harus membuat akun?',

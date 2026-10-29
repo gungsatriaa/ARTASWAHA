@@ -36,7 +36,6 @@ it.each([
     ['Cecimpedan', 'question'],
     ['Peparikan', 'conversation'],
     ['Sesonggan', 'leaf'],
-    ['Sesonggakan', 'leaf'],
 ])('uses the matching Paribasa icon for %s', (title, name) => {
     const { container, unmount } = render(<CategoryIcon group="paribasa" title={title} />);
     const path = container.querySelector('path').getAttribute('d');

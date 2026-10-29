@@ -25,7 +25,10 @@ class ParibasaLessonSeeder extends Seeder
     {
         DB::transaction(function (): void {
             foreach ($this->paths() as $pathData) {
-                $path = LearningPath::query()->firstOrCreate(['slug' => $pathData['slug']], [
+                $slug = $pathData['slug'] === 'sesonggan'
+                    ? (LearningPath::query()->where('slug', 'sesonggakan')->value('slug') ?? $pathData['slug'])
+                    : $pathData['slug'];
+                $path = LearningPath::query()->firstOrCreate(['slug' => $slug], [
                     'group' => 'paribasa', 'title' => $pathData['title'], 'description' => $pathData['description'],
                     'sort_order' => $pathData['order'], 'is_published' => true,
                 ]);
@@ -33,7 +36,7 @@ class ParibasaLessonSeeder extends Seeder
                     $sources = array_unique([...$module['sources'], self::MAHADEWA]);
                     $references = "## Sumber belajar\nRujukan konsep dan contoh tradisional:\n".implode("\n", $sources);
                     $references .= "\n\nPetunjuk, skenario, pilihan jawaban, dan pembahasan latihan ditulis ulang untuk ARTASWAHA. Bukan salinan bank soal. Penjelasan menggunakan Bahasa Indonesia, istilah dan contoh menggunakan Bahasa Bali. Variasi ejaan dan jawaban dapat berbeda antardaerah; latihan ini memakai jawaban acuan pada pembahasan.";
-                    Lesson::query()->firstOrCreate(['slug' => $pathData['slug'].'-'.$module['slug']], [
+                    Lesson::query()->firstOrCreate(['slug' => $path->slug.'-'.$module['slug']], [
                         'learning_path_id' => $path->id, 'title' => $module['title'], 'summary' => $module['summary'],
                         'sort_order' => $index + 1, 'content' => ($module['material'] === '' ? '' : '## '.$module['title']."\n".$module['material']."\n\n").$references,
                         'exercises' => $this->questions($module['facts']),
@@ -84,7 +87,7 @@ class ParibasaLessonSeeder extends Seeder
         return [
             ['slug' => 'cecimpedan', 'title' => 'Cecimpedan', 'description' => 'Membaca petunjuk, menebak, dan mengenali permainan makna dalam teka-teki Bali.', 'order' => 1, 'modules' => $this->cecimpedan()],
             ['slug' => 'peparikan', 'title' => 'Peparikan', 'description' => 'Mengenali sampiran, isi, bunyi, dan pesan pantun Bali.', 'order' => 2, 'modules' => $this->peparikan()],
-            ['slug' => 'sesonggakan', 'title' => 'Sesonggakan', 'description' => 'Mengenali ungkapan kias dan menerapkannya dalam konteks yang tepat.', 'order' => 3, 'modules' => $this->sesonggakan()],
+            ['slug' => 'sesonggan', 'title' => 'Sesonggan', 'description' => 'Mengenali ungkapan kias dan menerapkannya dalam konteks yang tepat.', 'order' => 3, 'modules' => $this->sesonggan()],
         ];
     }
 
@@ -193,11 +196,11 @@ class ParibasaLessonSeeder extends Seeder
     }
 
     /** @return list<array<string, mixed>> */
-    private function sesonggakan(): array
+    private function sesonggan(): array
     {
         return [
             ['slug' => 'membaca-makna-kias', 'title' => 'Membaca ungkapan dan makna kias', 'summary' => 'Bedakan gambaran harfiah, makna ungkapan, dan penerapannya.',
-                'material' => 'Nama jalur Sesonggakan dipertahankan dari menu platform. Rujukan membedakan sesonggan (pepatah) dan sesenggakan (ibarat); keduanya tidak otomatis sama. Latihan di jalur ini berfokus pada pemahaman ungkapan kias. Awali dari gambaran harfiah, cari hubungan maknanya, lalu periksa konteks pemakaiannya. Skenario latihan merupakan contoh baru, bukan kutipan sumber.',
+                'material' => 'Rujukan membedakan sesonggan (pepatah) dan sesenggakan (ibarat); keduanya tidak otomatis sama. Latihan di jalur ini berfokus pada pemahaman ungkapan kias. Awali dari gambaran harfiah, cari hubungan maknanya, lalu periksa konteks pemakaiannya. Skenario latihan merupakan contoh baru, bukan kutipan sumber.',
                 'sources' => [self::SESONGGAN, self::MAHADEWA], 'facts' => [
                     ['Makna yang mengikuti arti langsung kata-kata disebut apa?', 'Makna harfiah', 'Makna harfiah menjelaskan gambaran bendanya terlebih dahulu.'],
                     ['Makna yang meminjam gambaran untuk menunjuk keadaan lain disebut apa?', 'Makna kias', 'Ungkapan dapat menunjuk perilaku atau keadaan manusia secara tidak langsung.'],
