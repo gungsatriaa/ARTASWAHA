@@ -75,9 +75,7 @@ export default function PageEffects({ children }) {
                     Memuat halaman…
                 </span>
             )}
-            <div className="react-page-enter" key={pageKey}>
-                {children}
-            </div>
+            <div className="react-page-content">{children}</div>
         </div>
     );
 }

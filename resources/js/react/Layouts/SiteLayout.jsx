@@ -1,12 +1,18 @@
 import Footer from '../Components/Footer';
 import { ProfileDropdown, SubjectDropdown, SubjectLinks } from '../Components/NavigationMenus';
 import PageEffects from '../Components/PageEffects';
+import NavigationLink from '../Components/NavigationLink';
 import { useEffect, useState } from 'react';
 import { Head, Link, usePage } from '@inertiajs/react';
 import Dialog from '../Components/Dialog';
 import Icon from '../Components/Icon';
 import { Action, secondaryClass } from '../Components/forms';
 import { buttonClass } from '../Components/ui';
+
+const navigationPages = {
+    home: 'Home', book: 'Learning/Catalog', quiz: 'Quizzes/Index',
+    user: 'Profile/Show', info: 'Profile/About', chart: 'Admin/Dashboard',
+};
 
 export function usePresence(url) {
     useEffect(() => {
@@ -104,7 +110,8 @@ export default function SiteLayout({ children }) {
                 className={`sticky top-0 z-40 bg-background/95 backdrop-blur-sm ${playing ? 'hidden md:block' : ''}`}
             >
                 <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-10 lg:py-5">
-                    <Link
+                    <NavigationLink
+                        page="Home"
                         href={nav.home}
                         aria-label="ARTASWAHA beranda"
                         className="flex shrink-0 items-center gap-3 rounded-full focus-visible:outline-2 focus-visible:outline-accent"
@@ -119,16 +126,17 @@ export default function SiteLayout({ children }) {
                         <span className="font-display text-lg font-bold tracking-tight sm:text-2xl md:hidden lg:inline">
                             ARTASWAHA
                         </span>
-                    </Link>
+                    </NavigationLink>
                     <nav aria-label="Navigasi utama" className="hidden items-center gap-1 md:flex">
-                        <Link
+                        <NavigationLink
+                            page="Home"
                             href={nav.home}
                             aria-current={active === 'home' ? 'page' : undefined}
                             className={`${secondaryClass} !px-3 ${active === 'home' ? '!bg-primary/20 !text-accent' : '!bg-transparent'}`}
                         >
                             <Icon name="home" />
                             Beranda
-                        </Link>
+                        </NavigationLink>
                         <SubjectDropdown
                             group="paribasa"
                             items={materials.paribasa}
@@ -141,14 +149,15 @@ export default function SiteLayout({ children }) {
                             items={materials.aksara}
                             active={active === 'book' && (props.path?.group ?? props.lesson?.path?.group) === 'aksara'}
                         />
-                        <Link
+                        <NavigationLink
+                            page="Quizzes/Index"
                             href={nav.quizzes}
                             aria-current={active === 'quiz' ? 'page' : undefined}
                             className={`${secondaryClass} !px-3 ${active === 'quiz' ? '!bg-primary/20 !text-accent' : '!bg-transparent'}`}
                         >
                             <Icon name="quiz" />
                             Kuis
-                        </Link>
+                        </NavigationLink>
                         {viewer ? (
                             <ProfileDropdown />
                         ) : (
@@ -195,7 +204,7 @@ export default function SiteLayout({ children }) {
                         ['quiz', 'Kuis', nav.quizzes],
                         ['user', 'Profil', nav.profile],
                     ].map(([icon, label, url]) => (
-                        <Link
+                        <NavigationLink page={navigationPages[icon]}
                             key={icon}
                             href={url}
                             aria-current={active === icon ? 'page' : undefined}
@@ -207,7 +216,7 @@ export default function SiteLayout({ children }) {
                                 <Icon name={icon} />
                             </span>
                             {label}
-                        </Link>
+                        </NavigationLink>
                     ))}
                 </nav>
             )}
@@ -236,7 +245,7 @@ export default function SiteLayout({ children }) {
                                 ['Semua materi', nav.learning, 'book', active === 'book'],
                                 ['Kuis', nav.quizzes, 'quiz', active === 'quiz'],
                             ].map(([label, url, icon, selected]) => (
-                                <Link
+                                <NavigationLink page={navigationPages[icon]}
                                     onClick={() => setMenu(false)}
                                     key={label}
                                     href={url}
@@ -245,7 +254,7 @@ export default function SiteLayout({ children }) {
                                 >
                                     <Icon name={icon} />
                                     <span>{label}</span>
-                                </Link>
+                                </NavigationLink>
                             ))}
                         </div>
                         <div className="space-y-2">
@@ -274,7 +283,7 @@ export default function SiteLayout({ children }) {
                                     ['Tentang aplikasi ini', links['profile.about'], 'info'],
                                     ...(viewer.isAdmin ? [['Admin', nav.admin, 'chart']] : []),
                                 ].map(([label, url, icon]) => (
-                                    <Link
+                                    <NavigationLink page={navigationPages[icon]}
                                         onClick={() => setMenu(false)}
                                         key={label}
                                         href={url}
@@ -282,7 +291,7 @@ export default function SiteLayout({ children }) {
                                     >
                                         <Icon name={icon} />
                                         {label}
-                                    </Link>
+                                    </NavigationLink>
                                 ))}
                             </div>
                         )}

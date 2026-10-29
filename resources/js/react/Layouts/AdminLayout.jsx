@@ -1,4 +1,5 @@
 import PageEffects from '../Components/PageEffects';
+import NavigationLink from '../Components/NavigationLink';
 import { useEffect, useState } from 'react';
 import { Head, Link, usePage } from '@inertiajs/react';
 import Dialog from '../Components/Dialog';
@@ -45,7 +46,8 @@ export default function AdminLayout({ children }) {
                     <h2 className="mb-2 px-3 text-xs font-medium text-foreground/35">{label}</h2>
                     <div className="space-y-1">
                         {items.map(([prefix, title, name, icon]) => (
-                            <Link
+                            <NavigationLink
+                                page={{ "Admin/Path": "Admin/Paths", "Admin/Lesson": "Admin/Lessons", "Admin/Audio": "Admin/AudioIndex" }[prefix] ?? prefix}
                                 key={name}
                                 href={links[name]}
                                 onClick={() => setOpen(false)}
@@ -55,7 +57,7 @@ export default function AdminLayout({ children }) {
                                 <Icon name={icon} className="size-5 shrink-0" />
                                 <span className="min-w-0 flex-1">{title}</span>
                                 {active(prefix) && <span className="size-1.5 shrink-0 rounded-full bg-accent" />}
-                            </Link>
+                            </NavigationLink>
                         ))}
                     </div>
                 </section>

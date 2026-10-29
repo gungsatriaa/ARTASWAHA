@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import Dropdown from './Dropdown';
+import NavigationLink from './NavigationLink';
 import Icon from './Icon';
 import { CategoryIcon } from './ui';
 import { Action } from './forms';
@@ -12,22 +13,22 @@ export function SubjectLinks({ group, items = [], close }) {
         <>
             <div className="max-h-80 space-y-1 overflow-y-auto">
                 {items.map((item) => (
-                    <Link href={item.url} key={item.id} className={itemClass} onClick={close}>
+                    <NavigationLink page="Learning/Path" href={item.url} key={item.id} className={itemClass} onClick={close}>
                         <CategoryIcon group={group} title={item.title} className="size-9" />
                         <span className="min-w-0 break-words">{item.title}</span>
                         <Icon name="arrow" className="ml-auto size-4 shrink-0 text-foreground/30" />
-                    </Link>
+                    </NavigationLink>
                 ))}
                 {!items.length && <p className="px-3 py-4 text-sm text-foreground/50">Materi sedang disiapkan.</p>}
             </div>
-            <Link
+            <NavigationLink page="Learning/Catalog"
                 href={`${navigation.learning}?group=${group}`}
                 onClick={close}
                 className={`${itemClass} mt-2 !text-accent`}
             >
                 Lihat semua materi
                 <Icon name="arrow" className="ml-auto size-4" />
-            </Link>
+            </NavigationLink>
         </>
     );
 }
@@ -75,19 +76,19 @@ export function ProfileDropdown() {
                 </div>
             </div>
             <nav aria-label="Menu akun">
-                <Link href={navigation.profile} className={itemClass}>
+                <NavigationLink page="Profile/Show" href={navigation.profile} className={itemClass}>
                     <Icon name="user" />
                     Profil & progres belajar
-                </Link>
-                <Link href={links['profile.about']} className={itemClass}>
+                </NavigationLink>
+                <NavigationLink page="Profile/About" href={links['profile.about']} className={itemClass}>
                     <Icon name="info" />
                     Tentang aplikasi ini
-                </Link>
+                </NavigationLink>
                 {viewer.isAdmin && (
-                    <Link href={navigation.admin} className={itemClass}>
+                    <NavigationLink page="Admin/Dashboard" href={navigation.admin} className={itemClass}>
                         <Icon name="chart" />
                         Dashboard admin
-                    </Link>
+                    </NavigationLink>
                 )}
             </nav>
             {viewer.mode === 'anonymous' ? (

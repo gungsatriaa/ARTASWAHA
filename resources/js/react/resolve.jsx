@@ -2,12 +2,12 @@ import SiteLayout from './Layouts/SiteLayout';
 import AdminLayout from './Layouts/AdminLayout';
 import AuthLayout from './Layouts/AuthLayout';
 import PageLoadError from './Components/PageLoadError';
-const pages = import.meta.glob('./Pages/**/*.jsx');
+import { loadPage } from './pages';
 export const title = (text) => (text.includes('ARTASWAHA') ? text : `${text} — ARTASWAHA`);
 export async function resolve(name) {
     let page;
     try {
-        page = await pages[`./Pages/${name}.jsx`]();
+        page = await loadPage(name);
     } catch (error) {
         if (typeof window === 'undefined') throw error;
         page = { default: PageLoadError };

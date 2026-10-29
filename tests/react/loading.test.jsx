@@ -2,6 +2,8 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { act, cleanup, render, screen, renderHook } from '@testing-library/react';
 import { startBootLoader, markBootReady, failBootLoader } from '../../resources/js/react/boot-loader';
 import PageEffects from '../../resources/js/react/Components/PageEffects';
+import { useState } from 'react';
+import { fireEvent } from '@testing-library/react';
 import usePolling from '../../resources/js/react/Hooks/usePolling';
 const { callbacks, page } = vi.hoisted(() => ({
     callbacks: new Map(),
@@ -17,6 +19,24 @@ vi.mock('@inertiajs/react', () => ({
     },
 }));
 let stop;
+
+it('keeps the current screen mounted while navigation waits and avoids restarting the whole page animation', () => {
+    function Draft() {
+        const [value, setValue] = useState('');
+        return <input aria-label="Catatan" value={value} onChange={(event) => setValue(event.target.value)} />;
+    }
+    const { rerender } = render(<PageEffects><Draft /></PageEffects>);
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Tetap di sini' } });
+    act(() => callbacks.get('start')({ detail: { visit: { method: 'get' } } }));
+    act(() => vi.advanceTimersByTime(500));
+    expect(screen.getByRole('textbox').value).toBe('Tetap di sini');
+    const original = page.url;
+    page.url = '/belajar';
+    rerender(<PageEffects><Draft /></PageEffects>);
+    expect(screen.getByRole('textbox').value).toBe('Tetap di sini');
+    expect(document.querySelector('.react-page-enter')).toBeNull();
+    page.url = original;
+});
 beforeEach(() => {
     vi.useFakeTimers();
     callbacks.clear();

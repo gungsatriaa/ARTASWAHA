@@ -193,7 +193,7 @@ a.rounded-full:active { scale: 0.98; }
 .admin-workspace [data-ui='page-heading'] p { margin-top: .5rem; max-width: 46rem; }
 .admin-workspace [data-ui='card'], .admin-workspace [data-ui='stat'] { border-radius: 1.5rem; }
 .admin-workspace [data-ui='stat'] { padding: 1.25rem; }
-.admin-workspace .react-page-enter > form { padding: 1.25rem; border-radius: 1.5rem; background: var(--color-surface); }
+.admin-workspace .react-page-content > form { padding: 1.25rem; border-radius: 1.5rem; background: var(--color-surface); }
 .admin-workspace input:not([type='checkbox']):not([type='radio']), .admin-workspace select { min-height: 2.75rem; }
 .admin-workspace table { border-collapse: separate; border-spacing: 0; }
 .admin-workspace th { color: var(--color-muted); font-weight: 600; }
@@ -204,8 +204,8 @@ a.rounded-full:active { scale: 0.98; }
 @media (max-width: 639px) {
     .admin-workspace [data-ui='page-heading'] > a,
     .admin-workspace [data-ui='page-heading'] > div:last-child:not(:first-child) { width: 100%; }
-    .admin-workspace .react-page-enter > form { display: grid; grid-template-columns: minmax(0, 1fr); }
-    .admin-workspace .react-page-enter > nav { gap: .5rem; }
+    .admin-workspace .react-page-content > form { display: grid; grid-template-columns: minmax(0, 1fr); }
+    .admin-workspace .react-page-content > nav { gap: .5rem; }
 }
 
 .admin-analytics [data-ui='stat'] > p:first-child { min-height: 2.5rem; }
@@ -233,3 +233,5 @@ a.rounded-full:active { scale: 0.98; }
 @keyframes quiz-results-ring { from { stroke-dashoffset: 100; } to { stroke-dashoffset: var(--quiz-ring-offset); } }
 @keyframes quiz-result-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) { .quiz-results-ring, .quiz-result-item { animation: none; } }
+
+#nprogress .bar { height: 3px; z-index: 10000; }
