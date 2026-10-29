@@ -23,6 +23,8 @@ use App\Http\Controllers\RoomController;
 use App\Http\Controllers\ShowProfileAvatarController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\UpdateProfileAvatarController;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LearningPathController::class, 'index'])->name('home');
@@ -44,6 +46,17 @@ Route::get('/profil/tentang', [ProfileController::class, 'about'])->name('profil
 Route::get('/profil/avatar', ShowProfileAvatarController::class)->name('profile.avatar.show');
 Route::put('/profil/avatar', UpdateProfileAvatarController::class)->middleware('throttle:10,1')->name('profile.avatar.update');
 Route::get('/belajar', [LearningPathController::class, 'catalog'])->name('learning.paths.index');
+foreach ([
+    ['get', '/belajar/{legacySlug}', 'learning.paths.show', 'learningPath'],
+    ['get', '/pelajaran/{legacySlug}', 'learning.lessons.show', 'lesson'],
+    ['post', '/pelajaran/{legacySlug}/selesai', 'learning.progress.store', 'lesson'],
+    ['post', '/pelajaran/{legacySlug}/latihan', 'learning.exercises.answer', 'lesson'],
+    ['post', '/pelajaran/{legacySlug}/ulang', 'learning.exercises.retry', 'lesson'],
+] as [$method, $uri, $destination, $parameter]) {
+    Route::{$method}($uri, function (Request $request, string $legacySlug) use ($destination, $parameter): RedirectResponse {
+        return to_route($destination, [$parameter => 'sesonggan'.substr($legacySlug, strlen('sesonggakan'))], $request->isMethod('GET') ? 301 : 307);
+    })->where('legacySlug', 'sesonggakan(?:-.*)?')->name($destination.'.legacy');
+}
 Route::get('/belajar/{learningPath:slug}', [LearningPathController::class, 'show'])->name('learning.paths.show');
 Route::get('/pelajaran/{lesson:slug}', [LessonController::class, 'show'])->name('learning.lessons.show');
 Route::post('/pelajaran/{lesson:slug}/selesai', [LearningProgressController::class, 'store'])->name('learning.progress.store');

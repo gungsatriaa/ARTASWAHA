@@ -649,6 +649,12 @@ Halaman lama tetap terlihat selama request Inertia, tanpa skeleton navigasi atau
 
 Deploy source, `npm run build`, lalu restart SSR. Tidak ada migration, env, dependency, atau perubahan worker. Periksa navigasi pertama/ulang, Back, jaringan lambat, fokus keyboard, dan mobile. Tes mencakup pemanasan chunk, kegagalan preload, Save-Data/2G, serta konten/state yang bertahan selama navigasi menunggu. Ukuran build dan tes komponen tidak menggantikan pengukuran TTFB/INP di production.
 
+### URL Sesonggan dan tautan lama
+
+Migration lanjutan `2026_10_29_234310_rename_sesonggakan_slugs_to_sesonggan.php` menggantikan keputusan mempertahankan URL lama di bagian berikut: slug jalur dan modul sekarang memakai `sesonggan`. ID, progres, dan riwayat jawaban tetap utuh. URL lama dialihkan ke URL baru (GET 301, POST 307 agar isian tetap dikirim). Jika slug tujuan sudah dipakai baris lain, seluruh transaksi dibatalkan tanpa menggabungkan atau menghapus data; periksa duplikat sebelum menjalankan ulang.
+
+Deploy source lalu `php artisan migrate --force`. Perbarui route cache jika digunakan (`php artisan route:cache`). Tidak perlu seed ulang atau reset database. Rollback sengaja mempertahankan slug canonical agar tautan baru tetap berfungsi. Tes mencakup redirect, pengiriman formulir lama, seed ulang, dan pembatalan transaksi saat bentrok. Migration production belum dijalankan oleh Codex.
+
 ### Koreksi nama Sesonggan tanpa menghapus data production
 
 Nama tampil lama diperbaiki menjadi **Sesonggan** pada FAQ/profil, seeder, nama/deskripsi jalur, teks materi modul, judul/deskripsi kuis, serta prompt/pembahasan soal kuis. Migration `2026_10_29_214459_rename_sesonggakan_display_text_to_sesonggan.php` hanya memperbarui teks yang cocok dalam transaksi, membaca per 100 baris. Tidak ada tabel/baris yang dihapus atau dibuat ulang, dan ID, foreign key, slug/URL lama, timestamps, progres, skor, opsi/kunci jawaban, JSON bank soal, serta snapshot/riwayat percobaan tetap dipertahankan. Riwayat dan keluaran AI yang sudah tersimpan tidak ditulis ulang; analisis berikutnya memakai nama jalur yang sudah diperbaiki.
