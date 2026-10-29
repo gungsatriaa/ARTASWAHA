@@ -31,7 +31,7 @@ createInertiaApp({
         if (el.hasChildNodes()) hydrateRoot(el, content);
         else createRoot(el).render(content);
     },
-    progress: { color: 'var(--color-accent)', delay: 80, showSpinner: false },
+    progress: false,
 }).catch(() => {
     failBootLoader();
     const message = document.createElement('p');

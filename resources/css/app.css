@@ -233,5 +233,3 @@ a.rounded-full:active { scale: 0.98; }
 @keyframes quiz-results-ring { from { stroke-dashoffset: 100; } to { stroke-dashoffset: var(--quiz-ring-offset); } }
 @keyframes quiz-result-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) { .quiz-results-ring, .quiz-result-item { animation: none; } }
-
-#nprogress .bar { height: 3px; z-index: 10000; }

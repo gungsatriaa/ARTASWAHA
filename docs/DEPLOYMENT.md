@@ -645,7 +645,9 @@ Lobby memakai panel kode teal lembut, jumlah soal/peserta dari data room, dan av
 
 Menu utama desktop/mobile, dropdown materi/profil, dan sidebar admin menyiapkan chunk React saat pointer diarahkan, fokus keyboard masuk, atau layar disentuh. Hanya kode halaman yang diunduh; tidak ada prefetch respons GET, penciptaan percobaan, join room, atau antrean AI akibat menyentuh menu. Browser menggunakan kembali modul yang sudah diunduh. Pemuatan spekulatif dilewati pada Save-Data atau koneksi 2G bila browser menyediakan informasinya.
 
-Halaman lama tetap terlihat selama request Inertia, tanpa skeleton navigasi atau remount paksa pembungkus halaman. Animasi reveal konten bawah layar tetap tersedia. Progress bar bawaan Inertia berwarna tema, setinggi 3px, muncul setelah 80ms; tidak ada progress bar kedua. Overlay pembuka tetap hanya berjalan saat dokumen dimuat ulang. Request data server tetap diperlukan sehingga ini bukan jaminan seluruh navigasi instan atau perbaikan latensi production yang belum diukur.
+Halaman lama tetap terlihat selama request Inertia, tanpa skeleton navigasi atau remount paksa pembungkus halaman. Animasi reveal konten bawah layar tetap tersedia. Progress bar navigasi bawaan Inertia dinonaktifkan; status aksesibilitas tetap tersedia. Overlay pembuka tetap hanya berjalan saat dokumen dimuat ulang. Request data server tetap diperlukan sehingga ini bukan jaminan seluruh navigasi instan atau perbaikan latensi production yang belum diukur.
+
+Perubahan indikator navigasi memerlukan build frontend dan SSR terbaru (`npm run build`), lalu restart proses SSR jika digunakan. Tab lama perlu dimuat ulang agar memakai aset baru. Tidak ada perubahan migrasi, environment, atau worker antrean.
 
 Deploy source, `npm run build`, lalu restart SSR. Tidak ada migration, env, dependency, atau perubahan worker. Periksa navigasi pertama/ulang, Back, jaringan lambat, fokus keyboard, dan mobile. Tes mencakup pemanasan chunk, kegagalan preload, Save-Data/2G, serta konten/state yang bertahan selama navigasi menunggu. Ukuran build dan tes komponen tidak menggantikan pengukuran TTFB/INP di production.
 
