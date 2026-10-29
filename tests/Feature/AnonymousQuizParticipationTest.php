@@ -44,20 +44,20 @@ class AnonymousQuizParticipationTest extends TestCase
         $this->withCookie('artaswaha_device', $profile->visitor_id)
             ->get(route('quizzes.index'))
             ->assertOk()
-            ->assertInertiaContains(route('login'));
+            ->assertReactContains(route('login'));
         $this->get(route('quizzes.create'))->assertRedirect(route('login'));
         $this->post(route('rooms.join'), ['code' => $room->code])->assertRedirect(route('rooms.show', $room->code));
         $this->post(route('rooms.join'), ['code' => $room->code])->assertRedirect(route('rooms.show', $room->code));
         $this->assertDatabaseHas('room_participants', ['room_id' => $room->id, 'learner_profile_id' => $profile->id, 'user_id' => null]);
         $this->assertSame(2, $room->participants()->count());
         $avatarUrl = route('rooms.anonymous-avatar', [$room->code, $profile->id]);
-        $this->get(route('rooms.show', $room->code))->assertOk()->assertInertiaContains('Komang')->assertInertiaContains($avatarUrl);
+        $this->get(route('rooms.show', $room->code))->assertOk()->assertReactContains('Komang')->assertReactContains($avatarUrl);
         $this->get($avatarUrl)->assertOk();
         $this->get(route('rooms.status', $room->code))->assertNoContent()->assertHeader('X-Room-Status', 'waiting');
         $this->post(route('rooms.start', $room->code))->assertRedirect(route('login'));
 
         app(RoomService::class)->start($room, $host);
-        $this->get(route('rooms.show', $room->code))->assertInertiaContains('Apa jawabannya?');
+        $this->get(route('rooms.show', $room->code))->assertReactContains('Apa jawabannya?');
         $this->post(route('rooms.answer', $room->code), ['question_id' => $question->id, 'answer_index' => 1])->assertRedirect();
         $this->assertDatabaseHas('room_answers', ['quiz_question_id' => $question->id, 'is_correct' => true]);
         $this->get(route('rooms.show', $room->code))->assertOk();

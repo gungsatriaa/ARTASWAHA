@@ -22,9 +22,9 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
-use Inertia\Testing\AssertableInertia;
 use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
+use Tests\AssertablePage;
 use Tests\TestCase;
 
 class LearnerAnalysisTest extends TestCase
@@ -102,7 +102,7 @@ class LearnerAnalysisTest extends TestCase
 
         $this->assertSame('unavailable', $profile->fresh()->analysis_status);
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('profile.show'))
-            ->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc());
         Queue::assertNotPushed(AnalyzeLearnerInterview::class);
         Http::assertNothingSent();
     }
@@ -115,8 +115,8 @@ class LearnerAnalysisTest extends TestCase
 
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('profile.show'))
             ->assertOk()
-            ->assertInertiaNotContains('Coba analisis')
-            ->assertInertiaNotContains('Periksa lagi');
+            ->assertReactNotContains('Coba analisis')
+            ->assertReactNotContains('Periksa lagi');
         $this->get(route('home'))->assertOk();
         $this->get(route('profile.show'))->assertOk();
 
@@ -152,16 +152,16 @@ class LearnerAnalysisTest extends TestCase
                 && str_contains($request['messages'][0]['content'], 'Belum ada aktivitas belajarmu yang tercatat');
         });
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('profile.show'))
-            ->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc())->assertInertiaContains('Mulai dari materi pilihanmu.');
+            ->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc())->assertReactContains('Mulai dari materi pilihanmu.');
         $response = $this->getJson(route('profile.analysis.show'))->assertOk()
             ->assertHeader('Cache-Control', 'no-store, private')
             ->assertJsonPath('analysis.graph.nodes.1.id', 'path-'.$path->id)
             ->assertJsonPath('analysis.graph.edges.0', ['source' => 'role', 'target' => 'path-'.$path->id]);
         $this->assertCount(3, $response->json('analysis.graph.nodes'));
         $this->assertCount(2, $response->json('analysis.graph.edges'));
-        $homepage = $this->get(route('home'))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
-        $homepage->assertInertiaValue('analysis.status', 'completed');
-        $this->get(route('learning.paths.show', $path->slug))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
+        $homepage = $this->get(route('home'))->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc());
+        $homepage->assertReactValue('analysis.status', 'completed');
+        $this->get(route('learning.paths.show', $path->slug))->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc());
         $analyzer->enqueue($profile->fresh());
         (new AnalyzeLearnerInterview($profile->id, $profile->analysis_hash))->handle($analyzer);
         Http::assertSentCount(1);
@@ -226,7 +226,7 @@ class LearnerAnalysisTest extends TestCase
         $this->complete($profile, $path);
 
         $this->getJson(route('profile.analysis.show'))->assertNotFound();
-        $this->actingAs($user)->get(route('profile.show'))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
+        $this->actingAs($user)->get(route('profile.show'))->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc());
         $this->getJson(route('profile.analysis.show'))->assertOk()->assertJsonPath('analysis.summary', 'Mulai dari materi pilihanmu.');
         Http::assertNothingSent();
     }
@@ -243,7 +243,7 @@ class LearnerAnalysisTest extends TestCase
 
         $this->assertSame($user->id, $profile->fresh()->user_id);
         $this->assertSame('completed', $profile->fresh()->analysis_status);
-        $this->actingAs($user)->get(route('profile.show'))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
+        $this->actingAs($user)->get(route('profile.show'))->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc());
         Http::assertNothingSent();
     }
 
@@ -268,8 +268,8 @@ class LearnerAnalysisTest extends TestCase
         $profile->forceFill(['analysis_result' => $result])->save();
 
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('profile.show'))->assertOk()
-            ->assertInertiaContains('<script>summary()')->assertDontSee('<script>summary()', false)
-            ->assertInertiaContains('<img')->assertDontSee('<img src=x onerror=', false);
+            ->assertReactContains('<script>summary()')->assertDontSee('<script>summary()', false)
+            ->assertReactContains('<img')->assertDontSee('<img src=x onerror=', false);
         $response = $this->getJson(route('profile.analysis.show'))->assertOk();
         $response->assertJsonPath('analysis.summary', '<script>summary()</script>')->assertJsonMissingPath('html');
         $this->assertIsArray($response->json('analysis.recommendations'));
@@ -325,7 +325,7 @@ class LearnerAnalysisTest extends TestCase
 
         $this->assertSame('failed', $profile->fresh()->analysis_status);
         $this->assertSame([$path->id], $profile->fresh()->learning_path_ids);
-        $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('profile.show'))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
+        $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('profile.show'))->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc());
     }
 
     public function test_pending_status_has_no_rendered_html_and_retry_is_rate_limited(): void
@@ -434,7 +434,7 @@ class LearnerAnalysisTest extends TestCase
         $profile->forceFill(['analysis_status' => 'processing'])->save();
         $this->withCookie('artaswaha_device', $profile->visitor_id)->getJson(route('profile.analysis.show'))
             ->assertOk()->assertJsonPath('analysis.status', 'processing')->assertJsonPath('html', null);
-        $this->get(route('profile.show'))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
+        $this->get(route('profile.show'))->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc());
 
         config(['services.ai.model' => 'changed-model']);
         (new AnalyzeLearnerInterview($profile->id, $profile->analysis_hash))->handle($analyzer);
@@ -627,7 +627,7 @@ class LearnerAnalysisTest extends TestCase
 
         $this->assertSame('completed', $profile->fresh()->analysis_status);
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('profile.show'))
-            ->assertOk()->assertInertiaContains('Mulai dari materi pilihanmu.')->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertOk()->assertReactContains('Mulai dari materi pilihanmu.')->assertReact(fn (AssertablePage $page) => $page->etc());
         Http::assertSentCount(1);
     }
 

@@ -1,9 +1,7 @@
 // @vitest-environment node
 import { expect, it } from 'vitest';
-import { createInertiaApp } from '@inertiajs/react';
+import { renderPage } from '../../resources/js/react/ssr';
 import { renderToString } from 'react-dom/server';
-import { resolve, title } from '../../resources/js/react/resolve';
-import MotionProvider from '../../resources/js/react/Components/MotionProvider';
 import Keyboard from '../../resources/js/react/Components/Keyboard';
 
 const shared = {
@@ -49,17 +47,7 @@ const fixtures = {
 it.each(Object.entries(fixtures))(
     'server-renders %s content and metadata without browser globals',
     async (component, props) => {
-        const response = await createInertiaApp({
-            page: { component, url: '/', props: { ...shared, ...props }, version: 'test' },
-            resolve,
-            title,
-            render: renderToString,
-            setup: ({ App, props }) => (
-                <MotionProvider>
-                    <App {...props} />
-                </MotionProvider>
-            ),
-        });
+        const response = await renderPage({ component, url: '/', props: { ...shared, ...props }, version: 'test' });
         expect(response.body).toContain('<h1');
         if (component === 'Home') expect(response.body).toContain('aria-label="Footer ARTASWAHA"');
         expect(response.body).not.toContain('document is not defined');

@@ -8,7 +8,6 @@ use App\Services\AccountDeletionService;
 use App\Services\AuthService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Cookie;
-use Inertia\Inertia;
 
 class DestroyProfileController extends Controller
 {
@@ -18,7 +17,6 @@ class DestroyProfileController extends Controller
         abort_if($identity === null, 403);
         $filesDeleted = $deletion->delete($identity, $request->session()->getId());
         $auth->logout($request);
-        Inertia::clearHistory();
 
         return to_route('home')->with('status', $filesDeleted
             ? 'Akun dan data terkait berhasil dihapus.'

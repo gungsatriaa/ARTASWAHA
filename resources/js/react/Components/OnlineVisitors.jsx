@@ -1,7 +1,7 @@
 import { Card } from './forms';
 import Icon from './Icon';
 import usePolling from '../Hooks/usePolling';
-import { usePage } from '@inertiajs/react';
+import { usePage } from '../routing';
 
 export default function OnlineVisitors() {
     const { links } = usePage().props;

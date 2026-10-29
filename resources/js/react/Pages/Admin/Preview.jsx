@@ -1,5 +1,5 @@
 import LessonMaterial, { lessonSections } from '../../Components/LessonMaterial';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage } from '../../routing';
 import { PageMeta, buttonClass } from '../../Components/ui';
 import { Card, Back, Heading, Action, Status, secondaryClass } from '../../Components/forms';
 import AudioPlayer from '../../Components/AudioPlayer';

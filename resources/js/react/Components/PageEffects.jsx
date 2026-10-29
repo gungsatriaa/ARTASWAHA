@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { router, usePage } from '@inertiajs/react';
+import { usePage } from '../routing';
+import { useNavigation } from 'react-router';
 
 export default function PageEffects({ children }) {
     const { component, url, props } = usePage();
@@ -7,23 +8,15 @@ export default function PageEffects({ children }) {
     const [loading, setLoading] = useState(false);
     const pageKey = `${component}:${url?.split('?')[0]}:${component === 'Learning/Interview' ? props.step : ''}`;
 
+    const navigation = useNavigation();
     useEffect(() => {
-        let timer;
-        const start = router.on('start', (event) => {
-            if (event.detail.visit.method !== 'get') return;
-            clearTimeout(timer);
-            timer = setTimeout(() => setLoading(true), 180);
-        });
-        const finish = router.on('finish', () => {
-            clearTimeout(timer);
+        if (navigation.state === 'idle' || navigation.formMethod) {
             setLoading(false);
-        });
-        return () => {
-            clearTimeout(timer);
-            start();
-            finish();
-        };
-    }, []);
+            return;
+        }
+        const timer = setTimeout(() => setLoading(true), 180);
+        return () => clearTimeout(timer);
+    }, [navigation.state, navigation.formMethod]);
 
     useEffect(() => {
         const root = content.current;

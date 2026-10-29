@@ -16,7 +16,7 @@ use Illuminate\Http\Client\Request as ClientRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
-use Inertia\Testing\AssertableInertia;
+use Tests\AssertablePage;
 use Tests\TestCase;
 
 class AdminAiManagementTest extends TestCase
@@ -46,9 +46,9 @@ class AdminAiManagementTest extends TestCase
         Queue::fake();
         $this->actingAs(User::factory()->create(['is_admin' => true]));
         foreach (['overview', 'interviews', 'drafts', 'services'] as $tab) {
-            $this->get(route('admin.ai.index', ['tab' => $tab]))->assertOk()->assertInertiaContains('Pusat AI')->assertInertiaNotContains('private-secret');
+            $this->get(route('admin.ai.index', ['tab' => $tab]))->assertOk()->assertReactContains('Pusat AI')->assertReactNotContains('private-secret');
         }
-        $this->get(route('admin.index'))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
+        $this->get(route('admin.index'))->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc());
         Http::assertNothingSent();
     }
 
@@ -57,8 +57,8 @@ class AdminAiManagementTest extends TestCase
         Queue::shouldReceive('connection')->withNoArgs()->andThrow(new \RuntimeException('private connection details'));
         $this->actingAs(User::factory()->create(['is_admin' => true]))
             ->get(route('admin.ai.index', ['tab' => 'services']))->assertOk()
-            ->assertInertia(fn (AssertableInertia $page) => $page->where('pendingJobs', null)->where('queueUnavailable', true))
-            ->assertInertiaNotContains('private connection details');
+            ->assertReact(fn (AssertablePage $page) => $page->where('pendingJobs', null)->where('queueUnavailable', true))
+            ->assertReactNotContains('private connection details');
     }
 
     public function test_snapshot_uses_period_data_and_excludes_identity(): void
@@ -109,7 +109,7 @@ class AdminAiManagementTest extends TestCase
         Http::assertSent(fn (ClientRequest $request): bool => ! str_contains($request['messages'][1]['content'], $profile->visitor_id)
             && ! str_contains($request['messages'][1]['content'], 'Private learner') && $request['stream'] === false);
         $this->actingAs(User::factory()->create(['is_admin' => true]))->get(route('admin.ai.reports.show', $report))
-            ->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc())->assertInertiaContains('<script>unsafe()')->assertDontSee('<script>unsafe()', false);
+            ->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc())->assertReactContains('<script>unsafe()')->assertDontSee('<script>unsafe()', false);
     }
 
     public function test_invalid_report_output_is_failed_and_not_displayed_as_statistics(): void
@@ -131,7 +131,7 @@ class AdminAiManagementTest extends TestCase
         $this->post(route('admin.ai.reports.store'), ['start' => now()->toDateString(), 'end' => now()->toDateString()])->assertRedirect();
         $report = AiReport::firstOrFail();
         $this->assertSame('unavailable', $report->status);
-        $this->get(route('admin.ai.reports.show', $report))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
+        $this->get(route('admin.ai.reports.show', $report))->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc());
         Queue::assertNotPushed(GenerateAiReport::class);
         Http::assertNothingSent();
     }
@@ -141,8 +141,8 @@ class AdminAiManagementTest extends TestCase
         $profile = $this->profile(LearningPath::factory()->create());
         $profile->forceFill(['analysis_status' => 'queued'])->save();
         $this->actingAs(User::factory()->create(['is_admin' => true]))->get(route('admin.ai.profiles.show', $profile))
-            ->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc())->assertInertiaContains(route('admin.ai.profiles.retry', $profile))
-            ->assertInertiaNotContains($profile->visitor_id);
+            ->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc())->assertReactContains(route('admin.ai.profiles.retry', $profile))
+            ->assertReactNotContains($profile->visitor_id);
     }
 
     public function test_draft_details_are_admin_only_and_escape_ai_content(): void
@@ -150,16 +150,16 @@ class AdminAiManagementTest extends TestCase
         $owner = User::factory()->create();
         $draft = QuizDraft::create(['user_id' => $owner->id, 'status' => 'completed', 'source_path' => 'private/file.pdf', 'questions' => [['prompt' => '<script>bad()</script>', 'options' => ['A', 'B'], 'correct_option' => 0, 'explanation' => 'Alasan']]]);
         $this->actingAs(User::factory()->create(['is_admin' => true]))->get(route('admin.ai.drafts.show', $draft))
-            ->assertOk()->assertInertiaContains('<script>bad()')->assertDontSee('<script>bad()', false)->assertInertiaNotContains('private/file.pdf');
+            ->assertOk()->assertReactContains('<script>bad()')->assertDontSee('<script>bad()', false)->assertReactNotContains('private/file.pdf');
         $this->actingAs($owner)->get(route('admin.ai.drafts.show', $draft))->assertForbidden();
     }
 
     public function test_new_module_flow_handles_missing_paths_and_prefills_selected_path(): void
     {
         $this->actingAs(User::factory()->create(['is_admin' => true]));
-        $this->get(route('admin.lessons.create'))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
+        $this->get(route('admin.lessons.create'))->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc());
         $path = LearningPath::factory()->create();
-        $response = $this->get(route('admin.lessons.create', ['learning_path_id' => $path->id]))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
+        $response = $this->get(route('admin.lessons.create', ['learning_path_id' => $path->id]))->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc());
         $this->assertSame($path->id, $response->viewData('page')['props']['lesson']['learning_path_id']);
         $response = $this->post(route('admin.lessons.store'), ['learning_path_id' => $path->id, 'title' => 'Salam Bali Baru', 'slug' => '', 'summary' => 'Salam', 'content' => 'Rahajeng semeng.', 'sort_order' => 1]);
         $response->assertRedirect(route('admin.lessons.preview', Lesson::where('slug', 'salam-bali-baru')->firstOrFail()));
@@ -170,7 +170,7 @@ class AdminAiManagementTest extends TestCase
     {
         $lesson = Lesson::factory()->create(['is_published' => false, 'reviewed_at' => null, 'content' => '<script>bad()</script>']);
         $this->actingAs(User::factory()->create(['is_admin' => true]))->get(route('admin.lessons.preview', $lesson))
-            ->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc())->assertInertiaContains('<script>bad()')->assertDontSee('<script>bad()', false);
+            ->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc())->assertReactContains('<script>bad()')->assertDontSee('<script>bad()', false);
         $this->get(route('learning.lessons.show', $lesson->slug))->assertNotFound();
         $this->assertFalse($lesson->fresh()->is_published);
         $this->assertDatabaseCount('learning_progress', 0);
@@ -184,8 +184,8 @@ class AdminAiManagementTest extends TestCase
         $this->actingAs(User::factory()->create(['is_admin' => true]));
         $response = $this->get(route('admin.lessons.index'))->assertOk();
         $this->assertCount(20, $response->viewData('page')['props']['lessons']['data']);
-        $this->get(route('admin.ai.index', ['tab' => 'interviews', 'role' => 'murid']))->assertOk()->assertInertiaValue('profiles.data.0.id', $profile->id);
-        $this->get(route('admin.ai.index', ['tab' => 'interviews', 'role' => 'guru']))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->has('profiles.data', 0));
+        $this->get(route('admin.ai.index', ['tab' => 'interviews', 'role' => 'murid']))->assertOk()->assertReactValue('profiles.data.0.id', $profile->id);
+        $this->get(route('admin.ai.index', ['tab' => 'interviews', 'role' => 'guru']))->assertOk()->assertReact(fn (AssertablePage $page) => $page->has('profiles.data', 0));
         $this->getJson(route('admin.ai.index', ['start' => now()->subDays(100)->toDateString(), 'end' => now()->toDateString()]))->assertUnprocessable();
     }
 

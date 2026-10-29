@@ -11,7 +11,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Inertia\Testing\AssertableInertia as Assert;
+use Tests\AssertablePage as Assert;
 use Tests\TestCase;
 
 class LessonUnlockTest extends TestCase
@@ -26,9 +26,9 @@ class LessonUnlockTest extends TestCase
         $third = Lesson::factory()->for($path, 'learningPath')->create(['sort_order' => 3, 'exercise_prompt' => 'Pilih', 'exercise_options' => ['Ha', 'Na'], 'correct_option' => 0]);
         $user = User::factory()->create();
         $this->actingAs($user)->withCookie('artaswaha_device', (string) Str::uuid());
-        $this->get(route('learning.paths.show', $path))->assertInertia(fn (Assert $page): Assert => $page
+        $this->get(route('learning.paths.show', $path))->assertReact(fn (Assert $page): Assert => $page
             ->where('lessons.data.0.locked', false)->where('lessons.data.1.locked', true)->where('lessons.data.2.url', null));
-        $this->get(route('learning.lessons.show', $first))->assertOk()->assertInertia(fn (Assert $page): Assert => $page->where('nextLesson', null));
+        $this->get(route('learning.lessons.show', $first))->assertOk()->assertReact(fn (Assert $page): Assert => $page->where('nextLesson', null));
         $this->get(route('learning.lessons.show', $second))->assertRedirectToRoute('learning.paths.show', $path);
         $this->post(route('learning.progress.store', $second))->assertForbidden();
         $this->post(route('learning.exercises.answer', $third), ['answer_index' => 0])->assertForbidden();
@@ -40,16 +40,16 @@ class LessonUnlockTest extends TestCase
         $this->get(route('content-audio.show', $audio))->assertForbidden();
         $this->assertDatabaseCount('learning_progress', 0);
         $this->post(route('learning.progress.store', $first))->assertRedirect();
-        $this->get(route('learning.lessons.show', $first))->assertInertia(fn (Assert $page): Assert => $page
+        $this->get(route('learning.lessons.show', $first))->assertReact(fn (Assert $page): Assert => $page
             ->where('nextLesson.title', $second->title)->where('nextLesson.url', route('learning.lessons.show', $second)));
-        $this->get(route('learning.paths.show', $path))->assertInertia(fn (Assert $page): Assert => $page
+        $this->get(route('learning.paths.show', $path))->assertReact(fn (Assert $page): Assert => $page
             ->where('lessons.data.1.locked', false)->where('lessons.data.2.locked', true));
         $this->get(route('learning.lessons.show', $second))->assertOk();
         $this->get(route('content-audio.show', $audio))->assertOk();
         $this->post(route('learning.progress.store', $second))->assertRedirect();
         $this->get(route('learning.lessons.show', $third))->assertOk();
         $this->post(route('learning.exercises.answer', $third), ['answer_index' => 0])->assertRedirect();
-        $this->get(route('learning.lessons.show', $third))->assertInertia(fn (Assert $page): Assert => $page->where('nextLesson', null));
+        $this->get(route('learning.lessons.show', $third))->assertReact(fn (Assert $page): Assert => $page->where('nextLesson', null));
         $this->assertDatabaseCount('learning_progress', 3);
     }
 
@@ -81,7 +81,7 @@ class LessonUnlockTest extends TestCase
         $this->get(route('learning.lessons.show', $second))->assertRedirectToRoute('learning.paths.show', $path);
         LearningProgress::factory()->for($first)->for($user)->create();
         $this->get(route('learning.lessons.show', $second))->assertOk();
-        $this->get(route('learning.lessons.show', $first))->assertInertia(fn (Assert $page): Assert => $page->where('progress.points', 10));
+        $this->get(route('learning.lessons.show', $first))->assertReact(fn (Assert $page): Assert => $page->where('progress.points', 10));
         $otherCategory = Lesson::factory()->create();
         $this->get(route('learning.lessons.show', $otherCategory))->assertOk();
     }

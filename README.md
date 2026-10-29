@@ -10,7 +10,7 @@ ARTASWAHA adalah platform pembelajaran bahasa, sastra, dan aksara Bali berbasis 
 | --- | --- |
 | Nama produk | ARTASWAHA |
 | Bidang | Pendidikan bahasa dan budaya Bali |
-| Bentuk aplikasi | Web dengan React dan Inertia.js, didukung Laravel |
+| Bentuk aplikasi | Web dengan React dan React Router, didukung Laravel |
 | Materi | Paribasa Bali dan Aksara Bali |
 | Kontak pengelola | [kerthajayasoftware@gmail.com](mailto:kerthajayasoftware@gmail.com) |
 
@@ -47,7 +47,7 @@ Pilihan peran pada interview digunakan untuk personalisasi, bukan pemberian hak 
 | Area | Teknologi |
 | --- | --- |
 | Backend | PHP 8.4, Laravel 13, Eloquent |
-| Frontend | React 19, Inertia.js 3, Vite 8 |
+| Frontend | React 19, React Router 8, Vite 8 |
 | Tampilan dan animasi | Tailwind CSS 4, Motion for React, CSS, SVG |
 | Grafik | Chart.js |
 | Database | MySQL; SQLite in-memory untuk pengujian PHP |
@@ -59,7 +59,7 @@ Pilihan peran pada interview digunakan untuk personalisasi, bukan pemberian hak 
 | Pengujian | PHPUnit 12, Vitest, React Testing Library |
 | Hosting | VPS dengan aaPanel, Nginx/PHP-FPM, MySQL, Redis, Supervisor |
 
-Versi persis dependency mengikuti `composer.lock` dan `package-lock.json`. UI aktif menggunakan React/Inertia; Blade hanya dipakai untuk dokumen root, loader awal, dan sitemap. Detail implementasi terdapat pada [panduan React](docs/REACT.md).
+Versi persis dependency mengikuti `composer.lock` dan `package-lock.json`. UI aktif menggunakan React/React Router; Blade hanya dipakai untuk dokumen root, loader awal, dan sitemap. Detail implementasi terdapat pada [panduan React](docs/REACT.md).
 
 ## 5. AI Implementation
 
@@ -144,10 +144,10 @@ php artisan reverb:start --no-interaction
 php artisan schedule:work --no-interaction
 
 # SSR untuk hasil build
-php artisan inertia:start-ssr --no-interaction
+npm run ssr
 ```
 
-Untuk hot reload frontend, jalankan `npm run dev`. Jika tidak menjalankan SSR selama development, gunakan `INERTIA_SSR_ENABLED=false` pada `.env` lokal. Pada production, gunakan proses yang dikelola Supervisor dan scheduler sesuai [panduan deployment](docs/DEPLOYMENT.md), bukan server development.
+Untuk hot reload frontend, jalankan `npm run dev`. Jika tidak menjalankan SSR selama development, gunakan `REACT_SSR_ENABLED=false` pada `.env` lokal. Pada production, gunakan proses yang dikelola Supervisor dan scheduler sesuai [panduan deployment](docs/DEPLOYMENT.md), bukan server development.
 
 Layanan AI, OCR, dan TTS disiapkan terpisah. Repository ini tidak otomatis menyediakan layanan tersebut ketika Laravel dijalankan. Pengaturan timeout/retry audio yang lebih panjang dijelaskan pada [panduan production](docs/PRODUCTION.md).
 
@@ -163,7 +163,7 @@ npm run build
 
 ```mermaid
 flowchart LR
-    Browser[Browser: React + Inertia] --> Laravel[Laravel: route, sesi, validasi, otorisasi]
+    Browser[Browser: React + React Router] --> Laravel[Laravel: route, sesi, validasi, otorisasi]
     Laravel --> DB[(MySQL: profil, materi, jawaban, progres)]
     Laravel --> Queue[Queue sesuai konfigurasi]
     Queue --> Worker[Laravel queue worker]
@@ -176,7 +176,7 @@ flowchart LR
 ```
 
 1. Browser baru melewati loader dan interview; pengguna yang identitasnya sudah dikenali dapat melanjutkan sesuai status akunnya.
-2. React melakukan navigasi Inertia ke route Laravel. Controller dan presenter mengirim props yang diperlukan, sementara layout tetap dipertahankan.
+2. React Router mengelola navigasi tanpa reload penuh dan mengambil data JSON dari route Laravel. Controller dan presenter mengirim props yang diperlukan, sementara layout tetap dipertahankan.
 3. Server memeriksa izin/prasyarat, menerima jawaban, menghitung hasil, dan menyimpan progres. Pengulangan modul menyimpan percobaan baru.
 4. Pekerjaan AI/audio/draf dijalankan di antrean. Klien memeriksa status dan menampilkan hasil yang sudah tersimpan.
 5. Reverb menyampaikan perubahan room; server tetap menjadi sumber kebenaran untuk timer, hasil, dan akses peserta.
@@ -220,7 +220,7 @@ Akses awal mengikuti alur interview/login. Panel admin memerlukan akun dengan ha
 
 ### Library dan layanan
 
-- Framework dan UI: Laravel, Inertia.js, React, Vite, Tailwind CSS, Motion, Chart.js.
+- Framework dan UI: Laravel, React Router, React, Vite, Tailwind CSS, Motion, Chart.js.
 - Realtime dan autentikasi: Laravel Reverb, Laravel Echo, Pusher JS client, Laravel Socialite, Google OAuth.
 - Pengujian: PHPUnit, Vitest, React Testing Library.
 - Infrastruktur/integrasi: MySQL, Redis, endpoint AI kompatibel OpenAI, layanan OCR, dan opsi TTS seperti Chatterbox sesuai konfigurasi.

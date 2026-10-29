@@ -13,6 +13,7 @@ use App\Services\AdminAiService;
 use App\Services\ContentAudioService;
 use App\Services\LearnerInterviewAnalyzer;
 use App\Services\PagePresenter;
+use App\Services\ReactPage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,12 +21,11 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
-use Inertia\Response as InertiaResponse;
 use Throwable;
 
 class AiController extends Controller
 {
-    public function index(Request $request, AdminAiService $service, LearnerInterviewAnalyzer $analyzer, ContentAudioService $audioService): InertiaResponse
+    public function index(Request $request, AdminAiService $service, LearnerInterviewAnalyzer $analyzer, ContentAudioService $audioService): ReactPage
     {
         $filters = $request->validate([
             'tab' => ['nullable', 'in:overview,interviews,drafts,services'], 'role' => ['nullable', 'in:murid,guru,pendatang,masyarakat'],
@@ -68,7 +68,7 @@ class AiController extends Controller
         return app(PagePresenter::class)->render('admin.ai.index', compact('tab', 'start', 'end', 'snapshot', 'statuses', 'profiles', 'drafts', 'reports', 'learningPaths', 'aiConfigured', 'ttsConfigured', 'pendingJobs', 'queueUnavailable', 'audioCounts', 'lastCheck', 'lastWorker'));
     }
 
-    public function profile(LearnerProfile $learnerProfile, LearnerInterviewAnalyzer $analyzer): InertiaResponse
+    public function profile(LearnerProfile $learnerProfile, LearnerInterviewAnalyzer $analyzer): ReactPage
     {
         $paths = LearningPath::whereKey($learnerProfile->learning_path_ids ?: [$learnerProfile->learning_path_id])->get();
         $analysis = $analyzer->presentation($learnerProfile, $paths);
@@ -93,7 +93,7 @@ class AiController extends Controller
         return to_route('admin.ai.index', ['tab' => 'interviews'])->with('status', 'Tes semua profil langsung masuk antrean tanpa menunggu jadwal 6 jam. Worker memproses bergiliran; buka detail pelajar untuk melihat riwayat dan hasil.');
     }
 
-    public function draft(QuizDraft $quizDraft): InertiaResponse
+    public function draft(QuizDraft $quizDraft): ReactPage
     {
         return app(PagePresenter::class)->render('admin.ai.draft', compact('quizDraft'));
     }
@@ -109,7 +109,7 @@ class AiController extends Controller
         return to_route('admin.ai.reports.show', $report);
     }
 
-    public function report(AiReport $aiReport): InertiaResponse
+    public function report(AiReport $aiReport): ReactPage
     {
         return app(PagePresenter::class)->render('admin.ai.report', compact('aiReport'));
     }

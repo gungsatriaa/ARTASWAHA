@@ -1,4 +1,4 @@
-import { Link, router, useForm, usePage } from '@inertiajs/react';
+import { Link, router, useForm, usePage } from '../../routing';
 import { PageMeta, Pagination, Button } from '../../Components/ui';
 import { Card, Heading, Field, Action, Status, Stat, secondaryClass } from '../../Components/forms';
 import AiStatistics from '../../Components/AiStatistics';

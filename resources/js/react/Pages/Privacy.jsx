@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage } from '../routing';
 import { PageMeta, buttonClass } from '../Components/ui';
 import Icon from '../Components/Icon';
 

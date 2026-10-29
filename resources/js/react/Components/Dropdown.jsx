@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { usePage } from '@inertiajs/react';
+import { usePage } from '../routing';
 import Icon from './Icon';
 
 export default function Dropdown({ label, trigger, children, active = false, align = 'left' }) {

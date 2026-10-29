@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage } from '../routing';
 import * as m from 'motion/react-m';
 import { PageMeta, CategoryIcon, buttonClass } from '../Components/ui';
 import { Card, secondaryClass } from '../Components/forms';

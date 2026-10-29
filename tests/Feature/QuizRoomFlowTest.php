@@ -14,7 +14,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
-use Inertia\Testing\AssertableInertia;
+use Tests\AssertablePage;
 use Tests\TestCase;
 
 class QuizRoomFlowTest extends TestCase
@@ -48,8 +48,8 @@ class QuizRoomFlowTest extends TestCase
 
         $this->actingAs($owner)->get(route('quizzes.edit', $quiz))
             ->assertOk()
-            ->assertInertiaContains('Pertanyaan pertama?')
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertReactContains('Pertanyaan pertama?')
+            ->assertReact(fn (AssertablePage $page) => $page->etc());
 
         $this->put(route('quizzes.update', $quiz), [
             'title' => 'Kuis diperbarui',
@@ -104,7 +104,7 @@ class QuizRoomFlowTest extends TestCase
         $this->assertSame('Pertanyaan pertama?', $oldQuestion->fresh()->prompt);
         $this->assertSame($oldQuestion->id, RoomAnswer::query()->firstOrFail()->quiz_question_id);
         $this->assertSame('Pertanyaan baru?', $newQuiz->questions()->firstOrFail()->prompt);
-        $this->get(route('quizzes.index'))->assertInertiaContains('Versi baru')->assertInertiaNotContains('Kuis uji');
+        $this->get(route('quizzes.index'))->assertReactContains('Versi baru')->assertReactNotContains('Kuis uji');
         $this->get(route('quizzes.edit', $quiz))->assertNotFound();
         $this->post(route('rooms.store', $quiz))->assertStatus(422);
     }
@@ -184,15 +184,15 @@ class QuizRoomFlowTest extends TestCase
 
         $this->post(route('rooms.answer', $room->code), ['question_id' => $questions[0]->id, 'answer_index' => 0])->assertRedirect();
         $this->get(route('rooms.show', $room->code))
-            ->assertInertiaContains('Soal kedua?')
-            ->assertInertiaNotContains('Jawaban rahasia')
-            ->assertInertiaNotContains('Jawaban belum tepat');
+            ->assertReactContains('Soal kedua?')
+            ->assertReactNotContains('Jawaban rahasia')
+            ->assertReactNotContains('Jawaban belum tepat');
         $this->get(route('rooms.show', ['room' => $room->code, 'feedback' => RoomAnswer::query()->firstOrFail()->id]))
-            ->assertInertiaNotContains('Jawaban rahasia');
+            ->assertReactNotContains('Jawaban rahasia');
 
         $this->post(route('rooms.answer', $room->code), ['question_id' => $questions[1]->id, 'answer_index' => 1])->assertRedirect();
         $this->get(route('rooms.show', $room->code))
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertReact(fn (AssertablePage $page) => $page->etc());
     }
 
     public function test_immediate_answer_result_shows_selected_wrong_and_correct_options_before_advancing(): void
@@ -208,14 +208,14 @@ class QuizRoomFlowTest extends TestCase
 
         $response = $this->actingAs($host)->post(route('rooms.answer', $room->code), ['question_id' => $question->id, 'answer_index' => 0])->assertRedirect();
         $this->get($response->headers->get('Location'))
-            ->assertInertiaValue('room.answer.is_correct', false)
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertReactValue('room.answer.is_correct', false)
+            ->assertReact(fn (AssertablePage $page) => $page->etc());
         $this->actingAs($player)->get($response->headers->get('Location'))
             ->assertOk()
-            ->assertInertiaNotContains('Jawaban belum tepat');
+            ->assertReactNotContains('Jawaban belum tepat');
         $this->post(route('rooms.answer', $room->code), ['question_id' => $question->id, 'answer_index' => 1])->assertRedirect();
         $this->actingAs($host);
-        $this->get(route('rooms.show', $room->code))->assertInertiaValue('room.status', 'finished');
+        $this->get(route('rooms.show', $room->code))->assertReactValue('room.status', 'finished');
     }
 
     public function test_timed_quiz_keeps_correct_answer_hidden_until_everyone_finishes_when_feedback_is_delayed(): void
@@ -232,12 +232,12 @@ class QuizRoomFlowTest extends TestCase
 
         $this->actingAs($host)->post(route('rooms.answer', $room->code), ['question_id' => $question->id, 'answer_index' => 0])->assertRedirect();
         $this->get(route('rooms.show', $room->code))
-            ->assertInertiaNotContains('Jawaban belum tepat')
-            ->assertInertiaNotContains('Jawaban benar:');
+            ->assertReactNotContains('Jawaban belum tepat')
+            ->assertReactNotContains('Jawaban benar:');
 
         $this->actingAs($player)->post(route('rooms.answer', $room->code), ['question_id' => $question->id, 'answer_index' => 1])->assertRedirect();
         $this->actingAs($host)->get(route('rooms.show', $room->code))
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertReact(fn (AssertablePage $page) => $page->etc());
     }
 
     public function test_quiz_allows_duplicate_options(): void
@@ -270,14 +270,14 @@ class QuizRoomFlowTest extends TestCase
         $host = User::factory()->create();
         $quiz = $this->createQuiz($host);
 
-        $this->actingAs($host)->get(route('quizzes.index'))->assertOk()->assertInertiaContains('Kuis uji');
-        $this->get(route('quizzes.create'))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc())->assertInertiaNotContains('Tampilkan peringkat');
-        $this->get(route('quizzes.show', $quiz))->assertOk()->assertInertiaContains('Pertanyaan pertama?');
+        $this->actingAs($host)->get(route('quizzes.index'))->assertOk()->assertReactContains('Kuis uji');
+        $this->get(route('quizzes.create'))->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc())->assertReactNotContains('Tampilkan peringkat');
+        $this->get(route('quizzes.show', $quiz))->assertOk()->assertReactContains('Pertanyaan pertama?');
 
         $this->post(route('rooms.store', $quiz))->assertRedirect();
         $room = Room::query()->firstOrFail();
         $this->assertMatchesRegularExpression('/\A[0-9]{6}\z/', $room->code);
-        $this->get(route('rooms.show', $room->code))->assertOk()->assertInertiaContains($room->code)->assertInertia(fn (AssertableInertia $page) => $page->etc())->assertInertiaNotContains('Peringkat');
+        $this->get(route('rooms.show', $room->code))->assertOk()->assertReactContains($room->code)->assertReact(fn (AssertablePage $page) => $page->etc())->assertReactNotContains('Peringkat');
     }
 
     public function test_room_creation_retries_a_duplicate_six_digit_code(): void
@@ -357,10 +357,10 @@ class QuizRoomFlowTest extends TestCase
         $response = $this->actingAs($host)->get(route('rooms.show', $room->code));
 
         $response->assertOk()
-            ->assertInertiaContains(route('quizzes.index', ['code' => $room->code]));
+            ->assertReactContains(route('quizzes.index', ['code' => $room->code]));
         $this->get(route('quizzes.index', ['code' => $room->code]))
             ->assertOk()
-            ->assertInertiaValue('code', $room->code);
+            ->assertReactValue('code', $room->code);
     }
 
     public function test_quiz_success_message_uses_shared_notice_style(): void
@@ -369,8 +369,8 @@ class QuizRoomFlowTest extends TestCase
             ->withSession(['status' => 'Room berhasil dihapus.'])
             ->get(route('quizzes.index'))
             ->assertOk()
-            ->assertInertiaContains('Room berhasil dihapus.')
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertReactContains('Room berhasil dihapus.')
+            ->assertReact(fn (AssertablePage $page) => $page->etc());
     }
 
     public function test_started_room_hides_invitation_and_shows_modal_to_new_player(): void
@@ -384,10 +384,10 @@ class QuizRoomFlowTest extends TestCase
 
         $this->actingAs($host)->get(route('rooms.show', $room->code))
             ->assertOk()
-            ->assertInertiaNotContains('Salin undangan')
+            ->assertReactNotContains('Salin undangan')
 
-            ->assertInertiaNotContains('Kuis berlangsung')
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertReactNotContains('Kuis berlangsung')
+            ->assertReact(fn (AssertablePage $page) => $page->etc());
         $this->actingAs($existingPlayer)->get(route('rooms.show', $room->code))->assertOk();
 
         $joinPage = route('quizzes.index', ['code' => $room->code]);
@@ -398,7 +398,7 @@ class QuizRoomFlowTest extends TestCase
 
         $this->followingRedirects()->post(route('rooms.join'), ['code' => $room->code])
             ->assertOk()
-            ->assertInertiaContains('Kuis sudah dimulai');
+            ->assertReactContains('Kuis sudah dimulai');
         $this->assertDatabaseMissing('room_participants', ['room_id' => $room->id, 'user_id' => $newPlayer->id]);
     }
 
@@ -411,9 +411,9 @@ class QuizRoomFlowTest extends TestCase
 
         $this->actingAs($host)->get(route('rooms.show', $room->code))
             ->assertOk()
-            ->assertInertiaValue('room.status', 'finished')
-            ->assertInertiaNotContains('Permainan selesai!')
-            ->assertInertiaNotContains('Salin tautan undangan');
+            ->assertReactValue('room.status', 'finished')
+            ->assertReactNotContains('Permainan selesai!')
+            ->assertReactNotContains('Salin tautan undangan');
         $this->actingAs($newPlayer)->from(route('quizzes.index'))
             ->post(route('rooms.join'), ['code' => $room->code])
             ->assertRedirect(route('quizzes.index'))
@@ -430,12 +430,12 @@ class QuizRoomFlowTest extends TestCase
 
         $this->actingAs($host)->get(route('rooms.show', $room->code))
             ->assertOk()
-            ->assertInertiaContains('Host Bali')
-            ->assertInertiaContains('Pemain Bali')
-            ->assertInertiaNotContains('Nama lama pemain')
-            ->assertInertiaContains(asset('avatar/gajah.webp'))
-            ->assertInertiaContains(asset('avatar/kucing.webp'))
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertReactContains('Host Bali')
+            ->assertReactContains('Pemain Bali')
+            ->assertReactNotContains('Nama lama pemain')
+            ->assertReactContains(asset('avatar/gajah.webp'))
+            ->assertReactContains(asset('avatar/kucing.webp'))
+            ->assertReact(fn (AssertablePage $page) => $page->etc());
     }
 
     public function test_uploaded_room_avatar_is_only_available_to_room_members(): void
@@ -451,7 +451,7 @@ class QuizRoomFlowTest extends TestCase
         RoomParticipant::factory()->create(['room_id' => $room->id, 'user_id' => $player->id]);
         $avatarUrl = route('rooms.participant-avatar', [$room->code, $player->id]);
 
-        $this->actingAs($host)->get(route('rooms.show', $room->code))->assertInertiaContains($avatarUrl);
+        $this->actingAs($host)->get(route('rooms.show', $room->code))->assertReactContains($avatarUrl);
         $this->get($avatarUrl)->assertOk()->assertHeader('X-Content-Type-Options', 'nosniff');
         $this->get(route('rooms.participant-avatar', [$room->code, $outsider->id]))->assertNotFound();
         $this->actingAs($outsider)->get($avatarUrl)->assertForbidden();
@@ -474,8 +474,8 @@ class QuizRoomFlowTest extends TestCase
 
         $this->actingAs($player)->get(route('rooms.show', $room->code))
             ->assertOk()
-            ->assertInertiaValue('room.position', 1)
-            ->assertInertiaNotContains('Peringkat');
+            ->assertReactValue('room.position', 1)
+            ->assertReactNotContains('Peringkat');
 
         $question = $quiz->questions()->firstOrFail();
         $answerData = ['question_id' => $question->id, 'answer_index' => 1, 'points_awarded' => 9999];
@@ -508,12 +508,12 @@ class QuizRoomFlowTest extends TestCase
         $firstQuestion = $quiz->questions()->firstOrFail();
 
         $response = $this->actingAs($player)->post(route('rooms.answer', $room->code), ['question_id' => $firstQuestion->id, 'answer_index' => 1])->assertRedirect();
-        $this->get($response->headers->get('Location'))->assertOk()->assertInertiaValue('room.answer.is_correct', true)->assertInertia(fn (AssertableInertia $page) => $page->etc());
-        $this->get(route('rooms.show', $room->code))->assertOk()->assertInertiaContains('Pertanyaan kedua?');
-        $this->actingAs($host)->get(route('rooms.show', $room->code))->assertOk()->assertInertiaContains('Pertanyaan pertama?');
+        $this->get($response->headers->get('Location'))->assertOk()->assertReactValue('room.answer.is_correct', true)->assertReact(fn (AssertablePage $page) => $page->etc());
+        $this->get(route('rooms.show', $room->code))->assertOk()->assertReactContains('Pertanyaan kedua?');
+        $this->actingAs($host)->get(route('rooms.show', $room->code))->assertOk()->assertReactContains('Pertanyaan pertama?');
         $response = $this->actingAs($player)->post(route('rooms.answer', $room->code), ['question_id' => $secondQuestion->id, 'answer_index' => 1])->assertRedirect();
-        $this->get($response->headers->get('Location'))->assertInertiaValue('room.answer.is_correct', true);
-        $this->get(route('rooms.show', $room->code))->assertOk()->assertInertiaValue('room.question', null);
+        $this->get($response->headers->get('Location'))->assertReactValue('room.answer.is_correct', true);
+        $this->get(route('rooms.show', $room->code))->assertOk()->assertReactValue('room.question', null);
         $this->assertSame('active', $room->fresh()->status);
         $this->actingAs($host)->post(route('rooms.answer', $room->code), ['question_id' => $firstQuestion->id, 'answer_index' => 1])->assertRedirect();
         $this->assertSame(9, $room->participants()->where('user_id', $host->id)->value('score'));
@@ -542,9 +542,9 @@ class QuizRoomFlowTest extends TestCase
         $this->actingAs($player)->post(route('rooms.answer', $room->code), ['question_id' => $firstQuestion->id, 'answer_index' => 1])->assertRedirect();
         $this->assertSame(10, $room->participants()->where('user_id', $player->id)->firstOrFail()->question_ends_at->timestamp - now()->timestamp);
         $this->get(route('rooms.show', $room->code))
-            ->assertInertiaContains('Soal berikutnya?')
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
-        $this->actingAs($host)->get(route('rooms.show', $room->code))->assertInertiaContains('Pertanyaan pertama?')->assertInertiaNotContains('Soal berikutnya?');
+            ->assertReactContains('Soal berikutnya?')
+            ->assertReact(fn (AssertablePage $page) => $page->etc());
+        $this->actingAs($host)->get(route('rooms.show', $room->code))->assertReactContains('Pertanyaan pertama?')->assertReactNotContains('Soal berikutnya?');
         $this->assertSame(1, $room->participants()->where('user_id', $player->id)->firstOrFail()->question_position);
         $this->assertSame(0, $room->participants()->where('user_id', $host->id)->firstOrFail()->question_position);
         $this->actingAs($player)->post(route('rooms.answer', $room->code), ['question_id' => $secondQuestion->id, 'answer_index' => 1])->assertSessionHasNoErrors();
@@ -552,7 +552,7 @@ class QuizRoomFlowTest extends TestCase
         $this->travel(11)->seconds();
         $this->actingAs($host)->get(route('rooms.status', $room->code))->assertNoContent();
         $this->assertSame(1, $room->participants()->where('user_id', $host->id)->firstOrFail()->question_position);
-        $this->actingAs($host)->get(route('rooms.show', $room->code))->assertInertiaContains('Soal berikutnya?');
+        $this->actingAs($host)->get(route('rooms.show', $room->code))->assertReactContains('Soal berikutnya?');
         $this->actingAs($host)->post(route('rooms.answer', $room->code), ['question_id' => $firstQuestion->id, 'answer_index' => 1])->assertSessionHasErrors('question_id');
         $this->travel(10)->seconds();
         $this->get(route('rooms.status', $room->code))->assertNoContent();
@@ -578,15 +578,15 @@ class QuizRoomFlowTest extends TestCase
             'question_id' => $firstQuestion->id, 'answer_index' => 0,
         ])->assertRedirect();
         $this->get($response->headers->get('Location'))
-            ->assertInertiaValue('room.answer.is_correct', false)
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertReactValue('room.answer.is_correct', false)
+            ->assertReact(fn (AssertablePage $page) => $page->etc());
         $participant = $room->participants()->where('user_id', $player->id)->firstOrFail();
         $this->assertSame(18, $participant->question_ends_at->timestamp - now()->timestamp);
 
         $this->travel(3)->seconds();
         $this->assertSame(15, $participant->question_ends_at->timestamp - now()->timestamp);
-        $this->get(route('rooms.show', $room->code))->assertInertiaContains('Soal kedua?');
-        $this->actingAs($host)->get(route('rooms.show', $room->code))->assertInertiaContains('Pertanyaan pertama?');
+        $this->get(route('rooms.show', $room->code))->assertReactContains('Soal kedua?');
+        $this->actingAs($host)->get(route('rooms.show', $room->code))->assertReactContains('Pertanyaan pertama?');
 
         $this->travel(14)->seconds();
         $secondQuestion = $quiz->questions()->where('sort_order', 2)->firstOrFail();
@@ -651,7 +651,7 @@ class QuizRoomFlowTest extends TestCase
         $this->assertDatabaseHas('room_participants', ['room_id' => $room->id, 'user_id' => $host->id]);
         $this->assertDatabaseHas('room_participants', ['room_id' => $room->id, 'user_id' => $player->id]);
         $this->actingAs($player)->get(route('rooms.status', $room->code))->assertStatus(410);
-        $this->get(route('rooms.show', $room->code))->assertOk()->assertInertiaValue('room.status', 'inactive');
+        $this->get(route('rooms.show', $room->code))->assertOk()->assertReactValue('room.status', 'inactive');
         $this->from(route('quizzes.index'))->post(route('rooms.join'), ['code' => $room->code])
             ->assertRedirect(route('quizzes.index'))
             ->assertSessionHasErrors('room_inactive');
@@ -734,7 +734,7 @@ class QuizRoomFlowTest extends TestCase
 
         $this->actingAs($player)->get(route('rooms.show', $room->code))
             ->assertOk()
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertReact(fn (AssertablePage $page) => $page->etc());
         $this->get(route('rooms.status', $room->code))->assertNoContent();
         $this->actingAs(User::factory()->create())->get(route('rooms.status', $room->code))->assertForbidden();
         $this->actingAs($player)->delete(route('rooms.destroy', $room->code))->assertForbidden();
@@ -742,7 +742,7 @@ class QuizRoomFlowTest extends TestCase
 
         $this->actingAs($host)->get(route('rooms.show', $room->code))
             ->assertOk()
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertReact(fn (AssertablePage $page) => $page->etc());
         $this->delete(route('rooms.destroy', $room->code))
             ->assertRedirect(route('quizzes.index'))
             ->assertSessionHas('status', 'Room berhasil dihapus.');

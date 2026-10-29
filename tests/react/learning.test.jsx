@@ -10,11 +10,17 @@ import { CategoryIcon } from '../../resources/js/react/Components/ui';
 import Icon from '../../resources/js/react/Components/Icon';
 
 const { page, get } = vi.hoisted(() => ({ page: { props: {} }, get: vi.fn() }));
-vi.mock('@inertiajs/react', () => ({
+vi.mock('../../resources/js/react/routing', () => ({
+    prefetchPage: vi.fn().mockResolvedValue(),
     usePage: () => ({ ...page, component: page.component ?? 'Learning/Catalog' }),
     Link: ({ children, preserveScroll, preserveState, only, prefetch, cacheFor, ...props }) => <a {...props}>{children}</a>,
     Head: () => null,
     router: { get, on: () => () => {} },
+}));
+vi.mock('react-router', async (importOriginal) => ({
+    ...await importOriginal(),
+    useNavigation: () => ({ state: 'idle' }),
+    useBlocker: () => ({ state: 'unblocked' }),
 }));
 vi.mock('motion/react-m', async () => {
     const { forwardRef } = await import('react');

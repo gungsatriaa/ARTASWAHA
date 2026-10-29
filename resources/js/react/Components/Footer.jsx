@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage } from '../routing';
 import Icon from './Icon';
 
 export default function Footer({ className = '' }) {

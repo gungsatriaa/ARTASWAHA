@@ -8,8 +8,8 @@ use App\Models\User;
 use App\Services\RoomService;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Inertia\Testing\AssertableInertia;
 use PHPUnit\Framework\Attributes\TestWith;
+use Tests\AssertablePage;
 use Tests\TestCase;
 
 class QuizTimeLimitTest extends TestCase
@@ -26,7 +26,7 @@ class QuizTimeLimitTest extends TestCase
         $question = $quiz->questions()->sole();
         $this->assertSame(120, $quiz->time_limit_seconds);
         $this->assertSame(10, $question->time_limit_seconds);
-        $this->get(route('quizzes.edit', $quiz))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
+        $this->get(route('quizzes.edit', $quiz))->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc());
         $room = app(RoomService::class)->create($quiz, $owner);
         $data['time_limit_minutes'] = 5;
         $data['questions'][0]['id'] = $question->id;
@@ -54,7 +54,7 @@ class QuizTimeLimitTest extends TestCase
         app(RoomService::class)->start($room, $quiz->user);
         $deadline = now()->addMinute();
 
-        $this->actingAs($quiz->user)->get(route('rooms.show', $room->code))->assertOk()->assertInertiaValue('room.deadline', $deadline->toISOString());
+        $this->actingAs($quiz->user)->get(route('rooms.show', $room->code))->assertOk()->assertReactValue('room.deadline', $deadline->toISOString());
         $this->travel(20)->seconds();
         $this->get(route('rooms.show', $room->code))->assertOk();
 
@@ -76,7 +76,7 @@ class QuizTimeLimitTest extends TestCase
         $this->assertSame('finished', $room->fresh()->status);
         $this->assertTrue($room->fresh()->finished_at->equalTo($deadline));
         $this->assertDatabaseCount('room_answers', 1);
-        $this->get(route('rooms.show', $room->code))->assertOk()->assertInertiaValue('room.status', 'finished');
+        $this->get(route('rooms.show', $room->code))->assertOk()->assertReactValue('room.status', 'finished');
     }
 
     public function test_mixed_timed_and_unlimited_questions_keep_independent_deadlines(): void
@@ -139,10 +139,10 @@ class QuizTimeLimitTest extends TestCase
         $this->travel(59)->seconds();
         $this->actingAs($quiz->user)->post(route('rooms.answer', $room->code), ['question_id' => $questions[0]->id, 'answer_index' => 0])->assertSessionHasNoErrors();
         $answer = $room->participants()->sole()->answers()->sole();
-        $this->get(route('rooms.show', ['room' => $room->code, 'feedback' => $answer->id]))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
+        $this->get(route('rooms.show', ['room' => $room->code, 'feedback' => $answer->id]))->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc());
         $this->travel(1)->seconds();
 
-        $this->get(route('rooms.show', ['room' => $room->code, 'feedback' => $answer->id]))->assertOk()->assertInertiaValue('room.status', 'finished');
+        $this->get(route('rooms.show', ['room' => $room->code, 'feedback' => $answer->id]))->assertOk()->assertReactValue('room.status', 'finished');
 
         $this->assertSame('finished', $room->fresh()->status);
         $this->assertDatabaseCount('room_answers', 1);

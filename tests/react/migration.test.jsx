@@ -30,9 +30,10 @@ const { page, send, reload, visit } = vi.hoisted(() => ({
     reload: vi.fn(),
     visit: vi.fn(),
 }));
-vi.mock('@inertiajs/react', async () => {
+vi.mock('../../resources/js/react/routing', async () => {
     const { useState, useRef } = await import('react');
     return {
+        prefetchPage: vi.fn().mockResolvedValue(),
         usePage: () => page,
         Deferred: ({ data, fallback, rescue, children }) => page.rescuedProps?.includes(data) ? rescue :
             page.props[data] === undefined ? fallback : typeof children === 'function' ? children({ reloading: false }) : children,
@@ -60,6 +61,11 @@ vi.mock('@inertiajs/react', async () => {
         },
     };
 });
+vi.mock('react-router', async (importOriginal) => ({
+    ...await importOriginal(),
+    useNavigation: () => ({ state: 'idle' }),
+    useBlocker: () => ({ state: 'unblocked' }),
+}));
 vi.mock('motion/react-m', () => ({
     button: ({ children, whileTap, ...props }) => <button {...props}>{children}</button>,
     div: ({ children, initial, animate, exit, transition, ...props }) => <div {...props}>{children}</div>,
@@ -118,6 +124,8 @@ beforeEach(() => {
         brand: { mascot: '/image/asset1.webp', avatarBase: '/avatar' },
         flash: {},
     };
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Unexpected fetch')));
+    window.history.replaceState(null, '', '/');
     send.mockReset();
     reload.mockReset();
     visit.mockReset();
@@ -264,7 +272,7 @@ it('preserves saved question IDs while removing UI-only keys and correcting a de
     );
 });
 
-it('submits quiz settings through Inertia and keeps preview free of write requests', () => {
+it('submits quiz settings through routing and keeps preview free of write requests', () => {
     render(<Editor quiz={null} meta={meta} />);
     fireEvent.change(screen.getByRole('textbox', { name: 'Judul kuis' }), { target: { value: 'Belajar Bali' } });
     fireEvent.click(screen.getByRole('button', { name: /Preview & simpan/ }));
@@ -839,6 +847,7 @@ it.each(Object.entries(adminFixtures))('renders the admin %s page with sparse re
 });
 
 it('does not deactivate the host room on a document reload or a Strict Mode effect remount', async () => {
+    window.history.replaceState(null, '', '/room/ABCD');
     const beacon = vi.fn();
     Object.defineProperty(navigator, 'sendBeacon', { configurable: true, value: beacon });
     vi.stubGlobal(
@@ -861,7 +870,11 @@ it('does not deactivate the host room on a document reload or a Strict Mode effe
     await act(async () => {});
     act(() => window.dispatchEvent(new Event('pagehide')));
     expect(beacon).not.toHaveBeenCalled();
+    window.history.pushState(null, '', '/belajar');
     unmount();
+    expect(beacon).toHaveBeenCalledOnce();
+    expect(beacon.mock.calls[0][0]).toBe('/room/leave');
+    expect(beacon.mock.calls[0][1].get('_token')).toBe('test');
 });
 
 it('offers a document reload when a page chunk cannot be resolved', async () => {

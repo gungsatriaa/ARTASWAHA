@@ -10,15 +10,15 @@ use App\Models\QuizQuestion;
 use App\Services\ContentAudioService;
 use App\Services\PagePresenter;
 use App\Services\QuizService;
+use App\Services\ReactPage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Inertia\Response as InertiaResponse;
 
 class QuizController extends Controller
 {
-    public function index(Request $request): InertiaResponse
+    public function index(Request $request): ReactPage
     {
         $filters = $request->validate(['q' => ['nullable', 'string', 'max:120'], 'status' => ['nullable', 'in:active,archived']]);
         $profile = Auth::guest() ? LearnerProfile::completedFor(null, request()->cookie('artaswaha_device')) : null;
@@ -33,7 +33,7 @@ class QuizController extends Controller
         return app(PagePresenter::class)->render('quizzes.index', compact('quizzes', 'profile', 'filters'));
     }
 
-    public function create(): InertiaResponse
+    public function create(): ReactPage
     {
         return app(PagePresenter::class)->render('quizzes.create');
     }
@@ -45,7 +45,7 @@ class QuizController extends Controller
         return to_route('quizzes.show', $quiz)->with('status', 'Kuis berhasil dibuat.');
     }
 
-    public function show(Quiz $quiz, ContentAudioService $audioService): InertiaResponse
+    public function show(Quiz $quiz, ContentAudioService $audioService): ReactPage
     {
         abort_unless($quiz->user_id === Auth::id(), 404);
         $quiz->load('questions.audio');
@@ -58,7 +58,7 @@ class QuizController extends Controller
         return app(PagePresenter::class)->render('quizzes.show', compact('quiz', 'audioByQuestion'));
     }
 
-    public function edit(Quiz $quiz): InertiaResponse
+    public function edit(Quiz $quiz): ReactPage
     {
         abort_unless($quiz->user_id === Auth::id() && ! $quiz->is_archived, 404);
         $quiz->load('questions.audio');

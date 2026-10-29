@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage } from '../routing';
 import { useEffect, useState } from 'react';
 import Skeleton from './Skeleton';
 import usePolling from '../Hooks/usePolling';

@@ -1,4 +1,4 @@
-import { useForm, usePage } from '@inertiajs/react';
+import { useForm, usePage } from '../../routing';
 import { PageMeta, Button } from '../../Components/ui';
 import { Back, Card, Heading, Field, Check, Errors } from '../../Components/forms';
 export default function PathForm({ path, meta }) {

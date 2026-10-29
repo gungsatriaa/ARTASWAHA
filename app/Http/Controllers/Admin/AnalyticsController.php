@@ -5,16 +5,15 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\AdminAnalyticsService;
 use App\Services\PagePresenter;
+use App\Services\ReactPage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
-use Inertia\Inertia;
-use Inertia\Response as InertiaResponse;
 
 class AnalyticsController extends Controller
 {
-    public function index(AdminAnalyticsService $analytics): InertiaResponse
+    public function index(AdminAnalyticsService $analytics): ReactPage
     {
-        return app(PagePresenter::class)->render('admin.analytics', ['statistics' => Inertia::defer(fn (): array => $analytics->snapshot(), rescue: true)]);
+        return app(PagePresenter::class)->render('admin.analytics', ['statistics' => fn (): array => $analytics->snapshot()]);
     }
 
     public function online(): JsonResponse

@@ -2,7 +2,7 @@ import { lazy, Suspense, useMemo } from 'react';
 import OnlineVisitors from '../../Components/OnlineVisitors';
 import AdminWeekly from '../../Components/AdminWeekly';
 import Skeleton from '../../Components/Skeleton';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage } from '../../routing';
 import { PageMeta, buttonClass } from '../../Components/ui';
 import { Card, Heading, Stat, Status, secondaryClass } from '../../Components/forms';
 const Chart = lazy(() => import('../../Components/Chart'));

@@ -10,10 +10,10 @@ use App\Models\Room;
 use App\Models\User;
 use App\Services\ContentAudioService;
 use App\Services\PagePresenter;
+use App\Services\ReactPage;
 use App\Services\RoomService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
-use Inertia\Response as InertiaResponse;
 
 class RoomController extends Controller
 {
@@ -35,7 +35,7 @@ class RoomController extends Controller
         return to_route('rooms.show', $room->code);
     }
 
-    public function show(Room $room, RoomService $roomService, ContentAudioService $audioService): InertiaResponse|RedirectResponse
+    public function show(Room $room, RoomService $roomService, ContentAudioService $audioService): ReactPage|RedirectResponse
     {
         $player = $this->player();
         if ($player === null) {

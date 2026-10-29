@@ -7,11 +7,11 @@ use App\Models\LearningPath;
 use App\Models\Lesson;
 use App\Services\AdminAnalyticsService;
 use App\Services\PagePresenter;
-use Inertia\Response as InertiaResponse;
+use App\Services\ReactPage;
 
 class DashboardController extends Controller
 {
-    public function __invoke(AdminAnalyticsService $analytics): InertiaResponse
+    public function __invoke(AdminAnalyticsService $analytics): ReactPage
     {
         $lessonCounts = Lesson::query()
             ->selectRaw('count(*) as total')

@@ -14,9 +14,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-use Inertia\Testing\AssertableInertia;
 use Laravel\Socialite\Socialite;
 use Laravel\Socialite\Two\User as GoogleUser;
+use Tests\AssertablePage;
 use Tests\TestCase;
 
 class AuthFlowTest extends TestCase
@@ -34,12 +34,12 @@ class AuthFlowTest extends TestCase
         foreach ([route('login'), route('register')] as $url) {
             $this->get($url)
                 ->assertOk()
-                ->assertInertiaContains(route('auth.google.redirect'));
+                ->assertReactContains(route('auth.google.redirect'));
         }
 
         $this->get(route('password.request'))
             ->assertOk()
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertReact(fn (AssertablePage $page) => $page->etc());
     }
 
     public function test_a_user_can_register_and_log_out(): void
@@ -69,8 +69,8 @@ class AuthFlowTest extends TestCase
         $this->withSession(['status' => 'Akun berhasil dibuat. Selamat belajar!'])
             ->get(route('home'))
             ->assertOk()
-            ->assertInertiaContains('Akun berhasil dibuat. Selamat belajar!')
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertReactContains('Akun berhasil dibuat. Selamat belajar!')
+            ->assertReact(fn (AssertablePage $page) => $page->etc());
 
         $this->post(route('logout'))->assertRedirect(route('home'));
         $this->assertGuest();
@@ -102,7 +102,7 @@ class AuthFlowTest extends TestCase
         $this->flushSession();
         Auth::forgetGuards();
         $this->withCookie($cookieName, $cookie->getValue())->get(route('home'))
-            ->assertOk()->assertInertiaValue('viewer.name', $user->name);
+            ->assertOk()->assertReactValue('viewer.name', $user->name);
         $this->assertTrue(Auth::viaRemember());
 
         $this->post(route('logout'))->assertCookieExpired($cookieName);
@@ -180,7 +180,7 @@ class AuthFlowTest extends TestCase
         $this->flushSession();
         Auth::forgetGuards();
         $this->withCookie($cookieName, $response->getCookie($cookieName)->getValue())->get(route('home'))
-            ->assertOk()->assertInertiaValue('viewer.name', 'Putu Bali');
+            ->assertOk()->assertReactValue('viewer.name', 'Putu Bali');
         $this->assertTrue(Auth::viaRemember());
     }
 
@@ -199,7 +199,7 @@ class AuthFlowTest extends TestCase
     {
         $path = LearningPath::factory()->create(['is_published' => true]);
         $this->get(route('register'))->assertRedirectToRoute('learning.interview.show', ['step' => 2]);
-        $this->get(route('learning.interview.show', ['step' => 2]))->assertInertiaValue('step', 2);
+        $this->get(route('learning.interview.show', ['step' => 2]))->assertReactValue('step', 2);
         $this->post(route('learning.interview.store'), ['step' => 2, 'learning_path_ids' => [$path->id]]);
         $this->post(route('learning.interview.store'), ['step' => 3, 'role' => 'guru'])->assertRedirectToRoute('register');
         $profile = LearnerProfile::query()->sole();

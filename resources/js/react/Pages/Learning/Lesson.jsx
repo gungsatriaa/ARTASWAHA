@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useForm, Link } from '@inertiajs/react';
+import { useForm, Link } from '../../routing';
 import { PageMeta, Button, buttonClass } from '../../Components/ui';
 import { Back, Card, Errors, Action, secondaryClass } from '../../Components/forms';
 import AnswerInput, { hasAnswer } from '../../Components/AnswerInput';

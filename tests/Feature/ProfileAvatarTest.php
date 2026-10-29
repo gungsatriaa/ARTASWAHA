@@ -32,8 +32,8 @@ class ProfileAvatarTest extends TestCase
         $this->assertSame('avatar/gajah.webp', $user->fresh()->avatar);
         $this->actingAs($user)->get(route('profile.show'))
             ->assertOk()
-            ->assertInertiaContains(asset('avatar/gajah.webp'))
-            ->assertInertiaContains('avatar/penyu.webp');
+            ->assertReactContains(asset('avatar/gajah.webp'))
+            ->assertReactContains('avatar/penyu.webp');
     }
 
     public function test_profile_notice_is_displayed_once_above_the_profile_navigation(): void
@@ -44,7 +44,7 @@ class ProfileAvatarTest extends TestCase
             ->withSession(['status' => $message])
             ->get(route('profile.show'))
             ->assertOk()
-            ->assertInertiaValue('flash.message', $message);
+            ->assertReactValue('flash.message', $message);
 
         $this->assertSame(1, substr_count($response->getContent(), $message));
     }

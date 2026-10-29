@@ -13,7 +13,7 @@ use App\Services\RoomService;
 use Database\Seeders\LearningPathSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
-use Inertia\Testing\AssertableInertia as Assert;
+use Tests\AssertablePage as Assert;
 use Tests\TestCase;
 
 class QuestionTypesTest extends TestCase
@@ -58,7 +58,7 @@ class QuestionTypesTest extends TestCase
 
         foreach ([['answer_index' => 0], ['answer_indexes' => [2, 0]], ['answer_text' => "  TALENG\n TEDONG  "]] as $index => $answer) {
             $question = $quiz->questions[$index];
-            $this->get(route('rooms.show', $room->code))->assertOk()->assertInertia(fn (Assert $page): Assert => $page
+            $this->get(route('rooms.show', $room->code))->assertOk()->assertReact(fn (Assert $page): Assert => $page
                 ->where('room.question.id', $question->id)
                 ->missing('room.question.correct_options')->missing('room.question.accepted_answers')
                 ->where('room.correctText', null));
@@ -78,7 +78,7 @@ class QuestionTypesTest extends TestCase
         }
         $this->assertSame(30, $room->participants()->sole()->score);
         $this->assertDatabaseCount('room_answers', 3);
-        $this->get(route('rooms.show', $room->code))->assertOk()->assertInertia(fn (Assert $page): Assert => $page
+        $this->get(route('rooms.show', $room->code))->assertOk()->assertReact(fn (Assert $page): Assert => $page
             ->where('room.results.1.correct', 'ᬳ, ᬓ')->where('room.results.1.selected', 'ᬓ, ᬳ')
             ->where('room.results.2.isCorrect', true));
     }
@@ -100,7 +100,7 @@ class QuestionTypesTest extends TestCase
         $deadline = $room->participants()->sole()->question_ends_at;
         $this->assertNotNull($deadline);
         $this->get(route('rooms.show', ['room' => $room->code, 'feedback' => $answer->id]))
-            ->assertOk()->assertInertia(fn (Assert $page): Assert => $page
+            ->assertOk()->assertReact(fn (Assert $page): Assert => $page
             ->where('room.feedback', true)->where('room.correctOptions', [0, 2])
             ->where('room.question.question_type', 'multiple')->where('room.correctText', 'ᬳ, ᬓ'));
         $this->assertTrue($deadline->equalTo($room->participants()->sole()->question_ends_at));
@@ -172,7 +172,7 @@ class QuestionTypesTest extends TestCase
             $this->assertSame('Jawab soal', $lesson->exercise_prompt);
             $lesson->update(['reviewed_at' => now(), 'is_published' => true]);
             $this->actingAs($learner)->withCookie('artaswaha_device', (string) Str::uuid());
-            $this->get(route('learning.lessons.show', $lesson))->assertOk()->assertInertia(fn (Assert $page): Assert => $page
+            $this->get(route('learning.lessons.show', $lesson))->assertOk()->assertReact(fn (Assert $page): Assert => $page
                 ->where('lesson.question_type', $type)->missing('lesson.accepted_answers')->missing('lesson.correct_options'));
             $this->post(route('learning.exercises.answer', $lesson), $type === 'multiple'
                 ? ['answer_indexes' => [0]] : ['answer_text' => 'Salah'])->assertSessionHasNoErrors()->assertRedirect();

@@ -12,7 +12,7 @@ use App\Services\AdminAnalyticsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Inertia\Testing\AssertableInertia as Assert;
+use Tests\AssertablePage as Assert;
 use Tests\TestCase;
 
 class AdminAnalyticsTest extends TestCase
@@ -39,15 +39,15 @@ class AdminAnalyticsTest extends TestCase
 
         $response = $this->actingAs($admin)->get(route('admin.analytics.index'));
 
-        $response->assertOk()->assertInertia(fn (Assert $page): Assert => $page
-            ->missing('statistics')
-            ->loadDeferredProps(fn (Assert $reload): Assert => $reload
-                ->where('statistics.metrics.completedLessons', 1)
-                ->where('statistics.metrics.learners', 1)
-                ->has('statistics.chart.labels', 14)
-                ->where('statistics.chart.completions.13', 1)
-                ->where('statistics.chart.completions.0', 0)
-                ->where('statistics.topPaths.0.title', 'Cecimpedan')));
+        $response->assertOk()->assertReact(fn (Assert $page): Assert => $page->missing('statistics'));
+        $this->get(route('admin.analytics.index'), ['X-React-Page' => 'true', 'X-React-Only' => 'statistics', 'X-React-Component' => 'Admin/Analytics'])
+            ->assertOk()->assertReact(fn (Assert $reload): Assert => $reload
+            ->where('statistics.metrics.completedLessons', 1)
+            ->where('statistics.metrics.learners', 1)
+            ->has('statistics.chart.labels', 14)
+            ->where('statistics.chart.completions.13', 1)
+            ->where('statistics.chart.completions.0', 0)
+            ->where('statistics.topPaths.0.title', 'Cecimpedan'));
     }
 
     public function test_weekly_comparisons_and_accuracy_use_real_recorded_activity_and_empty_days_stay_null(): void
@@ -90,8 +90,8 @@ class AdminAnalyticsTest extends TestCase
         $this->assertSame(1, $snapshot['metrics']['delayedAnalysis']);
         $this->assertSame(1, $snapshot['metrics']['failedAnalysis']);
         $this->actingAs(User::factory()->create(['is_admin' => true]))->get(route('admin.index'))
-            ->assertOk()->assertInertiaValue('overview.metrics.delayedAnalysis', 1)
-            ->assertInertiaValue('overview.metrics.learners', 2)->assertInertiaNotContains($claimed->visitor_id);
+            ->assertOk()->assertReactValue('overview.metrics.delayedAnalysis', 1)
+            ->assertReactValue('overview.metrics.learners', 2)->assertReactNotContains($claimed->visitor_id);
     }
 
     public function test_presence_counts_recent_unique_visitors_without_exposing_identity(): void

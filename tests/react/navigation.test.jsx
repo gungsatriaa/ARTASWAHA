@@ -3,15 +3,16 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import NavigationLink from '../../resources/js/react/Components/NavigationLink';
 const { loadPage } = vi.hoisted(() => ({ loadPage: vi.fn().mockResolvedValue({}) }));
 vi.mock('../../resources/js/react/pages', () => ({ loadPage }));
-const { page, linkProps } = vi.hoisted(() => ({ page: { props: { viewer: { mode: 'account' } } }, linkProps: vi.fn() }));
-vi.mock('@inertiajs/react', () => ({
+const { page, linkProps, prefetchPage } = vi.hoisted(() => ({ page: { props: { viewer: { mode: 'account' } } }, linkProps: vi.fn(), prefetchPage: vi.fn().mockResolvedValue() }));
+vi.mock('../../resources/js/react/routing', () => ({
+    prefetchPage,
     usePage: () => page,
     Link: ({ children, prefetch, cacheFor, ...props }) => {
         linkProps({ prefetch, cacheFor });
         return <a {...props}>{children}</a>;
     },
 }));
-beforeEach(() => { page.props.viewer = { mode: 'account' }; linkProps.mockClear(); });
+beforeEach(() => { page.props.viewer = { mode: 'account' }; linkProps.mockClear(); prefetchPage.mockClear(); });
 afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
@@ -30,6 +31,7 @@ it('only warms page code on navigation intent without prefetching user data', ()
     expect(loadPage).toHaveBeenCalledTimes(3);
     expect(loadPage).toHaveBeenLastCalledWith('Profile/Show');
     expect(focus).toHaveBeenCalledOnce();
+    expect(prefetchPage).not.toHaveBeenCalled();
     expect(link.hasAttribute('prefetch')).toBe(false);
     expect(link.getAttribute('href')).toBe('/profil');
 });
@@ -39,6 +41,7 @@ it.each([{ saveData: true }, { effectiveType: '2g' }, { effectiveType: 'slow-2g'
     render(<NavigationLink page="Learning/Catalog" href="/belajar">Belajar</NavigationLink>);
     fireEvent.focus(screen.getByRole('link'));
     expect(loadPage).not.toHaveBeenCalled();
+    expect(prefetchPage).not.toHaveBeenCalled();
 });
 
 it('leaves normal navigation available when a code preload fails', async () => {
@@ -52,20 +55,31 @@ it('leaves normal navigation available when a code preload fails', async () => {
 it.each(['account', 'anonymous'])('prefetches only the read-only catalog for %s viewers for 15 seconds', (mode) => {
     page.props.viewer = { mode };
     render(<NavigationLink page="Learning/Catalog" href="/belajar">Belajar</NavigationLink>);
+    expect(prefetchPage).not.toHaveBeenCalled();
+    fireEvent.mouseEnter(screen.getByRole('link'));
+    fireEvent.focus(screen.getByRole('link'));
+    fireEvent.touchStart(screen.getByRole('link'));
+    expect(prefetchPage.mock.calls).toEqual([['/belajar'], ['/belajar'], ['/belajar']]);
     expect(linkProps).toHaveBeenLastCalledWith({ prefetch: ['hover', 'click'], cacheFor: '15s' });
 });
 
 it.each(['Learning/Lesson', 'Learning/Path', 'Home', 'Quizzes/Index', 'Profile/Show', 'Rooms/Show'])('never prefetches %s response data', (component) => {
     render(<NavigationLink page={component} href="/tujuan">Tujuan</NavigationLink>);
+    fireEvent.focus(screen.getByRole('link'));
+    expect(prefetchPage).not.toHaveBeenCalled();
     expect(linkProps.mock.lastCall[0].prefetch).toBe(false);
 });
 
 it('does not prefetch the guest interview redirect or data on Save-Data', () => {
     page.props.viewer = null;
     const view = render(<NavigationLink page="Learning/Catalog" href="/belajar">Belajar</NavigationLink>);
+    fireEvent.focus(screen.getByRole('link'));
+    expect(prefetchPage).not.toHaveBeenCalled();
     expect(linkProps.mock.lastCall[0].prefetch).toBe(false);
     page.props.viewer = { mode: 'account' };
     Object.defineProperty(navigator, 'connection', { configurable: true, value: { saveData: true } });
     view.rerender(<NavigationLink page="Learning/Catalog" href="/belajar">Belajar</NavigationLink>);
+    fireEvent.focus(screen.getByRole('link'));
+    expect(prefetchPage).not.toHaveBeenCalled();
     expect(linkProps.mock.lastCall[0].prefetch).toBe(false);
 });

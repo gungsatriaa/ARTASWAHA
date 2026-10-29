@@ -1,4 +1,4 @@
-import { Link, router, useForm, usePage } from '@inertiajs/react';
+import { Link, router, useForm, usePage } from '../../routing';
 import { PageMeta, Pagination, EmptyState, Button } from '../../Components/ui';
 import { Card, Heading, Field, Status, secondaryClass } from '../../Components/forms';
 export default function AudioIndex({ items, type, configured, filters, meta }) {

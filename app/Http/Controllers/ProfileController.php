@@ -5,15 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\LearningPath;
 use App\Services\LearnerInterviewAnalyzer;
 use App\Services\PagePresenter;
+use App\Services\ReactPage;
 use App\Services\ReactUi;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Response as InertiaResponse;
 
 class ProfileController extends Controller
 {
-    public function about(Request $request): InertiaResponse|RedirectResponse
+    public function about(Request $request): ReactPage|RedirectResponse
     {
         $user = $request->user();
         $profile = $user === null ? app(ReactUi::class)->profile($request) : null;
@@ -30,7 +30,7 @@ class ProfileController extends Controller
         return app(PagePresenter::class)->render('profile.about', compact('learningPaths', 'profile', 'user'));
     }
 
-    public function __invoke(Request $request, LearnerInterviewAnalyzer $analyzer): InertiaResponse|RedirectResponse
+    public function __invoke(Request $request, LearnerInterviewAnalyzer $analyzer): ReactPage|RedirectResponse
     {
         $user = $request->user();
         $profile = $user === null ? app(ReactUi::class)->profile($request) : null;

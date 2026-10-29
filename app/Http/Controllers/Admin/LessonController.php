@@ -10,13 +10,13 @@ use App\Models\Lesson;
 use App\Services\AdminLearningContentService;
 use App\Services\ContentAudioService;
 use App\Services\PagePresenter;
+use App\Services\ReactPage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Response as InertiaResponse;
 
 class LessonController extends Controller
 {
-    public function index(Request $request, AdminLearningContentService $contentService): InertiaResponse
+    public function index(Request $request, AdminLearningContentService $contentService): ReactPage
     {
         $filters = $request->validate(['learning_path_id' => ['nullable', 'integer'], 'status' => ['nullable', 'in:draft,published,archived']]);
         $lessons = $contentService->lessons(isset($filters['learning_path_id']) ? (int) $filters['learning_path_id'] : null, $filters['status'] ?? null);
@@ -25,7 +25,7 @@ class LessonController extends Controller
         return app(PagePresenter::class)->render('admin.lessons.index', compact('lessons', 'learningPaths'));
     }
 
-    public function create(Request $request): InertiaResponse
+    public function create(Request $request): ReactPage
     {
         $learningPaths = LearningPath::query()->orderBy('group')->orderBy('sort_order')->get(['id', 'title', 'group']);
 
@@ -38,7 +38,7 @@ class LessonController extends Controller
         return app(PagePresenter::class)->render('admin.lessons.form', compact('lesson', 'learningPaths'));
     }
 
-    public function preview(Lesson $lesson, ContentAudioService $audioService): InertiaResponse
+    public function preview(Lesson $lesson, ContentAudioService $audioService): ReactPage
     {
         $lesson->load('learningPath');
         $audio = $audioService->forContent($lesson);
@@ -54,7 +54,7 @@ class LessonController extends Controller
         return to_route('admin.lessons.preview', $lesson)->with('status', 'Modul tersimpan sebagai draf. Tinjau sebelum menerbitkan.');
     }
 
-    public function edit(Lesson $lesson): InertiaResponse
+    public function edit(Lesson $lesson): ReactPage
     {
         $learningPaths = LearningPath::query()->orderBy('group')->orderBy('sort_order')->get(['id', 'title', 'group']);
 

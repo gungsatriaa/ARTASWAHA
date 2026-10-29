@@ -1,4 +1,4 @@
-import { usePage } from '@inertiajs/react';
+import { usePage } from '../routing';
 import { buttonClass } from './ui';
 
 export default function PageLoadError() {

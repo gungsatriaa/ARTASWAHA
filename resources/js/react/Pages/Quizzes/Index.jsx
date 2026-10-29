@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, router, useForm, usePage } from '@inertiajs/react';
+import { Link, router, useForm, usePage } from '../../routing';
 import { Button, PageMeta, Pagination, buttonClass, EmptyState } from '../../Components/ui';
 import { Heading, Card, Field, Action, secondaryClass } from '../../Components/forms';
 import Dialog from '../../Components/Dialog';

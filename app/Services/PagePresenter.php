@@ -11,15 +11,13 @@ use App\Models\QuizDraft;
 use App\Models\QuizQuestion;
 use Closure;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class PagePresenter
 {
     public function __construct(private ContentAudioService $audioService) {}
 
     /** @param array<string, mixed> $data */
-    public function render(string $view, array $data = []): Response
+    public function render(string $view, array $data = []): ReactPage
     {
         [$page, $props, $title] = match ($view) {
             'welcome' => ['Home', $this->home($data), 'Belajar bahasa dan aksara Bali'],
@@ -49,7 +47,7 @@ class PagePresenter
             'admin.ai.report' => ['Admin/AiDetail', ['kind' => 'report', 'record' => $data['aiReport']->only(['id', 'status', 'period_start', 'period_end', 'snapshot', 'result', 'completed_at'])], 'Interpretasi statistik AI'],
         };
 
-        return Inertia::render($page, [...$props, 'meta' => ['title' => $title.' — ARTASWAHA', 'description' => $data['lesson']->summary ?? 'Belajar bahasa, sastra, dan aksara Bali melalui materi, latihan, dan kuis ARTASWAHA.', 'schema' => $page === 'Home' ? ['@context' => 'https://schema.org', '@type' => 'WebSite', 'name' => 'ARTASWAHA', 'url' => route('home')] : null, 'canonical' => request()->url(), 'robots' => in_array($page, ['Home', 'Privacy', 'Learning/Lesson'], true) ? 'index, follow' : 'noindex, nofollow']]);
+        return ReactPage::render($page, [...$props, 'meta' => ['title' => $title.' — ARTASWAHA', 'description' => $data['lesson']->summary ?? 'Belajar bahasa, sastra, dan aksara Bali melalui materi, latihan, dan kuis ARTASWAHA.', 'schema' => $page === 'Home' ? ['@context' => 'https://schema.org', '@type' => 'WebSite', 'name' => 'ARTASWAHA', 'url' => route('home')] : null, 'canonical' => request()->url(), 'robots' => in_array($page, ['Home', 'Privacy', 'Learning/Lesson'], true) ? 'index, follow' : 'noindex, nofollow']], $page === 'Admin/Analytics' ? ['statistics'] : []);
     }
 
     public function path(LearningPath $path): array

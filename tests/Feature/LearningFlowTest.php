@@ -11,7 +11,7 @@ use App\Models\User;
 use Database\Seeders\LearningPathSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
-use Inertia\Testing\AssertableInertia;
+use Tests\AssertablePage;
 use Tests\TestCase;
 
 class LearningFlowTest extends TestCase
@@ -32,15 +32,15 @@ class LearningFlowTest extends TestCase
 
         $response = $this->get(route('home'))
             ->assertOk()
-            ->assertInertiaContains('Cecimpedan')
-            ->assertInertiaContains(asset('image/asset1.webp'))
-            ->assertInertiaNotContains('Bawak-bawak madaging banyu')
-            ->assertInertiaContains('Pengangge Suara')
-            ->assertInertiaNotContains('Kembali ke atas')
-            ->assertInertiaNotContains('group-focus-within:visible')
-            ->assertInertiaContains(route('learning.paths.show', 'cecimpedan'));
+            ->assertReactContains('Cecimpedan')
+            ->assertReactContains(asset('image/asset1.webp'))
+            ->assertReactNotContains('Bawak-bawak madaging banyu')
+            ->assertReactContains('Pengangge Suara')
+            ->assertReactNotContains('Kembali ke atas')
+            ->assertReactNotContains('group-focus-within:visible')
+            ->assertReactContains(route('learning.paths.show', 'cecimpedan'));
 
-        $response->assertInertiaValue('navigation.privacy', route('privacy-policy'));
+        $response->assertReactValue('navigation.privacy', route('privacy-policy'));
 
     }
 
@@ -51,11 +51,11 @@ class LearningFlowTest extends TestCase
 
         $response = $this->get(route('home'))
             ->assertOk()
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertReact(fn (AssertablePage $page) => $page->etc());
 
         foreach (LearningPath::query()->where('is_published', true)->get() as $learningPath) {
-            $response->assertInertiaContains($learningPath->title)
-                ->assertInertiaContains(route('learning.paths.show', $learningPath->slug));
+            $response->assertReactContains($learningPath->title)
+                ->assertReactContains(route('learning.paths.show', $learningPath->slug));
         }
     }
 
@@ -70,7 +70,7 @@ class LearningFlowTest extends TestCase
 
         $this->actingAs($user)->get(route('home'))
             ->assertOk()
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertReact(fn (AssertablePage $page) => $page->etc());
 
         LearnerProfile::query()->create([
             'visitor_id' => (string) Str::uuid(),
@@ -84,7 +84,7 @@ class LearningFlowTest extends TestCase
 
         $this->actingAs($user)->get(route('home'))
             ->assertOk()
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertReact(fn (AssertablePage $page) => $page->etc());
 
         $this->post(route('logout'));
         $profile = LearnerProfile::query()->create([
@@ -98,8 +98,8 @@ class LearningFlowTest extends TestCase
 
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('home'))
             ->assertOk()
-            ->assertInertiaContains('Made')
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertReactContains('Made')
+            ->assertReact(fn (AssertablePage $page) => $page->etc());
 
         $this->withCookie('artaswaha_device', (string) Str::uuid())->get(route('home'))
             ->assertRedirectToRoute('learning.interview.show');
@@ -115,9 +115,9 @@ class LearningFlowTest extends TestCase
 
         $this->actingAs($user)->get(route('home'))
             ->assertOk()
-            ->assertInertiaValue('recent.url', route('learning.lessons.show', $latest->lesson->slug))
-            ->assertInertiaContains(route('learning.lessons.show', $latest->lesson->slug))
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertReactValue('recent.url', route('learning.lessons.show', $latest->lesson->slug))
+            ->assertReactContains(route('learning.lessons.show', $latest->lesson->slug))
+            ->assertReact(fn (AssertablePage $page) => $page->etc());
     }
 
     public function test_anonymous_learning_history_only_uses_unclaimed_progress_from_its_device(): void
@@ -136,8 +136,8 @@ class LearningFlowTest extends TestCase
 
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('home'))
             ->assertOk()
-            ->assertInertiaValue('recent.url', route('learning.lessons.show', $latest->lesson->slug))
-            ->assertInertiaContains(route('learning.lessons.show', $latest->lesson->slug));
+            ->assertReactValue('recent.url', route('learning.lessons.show', $latest->lesson->slug))
+            ->assertReactContains(route('learning.lessons.show', $latest->lesson->slug));
     }
 
     public function test_mobile_app_navigation_stays_on_the_main_pages_but_not_during_a_lesson(): void
@@ -148,7 +148,7 @@ class LearningFlowTest extends TestCase
 
         foreach (['home', 'learning.paths.show', 'quizzes.index', 'profile.show'] as $routeName) {
             $url = $routeName === 'learning.paths.show' ? route($routeName, $path->slug) : route($routeName);
-            $this->actingAs($user)->get($url)->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            $this->actingAs($user)->get($url)->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc());
         }
 
         $this->actingAs($user)->get(route('learning.lessons.show', $lesson->slug))
@@ -169,19 +169,19 @@ class LearningFlowTest extends TestCase
         ]);
 
         $response = $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('home'))->assertOk();
-        $response->assertInertiaValue('navigation.learning', route('learning.paths.index'))
-            ->assertInertiaValue('viewer.mode', 'anonymous');
+        $response->assertReactValue('navigation.learning', route('learning.paths.index'))
+            ->assertReactValue('viewer.mode', 'anonymous');
 
         foreach (['quizzes.index', 'profile.show'] as $routeName) {
             $this->withCookie('artaswaha_device', $profile->visitor_id)
                 ->get(route($routeName))
                 ->assertOk()
-                ->assertInertia(fn (AssertableInertia $page) => $page->etc());
+                ->assertReact(fn (AssertablePage $page) => $page->etc());
         }
 
         $publishedPath->update(['is_published' => false]);
         $response = $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('home'))->assertOk();
-        $response->assertInertiaValue('navigation.learning', route('learning.paths.index'));
+        $response->assertReactValue('navigation.learning', route('learning.paths.index'));
     }
 
     public function test_learning_catalog_lists_published_materials_and_lesson_counts(): void
@@ -192,10 +192,10 @@ class LearningFlowTest extends TestCase
 
         $this->actingAs(User::factory()->create())->get(route('learning.paths.index'))
             ->assertOk()
-            ->assertInertiaContains($path->title)
-            ->assertInertiaContains(route('learning.paths.show', $path->slug))
-            ->assertInertiaNotContains($hiddenPath->title)
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertReactContains($path->title)
+            ->assertReactContains(route('learning.paths.show', $path->slug))
+            ->assertReactNotContains($hiddenPath->title)
+            ->assertReact(fn (AssertablePage $page) => $page->etc());
     }
 
     public function test_learning_catalog_handles_no_materials_for_an_existing_account(): void
@@ -203,7 +203,7 @@ class LearningFlowTest extends TestCase
         $this->actingAs(User::factory()->create());
         $this->get(route('learning.paths.index'))
             ->assertOk()
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertReact(fn (AssertablePage $page) => $page->etc());
     }
 
     public function test_unreviewed_lessons_are_not_accessible(): void
@@ -222,10 +222,10 @@ class LearningFlowTest extends TestCase
         $response = $this->actingAs($user)
             ->get(route('home'))
             ->assertOk()
-            ->assertInertiaContains(route('profile.show'))
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertReactContains(route('profile.show'))
+            ->assertReact(fn (AssertablePage $page) => $page->etc());
 
-        $response->assertInertiaValue('viewer.avatar', asset($user->avatar));
+        $response->assertReactValue('viewer.avatar', asset($user->avatar));
         $this->assertStringNotContainsString('>G</button>', $response->getContent());
     }
 
@@ -243,12 +243,12 @@ class LearningFlowTest extends TestCase
         $this->actingAs($user)
             ->get(route('profile.show'))
             ->assertOk()
-            ->assertInertiaContains('Gung Satria')
-            ->assertInertiaContains('gung@example.com')
-            ->assertInertiaContains(route('profile.about'))
-            ->assertInertiaContains(route('learning.paths.show', 'cecimpedan'))
-            ->assertInertiaContains(route('quizzes.index'))
-            ->assertInertiaNotContains('Ruang belajar paribasa dan aksara Bali yang seru');
+            ->assertReactContains('Gung Satria')
+            ->assertReactContains('gung@example.com')
+            ->assertReactContains(route('profile.about'))
+            ->assertReactContains(route('learning.paths.show', 'cecimpedan'))
+            ->assertReactContains(route('quizzes.index'))
+            ->assertReactNotContains('Ruang belajar paribasa dan aksara Bali yang seru');
     }
 
     public function test_profile_about_page_explains_the_system_version_and_privacy(): void
@@ -261,8 +261,8 @@ class LearningFlowTest extends TestCase
         $this->actingAs($user)
             ->get(route('profile.about'))
             ->assertOk()
-            ->assertInertiaContains(route('privacy-policy'))
-            ->assertInertiaContains(route('profile.show'));
+            ->assertReactContains(route('privacy-policy'))
+            ->assertReactContains(route('profile.show'));
     }
 
     public function test_profile_shows_a_clear_empty_state_when_no_lessons_exist(): void
@@ -272,8 +272,8 @@ class LearningFlowTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->get(route('profile.show'))
             ->assertOk()
-            ->assertInertiaNotContains('Segera hadir')
-            ->assertInertiaNotContains('0 dari 0 pelajaran selesai');
+            ->assertReactNotContains('Segera hadir')
+            ->assertReactNotContains('0 dari 0 pelajaran selesai');
     }
 
     public function test_profile_progress_only_includes_materials_studied_by_the_current_user(): void
@@ -289,10 +289,10 @@ class LearningFlowTest extends TestCase
 
         $this->actingAs($user)->get(route('profile.show'))
             ->assertOk()
-            ->assertInertiaValue('totalLessons', 2)
-            ->assertInertiaValue('completedLessons', 1)
-            ->assertInertiaValue('paths.0.id', $studiedPath->id)
-            ->assertInertiaNotContains('Segera hadir');
+            ->assertReactValue('totalLessons', 2)
+            ->assertReactValue('completedLessons', 1)
+            ->assertReactValue('paths.0.id', $studiedPath->id)
+            ->assertReactNotContains('Segera hadir');
     }
 
     public function test_anonymous_profile_progress_excludes_other_devices_and_account_progress(): void
@@ -312,9 +312,9 @@ class LearningFlowTest extends TestCase
 
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('profile.show'))
             ->assertOk()
-            ->assertInertiaValue('totalLessons', 1)
-            ->assertInertiaValue('completedLessons', 1)
-            ->assertInertiaValue('paths.0.id', $path->id);
+            ->assertReactValue('totalLessons', 1)
+            ->assertReactValue('completedLessons', 1)
+            ->assertReactValue('paths.0.id', $path->id);
     }
 
     public function test_path_page_only_lists_published_reviewed_lessons(): void
@@ -335,9 +335,9 @@ class LearningFlowTest extends TestCase
 
         $this->get(route('learning.paths.show', $path->slug))
             ->assertOk()
-            ->assertInertiaContains('Pelajaran yang ditinjau')
-            ->assertInertiaContains(route('learning.lessons.show', 'pelajaran-yang-ditinjau'))
-            ->assertInertiaNotContains('Draf internal');
+            ->assertReactContains('Pelajaran yang ditinjau')
+            ->assertReactContains(route('learning.lessons.show', 'pelajaran-yang-ditinjau'))
+            ->assertReactNotContains('Draf internal');
     }
 
     public function test_empty_learning_path_offers_another_topic(): void
@@ -347,7 +347,7 @@ class LearningFlowTest extends TestCase
 
         $this->get(route('learning.paths.show', $path->slug))
             ->assertOk()
-            ->assertInertiaContains(route('home'));
+            ->assertReactContains(route('home'));
     }
 
     public function test_anonymous_progress_is_saved_once_for_the_device(): void

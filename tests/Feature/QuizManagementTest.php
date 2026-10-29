@@ -10,7 +10,7 @@ use App\Services\ContentAudioService;
 use App\Services\RoomService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
-use Inertia\Testing\AssertableInertia;
+use Tests\AssertablePage;
 use Tests\TestCase;
 
 class QuizManagementTest extends TestCase
@@ -110,8 +110,8 @@ class QuizManagementTest extends TestCase
 
         $this->assertTrue($quiz->fresh()->is_archived);
         $this->assertSame($quiz->id, $room->fresh()->quiz_id);
-        $this->get(route('quizzes.index', ['status' => 'archived', 'q' => $quiz->title]))->assertOk()->assertInertiaContains($quiz->title);
-        $this->get(route('quizzes.index'))->assertInertiaNotContains($quiz->title);
+        $this->get(route('quizzes.index', ['status' => 'archived', 'q' => $quiz->title]))->assertOk()->assertReactContains($quiz->title);
+        $this->get(route('quizzes.index'))->assertReactNotContains($quiz->title);
         $this->post(route('rooms.store', $quiz))->assertStatus(422);
     }
 
@@ -139,14 +139,14 @@ class QuizManagementTest extends TestCase
         $audio = $this->audio($question);
 
         $this->actingAs($admin)->get(route('quizzes.edit', $question->quiz))
-            ->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc())
-            ->assertInertiaContains(route('admin.audio.questions.edit', $question))
-            ->assertInertiaContains(route('content-audio.show', $audio))
-            ->assertInertiaContains('<script>alert(1)</script>')->assertDontSee('<script>alert(1)</script>', false);
+            ->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc())
+            ->assertReactContains(route('admin.audio.questions.edit', $question))
+            ->assertReactContains(route('content-audio.show', $audio))
+            ->assertReactContains('<script>alert(1)</script>')->assertDontSee('<script>alert(1)</script>', false);
         $this->get(route('quizzes.show', $question->quiz))->assertOk()
-            ->assertInertiaContains(route('quizzes.archive', $question->quiz))
-            ->assertInertiaContains(route('quizzes.duplicate', $question->quiz));
-        $this->get(route('admin.audio.questions.edit', $question))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertReactContains(route('quizzes.archive', $question->quiz))
+            ->assertReactContains(route('quizzes.duplicate', $question->quiz));
+        $this->get(route('admin.audio.questions.edit', $question))->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc());
     }
 
     public function test_search_lists_only_matching_owned_quizzes_and_shows_actions(): void
@@ -157,8 +157,8 @@ class QuizManagementTest extends TestCase
         Quiz::factory()->create(['title' => 'Belajar rahasia']);
 
         $this->actingAs($owner)->get(route('quizzes.index', ['q' => 'Belajar']))
-            ->assertOk()->assertInertiaContains('Belajar aksara')->assertInertiaNotContains('Paribasa lainnya')->assertInertiaNotContains('Belajar rahasia')
-            ->assertInertiaContains(route('quizzes.edit', $matching))->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertOk()->assertReactContains('Belajar aksara')->assertReactNotContains('Paribasa lainnya')->assertReactNotContains('Belajar rahasia')
+            ->assertReactContains(route('quizzes.edit', $matching))->assertReact(fn (AssertablePage $page) => $page->etc());
     }
 
     public function test_repeated_question_id_is_rejected_without_modifying_quiz(): void

@@ -8,19 +8,19 @@ use App\Http\Requests\UpdateLearningPathRequest;
 use App\Models\LearningPath;
 use App\Services\AdminLearningContentService;
 use App\Services\PagePresenter;
+use App\Services\ReactPage;
 use Illuminate\Http\RedirectResponse;
-use Inertia\Response as InertiaResponse;
 
 class LearningPathController extends Controller
 {
-    public function index(AdminLearningContentService $contentService): InertiaResponse
+    public function index(AdminLearningContentService $contentService): ReactPage
     {
         $learningPaths = $contentService->learningPaths();
 
         return app(PagePresenter::class)->render('admin.learning-paths.index', compact('learningPaths'));
     }
 
-    public function create(): InertiaResponse
+    public function create(): ReactPage
     {
         return app(PagePresenter::class)->render('admin.learning-paths.form', ['learningPath' => new LearningPath]);
     }
@@ -32,7 +32,7 @@ class LearningPathController extends Controller
         return to_route('admin.learning-paths.index')->with('status', 'Jalur belajar berhasil dibuat.');
     }
 
-    public function edit(LearningPath $learningPath): InertiaResponse
+    public function edit(LearningPath $learningPath): ReactPage
     {
         return app(PagePresenter::class)->render('admin.learning-paths.form', compact('learningPath'));
     }

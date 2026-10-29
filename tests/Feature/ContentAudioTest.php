@@ -22,8 +22,8 @@ use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Inertia\Testing\AssertableInertia;
 use RuntimeException;
+use Tests\AssertablePage;
 use Tests\TestCase;
 
 class ContentAudioTest extends TestCase
@@ -44,9 +44,9 @@ class ContentAudioTest extends TestCase
         $lesson = Lesson::factory()->create();
         $this->actingAs(User::factory()->create(['is_admin' => true]));
         foreach (['records', 'modules', 'questions'] as $type) {
-            $this->get(route('admin.audio.index', ['type' => $type]))->assertOk()->assertInertiaContains('Audio pembelajaran');
+            $this->get(route('admin.audio.index', ['type' => $type]))->assertOk()->assertReactContains('Audio pembelajaran');
         }
-        $this->get(route('admin.audio.lessons.edit', $lesson))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
+        $this->get(route('admin.audio.lessons.edit', $lesson))->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc());
         $this->assertDatabaseCount('content_audio', 0);
         Process::assertNothingRan();
     }
@@ -74,7 +74,7 @@ class ContentAudioTest extends TestCase
         $audio = ContentAudio::factory()->create(['status' => 'queued']);
         $this->actingAs(User::factory()->create(['is_admin' => true]));
         $this->get(route('admin.audio.lessons.edit', $audio->lesson))->assertOk()
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertReact(fn (AssertablePage $page) => $page->etc());
         $url = route('admin.audio.status', $audio);
         $audio->update(['status' => 'processing']);
         $this->getJson($url)->assertOk()->assertJsonPath('status', 'processing')->assertJsonMissingPath('html');
@@ -121,7 +121,7 @@ class ContentAudioTest extends TestCase
         $this->actingAs(User::factory()->create())->get(route('content-audio.show', $audio))->assertOk()->assertHeader('Cache-Control', 'no-store, private');
         $this->withHeader('Range', 'bytes=0-11')->get(route('content-audio.show', $audio))->assertStatus(206)->assertHeader('Content-Range', 'bytes 0-11/60');
         $this->flushHeaders();
-        $this->get(route('learning.lessons.show', $lesson->slug))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
+        $this->get(route('learning.lessons.show', $lesson->slug))->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc());
     }
 
     public function test_invalid_upload_and_unsupported_bali_generation_are_rejected(): void
@@ -500,7 +500,7 @@ class ContentAudioTest extends TestCase
         $rooms->join($room->code, $player);
         $rooms->start($room, $host);
 
-        $this->actingAs($player)->get(route('rooms.show', $room->code))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
+        $this->actingAs($player)->get(route('rooms.show', $room->code))->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc());
         $this->get(route('content-audio.show', ['contentAudio' => $firstAudio, 'room' => $room->code]))->assertOk();
         $this->get(route('content-audio.show', ['contentAudio' => $secondAudio, 'room' => $room->code]))->assertNotFound();
         $this->actingAs(User::factory()->create())->get(route('content-audio.show', ['contentAudio' => $firstAudio, 'room' => $room->code]))->assertForbidden();

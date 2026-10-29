@@ -1,6 +1,6 @@
 import Skeleton from '../../Components/Skeleton';
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { Link, useForm, usePage } from '@inertiajs/react';
+import { Link, useForm, usePage } from '../../routing';
 import { PageMeta, Button, buttonClass } from '../../Components/ui';
 import { Card, Action, Field, Errors, secondaryClass } from '../../Components/forms';
 import Dialog from '../../Components/Dialog';

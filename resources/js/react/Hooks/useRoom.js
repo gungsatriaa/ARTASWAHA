@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { router } from '@inertiajs/react';
+import { router } from '../routing';
 
 export default function useRoom(room, viewer, csrfToken) {
     const current = useRef(room),
@@ -131,17 +131,10 @@ export default function useRoom(room, viewer, csrfToken) {
             body.append('_token', csrfToken);
             navigator.sendBeacon(room.urls.leave, body);
         };
-        const before = router.on('before', (event) => {
-            if (
-                event.detail.visit.method === 'get' &&
-                event.detail.visit.url.pathname !== new URL(room.urls.show).pathname
-            )
-                leave();
-        });
         return () => {
             clearInterval(timer);
             controller?.abort();
-            before();
+            if (window.location.pathname !== new URL(room.urls.show, window.location.href).pathname) leave();
         };
     }, [room.code, room.isHost, live, csrfToken]);
     useEffect(() => {

@@ -8,7 +8,7 @@ use App\Models\User;
 use Database\Seeders\AksaraBaliLessonSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
-use Inertia\Testing\AssertableInertia as Assert;
+use Tests\AssertablePage as Assert;
 use Tests\TestCase;
 
 class LessonModuleTest extends TestCase
@@ -30,7 +30,7 @@ class LessonModuleTest extends TestCase
         $this->assertCount(10, $lesson->exercises);
         $this->assertSame('Penjelasan hasil suntingan admin.', $lesson->exercises[0]['exercise_explanation']);
         $this->assertSame(3, collect($lesson->exercises)->where('question_type', 'essay')->count());
-        $this->get(route('admin.lessons.preview', $lesson))->assertInertia(fn (Assert $page): Assert => $page->has('lesson.exercises', 10));
+        $this->get(route('admin.lessons.preview', $lesson))->assertReact(fn (Assert $page): Assert => $page->has('lesson.exercises', 10));
         $this->actingAs(User::factory()->create())->put(route('admin.lessons.update', $lesson), $data)->assertForbidden();
     }
 
@@ -58,11 +58,11 @@ class LessonModuleTest extends TestCase
         $user = User::factory()->create();
         $this->actingAs($user)->withCookie('artaswaha_device', (string) Str::uuid());
         $this->post(route('learning.exercises.answer', $lesson), ['question_index' => 0, 'answer_index' => $lesson->exercises[0]['correct_option']]);
-        $this->get(route('learning.lessons.show', $lesson))->assertInertia(fn (Assert $page): Assert => $page->where('quiz.index', 1));
+        $this->get(route('learning.lessons.show', $lesson))->assertReact(fn (Assert $page): Assert => $page->where('quiz.index', 1));
         $exercises = $lesson->exercises;
         $exercises[0]['exercise_prompt'] = 'Pertanyaan yang telah diubah';
         $lesson->update(['exercises' => $exercises]);
-        $this->get(route('learning.lessons.show', $lesson))->assertInertia(fn (Assert $page): Assert => $page->where('quiz.index', 0));
+        $this->get(route('learning.lessons.show', $lesson))->assertReact(fn (Assert $page): Assert => $page->where('quiz.index', 0));
         $this->assertDatabaseCount('learning_progress', 0);
     }
 }

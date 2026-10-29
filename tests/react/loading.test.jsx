@@ -5,18 +5,16 @@ import PageEffects from '../../resources/js/react/Components/PageEffects';
 import { useState } from 'react';
 import { fireEvent } from '@testing-library/react';
 import usePolling from '../../resources/js/react/Hooks/usePolling';
-const { callbacks, page } = vi.hoisted(() => ({
-    callbacks: new Map(),
+const { navigation, page } = vi.hoisted(() => ({
+    navigation: { state: 'idle', formMethod: undefined },
     page: { component: 'Home', url: '/', props: {} },
 }));
-vi.mock('@inertiajs/react', () => ({
+vi.mock('../../resources/js/react/routing', () => ({
     usePage: () => page,
-    router: {
-        on: (event, callback) => {
-            callbacks.set(event, callback);
-            return () => callbacks.delete(event);
-        },
-    },
+}));
+vi.mock('react-router', async (importOriginal) => ({
+    ...await importOriginal(),
+    useNavigation: () => navigation,
 }));
 let stop;
 
@@ -27,7 +25,8 @@ it('keeps the current screen mounted while navigation waits and avoids restartin
     }
     const { rerender } = render(<PageEffects><Draft /></PageEffects>);
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Tetap di sini' } });
-    act(() => callbacks.get('start')({ detail: { visit: { method: 'get' } } }));
+    navigation.state = 'loading';
+    rerender(<PageEffects><Draft /></PageEffects>);
     act(() => vi.advanceTimersByTime(500));
     expect(screen.getByRole('textbox').value).toBe('Tetap di sini');
     const original = page.url;
@@ -39,7 +38,8 @@ it('keeps the current screen mounted while navigation waits and avoids restartin
 });
 beforeEach(() => {
     vi.useFakeTimers();
-    callbacks.clear();
+    navigation.state = 'idle';
+    navigation.formMethod = undefined;
     Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
     vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
 });
@@ -84,24 +84,29 @@ it('does not pretend that a broken page loaded successfully and releases the ove
     await vi.advanceTimersByTimeAsync(5100);
     expect(document.documentElement.classList.contains('page-loading')).toBe(false);
 });
-it('announces slow GET navigation without a floating skeleton, never delays answer POSTs, and cleans route listeners', () => {
-    const { unmount } = render(
+it('announces slow GET navigation without a floating skeleton, never delays answer POSTs, and cleans pending timers', () => {
+    const { unmount, rerender } = render(
         <PageEffects>
             <h1>Halaman</h1>
         </PageEffects>,
     );
-    act(() => callbacks.get('start')({ detail: { visit: { method: 'post' } } }));
+    navigation.state = 'loading';
+    navigation.formMethod = 'post';
+    rerender(<PageEffects><h1>Halaman</h1></PageEffects>);
     act(() => vi.advanceTimersByTime(300));
     expect(screen.queryByRole('status')).toBeNull();
-    act(() => callbacks.get('start')({ detail: { visit: { method: 'get' } } }));
+    navigation.formMethod = undefined;
+    rerender(<PageEffects><h1>Halaman</h1></PageEffects>);
     act(() => vi.advanceTimersByTime(181));
     expect(screen.getByRole('status', { name: 'Memuat halaman…' })).toBeTruthy();
     expect(screen.getByRole('status', { name: 'Memuat halaman…' }).classList.contains('sr-only')).toBe(true);
     expect(document.querySelector('.skeleton-line')).toBeNull();
-    act(() => callbacks.get('finish')());
+    navigation.state = 'idle';
+    rerender(<PageEffects><h1>Halaman</h1></PageEffects>);
     expect(screen.queryByRole('status')).toBeNull();
+    navigation.state = 'loading';
+    rerender(<PageEffects><h1>Halaman</h1></PageEffects>);
     unmount();
-    expect(callbacks.size).toBe(0);
     expect(vi.getTimerCount()).toBe(0);
 });
 it('caps polling attempts including tab reactivation and reports exhaustion instead of spinning forever', async () => {

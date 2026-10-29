@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage } from '../routing';
 import Dropdown from './Dropdown';
 import NavigationLink from './NavigationLink';
 import Icon from './Icon';

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useForm } from '@inertiajs/react';
+import { useForm } from '../../routing';
 import { PageMeta, Button } from '../../Components/ui';
 import { Card, Heading, Field, Back, Errors, secondaryClass } from '../../Components/forms';
 import AudioStatus from '../../Components/AudioStatus';

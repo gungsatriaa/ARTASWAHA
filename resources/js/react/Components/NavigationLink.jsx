@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, prefetchPage, usePage } from '../routing';
 import { loadPage } from '../pages';
 
 export default function NavigationLink({ page, onMouseEnter, onFocus, onTouchStart, ...props }) {
@@ -9,6 +9,7 @@ export default function NavigationLink({ page, onMouseEnter, onFocus, onTouchSta
         if (!page || constrained) return;
         // Keep live progress fresh and avoid enqueueing profile analysis on hover.
         loadPage(page).catch(() => {});
+        if (page === 'Learning/Catalog' && viewer) prefetchPage(props.href).catch(() => {});
     };
     return (
         <Link

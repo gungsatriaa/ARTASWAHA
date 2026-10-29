@@ -8,15 +8,15 @@ use App\Models\Lesson;
 use App\Models\QuizQuestion;
 use App\Services\ContentAudioService;
 use App\Services\PagePresenter;
+use App\Services\ReactPage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Response as InertiaResponse;
 
 class ContentAudioController extends Controller
 {
-    public function index(Request $request, ContentAudioService $service): InertiaResponse
+    public function index(Request $request, ContentAudioService $service): ReactPage
     {
         $filters = $request->validate(['type' => ['nullable', 'in:records,modules,questions'], 'status' => ['nullable', 'in:draft,queued,processing,review,ready,failed,stale,unavailable'], 'q' => ['nullable', 'string', 'max:100']]);
         $type = $filters['type'] ?? 'records';
@@ -30,12 +30,12 @@ class ContentAudioController extends Controller
         return app(PagePresenter::class)->render('admin.audio.index', compact('items', 'type', 'configured', 'service'));
     }
 
-    public function lesson(Lesson $lesson, ContentAudioService $service): InertiaResponse
+    public function lesson(Lesson $lesson, ContentAudioService $service): ReactPage
     {
         return $this->editor($lesson, $service);
     }
 
-    public function question(QuizQuestion $question, ContentAudioService $service): InertiaResponse
+    public function question(QuizQuestion $question, ContentAudioService $service): ReactPage
     {
         return $this->editor($question, $service);
     }
@@ -72,7 +72,7 @@ class ContentAudioController extends Controller
         ])->header('Cache-Control', 'private, no-store');
     }
 
-    private function editor(Lesson|QuizQuestion $content, ContentAudioService $service): InertiaResponse
+    private function editor(Lesson|QuizQuestion $content, ContentAudioService $service): ReactPage
     {
         $audio = $service->forContent($content);
         $isLesson = $content instanceof Lesson;

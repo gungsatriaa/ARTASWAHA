@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
-use Inertia\Testing\AssertableInertia;
+use Tests\AssertablePage;
 use Tests\TestCase;
 
 class LearnerAnalysisMonitoringTest extends TestCase
@@ -86,7 +86,7 @@ class LearnerAnalysisMonitoringTest extends TestCase
         }
         $this->assertCount(20, $anonymous->fresh()->analysis_events);
         $this->get(route('admin.ai.profiles.show', $anonymous))->assertOk()
-            ->assertInertia(fn (AssertableInertia $page) => $page->has('record.events', 20));
+            ->assertReact(fn (AssertablePage $page) => $page->has('record.events', 20));
         $this->actingAs($user)->get(route('admin.ai.profiles.show', $anonymous))->assertForbidden();
         $this->getJson(route('profile.analysis.show'))->assertOk()->assertJsonMissingPath('analysis.events');
         $this->assertArrayNotHasKey('analysis_events', $anonymous->fresh()->toArray());
@@ -119,7 +119,7 @@ class LearnerAnalysisMonitoringTest extends TestCase
         $this->artisan('learning:analyze')->assertSuccessful();
         $this->assertNotNull(Cache::get('learner-analysis-last-check'));
         $this->actingAs(User::factory()->create(['is_admin' => true]))->get(route('admin.ai.index', ['tab' => 'interviews']))
-            ->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->has('profiles.data', 1)->where('aiConfigured', true));
+            ->assertOk()->assertReact(fn (AssertablePage $page) => $page->has('profiles.data', 1)->where('aiConfigured', true));
         config(['services.ai.model' => '']);
         $this->post(route('admin.ai.profiles.test-all'))->assertSessionHasErrors('analysis');
         Queue::assertNotPushed(QueueLearnerAnalyses::class);

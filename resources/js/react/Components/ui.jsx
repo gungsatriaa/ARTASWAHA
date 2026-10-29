@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link } from '../routing';
 import * as m from 'motion/react-m';
 import Icon from './Icon';
 import BalineseIcon from './BalineseIcon';

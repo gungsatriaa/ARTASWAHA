@@ -1,3 +1,18 @@
+# Migrasi navigasi React Router — 29 Oktober 2026
+
+Inertia sudah dihapus dari dependency PHP dan JavaScript. Deploy source Laravel, `composer.lock`, `package-lock.json`, build client, dan build SSR sebagai satu release. Tidak ada migrasi database atau penghapusan akun/progres untuk perubahan router ini.
+
+1. Jalankan `composer install --no-dev --optimize-autoloader --no-interaction`, `npm ci --ignore-scripts`, lalu `npm run build` sesuai prosedur release yang ada.
+2. Ubah command program SSR lama menjadi `node /path/aplikasi/bootstrap/ssr/ssr.js` (gunakan path Node sebenarnya). Perintah `inertia:start-ssr` dan `inertia:check-ssr` tidak tersedia lagi. Hentikan program SSR lama sebelum menjalankan penggantinya pada port yang sama.
+3. SSR tetap loopback port 13714; cek `curl --fail http://127.0.0.1:13714/health`. Konfigurasi memakai `REACT_SSR_ENABLED` (default true) dan `REACT_SSR_URL` (default `http://127.0.0.1:13714/render`). Hapus konfigurasi `INERTIA_SSR_*` lama. Jangan mengubah APP_KEY, cookie/sesi, database, worker AI/TTS, atau Reverb.
+4. Bersihkan/bangun cache Laravel mengikuti prosedur di bawah, lalu restart hanya SSR ARTASWAHA setelah build. `deploy.sh` tidak mengganti command atau restart SSR otomatis.
+5. Minta tab lama dimuat ulang setelah cutover karena kontrak request berubah. Pertahankan aset hash release lama selama pergantian release, tetapi frontend Inertia lama tidak kompatibel dengan backend baru.
+6. Periksa direct URL, refresh, Back/Forward, interview, akun/anonim, login/logout, upload avatar, editor, jawaban/hasil modul dan room, serta analitik admin. Metadata dan konten HTML awal harus tersedia saat SSR sehat.
+
+React Router memakai loader yang meminta JSON dengan `X-React-Page: true`; Laravel tetap mengotorisasi setiap request. Respons pribadi `no-store`; isi halaman tidak disalin ke browser history/localStorage. Status form, penguncian modul, hasil kuis, CSRF, dan sesi tetap berasal dari server. Pergantian router bukan jaminan penurunan latensi server production.
+
+---
+
 # Pembaruan production: Chatterbox CLI dalam folder ARTASWAHA
 
 Panduan ini untuk aplikasi yang **sudah berjalan**, berdasarkan commit `e5e8eee` dan perubahan adapter CLI setelahnya. Kode adapter, requirements, dan installer sudah disediakan. Adapter CLI sudah tersedia di source; tidak perlu menulis wrapper/API baru. Pastikan perubahan setelah commit tersebut sudah di-commit/push sebelum pull di server.
@@ -392,9 +407,9 @@ exit
 
 Jika salah satu perintah gagal, perbaiki terlebih dahulu dan biarkan TTS_ENABLED=false. Setelah WAV berhasil dibuat dan diperiksa, lanjutkan konfigurasi Supervisor pada bagian 6, environment pada bagian 7, dan pengujian admin pada bagian 8. Ollama/Qwen tetap nonaktif.
 
-## React/Inertia, SSR, dan animasi
+## React Router, SSR, dan animasi
 
-Seluruh halaman menggunakan React/Inertia, termasuk publik, autentikasi, kuis, dan admin. Tidak ada `REACT_UI_ENABLED` atau mode Blade aktif; hapus baris lama tersebut jika masih ada di `.env`. Template Blade lama tetap menjadi referensi. Tidak ada migration atau seeder baru untuk cutover UI. Gunakan `composer install`, `npm ci`, `npm run build`, dan pembaruan cache Laravel pada alur bagian 3. Build sekarang menghasilkan `public/build` dan `bootstrap/ssr`; keduanya harus berada pada release yang sama. Jangan menghapus aset hash versi sebelumnya ketika masih ada tab pengguna terbuka; gunakan release/deployment aset yang mempertahankannya selama transisi.
+Seluruh halaman menggunakan React Router, termasuk publik, autentikasi, kuis, dan admin. Tidak ada `REACT_UI_ENABLED` atau mode Blade aktif; hapus baris lama tersebut jika masih ada di `.env`. Template Blade lama tetap menjadi referensi. Tidak ada migration atau seeder baru untuk cutover UI. Gunakan `composer install`, `npm ci`, `npm run build`, dan pembaruan cache Laravel pada alur bagian 3. Build sekarang menghasilkan `public/build` dan `bootstrap/ssr`; keduanya harus berada pada release yang sama. Jangan menghapus aset hash versi sebelumnya ketika masih ada tab pengguna terbuka; gunakan release/deployment aset yang mempertahankannya selama transisi.
 
 Gunakan PHP 8.4 dan Node 22.12+ yang cocok dengan lockfile (baseline lokal Node 22.22.3). SSR aktif secara default dan memerlukan proses Node yang dikelola Supervisor. Pastikan user program dapat menjalankan `node --version` melalui PATH yang sama dengan program Supervisor; PATH shell interaktif belum tentu sama.
 
@@ -403,7 +418,7 @@ Contoh program **baru**, sesuaikan path dan user sebelum dipakai:
 ```ini
 [program:artaswaha-ssr]
 directory=/www/wwwroot/artaswaha
-command=/www/server/php/84/bin/php artisan inertia:start-ssr --no-interaction
+command=/usr/bin/node /www/wwwroot/artaswaha/bootstrap/ssr/ssr.js
 user=www
 autostart=true
 autorestart=true
@@ -411,22 +426,22 @@ stopasgroup=true
 killasgroup=true
 stopwaitsecs=15
 redirect_stderr=true
-stdout_logfile=/www/wwwroot/artaswaha/storage/logs/inertia-ssr.log
+stdout_logfile=/www/wwwroot/artaswaha/storage/logs/react-ssr.log
 ```
 
-Jangan menimpa konfigurasi Supervisor lain. Server SSR bind hanya ke `127.0.0.1:13714`; jangan membuka port tersebut ke publik. Jika PHP dan Node berada pada container berbeda, konfigurasi jaringan internal SSR perlu disesuaikan dahulu. `INERTIA_SSR_ENABLED=false` hanya opsi darurat untuk menonaktifkan SSR; UI tetap React, tetapi HTML konten publik awal tidak tersedia sampai JavaScript berjalan sehingga SEO menurun.
+Jangan menimpa konfigurasi Supervisor lain. Server SSR bind hanya ke `127.0.0.1:13714`; jangan membuka port tersebut ke publik. Jika PHP dan Node berada pada container berbeda, konfigurasi jaringan internal SSR perlu disesuaikan dahulu. `REACT_SSR_ENABLED=false` hanya opsi darurat untuk menonaktifkan SSR; UI tetap React, tetapi HTML konten publik awal tidak tersedia sampai JavaScript berjalan sehingga SEO menurun.
 
 Setelah build/deploy, restart **hanya** program SSR ARTASWAHA agar memuat bundle terbaru. `deploy.sh` belum mengelola restart proses ini. Worker AI/TTS dan Reverb tetap program yang berbeda; restart hanya yang berubah sesuai panduan sebelumnya. Periksa dengan binary PHP yang sama:
 
 ```bash
-"$PHP_BIN" artisan inertia:check-ssr --no-interaction
+curl --fail --max-time 3 http://127.0.0.1:13714/health
 ```
 
 Jika health check gagal, periksa log program SSR, executable Node pada PATH program, akses file bundle, dan port loopback. Request SSR dibatasi 3 detik; fallback client menjaga aplikasi tetap dapat dibuka, tetapi bukan pengganti SSR publik yang sehat. Rollback memakai release source + build sebelumnya sebagai satu paket, bukan sakelar renderer atau rollback database.
 
 QA setelah deploy: lihat source HTML awal beranda, katalog, pelajaran, dan privasi; pastikan heading/konten dan metadata sudah ada sebelum JavaScript. Periksa hydration/konsol, direct visit, refresh, Back/Forward, form validasi, login/logout, profil anonim, crop avatar, multi-select interview, editor kuis, feedback/timer, host reload/keluar, dan admin. PHP tetap memeriksa akses; props tidak boleh membawa jawaban masa depan, kunci tersembunyi, email peserta, atau path file privat.
 
-Overlay muncul **setiap reload dokumen** pada semua halaman, menunggu bootstrap React/font dengan batas waktu, mencapai 100%, hold sekitar 450 ms, lalu fade. Persentase adalah kesiapan tampilan, bukan byte jaringan atau progres antrean AI. Visit Inertia menggunakan progress bar tipis untuk GET lambat, tanpa skeleton mengambang di atas halaman lama; submit jawaban, countdown, dan deadline tidak ditunda. Uji lewati, kegagalan chunk, reduced motion, reveal kartu di bawah layar, desktop/mobile, serta job queued/completed/failed. Skeleton analisis berhenti pada error/batas polling dan menampilkan status yang jelas.
+Overlay muncul **setiap reload dokumen** pada semua halaman, menunggu bootstrap React/font dengan batas waktu, mencapai 100%, hold sekitar 450 ms, lalu fade. Persentase adalah kesiapan tampilan, bukan byte jaringan atau progres antrean AI. Navigasi React Router mempertahankan halaman lama selama data diambil dan tidak menampilkan progress bar atas, tanpa skeleton mengambang di atas halaman lama; submit jawaban, countdown, dan deadline tidak ditunda. Uji lewati, kegagalan chunk, reduced motion, reveal kartu di bawah layar, desktop/mobile, serta job queued/completed/failed. Skeleton analisis berhenti pada error/batas polling dan menampilkan status yang jelas.
 
 Sebelum rilis: `php artisan test --compact`, `npm run test:react`, dan `npm run build`. Cakupan, hasil, serta batas pengujian yang masih perlu dilakukan tercatat di `docs/REACT.md`. UI Blade lama dan initializer DOM-nya sudah dihapus; entry build tetap React. Pertahankan root Blade, komponen `react-loader`, dan sitemap XML. Tes helper edit aksara tetap berjalan dengan `node --test tests/aksara-keyboard.test.js`; tes initializer Blade dan tes worker dengan target skrip yang sudah tidak tersedia telah dihapus.
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useForm, usePage } from '@inertiajs/react';
+import { Link, useForm, usePage } from '../../routing';
 import { Button, PageMeta } from '../../Components/ui';
 import Icon from '../../Components/Icon';
 import { Card, Field, Errors } from '../../Components/forms';

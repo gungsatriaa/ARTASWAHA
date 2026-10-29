@@ -8,7 +8,7 @@ use App\Models\User;
 use Database\Seeders\AksaraBaliLessonSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
-use Inertia\Testing\AssertableInertia as Assert;
+use Tests\AssertablePage as Assert;
 use Tests\TestCase;
 
 class AksaraBaliLessonSeederTest extends TestCase
@@ -68,7 +68,7 @@ class AksaraBaliLessonSeederTest extends TestCase
         $this->actingAs(User::factory()->create())->withCookie('artaswaha_device', (string) Str::uuid());
         foreach (Lesson::all() as $lesson) {
             $this->get(route('learning.lessons.show', $lesson))->assertOk()
-                ->assertInertia(fn (Assert $page): Assert => $page->component('Learning/Lesson')
+                ->assertReact(fn (Assert $page): Assert => $page->component('Learning/Lesson')
                     ->where('quiz.total', count($lesson->exercises))->where('quiz.index', 0)
                     ->missing('quiz.question.correct_option')->missing('quiz.question.accepted_answers')->missing('lesson.exercises'));
             $this->post(route('learning.progress.store', $lesson))->assertForbidden();
@@ -84,7 +84,7 @@ class AksaraBaliLessonSeederTest extends TestCase
                     ->assertRedirectToRoute('learning.lessons.show', $lesson);
             }
             $this->assertDatabaseHas('learning_progress', ['lesson_id' => $lesson->id, 'points' => 10]);
-            $this->get(route('learning.lessons.show', $lesson))->assertInertia(fn (Assert $page): Assert => $page->where('quiz.question', null)->where('progress.points', 10));
+            $this->get(route('learning.lessons.show', $lesson))->assertReact(fn (Assert $page): Assert => $page->where('quiz.question', null)->where('progress.points', 10));
         }
         $this->assertDatabaseCount('learning_progress', 10);
     }
@@ -97,7 +97,7 @@ class AksaraBaliLessonSeederTest extends TestCase
         $answer = $lesson->exercises[0]['correct_option'];
         $this->post(route('learning.exercises.answer', $lesson), ['question_index' => 0, 'answer_index' => ($answer + 1) % 4])
             ->assertSessionMissing('lesson_feedback');
-        $this->get(route('learning.lessons.show', $lesson))->assertInertia(fn (Assert $page): Assert => $page->where('quiz.index', 1)->where('quiz.results', []));
+        $this->get(route('learning.lessons.show', $lesson))->assertReact(fn (Assert $page): Assert => $page->where('quiz.index', 1)->where('quiz.results', []));
         $this->post(route('learning.exercises.answer', $lesson), ['question_index' => 2, 'answer_index' => $answer])->assertConflict();
         $this->post(route('learning.exercises.answer', $lesson), ['question_index' => 0, 'answer_index' => $answer])->assertConflict();
         $this->assertDatabaseCount('learning_progress', 0);

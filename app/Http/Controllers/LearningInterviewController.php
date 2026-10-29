@@ -8,13 +8,13 @@ use App\Services\LearnerInterviewAnalyzer;
 use App\Services\LearningProgressService;
 use App\Services\PagePresenter;
 use App\Services\ProfileAvatarService;
+use App\Services\ReactPage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
-use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
@@ -29,7 +29,7 @@ class LearningInterviewController extends Controller
         'masyarakat' => 'Masyarakat umum',
     ];
 
-    public function show(Request $request): InertiaResponse|RedirectResponse
+    public function show(Request $request): ReactPage|RedirectResponse
     {
         if ($request->user() !== null || LearnerProfile::completedFor(null, $request->cookie('artaswaha_device')) !== null) {
             return to_route('home');

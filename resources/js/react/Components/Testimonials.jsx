@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { usePage } from '@inertiajs/react';
+import { usePage } from '../routing';
 import Icon from './Icon';
 
 const examples = [

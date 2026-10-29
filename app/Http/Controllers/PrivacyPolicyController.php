@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\LearningPath;
 use App\Services\PagePresenter;
-use Inertia\Response as InertiaResponse;
+use App\Services\ReactPage;
 
 class PrivacyPolicyController extends Controller
 {
-    public function __invoke(): InertiaResponse
+    public function __invoke(): ReactPage
     {
         $learningPaths = LearningPath::query()
             ->where('is_published', true)

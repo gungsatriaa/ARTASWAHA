@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { Link, useForm, usePage } from '@inertiajs/react';
+import { Link, useForm, usePage } from '../../routing';
 import { Button, PageMeta, buttonClass } from '../../Components/ui';
 import { Card, Back, Heading, Field, Check, Errors, secondaryClass } from '../../Components/forms';
 import LessonExerciseFields from '../../Components/LessonExerciseFields';

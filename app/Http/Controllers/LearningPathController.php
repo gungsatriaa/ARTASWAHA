@@ -7,15 +7,14 @@ use App\Models\LearningProgress;
 use App\Models\Lesson;
 use App\Services\LearnerInterviewAnalyzer;
 use App\Services\PagePresenter;
+use App\Services\ReactPage;
 use App\Services\ReactUi;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class LearningPathController extends Controller
 {
-    public function catalog(Request $request): Response
+    public function catalog(Request $request): ReactPage
     {
         $query = LearningPath::query()
             ->where('is_published', true)
@@ -34,14 +33,14 @@ class LearningPathController extends Controller
                 'url' => route('learning.paths.show', $path->slug),
             ]);
 
-        return Inertia::render('Learning/Catalog', [
+        return ReactPage::render('Learning/Catalog', [
             'paths' => $paths,
             'filters' => ['q' => $search, 'group' => $filters['group'] ?? ''],
             'meta' => ['title' => 'Materi belajar — ARTASWAHA', 'description' => 'Pilih materi bahasa dan aksara Bali untuk memulai perjalanan belajarmu.', 'robots' => 'index, follow', 'canonical' => route('learning.paths.index')],
         ]);
     }
 
-    public function index(Request $request, LearnerInterviewAnalyzer $analyzer): Response
+    public function index(Request $request, LearnerInterviewAnalyzer $analyzer): ReactPage
     {
         $user = $request->user();
         $profile = app(ReactUi::class)->profile($request);
@@ -90,7 +89,7 @@ class LearningPathController extends Controller
         return app(PagePresenter::class)->render('welcome', compact('learningPaths', 'hasCompletedInterview', 'lastLearningProgress', 'profile', 'user', 'analysis'));
     }
 
-    public function show(Request $request, LearningPath $learningPath, LearnerInterviewAnalyzer $analyzer, ReactUi $ui): Response
+    public function show(Request $request, LearningPath $learningPath, LearnerInterviewAnalyzer $analyzer, ReactUi $ui): ReactPage
     {
         abort_unless($learningPath->is_published, 404);
 
@@ -114,7 +113,7 @@ class LearningPathController extends Controller
             ->through(fn (Lesson $lesson): array => ['id' => $lesson->id, 'title' => $lesson->title, 'summary' => $lesson->summary, 'locked' => $lockedIds->contains($lesson->id), 'url' => $lockedIds->contains($lesson->id) ? null : route('learning.lessons.show', $lesson->slug), 'progress' => $completedIds->contains($lesson->id) ? 100 : 0]);
         $analysis = $analyzer->presentation($profile, collect([$learningPath]));
 
-        return Inertia::render('Learning/Path', [
+        return ReactPage::render('Learning/Path', [
             'path' => ['id' => $learningPath->id, 'title' => $learningPath->title, 'description' => $learningPath->description, 'group' => $learningPath->group, 'progress' => $progress, 'completedLessons' => $completedIds->count()],
             'lessons' => $lessons,
             'recommendation' => $analysis['recommendations'][0]['reason'] ?? null,

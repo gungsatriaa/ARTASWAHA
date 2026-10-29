@@ -1,4 +1,4 @@
-import { Link, router, useForm, usePage } from '@inertiajs/react';
+import { Link, router, useForm, usePage } from '../../routing';
 import { PageMeta, Pagination, buttonClass, EmptyState } from '../../Components/ui';
 import { Card, Heading, Field, Action, Status, secondaryClass } from '../../Components/forms';
 export default function Lessons({ lessons, paths, filters, meta }) {

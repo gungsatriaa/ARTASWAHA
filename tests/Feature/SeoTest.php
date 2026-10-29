@@ -20,22 +20,22 @@ class SeoTest extends TestCase
         $this->get(route('home'))->assertRedirectToRoute('learning.interview.show');
         $this->actingAs(User::factory()->create())->get(route('home'))
             ->assertOk()
-            ->assertSee('<link rel="canonical" href="'.route('home').'" data-inertia="canonical">', false)
+            ->assertSee('<link rel="canonical" href="'.route('home').'" data-react-head="canonical">', false)
             ->assertSee('<meta property="og:title"', false)
             ->assertDontSee('name="robots" content="noindex, nofollow"', false);
 
         $this->get(route('learning.paths.show', $learningPath->slug))
             ->assertOk()
-            ->assertSee('<meta name="description" content="Belajar teka-teki tradisional Bali." data-inertia="description">', false)
-            ->assertSee('<link rel="canonical" href="'.route('learning.paths.show', $learningPath->slug).'" data-inertia="canonical">', false);
+            ->assertSee('<meta name="description" content="Belajar teka-teki tradisional Bali." data-react-head="description">', false)
+            ->assertSee('<link rel="canonical" href="'.route('learning.paths.show', $learningPath->slug).'" data-react-head="canonical">', false);
 
         $this->get(route('learning.lessons.show', $lesson->slug))
             ->assertOk()
-            ->assertSee('<meta name="description" content="Kenali jawaban teka-teki Bali." data-inertia="description">', false)
-            ->assertSee('<link rel="canonical" href="'.route('learning.lessons.show', $lesson->slug).'" data-inertia="canonical">', false);
+            ->assertSee('<meta name="description" content="Kenali jawaban teka-teki Bali." data-react-head="description">', false)
+            ->assertSee('<link rel="canonical" href="'.route('learning.lessons.show', $lesson->slug).'" data-react-head="canonical">', false);
 
-        $this->get(route('quizzes.index'))->assertOk()->assertSee('<link rel="canonical" href="'.route('quizzes.index').'" data-inertia="canonical">', false);
-        $this->get(route('privacy-policy'))->assertOk()->assertSee('<link rel="canonical" href="'.route('privacy-policy').'" data-inertia="canonical">', false);
+        $this->get(route('quizzes.index'))->assertOk()->assertSee('<link rel="canonical" href="'.route('quizzes.index').'" data-react-head="canonical">', false);
+        $this->get(route('privacy-policy'))->assertOk()->assertSee('<link rel="canonical" href="'.route('privacy-policy').'" data-react-head="canonical">', false);
         $this->post(route('logout'));
         $this->get(route('login'))->assertOk()->assertSee('name="robots" content="noindex, nofollow"', false);
         $this->get(route('learning.interview.show'))->assertOk()->assertSee('name="robots" content="noindex, nofollow"', false);

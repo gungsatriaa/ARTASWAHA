@@ -8,7 +8,7 @@ use App\Models\LessonAttempt;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
-use Inertia\Testing\AssertableInertia;
+use Tests\AssertablePage;
 use Tests\TestCase;
 
 class AdminLearningContentTest extends TestCase
@@ -35,13 +35,13 @@ class AdminLearningContentTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.index'))
             ->assertOk()
-            ->assertInertiaContains(route('admin.lessons.create'))
-            ->assertInertiaContains(route('admin.learning-paths.index'))
-            ->assertInertia(fn (AssertableInertia $page) => $page->etc());
+            ->assertReactContains(route('admin.lessons.create'))
+            ->assertReactContains(route('admin.learning-paths.index'))
+            ->assertReact(fn (AssertablePage $page) => $page->etc());
 
         $this->actingAs($admin)->get(route('admin.lessons.index'))
             ->assertOk()
-            ->assertInertiaContains(route('admin.learning-paths.index'));
+            ->assertReactContains(route('admin.learning-paths.index'));
     }
 
     public function test_admin_can_save_review_publish_edit_and_archive_a_lesson(): void
@@ -51,8 +51,8 @@ class AdminLearningContentTest extends TestCase
         $learningPath = LearningPath::factory()->create(['is_published' => true]);
 
         $this->actingAs($admin)->get(route('admin.lessons.index'))->assertOk();
-        $this->get(route('admin.lessons.create'))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
-        $this->get(route('admin.learning-paths.create'))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
+        $this->get(route('admin.lessons.create'))->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc());
+        $this->get(route('admin.learning-paths.create'))->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc());
         $this->post(route('admin.lessons.store'), [
             'learning_path_id' => $learningPath->id,
             'title' => 'Salam Bali',
@@ -68,7 +68,7 @@ class AdminLearningContentTest extends TestCase
         ])->assertRedirect();
 
         $lesson = Lesson::query()->where('slug', 'salam-bali')->firstOrFail();
-        $this->get(route('admin.lessons.preview', $lesson))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->etc());
+        $this->get(route('admin.lessons.preview', $lesson))->assertOk()->assertReact(fn (AssertablePage $page) => $page->etc());
         $this->assertFalse($lesson->is_published);
         $this->assertNull($lesson->reviewed_at);
         $this->get(route('learning.lessons.show', $lesson->slug))->assertNotFound();
@@ -76,7 +76,7 @@ class AdminLearningContentTest extends TestCase
         $this->post(route('admin.lessons.publish', $lesson))->assertRedirect(route('admin.lessons.index'));
         $this->assertTrue($lesson->fresh()->is_published);
         $this->assertArrayNotHasKey('correct_option', $lesson->fresh()->toArray());
-        $this->get(route('learning.lessons.show', $lesson->slug))->assertOk()->assertInertiaContains('Ucapan untuk pagi hari?')->assertInertiaNotContains('exercise_explanation');
+        $this->get(route('learning.lessons.show', $lesson->slug))->assertOk()->assertReactContains('Ucapan untuk pagi hari?')->assertReactNotContains('exercise_explanation');
 
         $visitorId = (string) Str::uuid();
         $answerRoute = route('learning.exercises.answer', $lesson->slug);
@@ -88,7 +88,7 @@ class AdminLearningContentTest extends TestCase
         $this->withCookie('artaswaha_device', $visitorId)->post($answerRoute, ['answer_index' => 0])->assertRedirect();
         $this->assertDatabaseHas('learning_progress', ['visitor_id' => $visitorId, 'lesson_id' => $lesson->id, 'points' => 10]);
         $this->assertDatabaseCount('lesson_attempts', 2);
-        $this->withCookie('artaswaha_device', $visitorId)->get(route('learning.lessons.show', $lesson->slug))->assertOk()->assertInertiaContains('Rahajeng semeng berarti selamat pagi.');
+        $this->withCookie('artaswaha_device', $visitorId)->get(route('learning.lessons.show', $lesson->slug))->assertOk()->assertReactContains('Rahajeng semeng berarti selamat pagi.');
 
         $learningPath->update(['is_published' => false]);
         $this->get(route('learning.lessons.show', $lesson->slug))->assertNotFound();
@@ -136,7 +136,7 @@ class AdminLearningContentTest extends TestCase
             'is_published' => true,
         ])->assertRedirect(route('admin.learning-paths.index'));
         $this->assertTrue($learningPath->fresh()->is_published);
-        $this->get(route('home'))->assertOk()->assertInertiaContains('Aksara Dasar');
+        $this->get(route('home'))->assertOk()->assertReactContains('Aksara Dasar');
         $this->put(route('admin.learning-paths.update', $learningPath), [
             'group' => 'aksara',
             'title' => 'Aksara Dasar',
@@ -146,7 +146,7 @@ class AdminLearningContentTest extends TestCase
         ])->assertRedirect(route('admin.learning-paths.index'));
         $this->assertFalse($learningPath->fresh()->is_published);
         $this->get(route('learning.paths.show', $learningPath->slug))->assertNotFound();
-        $this->get(route('home'))->assertInertiaNotContains('Aksara Dasar');
+        $this->get(route('home'))->assertReactNotContains('Aksara Dasar');
 
         $account = User::factory()->create();
         $this->artisan('app:make-admin-user', ['email' => $account->email])->assertExitCode(0);

@@ -3,7 +3,7 @@ import { ProfileDropdown, SubjectDropdown, SubjectLinks } from '../Components/Na
 import PageEffects from '../Components/PageEffects';
 import NavigationLink from '../Components/NavigationLink';
 import { useEffect, useState } from 'react';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '../routing';
 import Dialog from '../Components/Dialog';
 import Icon from '../Components/Icon';
 import { Action, secondaryClass } from '../Components/forms';

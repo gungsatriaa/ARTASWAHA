@@ -13,14 +13,14 @@ use App\Models\User;
 use App\Services\RoomService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
-use Inertia\Testing\AssertableInertia as Assert;
+use Tests\AssertablePage as Assert;
 use Tests\TestCase;
 
 class ReactPageCoverageTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_every_public_page_is_an_inertia_page_without_a_renderer_flag(): void
+    public function test_every_public_page_is_a_react_page_without_a_renderer_flag(): void
     {
         $path = LearningPath::factory()->create();
         $lesson = Lesson::factory()->for($path, 'learningPath')->create();
@@ -31,7 +31,7 @@ class ReactPageCoverageTest extends TestCase
 
         ];
         foreach ($routes as [$route, $parameters, $component]) {
-            $this->get(route($route, $parameters))->assertOk()->assertSee('<div data-react-loader', false)->assertDontSee('data-page-loader', false)->assertInertia(fn (Assert $page): Assert => $page->component($component)
+            $this->get(route($route, $parameters))->assertOk()->assertSee('<div data-react-loader', false)->assertDontSee('data-page-loader', false)->assertReact(fn (Assert $page): Assert => $page->component($component)
                 ->missing('viewer.password')->missing('viewer.visitor_id'));
         }
     }
@@ -61,7 +61,7 @@ class ReactPageCoverageTest extends TestCase
         ];
         $this->actingAs($admin);
         foreach ($routes as [$route, $parameters, $component]) {
-            $this->get(route($route, $parameters))->assertOk()->assertSee('<div data-react-loader', false)->assertDontSee('data-page-loader', false)->assertInertia(fn (Assert $page): Assert => $page->component($component)
+            $this->get(route($route, $parameters))->assertOk()->assertSee('<div data-react-loader', false)->assertDontSee('data-page-loader', false)->assertReact(fn (Assert $page): Assert => $page->component($component)
                 ->missing('viewer.password')->missing('viewer.email')->missing('record.visitor_id')->missing('record.source_path'));
         }
     }
@@ -76,17 +76,18 @@ class ReactPageCoverageTest extends TestCase
         $room = $service->create($quiz, $host);
         $service->start($room, $host);
         $this->actingAs($host)->get(route('rooms.show', $room->code))->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page->component('Rooms/Show')->where('room.question.id', $first->id)
+            ->assertReact(fn (Assert $page): Assert => $page->component('Rooms/Show')->where('room.question.id', $first->id)
                 ->missing('room.question.correct_option')->missing('room.question.explanation')->where('room.correctOption', null)->has('room.results', 0))
-            ->assertInertiaNotContains($future->prompt);
+            ->assertReactNotContains($future->prompt);
     }
 
-    public function test_logout_rotates_history_and_removes_account_props(): void
+    public function test_logout_removes_account_props_and_prevents_page_caching(): void
     {
         $this->actingAs(User::factory()->create())->post(route('logout'))->assertRedirect(route('home'));
         $this->get(route('home'))->assertRedirectToRoute('learning.interview.show');
-        $response = $this->get(route('learning.interview.show'))->assertOk()->assertInertiaValue('viewer', null);
-        $this->assertTrue($response->viewData('page')['clearHistory']);
-        $this->assertTrue($response->viewData('page')['encryptHistory']);
+        $response = $this->get(route('learning.interview.show'))->assertOk()->assertReactValue('viewer', null);
+        $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
+        $this->assertArrayNotHasKey('clearHistory', $response->viewData('page'));
+        $this->assertArrayNotHasKey('encryptHistory', $response->viewData('page'));
     }
 }

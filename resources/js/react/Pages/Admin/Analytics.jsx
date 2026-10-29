@@ -2,10 +2,10 @@ import Skeleton from '../../Components/Skeleton';
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { PageMeta } from '../../Components/ui';
 import { Card, Heading, Stat } from '../../Components/forms';
-import { Deferred, router, usePage } from '@inertiajs/react';
+import { Deferred, router, usePage } from '../../routing';
 import OnlineVisitors from '../../Components/OnlineVisitors';
 import AdminWeekly from '../../Components/AdminWeekly';
-import { Link } from '@inertiajs/react';
+import { Link } from '../../routing';
 const Chart = lazy(() => import('../../Components/Chart'));
 export default function Analytics({ statistics, meta }) {
     const [slow, setSlow] = useState(false);

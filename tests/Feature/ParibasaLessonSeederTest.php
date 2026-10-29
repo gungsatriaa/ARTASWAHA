@@ -11,7 +11,7 @@ use Database\Seeders\ParibasaLessonSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use Inertia\Testing\AssertableInertia as Assert;
+use Tests\AssertablePage as Assert;
 use Tests\TestCase;
 
 class ParibasaLessonSeederTest extends TestCase
@@ -69,7 +69,7 @@ class ParibasaLessonSeederTest extends TestCase
         $this->seed(ParibasaLessonSeeder::class);
         $this->actingAs(User::factory()->create())->withCookie('artaswaha_device', (string) Str::uuid());
         foreach (Lesson::orderBy('id')->get() as $lesson) {
-            $this->get(route('learning.lessons.show', $lesson))->assertOk()->assertInertia(fn (Assert $page): Assert => $page
+            $this->get(route('learning.lessons.show', $lesson))->assertOk()->assertReact(fn (Assert $page): Assert => $page
                 ->where('quiz.index', 0)->where('quiz.total', 10)->missing('quiz.question.correct_option')->missing('lesson.exercises'));
             $this->post(route('learning.progress.store', $lesson))->assertForbidden();
             foreach ($lesson->exercises as $index => $exercise) {
@@ -85,7 +85,7 @@ class ParibasaLessonSeederTest extends TestCase
                     $this->assertDatabaseMissing('learning_progress', ['lesson_id' => $lesson->id]);
                 }
             }
-            $this->get(route('learning.lessons.show', $lesson))->assertInertia(fn (Assert $page): Assert => $page->where('progress.points', 10)->where('quiz.question', null));
+            $this->get(route('learning.lessons.show', $lesson))->assertReact(fn (Assert $page): Assert => $page->where('progress.points', 10)->where('quiz.question', null));
         }
         $this->assertDatabaseCount('learning_progress', 18);
     }

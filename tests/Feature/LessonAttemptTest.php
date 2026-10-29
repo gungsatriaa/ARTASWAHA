@@ -15,7 +15,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
-use Inertia\Testing\AssertableInertia as Assert;
+use Tests\AssertablePage as Assert;
 use Tests\TestCase;
 
 class LessonAttemptTest extends TestCase
@@ -38,7 +38,7 @@ class LessonAttemptTest extends TestCase
         $this->post(route('learning.exercises.answer', $lesson), ['question_index' => 0, 'answer_index' => 1])->assertRedirect()->assertSessionMissing('lesson_feedback')->assertSessionMissing('status');
         $attempt = LessonAttempt::sole();
         $this->assertFalse($attempt->answers[0]['is_correct']);
-        $this->get(route('learning.lessons.show', $lesson))->assertInertia(fn (Assert $page): Assert => $page
+        $this->get(route('learning.lessons.show', $lesson))->assertReact(fn (Assert $page): Assert => $page
             ->where('quiz.index', 1)->where('quiz.feedback.index', 0)->where('quiz.feedback.is_correct', false)->where('quiz.feedback.correct', 'Ha')->where('quiz.results', [])->where('quiz.correct', null)->where('quiz.completed', false)
             ->missing('quiz.question.correct_options')->missing('lesson.exercises')->missing('lesson.exercise_explanation'));
         $this->post(route('learning.exercises.answer', $lesson), ['attempt_id' => $attempt->id, 'question_index' => 1, 'answer_indexes' => []])->assertSessionHasErrors('answer_indexes');
@@ -47,7 +47,7 @@ class LessonAttemptTest extends TestCase
         $this->assertDatabaseCount('learning_progress', 0);
         $this->post(route('learning.exercises.answer', $lesson), ['attempt_id' => $attempt->id, 'question_index' => 2, 'answer_text' => 'ᬳ'])->assertRedirect()->assertSessionHasNoErrors();
         $this->assertDatabaseCount('learning_progress', 1);
-        $this->get(route('learning.lessons.show', $lesson))->assertInertia(fn (Assert $page): Assert => $page
+        $this->get(route('learning.lessons.show', $lesson))->assertReact(fn (Assert $page): Assert => $page
             ->where('quiz.completed', true)->where('quiz.correct', 1)->has('quiz.results', 3)
             ->where('quiz.results.0.selected', 'Na')->where('quiz.results.0.correct', 'Ha')->where('quiz.results.0.is_correct', false));
         $this->post(route('learning.exercises.answer', $lesson), ['question_index' => 2, 'answer_text' => 'ᬳ'])->assertConflict();
@@ -64,7 +64,7 @@ class LessonAttemptTest extends TestCase
         $this->post(route('learning.exercises.retry', $lesson), ['attempt_id' => $first->id])->assertRedirect();
         $second = LessonAttempt::latest('id')->first();
         $this->assertNotSame($first->id, $second->id);
-        $this->get(route('learning.lessons.show', $lesson))->assertInertia(fn (Assert $page): Assert => $page->where('quiz.completed', false)->where('quiz.index', 0)->where('quiz.results', []));
+        $this->get(route('learning.lessons.show', $lesson))->assertReact(fn (Assert $page): Assert => $page->where('quiz.completed', false)->where('quiz.index', 0)->where('quiz.results', []));
         $this->post(route('learning.exercises.retry', $lesson), ['attempt_id' => $first->id])->assertConflict();
         $this->post(route('learning.exercises.answer', $lesson), ['attempt_id' => $first->id, 'answer_index' => 0])->assertConflict();
         $this->post(route('learning.exercises.answer', $lesson), ['attempt_id' => $second->id, 'answer_index' => 0])->assertRedirect();
@@ -72,7 +72,7 @@ class LessonAttemptTest extends TestCase
         $this->assertTrue($second->fresh()->answers[0]['is_correct']);
         $this->assertSame(10, LearningProgress::sum('points'));
         $this->assertDatabaseCount('learning_progress', 1);
-        $this->get(route('learning.lessons.show', $lesson))->assertInertia(fn (Assert $page): Assert => $page->has('quiz.history', 2)->where('quiz.correct', 1));
+        $this->get(route('learning.lessons.show', $lesson))->assertReact(fn (Assert $page): Assert => $page->has('quiz.history', 2)->where('quiz.correct', 1));
     }
 
     public function test_partial_attempt_resumes_on_another_device_for_the_same_account_but_is_not_shared(): void
@@ -84,9 +84,9 @@ class LessonAttemptTest extends TestCase
         $attempt = LessonAttempt::sole();
         $this->flushSession();
         $this->actingAs($user)->withCookie('artaswaha_device', (string) Str::uuid());
-        $this->get(route('learning.lessons.show', $lesson))->assertInertia(fn (Assert $page): Assert => $page->where('quiz.id', $attempt->id)->where('quiz.index', 1));
+        $this->get(route('learning.lessons.show', $lesson))->assertReact(fn (Assert $page): Assert => $page->where('quiz.id', $attempt->id)->where('quiz.index', 1));
         $this->actingAs(User::factory()->create());
-        $this->get(route('learning.lessons.show', $lesson))->assertInertia(fn (Assert $page): Assert => $page->where('quiz.id', null)->where('quiz.index', 0)->where('quiz.history', []));
+        $this->get(route('learning.lessons.show', $lesson))->assertReact(fn (Assert $page): Assert => $page->where('quiz.id', null)->where('quiz.index', 0)->where('quiz.history', []));
         $this->post(route('learning.exercises.answer', $lesson), ['attempt_id' => $attempt->id, 'answer_index' => 0])->assertConflict();
     }
 
@@ -123,7 +123,7 @@ class LessonAttemptTest extends TestCase
         $questions = $lesson->exercises;
         $questions[0]['exercise_prompt'] = 'Pertanyaan diperbarui';
         $lesson->update(['exercises' => $questions]);
-        $this->get(route('learning.lessons.show', $lesson))->assertInertia(fn (Assert $page): Assert => $page->where('quiz.index', 0)->where('quiz.id', null));
+        $this->get(route('learning.lessons.show', $lesson))->assertReact(fn (Assert $page): Assert => $page->where('quiz.index', 0)->where('quiz.id', null));
         $this->post(route('learning.exercises.answer', $lesson), ['attempt_id' => $old->id, 'answer_index' => 0])->assertConflict();
         $this->post(route('learning.exercises.answer', $lesson), ['answer_index' => 0])->assertRedirect();
         $this->assertDatabaseCount('lesson_attempts', 2);

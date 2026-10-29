@@ -1,5 +1,6 @@
+import { useBlocker } from 'react-router';
 import { useEffect, useId, useRef, useState } from 'react';
-import { Link, router, useForm, usePage } from '@inertiajs/react';
+import { Link, useForm, usePage } from '../../routing';
 import { PageMeta, Button } from '../../Components/ui';
 import { Card, Heading, Back, Field, Check, Errors, secondaryClass } from '../../Components/forms';
 import QuestionFields from '../../Components/QuestionFields';
@@ -132,20 +133,14 @@ export default function Editor({ quiz, hasRooms, preview, meta }) {
             }
         };
         window.addEventListener('beforeunload', leave);
-        const off = router.on('before', (event) => {
-            if (
-                event.detail.visit.method === 'get' &&
-                form.isDirty &&
-                !form.processing &&
-                !window.confirm('Perubahan belum disimpan. Tinggalkan editor?')
-            )
-                event.preventDefault();
-        });
-        return () => {
-            window.removeEventListener('beforeunload', leave);
-            off();
-        };
+        return () => window.removeEventListener('beforeunload', leave);
     }, [form.isDirty, form.processing]);
+    const blocker = useBlocker(form.isDirty && !form.processing);
+    useEffect(() => {
+        if (blocker.state !== 'blocked') return;
+        if (window.confirm('Perubahan belum disimpan. Tinggalkan editor?')) blocker.proceed();
+        else blocker.reset();
+    }, [blocker]);
     const change = (index, key, value) =>
         form.setData(
             'questions',

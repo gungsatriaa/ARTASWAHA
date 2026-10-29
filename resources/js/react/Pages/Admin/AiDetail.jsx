@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { router, usePage } from '@inertiajs/react';
+import { router, usePage } from '../../routing';
 import { PageMeta } from '../../Components/ui';
 import { Card, Heading, Back, Status, Action } from '../../Components/forms';
 import Analysis from '../../Components/Analysis';

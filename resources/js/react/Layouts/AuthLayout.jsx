@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '../routing';
 import PageEffects from '../Components/PageEffects';
 import Icon from '../Components/Icon';
 import { FlashNotice } from './SiteLayout';

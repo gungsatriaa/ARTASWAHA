@@ -12,23 +12,22 @@ use App\Models\User;
 use App\Services\AuthService;
 use App\Services\LearningProgressService;
 use App\Services\PagePresenter;
+use App\Services\ReactPage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
-use Inertia\Inertia;
-use Inertia\Response as InertiaResponse;
 use Laravel\Socialite\Socialite;
 use Laravel\Socialite\Two\User as GoogleUser;
 use Throwable;
 
 class AuthController extends Controller
 {
-    public function createLogin(): InertiaResponse
+    public function createLogin(): ReactPage
     {
         return app(PagePresenter::class)->render('auth.login');
     }
 
-    public function createRegistration(Request $request, AuthService $authService, LearningProgressService $progressService): InertiaResponse|RedirectResponse
+    public function createRegistration(Request $request, AuthService $authService, LearningProgressService $progressService): ReactPage|RedirectResponse
     {
         $pending = $request->session()->pull('google_registration');
         if (is_array($pending)) {
@@ -109,12 +108,11 @@ class AuthController extends Controller
     public function logout(Request $request, AuthService $authService): RedirectResponse
     {
         $authService->logout($request);
-        Inertia::clearHistory();
 
         return to_route('home');
     }
 
-    public function createPasswordReset(): InertiaResponse
+    public function createPasswordReset(): ReactPage
     {
         return app(PagePresenter::class)->render('auth.forgot-password');
     }
@@ -126,7 +124,7 @@ class AuthController extends Controller
         return back()->with('status', 'Jika email terdaftar, tautan pemulihan akan dikirim.');
     }
 
-    public function createPasswordResetForm(string $token): InertiaResponse
+    public function createPasswordResetForm(string $token): ReactPage
     {
         return app(PagePresenter::class)->render('auth.reset-password', compact('token'));
     }
@@ -142,7 +140,6 @@ class AuthController extends Controller
 
     private function learningDestination(Request $request): RedirectResponse
     {
-        Inertia::clearHistory();
         $pathId = $request->session()->pull('learning_interview_destination');
         $path = is_numeric($pathId) ? LearningPath::query()->where('is_published', true)->find($pathId) : null;
 

@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import { Link, useForm } from '@inertiajs/react';
+import { Link, useForm } from '../routing';
 import Dialog from './Dialog';
 import { Button, buttonClass } from './ui';
 

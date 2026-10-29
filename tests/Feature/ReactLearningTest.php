@@ -2,16 +2,14 @@
 
 namespace Tests\Feature;
 
-use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\LearnerProfile;
 use App\Models\LearningPath;
 use App\Models\LearningProgress;
 use App\Models\Lesson;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Inertia\Testing\AssertableInertia as Assert;
+use Tests\AssertablePage as Assert;
 use Tests\TestCase;
 
 class ReactLearningTest extends TestCase
@@ -23,12 +21,12 @@ class ReactLearningTest extends TestCase
         $paribasa = LearningPath::factory()->create(['group' => 'paribasa', 'is_published' => true]);
         $aksara = LearningPath::factory()->create(['group' => 'aksara', 'is_published' => true]);
         $hidden = LearningPath::factory()->create(['is_published' => false]);
-        $this->get(route('login'))->assertOk()->assertInertia(fn (Assert $page): Assert => $page
+        $this->get(route('login'))->assertOk()->assertReact(fn (Assert $page): Assert => $page
             ->has('materials.paribasa', 1)->has('materials.aksara', 1)
             ->where('materials.paribasa.0.title', $paribasa->title)
             ->where('materials.aksara.0.url', route('learning.paths.show', $aksara->slug))
             ->missing('materials.paribasa.0.created_at')->missing('materials.paribasa.0.is_published'))
-            ->assertInertiaNotContains($hidden->title);
+            ->assertReactNotContains($hidden->title);
     }
 
     public function test_new_visitors_are_redirected_to_interview_before_the_catalog(): void
@@ -42,7 +40,7 @@ class ReactLearningTest extends TestCase
         LearningPath::factory()->count(14)->create(['is_published' => true]);
         LearningPath::factory()->create(['is_published' => false, 'title' => 'Draf rahasia']);
         $this->actingAs(User::factory()->create(['name' => 'Komang']))->get(route('learning.paths.index'))
-            ->assertOk()->assertInertia(fn (Assert $page): Assert => $page->component('Learning/Catalog')
+            ->assertOk()->assertReact(fn (Assert $page): Assert => $page->component('Learning/Catalog')
             ->has('paths.data', 12)->where('paths.total', 14)->where('viewer.name', 'Komang')
             ->where('viewer.mode', 'account')->missing('viewer.email')->missing('viewer.password')
             ->missing('paths.data.0.is_published')->missing('paths.data.0.created_at'));
@@ -56,7 +54,7 @@ class ReactLearningTest extends TestCase
             'name' => 'Kadek', 'role' => 'murid', 'mode' => 'anonymous', 'avatar' => 'avatar/penyu.webp',
         ]);
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('learning.paths.index'))
-            ->assertOk()->assertInertia(fn (Assert $page): Assert => $page->component('Learning/Catalog')
+            ->assertOk()->assertReact(fn (Assert $page): Assert => $page->component('Learning/Catalog')
             ->where('viewer.mode', 'anonymous')->where('viewer.name', 'Kadek')->missing('viewer.visitor_id')
             ->where('viewer.avatar', asset('avatar/penyu.webp')));
     }
@@ -66,7 +64,7 @@ class ReactLearningTest extends TestCase
         LearningPath::factory()->create(['title' => 'Aksara pilihan', 'group' => 'aksara']);
         LearningPath::factory()->create(['title' => 'Aksara lainnya', 'group' => 'paribasa']);
         $this->actingAs(User::factory()->create())->get(route('learning.paths.index', ['q' => 'pilihan', 'group' => 'aksara']))
-            ->assertOk()->assertInertia(fn (Assert $page): Assert => $page->component('Learning/Catalog')
+            ->assertOk()->assertReact(fn (Assert $page): Assert => $page->component('Learning/Catalog')
             ->has('paths.data', 1)->where('paths.data.0.title', 'Aksara pilihan')->where('filters.q', 'pilihan')->where('filters.group', 'aksara'));
     }
 
@@ -77,7 +75,7 @@ class ReactLearningTest extends TestCase
         Lesson::factory()->for($path, 'learningPath')->create(['is_published' => false]);
         Lesson::factory()->for($path, 'learningPath')->create(['reviewed_at' => null]);
         $this->actingAs(User::factory()->create())->get(route('learning.paths.show', $path->slug))->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page->component('Learning/Path')->has('lessons.data', 1)
+            ->assertReact(fn (Assert $page): Assert => $page->component('Learning/Path')->has('lessons.data', 1)
                 ->where('lessons.data.0.title', $lesson->title)->where('lessons.data.0.url', route('learning.lessons.show', $lesson->slug))
                 ->missing('lessons.data.0.correct_option')->missing('lessons.data.0.exercise_explanation')->missing('lessons.data.0.content'));
         $path->update(['is_published' => false]);
@@ -97,7 +95,7 @@ class ReactLearningTest extends TestCase
         LearningProgress::factory()->create(['user_id' => $user->id, 'lesson_id' => $hidden->id]);
 
         $this->actingAs($user)->get(route('learning.paths.show', ['learningPath' => $path->slug, 'page' => 2]))
-            ->assertOk()->assertInertia(fn (Assert $page): Assert => $page
+            ->assertOk()->assertReact(fn (Assert $page): Assert => $page
             ->where('path.progress', 8)->where('path.completedLessons', 1)
             ->where('lessons.total', 13)->has('lessons.data', 1)
             ->where('lessons.data.0.progress', 100)->missing('lessons.data.0.visitor_id'));
@@ -116,7 +114,7 @@ class ReactLearningTest extends TestCase
         LearningProgress::factory()->create(['lesson_id' => $lessons[1]->id]);
 
         $this->withCookie('artaswaha_device', $profile->visitor_id)->get(route('learning.paths.show', $path->slug))
-            ->assertOk()->assertInertia(fn (Assert $page): Assert => $page
+            ->assertOk()->assertReact(fn (Assert $page): Assert => $page
             ->where('path.progress', 50)->where('path.completedLessons', 1)
             ->where('lessons.data.0.progress', 100)->where('lessons.data.1.progress', 0));
     }
@@ -126,7 +124,7 @@ class ReactLearningTest extends TestCase
         $this->actingAs(User::factory()->create());
         $path = LearningPath::factory()->create();
         $this->get(route('learning.paths.show', $path->slug))->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page
+            ->assertReact(fn (Assert $page): Assert => $page
                 ->where('path.progress', 0)->where('path.completedLessons', 0)->where('lessons.total', 0));
     }
 
@@ -134,26 +132,24 @@ class ReactLearningTest extends TestCase
     {
         $this->actingAs(User::factory()->create());
         $this->get(route('learning.paths.index', ['ui' => 'blade']))->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page->component('Learning/Catalog'));
+            ->assertReact(fn (Assert $page): Assert => $page->component('Learning/Catalog'));
     }
 
-    public function test_home_is_an_inertia_page_in_every_environment(): void
+    public function test_home_is_a_react_page_in_every_environment(): void
     {
         $this->actingAs(User::factory()->create());
-        $version = (string) app(HandleInertiaRequests::class)->version(Request::create('/'));
-        $this->withHeaders(['X-Inertia' => 'true', 'X-Inertia-Version' => $version])->get(route('home'))
+        $this->withHeaders(['X-React-Page' => 'true'])->get(route('home'))
             ->assertOk()->assertJsonPath('component', 'Home');
     }
 
     public function test_partial_reload_omits_other_page_data(): void
     {
         LearningPath::factory()->create();
-        $version = (string) app(HandleInertiaRequests::class)->version(Request::create('/'));
         $this->actingAs(User::factory()->create())->withHeaders([
-            'X-Inertia' => 'true', 'X-Inertia-Version' => $version,
-            'X-Inertia-Partial-Component' => 'Learning/Catalog', 'X-Inertia-Partial-Data' => 'paths',
+            'X-React-Page' => 'true',
+            'X-React-Component' => 'Learning/Catalog', 'X-React-Only' => 'paths',
         ])->get(route('learning.paths.index'))->assertOk()->assertJsonPath('component', 'Learning/Catalog')
-            ->assertJsonMissingPath('props.filters')->assertJsonMissingPath('props.viewer')->assertJsonCount(1, 'props.paths.data');
+            ->assertJsonMissingPath('props.filters')->assertJsonPath('props.viewer.mode', 'account')->assertJsonCount(1, 'props.paths.data');
     }
 
     public function test_external_validation_rejects_invalid_filter_values(): void

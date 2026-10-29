@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureAdmin;
-use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\HandleReactRequests;
 use App\Http\Middleware\RequireLearningInterview;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -18,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias(['admin' => EnsureAdmin::class]);
         $middleware->trimStrings(except: [fn (Request $request): bool => $request->isMethod('DELETE') && $request->is('profil')]);
-        $middleware->web(append: [HandleInertiaRequests::class, RequireLearningInterview::class]);
+        $middleware->web(append: [HandleReactRequests::class, RequireLearningInterview::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

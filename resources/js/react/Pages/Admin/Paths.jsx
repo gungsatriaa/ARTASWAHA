@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage } from '../../routing';
 import { CategoryIcon, PageMeta, Pagination, buttonClass, EmptyState } from '../../Components/ui';
 import { Card, Heading, secondaryClass } from '../../Components/forms';
 export default function Paths({ paths, meta }) {

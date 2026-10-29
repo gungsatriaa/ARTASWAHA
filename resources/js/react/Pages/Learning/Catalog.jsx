@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { router, usePage } from '@inertiajs/react';
+import { router, usePage } from '../../routing';
 import * as m from 'motion/react-m';
 import Icon from '../../Components/Icon';
 import NavigationLink from '../../Components/NavigationLink';

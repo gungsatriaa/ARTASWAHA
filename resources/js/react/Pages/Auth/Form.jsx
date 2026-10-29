@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useForm, usePage } from '@inertiajs/react';
+import { Link, useForm, usePage } from '../../routing';
 import { PageMeta, Button } from '../../Components/ui';
 import { Field, Errors, secondaryClass } from '../../Components/forms';
 export default function AuthForm({ mode, token, email, meta }) {
