@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\LearnerProfile;
 use App\Models\LearningPath;
 use App\Models\LearningProgress;
 use App\Models\Lesson;
@@ -45,7 +44,7 @@ class LearningPathController extends Controller
     public function index(Request $request, LearnerInterviewAnalyzer $analyzer): Response
     {
         $user = $request->user();
-        $profile = LearnerProfile::completedFor($user?->id, $request->cookie('artaswaha_device'));
+        $profile = app(ReactUi::class)->profile($request);
         $showMobileDashboard = $user !== null || $profile !== null;
 
         $learningPathsQuery = LearningPath::query()
@@ -97,14 +96,17 @@ class LearningPathController extends Controller
 
         $user = $request->user();
         $profile = $ui->profile($request);
-        $completedIds = $user !== null || $profile !== null
-            ? $learningPath->lessons()->whereHas('progress', fn (Builder $query): Builder => $query
+        $orderedLessons = $learningPath->lessons()->select('id');
+        if ($user !== null || $profile !== null) {
+            $orderedLessons->withExists(['progress as completed' => fn (Builder $query): Builder => $query
                 ->when($user !== null, fn (Builder $query): Builder => $query->where('user_id', $user->id))
                 ->when($user === null, fn (Builder $query): Builder => $query->where('visitor_id', $profile->visitor_id)->whereNull('user_id'))
-                ->whereNotNull('completed_at'))->pluck('id')
-            : collect();
-        $totalLessons = $learningPath->lessons()->count();
-        $orderedIds = $learningPath->lessons()->pluck('id');
+                ->whereNotNull('completed_at')]);
+        }
+        $orderedLessons = $orderedLessons->get();
+        $completedIds = $orderedLessons->where('completed', true)->pluck('id');
+        $totalLessons = $orderedLessons->count();
+        $orderedIds = $orderedLessons->pluck('id');
         $firstIncomplete = $orderedIds->search(fn (int $id): bool => ! $completedIds->contains($id));
         $lockedIds = $firstIncomplete === false ? collect() : $orderedIds->slice($firstIncomplete + 1);
         $progress = $totalLessons > 0 ? (int) round($completedIds->count() / $totalLessons * 100) : 0;

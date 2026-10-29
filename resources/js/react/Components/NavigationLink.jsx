@@ -1,16 +1,20 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { loadPage } from '../pages';
 
 export default function NavigationLink({ page, onMouseEnter, onFocus, onTouchStart, ...props }) {
+    const { viewer } = usePage().props;
+    const connection = typeof navigator !== 'undefined' ? navigator.connection : null;
+    const constrained = connection?.saveData || ['slow-2g', '2g'].includes(connection?.effectiveType);
     const warm = () => {
-        const connection = navigator.connection;
-        if (!page || connection?.saveData || ['slow-2g', '2g'].includes(connection?.effectiveType)) return;
-        // Only download page code: prefetching GET data can start a lesson or enqueue AI analysis.
+        if (!page || constrained) return;
+        // Keep live progress fresh and avoid enqueueing profile analysis on hover.
         loadPage(page).catch(() => {});
     };
     return (
         <Link
             {...props}
+            prefetch={page === 'Learning/Catalog' && viewer && !constrained ? ['hover', 'click'] : false}
+            cacheFor="15s"
             onMouseEnter={(event) => {
                 warm();
                 onMouseEnter?.(event);

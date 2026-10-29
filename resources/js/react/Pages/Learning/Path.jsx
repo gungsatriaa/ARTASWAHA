@@ -147,7 +147,7 @@ export default function Path({ path, lessons, recommendation, meta }) {
                             </Link>
                         </div>
                     )}
-                    <Pagination {...lessons} />
+                    <Pagination {...lessons} only={['lessons']} />
                 </section>
             </div>
         </>

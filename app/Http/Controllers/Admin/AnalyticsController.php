@@ -7,13 +7,14 @@ use App\Services\AdminAnalyticsService;
 use App\Services\PagePresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
 class AnalyticsController extends Controller
 {
     public function index(AdminAnalyticsService $analytics): InertiaResponse
     {
-        return app(PagePresenter::class)->render('admin.analytics', $analytics->snapshot());
+        return app(PagePresenter::class)->render('admin.analytics', ['statistics' => Inertia::defer(fn (): array => $analytics->snapshot(), rescue: true)]);
     }
 
     public function online(): JsonResponse

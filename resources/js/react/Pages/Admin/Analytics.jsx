@@ -1,13 +1,54 @@
 import Skeleton from '../../Components/Skeleton';
-import { lazy, Suspense, useMemo } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { PageMeta } from '../../Components/ui';
 import { Card, Heading, Stat } from '../../Components/forms';
-import { usePage } from '@inertiajs/react';
+import { Deferred, router, usePage } from '@inertiajs/react';
 import OnlineVisitors from '../../Components/OnlineVisitors';
 import AdminWeekly from '../../Components/AdminWeekly';
 import { Link } from '@inertiajs/react';
 const Chart = lazy(() => import('../../Components/Chart'));
-export default function Analytics({
+export default function Analytics({ statistics, meta }) {
+    const [slow, setSlow] = useState(false);
+    useEffect(() => {
+        if (statistics) return;
+        const timer = setTimeout(() => setSlow(true), 15000);
+        return () => clearTimeout(timer);
+    }, [statistics]);
+    const retry = (
+        <Card className="mt-6">
+            <p role="alert">Statistik belum dapat dimuat. Silakan coba kembali.</p>
+            <button
+                type="button"
+                className="mt-4 min-h-11 rounded-full px-5 font-bold text-accent"
+                onClick={() => router.reload({ only: ['statistics'] })}
+            >
+                Coba lagi
+            </button>
+        </Card>
+    );
+    return (
+        <>
+            <PageMeta {...meta} />
+            <Heading title="Analitik ARTASWAHA">
+                Aktivitas belajar dan kuis dari data tersimpan. Grafik harian memakai waktu Bali (WITA).
+            </Heading>
+            <OnlineVisitors />
+            <Deferred
+                data="statistics"
+                fallback={slow ? retry : (
+                    <div className="mt-6">
+                        <Skeleton label="Memuat statistik…" />
+                    </div>
+                )}
+                rescue={retry}
+            >
+                {() => <Statistics {...statistics} />}
+            </Deferred>
+        </>
+    );
+}
+
+function Statistics({
     chart,
     metrics,
     topPaths,
@@ -15,7 +56,6 @@ export default function Analytics({
     roomStatuses = {},
     analysisStatuses = {},
     roles = [],
-    meta,
 }) {
     const { links } = usePage().props;
     const activitySeries = useMemo(
@@ -32,11 +72,6 @@ export default function Analytics({
     );
     return (
         <div className="admin-analytics min-w-0">
-            <PageMeta {...meta} />
-            <Heading title="Analitik ARTASWAHA">
-                Aktivitas belajar dan kuis dari data tersimpan. Grafik harian memakai waktu Bali (WITA).
-            </Heading>
-            <OnlineVisitors />
             <section className="mt-6" aria-labelledby="weekly-title">
                 <h2 id="weekly-title" className="mb-4 font-display text-xl font-bold">
                     Tujuh hari terakhir

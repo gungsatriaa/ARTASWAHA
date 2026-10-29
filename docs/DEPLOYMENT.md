@@ -649,6 +649,14 @@ Halaman lama tetap terlihat selama request Inertia, tanpa skeleton navigasi atau
 
 Deploy source, `npm run build`, lalu restart SSR. Tidak ada migration, env, dependency, atau perubahan worker. Periksa navigasi pertama/ulang, Back, jaringan lambat, fokus keyboard, dan mobile. Tes mencakup pemanasan chunk, kegagalan preload, Save-Data/2G, serta konten/state yang bertahan selama navigasi menunggu. Ukuran build dan tes komponen tidak menggantikan pengukuran TTFB/INP di production.
 
+### Optimasi respons navigasi Inertia
+
+Deploy PHP dan frontend bersama, jalankan `npm run build`, lalu restart SSR agar kontrak analitik baru tidak tercampur dengan bundle lama. `deploy.sh` sudah menjalankan optimasi cache Laravel; tidak ada migration, seed, env, dependency, installer, atau perubahan worker untuk optimasi ini. Muat ulang tab yang masih memakai bundle lama setelah deployment.
+
+Menu materi memakai satu query dengan batas 12 per kategori. Identitas/progres/CSRF tidak di-cache lintas request; URL shell dan brand memakai once props Inertia. Katalog akun/anonim boleh diprefetch saat hover/click selama 15 detik; mode hemat data/2G dan tamu dikecualikan. Pelajaran, room, profil, beranda, dan admin tidak diprefetch datanya. Pagination katalog/modul memakai partial reload pada komponen yang sama. Analitik admin mengembalikan kerangka lebih dulu, lalu mengambil satu prop `statistics`; error deferred dilaporkan Laravel dan UI menyediakan coba lagi tanpa skeleton tak terbatas.
+
+Sesudah deploy, periksa perpindahan katalog/materi/profil, pagination, Back, logout/login identitas lain, dan admin analitik (termasuk koneksi gagal). Periksa Network: hover katalog mengirim prefetch satu kali dalam TTL, hover pelajaran tidak mengirim data, pagination tidak mengirim ulang menu, analitik memuat statistik melalui satu request tambahan, dan presence tidak diulang karena berganti layout. Panduan audit dan batas bukti pengukuran ada di `docs/REACT.md` bagian 6. Tes query memakai SQLite; TTFB, PHP-FPM, indeks/slow query MySQL, dan tampilan mobile production belum diukur.
+
 ### Heartbeat presence tunggal
 
 Heartbeat kini dipasang sekali pada bootstrap React, bukan pada masing-masing layout. Berganti halaman pengguna/admin/auth tidak memulai ping baru. Ping tetap setiap 30 detik, dilewati saat tab tersembunyi atau request sebelumnya belum selesai, dan perubahan visibility dibatasi dengan cadence yang sama. Timeout tetap 10 detik; cleanup membatalkan timer/request. Deploy client dengan `npm run build`, restart SSR sesuai prosedur, lalu muat ulang tab lama. Tidak ada migration, env, dependency, atau perubahan proses worker. Tes Strict Mode memeriksa tidak ada ping ganda dan timer dibersihkan. Jumlah pengunjung tetap memakai expiry server dua menit; latency presence production perlu diukur terpisah.

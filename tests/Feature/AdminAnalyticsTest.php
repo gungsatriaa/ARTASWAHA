@@ -12,6 +12,7 @@ use App\Services\AdminAnalyticsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class AdminAnalyticsTest extends TestCase
@@ -38,12 +39,15 @@ class AdminAnalyticsTest extends TestCase
 
         $response = $this->actingAs($admin)->get(route('admin.analytics.index'));
 
-        $response->assertOk()->assertInertiaContains('Analitik ARTASWAHA')->assertInertiaContains('Cecimpedan');
-        $this->assertSame(1, $response->viewData('page')['props']['metrics']['completedLessons']);
-        $this->assertSame(1, $response->viewData('page')['props']['metrics']['learners']);
-        $this->assertCount(14, $response->viewData('page')['props']['chart']['labels']);
-        $this->assertSame(1, $response->viewData('page')['props']['chart']['completions'][13]);
-        $this->assertSame(0, $response->viewData('page')['props']['chart']['completions'][0]);
+        $response->assertOk()->assertInertia(fn (Assert $page): Assert => $page
+            ->missing('statistics')
+            ->loadDeferredProps(fn (Assert $reload): Assert => $reload
+                ->where('statistics.metrics.completedLessons', 1)
+                ->where('statistics.metrics.learners', 1)
+                ->has('statistics.chart.labels', 14)
+                ->where('statistics.chart.completions.13', 1)
+                ->where('statistics.chart.completions.0', 0)
+                ->where('statistics.topPaths.0.title', 'Cecimpedan')));
     }
 
     public function test_weekly_comparisons_and_accuracy_use_real_recorded_activity_and_empty_days_stay_null(): void

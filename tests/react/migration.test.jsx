@@ -34,8 +34,10 @@ vi.mock('@inertiajs/react', async () => {
     const { useState, useRef } = await import('react');
     return {
         usePage: () => page,
+        Deferred: ({ data, fallback, rescue, children }) => page.rescuedProps?.includes(data) ? rescue :
+            page.props[data] === undefined ? fallback : typeof children === 'function' ? children({ reloading: false }) : children,
         Head: () => null,
-        Link: ({ children, replace, preserveScroll, ...props }) => <a {...props}>{children}</a>,
+        Link: ({ children, replace, preserveScroll, preserveState, only, prefetch, cacheFor, ...props }) => <a {...props}>{children}</a>,
         router: { on: () => () => {}, reload, get: visit, visit },
         useForm: (initial) => {
             const [data, setData] = useState(initial);
@@ -790,7 +792,7 @@ const adminPages = import.meta.glob('../../resources/js/react/Pages/Admin/*.jsx'
 const collection = { data: [], total: 0, current_page: 1, last_page: 1 };
 const adminFixtures = {
     Dashboard: { counts: {}, tasks: {}, paths: [path], lessons: [] },
-    Analytics: { chart: { labels: [], users: [], completions: [], answers: [] }, metrics: {}, topPaths: [] },
+    Analytics: { statistics: { chart: { labels: [], users: [], completions: [], answers: [] }, metrics: {}, topPaths: [] } },
     Paths: { paths: collection },
     PathForm: { path: {} },
     Lessons: { lessons: collection, paths: [path], filters: {} },
@@ -827,6 +829,7 @@ it.each(Object.entries(adminFixtures))('renders the admin %s page with sparse re
         vi.fn().mockResolvedValue({ ok: true, json: async () => ({ total: 0, accounts: 0, anonymous: 0 }) }),
     );
     page.props.viewer = { ...page.props.viewer, mode: 'account', isAdmin: true };
+    Object.assign(page.props, props);
     const { default: Page } = await adminPages[`../../resources/js/react/Pages/Admin/${name}.jsx`]();
     await act(async () => {
         render(<Page {...props} meta={meta} />);
@@ -1277,4 +1280,22 @@ it('still reveals the final result when the browser blocks feedback audio', asyn
     await act(async () => vi.advanceTimersByTime(3000));
     expect(screen.getByRole('heading', { name: 'Modul selesai!' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Ulangi kuis' })).toBeTruthy();
+});
+
+it('shows the analytics shell immediately and bounds the deferred statistics skeleton', async () => {
+    const { default: Analytics } = await adminPages['../../resources/js/react/Pages/Admin/Analytics.jsx']();
+    vi.useFakeTimers();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ total: 1, accounts: 1, anonymous: 0 }) }));
+    const view = render(<Analytics meta={meta} />);
+    expect(screen.getByRole('heading', { name: 'Analitik ARTASWAHA' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Pengunjung aktif' })).toBeTruthy();
+    expect(screen.getByLabelText('Memuat statistik…')).toBeTruthy();
+    await act(async () => vi.advanceTimersByTime(15000));
+    expect(screen.queryByLabelText('Memuat statistik…')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Coba lagi' }));
+    expect(reload).toHaveBeenLastCalledWith({ only: ['statistics'] });
+    page.props.statistics = adminFixtures.Analytics.statistics;
+    view.rerender(<Analytics statistics={page.props.statistics} meta={meta} />);
+    expect(screen.getByRole('heading', { name: 'Tujuh hari terakhir' })).toBeTruthy();
+    expect(screen.queryByText('Statistik belum dapat dimuat. Silakan coba kembali.')).toBeNull();
 });

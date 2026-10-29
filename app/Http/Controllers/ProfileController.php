@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\LearnerProfile;
 use App\Models\LearningPath;
 use App\Services\LearnerInterviewAnalyzer;
 use App\Services\PagePresenter;
+use App\Services\ReactUi;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,7 +16,7 @@ class ProfileController extends Controller
     public function about(Request $request): InertiaResponse|RedirectResponse
     {
         $user = $request->user();
-        $profile = $user === null ? LearnerProfile::completedFor(null, $request->cookie('artaswaha_device')) : null;
+        $profile = $user === null ? app(ReactUi::class)->profile($request) : null;
         if ($user === null && $profile === null) {
             return to_route('login');
         }
@@ -33,11 +33,10 @@ class ProfileController extends Controller
     public function __invoke(Request $request, LearnerInterviewAnalyzer $analyzer): InertiaResponse|RedirectResponse
     {
         $user = $request->user();
-        $profile = $user === null ? LearnerProfile::completedFor(null, $request->cookie('artaswaha_device')) : null;
+        $profile = $user === null ? app(ReactUi::class)->profile($request) : null;
         if ($user === null && $profile === null) {
             return to_route('login');
         }
-        $profile?->load('learningPath');
 
         $learningPaths = LearningPath::query()
             ->where('is_published', true)
@@ -60,7 +59,7 @@ class ProfileController extends Controller
         $totalLessons = $studiedPaths->sum('lessons_count');
         $completedLessons = $studiedPaths->sum('completed_lessons_count');
 
-        $analysisProfile = $user === null ? $profile : LearnerProfile::completedFor($user->id, null);
+        $analysisProfile = app(ReactUi::class)->profile($request);
         if ($analysisProfile !== null) {
             $analyzer->enqueue($analysisProfile);
             $analysisProfile->refresh();

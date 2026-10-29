@@ -72,13 +72,21 @@ export function CategoryIcon({ group, title = '', className = 'size-12' }) {
     );
 }
 
-export function Pagination({ current_page: current, last_page: last, prev_page_url: previous, next_page_url: next }) {
+export function Pagination({
+    current_page: current,
+    last_page: last,
+    prev_page_url: previous,
+    next_page_url: next,
+    only = [],
+}) {
     if (last <= 1) return null;
     return (
         <nav className="mt-7 flex items-center justify-between gap-4" aria-label="Halaman hasil">
             {previous ? (
                 <Link
                     href={previous}
+                    only={only}
+                    preserveState={only.length > 0}
                     aria-label="Sebelumnya"
                     preserveScroll
                     className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-accent"
@@ -95,6 +103,8 @@ export function Pagination({ current_page: current, last_page: last, prev_page_u
             {next ? (
                 <Link
                     href={next}
+                    only={only}
+                    preserveState={only.length > 0}
                     aria-label="Berikutnya"
                     preserveScroll
                     className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-accent"

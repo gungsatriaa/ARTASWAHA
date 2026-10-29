@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link, router, usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import * as m from 'motion/react-m';
 import Icon from '../../Components/Icon';
+import NavigationLink from '../../Components/NavigationLink';
 import { Button, CategoryIcon, EmptyState, PageMeta, Pagination } from '../../Components/ui';
 
 const groups = [
@@ -133,7 +134,8 @@ export default function Catalog({ paths, filters, meta }) {
                                         {entries.map((path) => (
                                             <li key={path.id}>
                                                 <m.div initial={false} whileHover={{ y: -3 }} className="h-full">
-                                                    <Link
+                                                    <NavigationLink
+                                                        page="Learning/Path"
                                                         href={path.url}
                                                         className="group flex h-full flex-col rounded-card bg-surface p-5 transition-colors hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:p-6"
                                                     >
@@ -157,7 +159,7 @@ export default function Catalog({ paths, filters, meta }) {
                                                                 ? `${path.lessonsCount} pelajaran`
                                                                 : 'Pelajaran sedang disiapkan'}
                                                         </p>
-                                                    </Link>
+                                                    </NavigationLink>
                                                 </m.div>
                                             </li>
                                         ))}
@@ -167,7 +169,7 @@ export default function Catalog({ paths, filters, meta }) {
                         })
                 )}
             </div>
-            <Pagination {...paths} />
+            <Pagination {...paths} only={['paths', 'filters']} />
         </>
     );
 }
