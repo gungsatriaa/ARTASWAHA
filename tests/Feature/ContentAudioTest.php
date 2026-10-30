@@ -533,6 +533,47 @@ class ContentAudioTest extends TestCase
         Storage::disk('local')->assertMissing($audio->path);
     }
 
+    public function test_saving_unchanged_narration_preserves_ready_audio_and_approval_after_reopening(): void
+    {
+        Queue::fake();
+        $this->actingAs(User::factory()->create(['is_admin' => true]));
+        foreach ([Lesson::factory()->create(), QuizQuestion::factory()->create()] as $content) {
+            $audio = $this->ready($content);
+            $before = $audio->getAttributes();
+            $url = route($content instanceof Lesson ? 'admin.audio.lessons.store' : 'admin.audio.questions.store', $content);
+            $this->post($url, [...$this->data(), 'version' => $audio->version])->assertRedirect()->assertSessionHasNoErrors();
+            $this->assertSame($before, $audio->fresh()->getAttributes());
+            Storage::disk('local')->assertExists($audio->path);
+            $edit = route($content instanceof Lesson ? 'admin.audio.lessons.edit' : 'admin.audio.questions.edit', $content);
+            $this->get($edit)->assertOk()->assertReact(fn (AssertablePage $page) => $page
+                ->where('audio.status', 'ready')->where('audio.url', route('content-audio.show', $audio))->etc());
+        }
+        Queue::assertNothingPushed();
+    }
+
+    public function test_saving_unchanged_exercise_narration_preserves_review_and_inflight_generation(): void
+    {
+        Queue::fake();
+        $this->actingAs(User::factory()->create(['is_admin' => true]));
+        foreach (['review', 'queued', 'processing'] as $status) {
+            $lesson = Lesson::factory()->create(['exercise_prompt' => 'Pilih satu', 'exercise_options' => ['Ha', 'Na']]);
+            $audio = ContentAudio::factory()->create(['lesson_id' => $lesson->id, 'lesson_audio_slot' => 1,
+                'status' => $status, 'path' => $status === 'review' ? 'content-audio/'.$status.'.wav' : null,
+                'generation_started_at' => now()->subMinute(), 'generation_finished_at' => $status === 'review' ? now() : null]);
+            if ($audio->path !== null) {
+                Storage::disk('local')->put($audio->path, $this->wav());
+            }
+            $before = $audio->fresh()->getAttributes();
+            $url = route('admin.audio.lessons.store', ['lesson' => $lesson, 'slot' => 1]);
+            $this->post($url, [...$this->data(), 'spoken_text' => $audio->spoken_text, 'version' => $audio->version])->assertRedirect()->assertSessionHasNoErrors();
+            $this->assertSame($before, $audio->fresh()->getAttributes());
+            if ($audio->path !== null) {
+                Storage::disk('local')->assertExists($audio->path);
+            }
+        }
+        Queue::assertNothingPushed();
+    }
+
     /** @return array{spoken_text: string, language: string, speed: int, action: string} */
     private function data(): array
     {

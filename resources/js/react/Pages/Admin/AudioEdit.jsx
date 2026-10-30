@@ -52,6 +52,10 @@ function AudioEditor({ title, text, action, configured, audio, backUrl, meta, ta
                     className="space-y-5"
                 >
                     <Errors errors={form.errors} />
+                    <p className="text-sm leading-6 text-foreground/65">
+                        Buat audio otomatis menyimpan narasi. Setelah selesai, dengarkan dan setujui hasilnya.
+                        Simpan narasi tanpa perubahan tetap mempertahankan audio; perubahan teks, bahasa, atau tempo memerlukan audio baru.
+                    </p>
                     <Field
                         as="textarea"
                         label="Teks yang dibacakan"

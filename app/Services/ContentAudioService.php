@@ -156,11 +156,12 @@ class ContentAudioService
                 if ($audio !== null && ($data['version'] ?? null) !== $audio->version) {
                     abort(409, 'Audio sudah berubah. Muat ulang halaman sebelum menyimpan.');
                 }
-                if ($audio !== null && $data['action'] === 'generate' && $newPath === null
-                    && $audio->engine === config('services.tts.engine', 'espeak')
+                if ($audio !== null && $newPath === null
                     && $audio->source_hash === $this->sourceHash($content, $slot)
                     && $audio->spoken_text === $data['spoken_text'] && $audio->language === $data['language'] && $audio->speed === (int) $data['speed']
-                    && in_array($audio->status, ['queued', 'processing', 'review', 'ready'], true)) {
+                    && ($data['action'] === 'save' || ($data['action'] === 'generate'
+                        && $audio->engine === config('services.tts.engine', 'espeak')
+                        && in_array($audio->status, ['queued', 'processing', 'review', 'ready'], true)))) {
                     return $audio;
                 }
                 $oldPath = $audio?->path;

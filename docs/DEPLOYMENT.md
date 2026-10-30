@@ -196,7 +196,7 @@ Model menggunakan RAM selama proses Python hidup. Proses dilepas setelah 15 meni
 
 Narasi mendukung hingga 16.000 karakter dan audio hasil generate hingga 64 MB; unggahan rekaman tetap maksimal 10 MB. Potongan Chatterbox tetap dibatasi 220 karakter, tetapi kalimat pendek digabung selama muat dalam satu potongan untuk mengurangi pemanggilan decoder berulang. Ukuran kamus token decoder tidak diubah. Batas ini bukan jaminan seluruh narasi panjang selesai dalam 30 menit pada CPU; bagi materi jika melebihi kapasitas mesin.
 
-Untuk menguji pemakaian ulang, buat audio pendek melalui admin, lalu pilih **Simpan narasi** dan **Buat audio offline** lagi pada materi percobaan. Gunakan narasi/referensi sama agar perbandingan masuk akal. Log `Chatterbox TTS selesai` di `storage/logs/laravel.log` mencatat `model_reused`, `model_load_seconds`, `reference_seconds`, `generation_seconds`, `seconds`, dan `threads` tanpa isi narasi. Tugas kedua diharapkan memiliki `model_reused=true` saat ditangani proses yang sama. Waktu sintesis dan pemakaian RAM sebenarnya perlu diukur di server; biaya pemuatan yang berkurang tidak menjamin seluruh proses menjadi instan.
+Untuk menguji pemakaian ulang, buat audio pendek melalui admin pada dua modul/soal percobaan yang berbeda. Menyimpan ulang narasi yang sama tidak memicu inferensi. Gunakan narasi/referensi sama agar perbandingan masuk akal. Log `Chatterbox TTS selesai` di `storage/logs/laravel.log` mencatat `model_reused`, `model_load_seconds`, `reference_seconds`, `generation_seconds`, `seconds`, dan `threads` tanpa isi narasi. Tugas kedua diharapkan memiliki `model_reused=true` saat ditangani proses yang sama. Waktu sintesis dan pemakaian RAM sebenarnya perlu diukur di server; biaya pemuatan yang berkurang tidak menjamin seluruh proses menjadi instan.
 
 Jalankan migrasi setelah menarik pembaruan timer audio. Kolom `generation_started_at` dan `generation_finished_at` menyimpan waktu proses aktual dari worker, termasuk ketika tugas gagal; menyimpan narasi baru mengosongkan waktu versi lama. Durasi pada UI menghitung waktu pemrosesan, tanpa waktu menunggu antrean. Jam awal/akhir memakai zona waktu aplikasi.
 
@@ -252,7 +252,7 @@ TTS_CHATTERBOX_REFERENCE_AUDIO=/www/wwwroot/artaswaha.kerthajaya.com/storage/app
 
 Jalankan `php artisan config:cache` lalu Restart hanya program TTS di Supervisor aaPanel. Model tidak perlu diunduh ulang. Referensi digunakan untuk semua potongan narasi dan dapat dipakai ulang antar tugas dalam mode persisten; sintesis tetap offline. Untuk pengecekan CLI, tambahkan `--reference-audio /path/ke/indonesia.wav` pada perintah `check` maupun `synthesize`. Path salah atau WAV di luar durasi tersebut akan ditolak; konfigurasi yang kosong tetap memakai suara bawaan. Perbaikan aksen harus dinilai dari hasil audio, bukan hanya status tugas.
 
-Audio lama tidak berubah otomatis: setelah mengganti referensi, pilih **Simpan narasi**, lalu **Buat audio offline** untuk menghasilkan ulang. Tinjau hasil sebelum menyetujui audio untuk pengguna.
+Audio lama tidak berubah otomatis setelah mengganti referensi. Uji referensi baru pada audio draf atau materi percobaan baru, lalu dengarkan dan setujui hasilnya. Simpan narasi tanpa perubahan mempertahankan audio lama.
 
 Lalu:
 
@@ -275,7 +275,7 @@ Restart program TTS melalui Supervisor aaPanel dan tunggu status Running. Defaul
 6. Pastikan audio soal masa depan tetap ditolak dan kuis realtime tetap bekerja.
 7. Periksa graf/Graphify dan statistik database tetap tersedia. Analisis LLM belum aktif karena Ollama ditunda.
 
-Tidak perlu seed materi demo secara massal di production. Audio sudah disetujui tetap diputar dari file tanpa memanggil model lagi. Untuk menghasilkan ulang pada engine/model yang sama, Simpan narasi lalu Buat audio offline; deduplikasi sengaja menggunakan kembali hasil yang masih berlaku.
+Tidak perlu seed materi demo secara massal di production. Audio sudah disetujui tetap diputar dari file tanpa memanggil model lagi. Simpan narasi tanpa perubahan mempertahankan file dan status; deduplikasi generate menggunakan kembali hasil yang masih berlaku. Perubahan narasi, bahasa, atau tempo memerlukan audio baru dan persetujuan ulang.
 
 Diagnosis awal:
 
@@ -718,3 +718,9 @@ Di admin **Audio pembelajaran / Modul**, buka **Pilih audio materi atau soal**. 
 Audio materi lama ditandai kedaluwarsa karena aturan sumber berubah. Buka editor untuk mendapatkan narasi bersih, lalu buat dan tinjau ulang audio; file lama tidak otomatis dihapus sebelum penggantian. Audio soal yang belum dibuat/disetujui tidak menampilkan pemutar. Pengguna hanya menerima audio soal aktif; berpindah soal menghentikan pemutar sebelumnya dan tidak mengunduh audio soal berikutnya terlebih dahulu. Mengubah pertanyaan/pilihan atau menghapus soal membuat audio terkait kedaluwarsa tanpa mengubah riwayat jawaban atau progres. Hindari menulis kunci jawaban dalam narasi pertanyaan kustom.
 
 Pemeriksaan setelah deploy: buka satu modul bersumber, pastikan narasi tidak memuat URL/catatan sumber; buat dan setujui audio dua soal; periksa pemutar soal pertama, kirim jawaban, lalu periksa audio soal kedua. Periksa juga esai, latihan tunggal, audio belum ditinjau, serta soal yang diedit. Tes otomatis memakai antrean/storage palsu, bukan inferensi model. Pemutaran dan tampilan pada perangkat nyata tetap perlu dicek. Rollback migration ditolak bila slot latihan sudah berisi data agar metadata tidak terhapus; gunakan perbaikan maju di production.
+
+### Simpan narasi sesudah membuat audio
+
+Tombol **Buat audio offline** sudah menyimpan narasi sebelum mengantrekan pembuatan suara. Setelah selesai, dengarkan dan **Setujui** hasilnya; tidak wajib menekan Simpan narasi lagi. Menyimpan teks, bahasa, dan tempo yang sama mempertahankan file, persetujuan, versi, waktu generasi, dan tugas yang sedang diproses, termasuk rekaman unggahan. Perubahan sumber/teks/bahasa/tempo tetap membatalkan audio lama agar pengguna tidak mendengar versi yang tidak cocok. Audio yang sudah terhapus oleh perilaku lama perlu dibuat ulang atau dipulihkan dari backup yang tersedia.
+
+Deploy PHP dan build frontend/SSR (`npm run build`), lalu restart hanya SSR ARTASWAHA. Perbaikan tombol simpan ini tidak menambah migration, dependency, env, atau restart worker/Reverb. Tes terarah memeriksa simpan lalu buka ulang audio materi/kuis siap pakai, audio latihan yang menunggu tinjauan/dalam antrean/diproses, serta pengosongan waktu generasi ketika narasi berubah.
