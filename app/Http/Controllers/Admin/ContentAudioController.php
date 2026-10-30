@@ -58,6 +58,14 @@ class ContentAudioController extends Controller
         return back()->with('status', 'Audio sudah ditinjau dan siap digunakan.');
     }
 
+    public function destroy(Request $request, ContentAudio $contentAudio, ContentAudioService $service): RedirectResponse
+    {
+        $data = $request->validate(['version' => ['required', 'uuid']]);
+        $service->delete($contentAudio, $data['version']);
+
+        return back()->with('status', 'Audio dihapus. Narasi tetap tersimpan dan bisa dibuatkan audio kembali.');
+    }
+
     public function status(ContentAudio $contentAudio, ContentAudioService $service): JsonResponse
     {
         $current = $service->isCurrent($contentAudio);

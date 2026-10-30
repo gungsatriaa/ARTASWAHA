@@ -97,6 +97,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/audio/soal/{question}', [AdminContentAudioController::class, 'question'])->name('audio.questions.edit');
     Route::post('/audio/soal/{question}', [AdminContentAudioController::class, 'saveQuestion'])->middleware('throttle:admin-ai-write')->name('audio.questions.store');
     Route::post('/audio/{contentAudio}/setujui', [AdminContentAudioController::class, 'approve'])->name('audio.approve');
+    Route::delete('/audio/{contentAudio}', [AdminContentAudioController::class, 'destroy'])->middleware('throttle:admin-ai-write')->name('audio.destroy');
 
     Route::get('/jalur', [AdminLearningPathController::class, 'index'])->name('learning-paths.index');
     Route::get('/jalur/buat', [AdminLearningPathController::class, 'create'])->name('learning-paths.create');

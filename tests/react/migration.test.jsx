@@ -20,6 +20,7 @@ import Analysis from '../../resources/js/react/Components/Analysis';
 import Keyboard from '../../resources/js/react/Components/Keyboard';
 import AvatarCrop from '../../resources/js/react/Components/AvatarCrop';
 import AudioPlayer from '../../resources/js/react/Components/AudioPlayer';
+import AudioStatus from '../../resources/js/react/Components/AudioStatus';
 import AnswerFeedback from '../../resources/js/react/Components/AnswerFeedback';
 import usePolling from '../../resources/js/react/Hooks/usePolling';
 import useRoom from '../../resources/js/react/Hooks/useRoom';
@@ -216,6 +217,19 @@ it('plays only the current module question audio and stops it when the question 
     expect(HTMLMediaElement.prototype.pause.mock.instances).toContain(first);
     rerender(<Lesson lesson={lesson} quiz={{ ...quiz, index: 1, question: { ...quiz.question, audio: null } }} meta={meta} />);
     expect(container.querySelector('audio')).toBeNull();
+});
+
+it('confirms audio deletion beside approval and sends the current version', () => {
+    const audio = { status: 'review', version: 'current-version', url: '/audio/1', approveUrl: '/audio/1/approve', deleteUrl: '/audio/1' };
+    render(<AudioStatus audio={audio} />);
+    const approve = screen.getByRole('button', { name: 'Sudah diperiksa, setujui audio' });
+    const remove = screen.getByRole('button', { name: 'Hapus audio' });
+    expect(remove.parentElement).toBe(approve.parentElement);
+    fireEvent.click(remove);
+    expect(send).not.toHaveBeenCalled();
+    const dialog = screen.getByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Ya, lanjutkan' }));
+    expect(send.mock.calls[0].slice(0, 3)).toEqual(['delete', '/audio/1', { version: 'current-version' }]);
 });
 
 it('requires login only when an anonymous learner tries to create a quiz', () => {

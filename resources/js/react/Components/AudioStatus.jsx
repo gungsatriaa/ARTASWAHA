@@ -104,11 +104,20 @@ export default function AudioStatus({ audio: initial }) {
                         </p>
                     )}
                     <AudioPlayer audio={audio} label="Dengarkan sebelum menyetujui" />
+                    <div className="flex flex-wrap gap-3">
                     {audio.status === 'review' && (
                         <Action url={audio.approveUrl} data={{ version: audio.version }}>
                             Sudah diperiksa, setujui audio
                         </Action>
                     )}
+                    {audio.deleteUrl && (audio.url || pending) && (
+                        <Action url={audio.deleteUrl} method="delete" data={{ version: audio.version }}
+                            className={`${secondaryClass} text-danger`}
+                            confirm="Hapus audio ini? Narasi tetap tersimpan. Hasil proses yang sedang berjalan tidak akan digunakan.">
+                            Hapus audio
+                        </Action>
+                    )}
+                    </div>
                 </>
             )}
             {error && (

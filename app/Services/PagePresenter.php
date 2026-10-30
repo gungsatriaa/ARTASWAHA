@@ -161,7 +161,7 @@ class PagePresenter
             return null;
         }
 
-        return ['url' => ($playable || ($admin && $audio->path)) ? route('content-audio.show', $audio) : null, ...($admin ? [...$audio->only(['id', 'version', 'language', 'speed']), 'status' => $current ? $audio->status : 'stale', 'progress' => $this->audioService->generationProgress($audio), 'statusUrl' => route('admin.audio.status', $audio), 'approveUrl' => route('admin.audio.approve', $audio)] : [])];
+        return ['url' => ($playable || ($admin && $audio->path)) ? route('content-audio.show', $audio) : null, ...($admin ? [...$audio->only(['id', 'version', 'language', 'speed']), 'status' => $current ? $audio->status : 'stale', 'progress' => $this->audioService->generationProgress($audio), 'statusUrl' => route('admin.audio.status', $audio), 'approveUrl' => route('admin.audio.approve', $audio), 'deleteUrl' => route('admin.audio.destroy', $audio)] : [])];
     }
 
     private function audioIndex(array $data): array

@@ -196,6 +196,24 @@ class ContentAudioService
         }
     }
 
+    public function delete(ContentAudio $audio, string $version): void
+    {
+        DB::transaction(function () use ($audio, $version): void {
+            $audio = ContentAudio::whereKey($audio->id)->lockForUpdate()->firstOrFail();
+            abort_unless($audio->version === $version, 409, 'Audio sudah berubah. Muat ulang halaman sebelum menghapus.');
+            $path = $audio->path;
+            $progressKey = $this->progressKey($audio);
+            $audio->update(['path' => null, 'status' => 'draft', 'version' => (string) Str::uuid(),
+                'reviewed_at' => null, 'generation_started_at' => null, 'generation_finished_at' => null]);
+            DB::afterCommit(function () use ($path, $progressKey): void {
+                Cache::forget($progressKey);
+                if ($path !== null) {
+                    Storage::disk('local')->delete($path);
+                }
+            });
+        });
+    }
+
     public function approve(ContentAudio $audio, string $version): void
     {
         DB::transaction(function () use ($audio, $version): void {

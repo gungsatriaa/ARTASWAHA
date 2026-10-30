@@ -62,12 +62,16 @@ class GenerateContentAudio implements ShouldBeUnique, ShouldQueue
             return;
         }
         if (! $service->isConfigured() || $audio->engine !== config('services.tts.engine', 'espeak')) {
-            $audio->update(['status' => 'unavailable']);
+            ContentAudio::whereKey($audio->id)->where('version', $this->version)->update(['status' => 'unavailable']);
 
             return;
         }
         $service->resetGenerationProgress($audio);
-        $audio->update(['status' => 'processing', 'generation_started_at' => now(), 'generation_finished_at' => null]);
+        $started = ContentAudio::whereKey($audio->id)->where('version', $this->version)->whereIn('status', ['queued', 'processing'])
+            ->update(['status' => 'processing', 'generation_started_at' => now(), 'generation_finished_at' => null]);
+        if (! $started) {
+            return;
+        }
         $path = null;
         try {
             $path = $service->synthesize($audio);

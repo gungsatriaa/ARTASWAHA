@@ -574,6 +574,70 @@ class ContentAudioTest extends TestCase
         Queue::assertNothingPushed();
     }
 
+    public function test_admin_can_delete_audio_without_removing_narration_or_other_slots(): void
+    {
+        $lesson = Lesson::factory()->create(['exercise_prompt' => 'Pilih Ha', 'exercise_options' => ['Ha', 'Na']]);
+        $material = $this->ready($lesson);
+        $exercise = ContentAudio::factory()->create(['lesson_id' => $lesson->id, 'lesson_audio_slot' => 1,
+            'path' => 'content-audio/exercise.wav', 'status' => 'review']);
+        Storage::disk('local')->put($exercise->path, $this->wav());
+        $question = $this->ready(QuizQuestion::factory()->create());
+        $this->actingAs(User::factory()->create(['is_admin' => true]));
+        foreach ([$exercise, $material, $question] as $audio) {
+            $text = $audio->spoken_text;
+            $path = $audio->path;
+            $version = $audio->version;
+            $this->delete(route('admin.audio.destroy', $audio), ['version' => $version])->assertRedirect()->assertSessionHasNoErrors();
+            $fresh = $audio->fresh();
+            $this->assertSame($text, $fresh->spoken_text);
+            $this->assertSame('draft', $fresh->status);
+            $this->assertNotSame($version, $fresh->version);
+            $this->assertNull($fresh->path);
+            $this->assertNull($fresh->reviewed_at);
+            Storage::disk('local')->assertMissing($path);
+            $this->get(route('content-audio.show', $audio))->assertNotFound();
+            if ($audio->id === $exercise->id) {
+                Storage::disk('local')->assertExists($material->path);
+                $this->assertSame('ready', $material->fresh()->status);
+            }
+        }
+    }
+
+    public function test_audio_deletion_requires_admin_and_current_version(): void
+    {
+        $audio = $this->ready(Lesson::factory()->create());
+        $url = route('admin.audio.destroy', $audio);
+        $this->deleteJson($url, ['version' => $audio->version])->assertUnauthorized();
+        $this->actingAs(User::factory()->create())->deleteJson($url, ['version' => $audio->version])->assertForbidden();
+        $this->actingAs(User::factory()->create(['is_admin' => true]));
+        $this->deleteJson($url, [])->assertUnprocessable();
+        $this->deleteJson($url, ['version' => (string) Str::uuid()])->assertConflict();
+        $this->assertSame('ready', $audio->fresh()->status);
+        Storage::disk('local')->assertExists($audio->path);
+    }
+
+    public function test_deleting_during_generation_discards_output_and_old_job_cannot_restore_audio(): void
+    {
+        Queue::fake();
+        config(['services.tts.enabled' => true, 'services.tts.binary' => PHP_BINARY]);
+        $service = app(ContentAudioService::class);
+        $audio = $service->save(Lesson::factory()->create(), [...$this->data(), 'action' => 'generate']);
+        $job = new GenerateContentAudio($audio->id, $audio->version);
+        Process::fake(function ($process) use ($service, $audio) {
+            $service->delete($audio, $audio->version);
+            file_put_contents($process->command[array_search('-w', $process->command, true) + 1], $this->wav());
+
+            return Process::result(exitCode: 0);
+        });
+        $job->handle($service);
+        $this->assertSame('draft', $audio->fresh()->status);
+        $this->assertNull($audio->fresh()->path);
+        $this->assertSame([], Storage::disk('local')->files('content-audio'));
+        Process::assertRanTimes(fn ($process): bool => true, 1);
+        $job->handle($service);
+        Process::assertRanTimes(fn ($process): bool => true, 1);
+    }
+
     /** @return array{spoken_text: string, language: string, speed: int, action: string} */
     private function data(): array
     {
