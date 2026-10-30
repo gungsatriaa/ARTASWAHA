@@ -173,7 +173,7 @@ it('retains several interview selections and submits their IDs, not a single rad
 
 it.each([
     ['Simpan narasi', 'save'],
-    ['Buat audio offline', 'generate'],
+    ['Generate audio', 'generate'],
     ['Gunakan rekaman', 'upload'],
 ])('submits the %s audio action when transform returns void', (label, action) => {
     render(<AudioEdit title="Narasi" text="Materi Bali" action="/admin/audio/modul/1" configured meta={meta} />);

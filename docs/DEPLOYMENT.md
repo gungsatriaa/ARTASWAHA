@@ -268,7 +268,7 @@ Restart program TTS melalui Supervisor aaPanel dan tunggu status Running. Defaul
 ## 8. Uji melalui admin
 
 1. Buka Admin → Audio pembelajaran → pilih modul uji atau draft yang sah.
-2. Masukkan narasi Indonesia, kecepatan 150, tekan Buat audio offline.
+2. Masukkan narasi Indonesia, kecepatan 150, tekan Generate audio.
 3. Status harus menjadi queued → processing → review. Perbarui status bila diperlukan.
 4. Dengarkan preview; admin menyetujui setelah memeriksa suara. Hasil baru menjadi ready dan dapat digunakan pelajar.
 5. Uji perubahan narasi, kegagalan proses, dan tempo lain. Pastikan file sementara dibersihkan saat gagal.
@@ -721,7 +721,7 @@ Pemeriksaan setelah deploy: buka satu modul bersumber, pastikan narasi tidak mem
 
 ### Simpan narasi sesudah membuat audio
 
-Tombol **Buat audio offline** sudah menyimpan narasi sebelum mengantrekan pembuatan suara. Setelah selesai, dengarkan dan **Setujui** hasilnya; tidak wajib menekan Simpan narasi lagi. Menyimpan teks, bahasa, dan tempo yang sama mempertahankan file, persetujuan, versi, waktu generasi, dan tugas yang sedang diproses, termasuk rekaman unggahan. Perubahan sumber/teks/bahasa/tempo tetap membatalkan audio lama agar pengguna tidak mendengar versi yang tidak cocok. Audio yang sudah terhapus oleh perilaku lama perlu dibuat ulang atau dipulihkan dari backup yang tersedia.
+Tombol **Generate audio** sudah menyimpan narasi sebelum mengantrekan pembuatan suara. Setelah selesai, dengarkan dan **Setujui** hasilnya; tidak wajib menekan Simpan narasi lagi. Menyimpan teks, bahasa, dan tempo yang sama mempertahankan file, persetujuan, versi, waktu generasi, dan tugas yang sedang diproses, termasuk rekaman unggahan. Perubahan sumber/teks/bahasa/tempo tetap membatalkan audio lama agar pengguna tidak mendengar versi yang tidak cocok. Audio yang sudah terhapus oleh perilaku lama perlu dibuat ulang atau dipulihkan dari backup yang tersedia.
 
 Deploy PHP dan build frontend/SSR (`npm run build`), lalu restart hanya SSR ARTASWAHA. Perbaikan tombol simpan ini tidak menambah migration, dependency, env, atau restart worker/Reverb. Tes terarah memeriksa simpan lalu buka ulang audio materi/kuis siap pakai, audio latihan yang menunggu tinjauan/dalam antrean/diproses, serta pengosongan waktu generasi ketika narasi berubah.
 

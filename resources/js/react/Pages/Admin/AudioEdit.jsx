@@ -53,7 +53,7 @@ function AudioEditor({ title, text, action, configured, audio, backUrl, meta, ta
                 >
                     <Errors errors={form.errors} />
                     <p className="text-sm leading-6 text-foreground/65">
-                        Buat audio otomatis menyimpan narasi. Setelah selesai, dengarkan dan setujui hasilnya.
+                        Tombol Generate audio otomatis menyimpan narasi. Setelah selesai, dengarkan dan setujui hasilnya.
                         Simpan narasi tanpa perubahan tetap mempertahankan audio; perubahan teks, bahasa, atau tempo memerlukan audio baru.
                     </p>
                     <Field
@@ -108,7 +108,7 @@ function AudioEditor({ title, text, action, configured, audio, backUrl, meta, ta
                             Simpan narasi
                         </button>
                         <Button type="submit" name="action" value="generate" disabled={form.processing}>
-                            Buat audio offline
+                            Generate audio
                         </Button>
                         <button
                             type="submit"
