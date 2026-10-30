@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\ContentAudio;
 use App\Models\LearnerProfile;
+use App\Models\LearningProgress;
 use App\Models\Room;
 use App\Services\ContentAudioService;
 use App\Services\LearningProgressService;
+use App\Services\LessonAttemptService;
 use App\Services\RoomService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -26,6 +28,12 @@ class ContentAudioController extends Controller
                 abort_unless($lesson->is_published && $lesson->reviewed_at !== null && $lesson->learningPath->is_published, 404);
                 $progress = app(LearningProgressService::class);
                 abort_if($progress->prerequisite($lesson, $progress->deviceId($request), $request->user()) !== null, 403, 'Selesaikan modul sebelumnya terlebih dahulu.');
+                if ($contentAudio->lesson_audio_slot > 0) {
+                    $deviceId = $progress->deviceId($request);
+                    $completed = LearningProgress::query()->forLearner($deviceId, $request->user()?->id)->where('lesson_id', $lesson->id)->whereNotNull('completed_at')->first();
+                    $quiz = app(LessonAttemptService::class)->presentation($lesson, $completed, $deviceId, $request->user());
+                    abort_unless($quiz !== null && $quiz['question'] !== null && $contentAudio->lesson_audio_slot === $quiz['index'] + 1, 404);
+                }
             } else {
                 $question = $contentAudio->question;
                 abort_if($question === null, 404);

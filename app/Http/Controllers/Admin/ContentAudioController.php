@@ -30,9 +30,9 @@ class ContentAudioController extends Controller
         return app(PagePresenter::class)->render('admin.audio.index', compact('items', 'type', 'configured', 'service'));
     }
 
-    public function lesson(Lesson $lesson, ContentAudioService $service): ReactPage
+    public function lesson(Lesson $lesson, ContentAudioService $service, int $slot = 0): ReactPage
     {
-        return $this->editor($lesson, $service);
+        return $this->editor($lesson, $service, $slot);
     }
 
     public function question(QuizQuestion $question, ContentAudioService $service): ReactPage
@@ -40,9 +40,9 @@ class ContentAudioController extends Controller
         return $this->editor($question, $service);
     }
 
-    public function saveLesson(Request $request, Lesson $lesson, ContentAudioService $service): RedirectResponse
+    public function saveLesson(Request $request, Lesson $lesson, ContentAudioService $service, int $slot = 0): RedirectResponse
     {
-        return $this->save($request, $lesson, $service);
+        return $this->save($request, $lesson, $service, $slot);
     }
 
     public function saveQuestion(Request $request, QuizQuestion $question, ContentAudioService $service): RedirectResponse
@@ -72,27 +72,34 @@ class ContentAudioController extends Controller
         ])->header('Cache-Control', 'private, no-store');
     }
 
-    private function editor(Lesson|QuizQuestion $content, ContentAudioService $service): ReactPage
+    private function editor(Lesson|QuizQuestion $content, ContentAudioService $service, int $slot = 0): ReactPage
     {
-        $audio = $service->forContent($content);
+        $defaultText = $service->defaultText($content, $slot);
+        $audio = $service->forContent($content, $slot);
         $isLesson = $content instanceof Lesson;
-        $title = $isLesson ? $content->title : $content->prompt;
+        $title = $isLesson ? $content->title.($slot > 0 ? ' - Soal '.$slot : ' - Materi') : $content->prompt;
         $current = $audio === null || $service->isCurrent($audio);
-        $text = $audio !== null && $current ? $audio->spoken_text : $service->defaultText($content);
-        $action = route($isLesson ? 'admin.audio.lessons.store' : 'admin.audio.questions.store', $content);
+        $text = $audio !== null && $current ? $audio->spoken_text : $defaultText;
+        $action = route($isLesson ? 'admin.audio.lessons.store' : 'admin.audio.questions.store', $isLesson ? ['lesson' => $content, 'slot' => $slot ?: null] : $content);
         $configured = $service->isConfigured();
 
-        return app(PagePresenter::class)->render('admin.audio.edit', compact('content', 'audio', 'title', 'text', 'action', 'configured', 'current', 'isLesson'));
+        $targets = $isLesson ? collect(range(0, count($content->exerciseQuestions())))->map(fn (int $index): array => [
+            'title' => $index === 0 ? 'Materi' : 'Soal '.$index,
+            'url' => route('admin.audio.lessons.edit', ['lesson' => $content, 'slot' => $index ?: null]),
+            'active' => $index === $slot,
+        ])->all() : [];
+
+        return app(PagePresenter::class)->render('admin.audio.edit', compact('content', 'audio', 'title', 'text', 'action', 'configured', 'current', 'isLesson', 'targets'));
     }
 
-    private function save(Request $request, Lesson|QuizQuestion $content, ContentAudioService $service): RedirectResponse
+    private function save(Request $request, Lesson|QuizQuestion $content, ContentAudioService $service, int $slot = 0): RedirectResponse
     {
         $data = $request->validate([
             'spoken_text' => ['required', 'string', 'max:'.ContentAudioService::MAX_TEXT_LENGTH], 'language' => ['required', 'in:id,en,ban'],
             'speed' => ['required', 'integer', 'between:100,220'], 'action' => ['required', 'in:save,generate,upload'], 'version' => ['nullable', 'uuid'],
             'audio_upload' => ['required_if:action,upload', 'nullable', 'file', 'mimes:mp3,wav,ogg', 'max:10240'],
         ]);
-        $service->save($content, $data, $data['action'] === 'upload' ? $request->file('audio_upload') : null);
+        $service->save($content, $data, $data['action'] === 'upload' ? $request->file('audio_upload') : null, $slot);
 
         return back()->with('status', 'Pengaturan audio tersimpan. Periksa status dan dengarkan hasilnya sebelum menyetujui.');
     }

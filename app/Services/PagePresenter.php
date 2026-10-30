@@ -40,7 +40,7 @@ class PagePresenter
             'admin.lessons.form' => ['Admin/LessonForm', ['lesson' => $this->lesson($data['lesson'], true), 'paths' => $data['learningPaths']->map(fn ($path) => $this->path($path))], $data['lesson']->exists ? 'Ubah modul' : 'Modul baru'],
             'admin.lessons.preview' => ['Admin/Preview', ['lesson' => $this->lesson($data['lesson'], true), 'audio' => $this->audio($data['audio'] ?? null)], 'Preview modul'],
             'admin.audio.index' => ['Admin/AudioIndex', $this->audioIndex($data), 'Audio pembelajaran'],
-            'admin.audio.edit' => ['Admin/AudioEdit', ['title' => $data['title'], 'text' => $data['text'], 'action' => $data['action'], 'configured' => $data['configured'], 'audio' => $this->audio($data['audio']), 'backUrl' => $data['isLesson'] ? route('admin.lessons.preview', $data['content']) : route('quizzes.index')], 'Siapkan audio'],
+            'admin.audio.edit' => ['Admin/AudioEdit', ['title' => $data['title'], 'text' => $data['text'], 'action' => $data['action'], 'configured' => $data['configured'], 'targets' => $data['targets'], 'audio' => $this->audio($data['audio']), 'backUrl' => $data['isLesson'] ? route('admin.lessons.preview', $data['content']) : route('quizzes.index')], 'Siapkan audio'],
             'admin.ai.index' => ['Admin/Ai', $this->aiIndex($data), 'Pusat AI'],
             'admin.ai.profile' => ['Admin/AiDetail', ['kind' => 'profile', 'record' => ['id' => $data['learnerProfile']->id, 'mode' => $data['learnerProfile']->mode, 'status' => $data['analysis']['status'], 'events' => array_reverse($data['learnerProfile']->analysis_events ?? []), 'requestedAt' => $data['learnerProfile']->analysis_requested_at?->toIso8601String(), 'analysis' => $data['analysis'], 'paths' => $data['paths']->map(fn ($path) => $this->path($path)), 'retryUrl' => route('admin.ai.profiles.retry', $data['learnerProfile'])]], 'Detail analisis interview'],
             'admin.ai.draft' => ['Admin/AiDetail', ['kind' => 'draft', 'record' => $data['quizDraft']->only(['id', 'status', 'questions'])], 'Detail draf kuis AI'],
@@ -69,6 +69,9 @@ class PagePresenter
                 $result[$action.'Url'] = $lesson->exists ? route('admin.lessons.'.$action, $lesson) : null;
             }
             $result['audioUrl'] = $lesson->exists ? route('admin.audio.lessons.edit', $lesson) : null;
+            if ($detail && $lesson->exists) {
+                $result['exerciseAudioUrls'] = array_map(fn (int $index): string => route('admin.audio.lessons.edit', ['lesson' => $lesson, 'slot' => $index + 1]), array_keys($lesson->exerciseQuestions()));
+            }
         }
 
         if (! $detail) {
@@ -84,6 +87,10 @@ class PagePresenter
         $progress = $data['progress'];
         $nextLesson = $data['nextLesson'] ?? null;
         $quiz = app(LessonAttemptService::class)->presentation($lesson, $progress, app(LearningProgressService::class)->deviceId(request()), request()->user());
+        if ($quiz !== null && $quiz['question'] !== null) {
+            $questionAudio = $this->audioService->forContent($lesson, $quiz['index'] + 1);
+            $quiz['question']['audio'] = $this->audioService->isPlayable($questionAudio) ? ['url' => route('content-audio.show', $questionAudio)] : null;
+        }
 
         return ['nextLesson' => $nextLesson ? ['title' => $nextLesson->title, 'url' => route('learning.lessons.show', $nextLesson->slug)] : null,
             'quiz' => $quiz, 'lesson' => [...$this->lesson($lesson), 'path' => $this->path($lesson->learningPath),
@@ -164,7 +171,9 @@ class PagePresenter
             $lesson = $record ? $item->lesson : ($item instanceof Lesson ? $item : null);
             $question = $record ? $item->question : ($item instanceof QuizQuestion ? $item : null);
 
-            return ['id' => $item->id, 'title' => $lesson?->title ?? $question?->prompt ?? 'Materi tidak tersedia', 'status' => $record ? ($this->audioService->isCurrent($item) ? $item->status : 'stale') : null, 'url' => $lesson ? route('admin.audio.lessons.edit', $lesson) : ($question ? route('admin.audio.questions.edit', $question) : null)];
+            $slot = $record ? $item->lesson_audio_slot : 0;
+
+            return ['id' => $item->id, 'title' => $lesson ? $lesson->title.($slot > 0 ? ' - Soal '.$slot : ' - Materi') : ($question?->prompt ?? 'Materi tidak tersedia'), 'status' => $record ? ($this->audioService->isCurrent($item) ? $item->status : 'stale') : null, 'url' => $lesson ? route('admin.audio.lessons.edit', ['lesson' => $lesson, 'slot' => $slot ?: null]) : ($question ? route('admin.audio.questions.edit', $question) : null)];
         })];
     }
 

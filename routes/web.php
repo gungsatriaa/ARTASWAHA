@@ -92,8 +92,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/ai/laporan/{aiReport}', [AdminAiController::class, 'report'])->name('ai.reports.show');
     Route::get('/audio', [AdminContentAudioController::class, 'index'])->name('audio.index');
     Route::get('/audio/{contentAudio}/status', [AdminContentAudioController::class, 'status'])->middleware('throttle:60,1')->name('audio.status');
-    Route::get('/audio/modul/{lesson}', [AdminContentAudioController::class, 'lesson'])->name('audio.lessons.edit');
-    Route::post('/audio/modul/{lesson}', [AdminContentAudioController::class, 'saveLesson'])->middleware('throttle:admin-ai-write')->name('audio.lessons.store');
+    Route::get('/audio/modul/{lesson}/{slot?}', [AdminContentAudioController::class, 'lesson'])->whereNumber('slot')->name('audio.lessons.edit');
+    Route::post('/audio/modul/{lesson}/{slot?}', [AdminContentAudioController::class, 'saveLesson'])->middleware('throttle:admin-ai-write')->whereNumber('slot')->name('audio.lessons.store');
     Route::get('/audio/soal/{question}', [AdminContentAudioController::class, 'question'])->name('audio.questions.edit');
     Route::post('/audio/soal/{question}', [AdminContentAudioController::class, 'saveQuestion'])->middleware('throttle:admin-ai-write')->name('audio.questions.store');
     Route::post('/audio/{contentAudio}/setujui', [AdminContentAudioController::class, 'approve'])->name('audio.approve');

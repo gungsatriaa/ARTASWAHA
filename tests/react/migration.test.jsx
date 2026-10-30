@@ -188,6 +188,36 @@ it.each([
     ]);
 });
 
+it('switches module audio targets without retaining narration from the previous question', () => {
+    const props = { configured: false, meta, targets: [
+        { title: 'Materi', url: '/audio/modul/1', active: false },
+        { title: 'Soal 1', url: '/audio/modul/1/1', active: true },
+    ] };
+    const { rerender } = render(<AudioEdit {...props} title="Soal 1" text="Pertanyaan pertama" action="/audio/modul/1/1" />);
+    expect(screen.getByRole('link', { name: 'Soal 1' }).getAttribute('aria-current')).toBe('page');
+    fireEvent.change(screen.getByLabelText('Teks yang dibacakan'), { target: { value: 'Draf pertama' } });
+    rerender(<AudioEdit {...props} title="Soal 2" text="Pertanyaan kedua" action="/audio/modul/1/2" />);
+    expect(screen.getByLabelText('Teks yang dibacakan').value).toBe('Pertanyaan kedua');
+});
+
+it('plays only the current module question audio and stops it when the question changes', () => {
+    const lesson = { id: 1, title: 'Latihan', path, content: '', answerUrl: '/jawab' };
+    const quiz = { id: 1, total: 2, index: 0, question: {
+        question_type: 'single', exercise_prompt: 'Pertama?', exercise_options: ['Ha', 'Na'], audio: { url: '/audio/1' },
+    } };
+    const { rerender, container } = render(<Lesson lesson={lesson} quiz={quiz} meta={meta} />);
+    expect(screen.getByRole('region', { name: 'Dengarkan soal' })).toBeTruthy();
+    const first = container.querySelector('audio');
+    expect(first.getAttribute('src')).toBe('/audio/1');
+    expect(first.getAttribute('preload')).toBe('none');
+    HTMLMediaElement.prototype.pause.mockClear();
+    rerender(<Lesson lesson={lesson} quiz={{ ...quiz, index: 1, question: { ...quiz.question, audio: { url: '/audio/2' } } }} meta={meta} />);
+    expect(container.querySelector('audio').getAttribute('src')).toBe('/audio/2');
+    expect(HTMLMediaElement.prototype.pause.mock.instances).toContain(first);
+    rerender(<Lesson lesson={lesson} quiz={{ ...quiz, index: 1, question: { ...quiz.question, audio: null } }} meta={meta} />);
+    expect(container.querySelector('audio')).toBeNull();
+});
+
 it('requires login only when an anonymous learner tries to create a quiz', () => {
     render(<Quizzes quizzes={null} filters={{}} meta={meta} />);
     fireEvent.click(screen.getByRole('button', { name: /Buat kuis/ }));

@@ -47,7 +47,7 @@ class Lesson extends Model
 
     public function audio(): HasOne
     {
-        return $this->hasOne(ContentAudio::class);
+        return $this->hasOne(ContentAudio::class)->where('lesson_audio_slot', 0);
     }
 
     public function progress(): HasMany

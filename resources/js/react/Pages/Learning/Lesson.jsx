@@ -30,6 +30,7 @@ function Exercise({ question, index, attemptId, url }) {
             <h2 className="font-display text-xl font-bold leading-relaxed sm:text-2xl">
                 <AksaraText>{question.exercise_prompt}</AksaraText>
             </h2>
+            <AudioPlayer audio={question.audio} label="Dengarkan soal" />
             <Errors errors={form.errors} />
             <AnswerInput
                 question={{ ...question, options: question.exercise_options }}

@@ -1,9 +1,13 @@
 import { useEffect } from 'react';
-import { useForm } from '../../routing';
+import { Link, useForm } from '../../routing';
 import { PageMeta, Button } from '../../Components/ui';
 import { Card, Heading, Field, Back, Errors, secondaryClass } from '../../Components/forms';
 import AudioStatus from '../../Components/AudioStatus';
-export default function AudioEdit({ title, text, action, configured, audio, backUrl, meta }) {
+export default function AudioEdit(props) {
+    return <AudioEditor key={props.action} {...props} />;
+}
+
+function AudioEditor({ title, text, action, configured, audio, backUrl, meta, targets = [] }) {
     const form = useForm({
         spoken_text: text,
         language: audio?.language ?? 'id',
@@ -20,6 +24,18 @@ export default function AudioEdit({ title, text, action, configured, audio, back
             <PageMeta {...meta} />
             <Back href={backUrl}>Kembali ke materi</Back>
             <Heading title="Siapkan audio">{title}</Heading>
+            {targets.length > 1 && (
+                <details className="mb-5 rounded-2xl bg-surface p-4">
+                    <summary className="cursor-pointer font-semibold">Pilih audio materi atau soal</summary>
+                    <nav aria-label="Audio modul" className="mt-4 flex max-h-64 flex-wrap gap-2 overflow-y-auto">
+                        {targets.map((target) => (
+                            <Link key={target.url} href={target.url} className={secondaryClass} aria-current={target.active ? 'page' : undefined}>
+                                {target.title}
+                            </Link>
+                        ))}
+                    </nav>
+                </details>
+            )}
             {audio && <AudioStatus key={audio.version} audio={audio} />}
             <Card>
                 <form

@@ -39,6 +39,11 @@ export default function Preview({ lesson, audio, meta }) {
                             Soal {index + 1} · bagian {exercise.section + 1} · {exercise.question_type}
                         </h2>
                         <p className="mt-3 leading-8">{exercise.exercise_prompt}</p>
+                        {lesson.exerciseAudioUrls?.[index] && (
+                            <Link className={`${secondaryClass} mt-3`} href={lesson.exerciseAudioUrls[index]}>
+                                Siapkan audio soal {index + 1}
+                            </Link>
+                        )}
                         <p className="mt-3 text-success">
                             Jawaban:{' '}
                             {exercise.question_type === 'essay'
@@ -55,6 +60,9 @@ export default function Preview({ lesson, audio, meta }) {
                 {lesson.exercise_prompt && (
                     <section className="mt-7 rounded-2xl bg-background p-5">
                         <h3 className="font-display text-xl font-bold">{lesson.exercise_prompt}</h3>
+                        {lesson.exerciseAudioUrls?.[0] && (
+                            <Link className={`${secondaryClass} mt-3`} href={lesson.exerciseAudioUrls[0]}>Siapkan audio soal</Link>
+                        )}
                         {lesson.question_type === 'essay' && (
                             <p className="mt-4 whitespace-pre-wrap break-words text-sm text-success">
                                 Jawaban acuan: {(lesson.accepted_answers ?? []).join(' / ')}
@@ -85,7 +93,7 @@ export default function Preview({ lesson, audio, meta }) {
                         Ubah modul
                     </Link>
                     <Link className={secondaryClass} href={lesson.audioUrl}>
-                        Siapkan audio
+                        Siapkan audio materi
                     </Link>
                     <Action
                         url={lesson.publishUrl}

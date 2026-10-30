@@ -14,11 +14,11 @@ class ContentAudio extends Model
 
     protected $table = 'content_audio';
 
-    protected $fillable = ['lesson_id', 'quiz_question_id', 'source_hash', 'version', 'spoken_text', 'language', 'speed', 'engine', 'status', 'path', 'reviewed_at', 'generation_started_at', 'generation_finished_at'];
+    protected $fillable = ['lesson_id', 'lesson_audio_slot', 'quiz_question_id', 'source_hash', 'version', 'spoken_text', 'language', 'speed', 'engine', 'status', 'path', 'reviewed_at', 'generation_started_at', 'generation_finished_at'];
 
     protected function casts(): array
     {
-        return ['reviewed_at' => 'datetime', 'speed' => 'integer', 'generation_started_at' => 'datetime', 'generation_finished_at' => 'datetime'];
+        return ['lesson_audio_slot' => 'integer', 'reviewed_at' => 'datetime', 'speed' => 'integer', 'generation_started_at' => 'datetime', 'generation_finished_at' => 'datetime'];
     }
 
     public function lesson(): BelongsTo

@@ -19,7 +19,7 @@ class ContentAudioFactory extends Factory
     public function configure(): static
     {
         return $this->afterCreating(function (ContentAudio $audio): void {
-            $audio->update(['source_hash' => app(ContentAudioService::class)->sourceHash($audio->lesson ?? $audio->question)]);
+            $audio->update(['source_hash' => app(ContentAudioService::class)->sourceHash($audio->lesson ?? $audio->question, $audio->lesson_audio_slot ?? 0)]);
         });
     }
 }

@@ -6,6 +6,7 @@ use App\Jobs\GenerateContentAudio;
 use App\Models\ContentAudio;
 use App\Models\Lesson;
 use App\Models\QuizQuestion;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -63,27 +64,50 @@ class ContentAudioService
         return config('services.tts.engine', 'espeak') === 'espeak' && is_file((string) config('services.tts.binary'));
     }
 
-    public function sourceHash(Lesson|QuizQuestion $content): string
+    public function sourceHash(Lesson|QuizQuestion $content, int $slot = 0): string
     {
-        return hash('sha256', json_encode($content instanceof Lesson
-            ? [$content->title, $content->content]
-            : [$content->prompt, $content->options], JSON_THROW_ON_ERROR));
-    }
-
-    public function defaultText(Lesson|QuizQuestion $content): string
-    {
-        $text = $content instanceof Lesson ? $content->title.".\n".$content->content : $content->prompt;
-        if ($content instanceof QuizQuestion) {
-            foreach ($content->options as $index => $option) {
-                $text .= "\n".chr(65 + $index).'. '.$option;
-            }
+        if ($content instanceof Lesson) {
+            return hash('sha256', json_encode(['lesson-audio-v2', $slot, $this->defaultText($content, $slot)], JSON_THROW_ON_ERROR));
         }
 
-        return mb_substr($text, 0, self::MAX_TEXT_LENGTH);
+        return hash('sha256', json_encode([$content->prompt, $content->options], JSON_THROW_ON_ERROR));
     }
 
-    public function forContent(Lesson|QuizQuestion $content): ?ContentAudio
+    public function defaultText(Lesson|QuizQuestion $content, int $slot = 0): string
     {
+        if ($content instanceof Lesson && $slot > 0) {
+            $question = $content->exerciseQuestions()[$slot - 1] ?? null;
+            abort_if($question === null, 404);
+            $text = $question['exercise_prompt'];
+            $options = $question['exercise_options'] ?? [];
+        } else {
+            $text = $content instanceof Lesson ? $content->title.".\n".$content->content : $content->prompt;
+            $options = $content instanceof QuizQuestion ? $content->options : [];
+        }
+        foreach ($options ?? [] as $index => $option) {
+            $text .= "\n".chr(65 + $index).'. '.$option;
+        }
+
+        return mb_substr($content instanceof Lesson ? $this->cleanNarration($text) : $text, 0, self::MAX_TEXT_LENGTH);
+    }
+
+    private function cleanNarration(string $text): string
+    {
+        $text = preg_replace('/^#{1,6}\h+Sumber belajar\h*\R.*?(?=^#{1,6}\h|\z)/imsu', '', $text) ?? $text;
+        $text = preg_replace('/!\[[^\]]*\]\([^)]*\)/u', '', $text) ?? $text;
+        $text = preg_replace('/\[([^\]]+)\]\([^)]*\)/u', '$1', $text) ?? $text;
+        $text = preg_replace('~https?://[^\s<>]+~iu', '', $text) ?? $text;
+        $text = preg_replace('/^\h*(?:#{1,6}\h+|[-*+]\h+|>\h*)/mu', '', $text) ?? $text;
+        $text = str_replace(['**', '__', '`'], '', strip_tags($text));
+
+        return trim(preg_replace('/\n{3,}/', "\n\n", $text) ?? $text);
+    }
+
+    public function forContent(Lesson|QuizQuestion $content, int $slot = 0): ?ContentAudio
+    {
+        if ($content instanceof Lesson && $slot > 0) {
+            return ContentAudio::where('lesson_id', $content->id)->where('lesson_audio_slot', $slot)->first()?->setRelation('lesson', $content);
+        }
         $content->loadMissing('audio');
         if ($content->audio !== null) {
             $content->audio->setRelation($content instanceof Lesson ? 'lesson' : 'question', $content);
@@ -97,7 +121,11 @@ class ContentAudioService
     {
         $content = $audio->lesson ?? $audio->question;
 
-        return $content !== null && $audio->source_hash === $this->sourceHash($content);
+        if ($content instanceof Lesson && $audio->lesson_audio_slot > count($content->exerciseQuestions())) {
+            return false;
+        }
+
+        return $content !== null && $audio->source_hash === $this->sourceHash($content, $audio->lesson_audio_slot ?? 0);
     }
 
     public function isPlayable(?ContentAudio $audio): bool
@@ -107,7 +135,7 @@ class ContentAudioService
     }
 
     /** @param array{spoken_text: string, language: string, speed: int, action: string, version?: ?string} $data */
-    public function save(Lesson|QuizQuestion $content, array $data, ?UploadedFile $upload = null): ContentAudio
+    public function save(Lesson|QuizQuestion $content, array $data, ?UploadedFile $upload = null, int $slot = 0): ContentAudio
     {
         if ($data['action'] === 'generate' && $data['language'] === 'ban') {
             throw ValidationException::withMessages(['language' => 'Untuk Bahasa Bali, unggah rekaman yang sudah diperiksa pengajar.']);
@@ -120,24 +148,25 @@ class ContentAudioService
             throw new RuntimeException('Audio gagal disimpan.');
         }
         try {
-            return DB::transaction(function () use ($content, $data, $newPath): ContentAudio {
+            return DB::transaction(function () use ($content, $data, $newPath, $slot): ContentAudio {
                 $content = $content->newQuery()->lockForUpdate()->findOrFail($content->id);
+                $this->defaultText($content, $slot);
                 $key = $content instanceof Lesson ? 'lesson_id' : 'quiz_question_id';
-                $audio = ContentAudio::where($key, $content->id)->lockForUpdate()->first();
+                $audio = ContentAudio::where($key, $content->id)->when($content instanceof Lesson, fn (Builder $query): Builder => $query->where('lesson_audio_slot', $slot))->lockForUpdate()->first();
                 if ($audio !== null && ($data['version'] ?? null) !== $audio->version) {
                     abort(409, 'Audio sudah berubah. Muat ulang halaman sebelum menyimpan.');
                 }
                 if ($audio !== null && $data['action'] === 'generate' && $newPath === null
                     && $audio->engine === config('services.tts.engine', 'espeak')
-                    && $audio->source_hash === $this->sourceHash($content)
+                    && $audio->source_hash === $this->sourceHash($content, $slot)
                     && $audio->spoken_text === $data['spoken_text'] && $audio->language === $data['language'] && $audio->speed === (int) $data['speed']
                     && in_array($audio->status, ['queued', 'processing', 'review', 'ready'], true)) {
                     return $audio;
                 }
                 $oldPath = $audio?->path;
-                $audio ??= new ContentAudio([$key => $content->id]);
+                $audio ??= new ContentAudio([$key => $content->id, 'lesson_audio_slot' => $slot]);
                 $audio->fill([
-                    'source_hash' => $this->sourceHash($content), 'version' => (string) Str::uuid(),
+                    'source_hash' => $this->sourceHash($content, $slot), 'version' => (string) Str::uuid(),
                     'spoken_text' => $data['spoken_text'], 'language' => $data['language'], 'speed' => (int) $data['speed'],
                     'engine' => $newPath !== null ? 'upload' : config('services.tts.engine', 'espeak'), 'path' => $newPath,
                     'status' => $newPath !== null ? 'review' : ($data['action'] === 'generate' ? ($this->isConfigured() ? 'queued' : 'unavailable') : 'draft'),
